@@ -63,7 +63,7 @@
       gap: 2px;
       flex-wrap: wrap;
       justify-content: flex-end;
-      max-width: 260px;
+      max-width: 270px;
     }
 
     .cyber-btn {
@@ -256,14 +256,14 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.1</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.2</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
         <button class="cyber-btn accent" onclick="adjustFunds()">FUND</button>
         <button class="cyber-btn" onclick="promptApiKey()">KEY</button>
         <button class="cyber-btn" onclick="requestBriefing()">BRIEF</button>
-        <button class="cyber-btn danger" onclick="masterReset()">RESET</button>
+        <button class="cyber-btn danger" onclick="freshWipe()">WIPE</button>
       </div>
     </div>
 
@@ -459,9 +459,13 @@
       localStorage.setItem('solaris_agent_stats', JSON.stringify(statsMap));
     }
 
-    function masterReset() {
-      if (confirm("Perform a complete master reset on all cash, vault, positions, fees, and bot metrics?")) {
+    function freshWipe() {
+      if (confirm("Reset all bots, positions, bankrolls, and vault balances to zero/baseline while preserving your API key?")) {
+        const apiKey = localStorage.getItem('gemini_api_key');
         localStorage.clear();
+        if (apiKey) {
+          localStorage.setItem('gemini_api_key', apiKey);
+        }
         location.reload();
       }
     }
