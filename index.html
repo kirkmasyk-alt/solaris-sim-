@@ -105,6 +105,7 @@
     }
     .stat-value.green { color: var(--green); }
     .stat-value.red { color: var(--red); }
+    .stat-value.amber { color: var(--amber); }
 
     .nav-tabs {
       display: grid;
@@ -250,15 +251,14 @@
         <div class="stat-value" style="color: var(--amber);" id="cash-balance">$10,000.00</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Active Positions</div>
-        <div class="stat-value" id="position-count">0</div>
+        <div class="stat-label">Total Fees Paid</div>
+        <div class="stat-value amber" id="total-fees">$0.00</div>
       </div>
     </div>
 
-    <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 11px;">
+    <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 10px;">
       <span>SOL: <strong id="sol-price" style="color: var(--cyan);">FETCHING...</strong></span>
-      <span>FEE: <strong style="color: var(--amber);">0.3% DEX</strong></span>
-      <span>MODE: <strong style="color: var(--green);">LIVE (USD)</strong></span>
+      <span>SOURCE: <strong style="color: var(--green);">COINGECKO API</strong></span>
     </div>
 
     <div class="nav-tabs">
@@ -274,7 +274,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Precision weighted-average cost basis engine online.</div>
+        <div style="color: var(--green);">[00:01] Market data source tracking initialized.</div>
       </div>
     </div>
 
@@ -284,12 +284,13 @@
     </div>
 
     <div id="tab-status" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION STATUS</div>
-      <div class="status-row"><span>COINGECKO API:</span> <strong id="status-gecko" style="color: var(--green);">● CONNECTED (LIVE)</strong></div>
-      <div class="status-row"><span>MARKET NEWS & TICKER:</span> <strong id="status-news" style="color: var(--green);">● STREAMING ACTIVE</strong></div>
-      <div class="status-row"><span>DEX ROUTING & FEES:</span> <strong style="color: var(--green);">● ACTIVE (0.3% DEDUCTION)</strong></div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
+      <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">COINGECKO API v3</strong></div>
+      <div class="status-row"><span>API ROUTE:</span> <strong style="color: var(--text-dim); font-size: 9px;">api.coingecko.com/simple/price</strong></div>
+      <div class="status-row"><span>MARKET NEWS FEED:</span> <strong id="status-news" style="color: var(--green);">● STREAMING ACTIVE</strong></div>
+      <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
+      <div class="status-row"><span>TOTAL TRANSACTIONS:</span> <strong style="color: var(--cyan);" id="status-tx-count">0 EXECUTED</strong></div>
       <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 5/5 UNITS OPERATIONAL</strong></div>
-      <div class="status-row"><span>COST-BASIS LEDGER:</span> <strong style="color: var(--green);">● WEIGHTED AVERAGE ACTIVE</strong></div>
       <div class="status-row"><span>LOCAL STORAGE:</span> <strong style="color: var(--cyan);">● ISOLATED SANDBOX</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
@@ -322,7 +323,9 @@
       positions: JSON.parse(localStorage.getItem('solaris_positions')) || { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
       costBasis: JSON.parse(localStorage.getItem('solaris_cost_basis')) || { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
-      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online. Market status tracking green.', color: '#38bdf8', time: '00:00' }],
+      totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
+      txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
+      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online. Market source tracking active.', color: '#38bdf8', time: '00:00' }],
       soundEnabled: false
     };
 
@@ -408,9 +411,13 @@
 
     function resetPnlOnly() {
       state.realizedPnl = 0;
+      state.totalFeesPaid = 0;
+      state.txCount = 0;
       localStorage.setItem('solaris_pnl', 0);
+      localStorage.setItem('solaris_fees', 0);
+      localStorage.setItem('solaris_tx_count', 0);
       agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; });
-      addSystemLog(`[CONFIG] Realized P&L matrix zeroed out.`);
+      addSystemLog(`[CONFIG] Realized P&L and fee metrics zeroed out.`);
       renderAll();
     }
 
@@ -441,7 +448,7 @@
     function requestBriefing() {
       let net = state.cash;
       marketCoins.forEach(c => { net += (state.positions[c.symbol] || 0) * c.price; });
-      const brief = `EXECUTIVE BRIEF: Net Worth is ${fmtCurrency(net)}. Realized P&L: ${fmtCurrency(state.realizedPnl)}. Cash Reserve: ${fmtCurrency(state.cash)}. All systems green.`;
+      const brief = `EXECUTIVE BRIEF: Net Worth is ${fmtCurrency(net)}. Realized P&L: ${fmtCurrency(state.realizedPnl)}. Total Fees Paid: ${fmtCurrency(state.totalFeesPaid)}. Source: CoinGecko API. All systems green.`;
       state.councilFeed.unshift({ sender: 'ROBBIEBOT 9000 // BRIEFING', text: brief, color: '#22c55e', time: new Date().toLocaleTimeString() });
       renderAll();
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
@@ -460,15 +467,15 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
-    function generateAgentDialogue(agent, coin, actionType, pnlDelta) {
+    function generateAgentDialogue(agent, coin, actionType, pnlDelta, feeAmount) {
       const priceStr = coin.price > 0 ? `at ${fmtPrice(coin.price)}` : '';
       const conversations = {
         'KIRKTRON 9001': [
-          actionType === 'buy' ? `Deploying capital into ${coin.symbol} ${priceStr}. Cost basis locked.` : `Position closed on ${coin.symbol}. Net P&L: ${fmtCurrency(pnlDelta)}.`,
-          `Evaluating asset yield against 0.3% DEX fee hurdle rate.`
+          actionType === 'buy' ? `Deploying capital into ${coin.symbol} ${priceStr} via CoinGecko feed. Fee: ${fmtCurrency(feeAmount)}.` : `Position closed on ${coin.symbol}. Net P&L: ${fmtCurrency(pnlDelta)} (Fee: ${fmtCurrency(feeAmount)}).`,
+          `Evaluating asset yield against cumulative 0.3% DEX protocol fees.`
         ],
         'RISK_CORE': [
-          actionType === 'buy' ? `Fee hurdle verified. Risk parameters approved for ${coin.symbol}.` : `Position successfully unwound. Profitability confirmed after fees.`,
+          actionType === 'buy' ? `Fee hurdle verified. Risk parameters approved for ${coin.symbol}.` : `Position successfully unwound. Cumulative fee drag accounted for.`,
           `Monitoring volatility bands to protect treasury capital.`
         ],
         'ALPHA_X': [
@@ -476,12 +483,12 @@
           `Scanning liquidity depth for high-reward entry setups.`
         ],
         'MACRO_9': [
-          `Macro trend analysis: Ecosystem liquidity flows remain stable.`,
-          `Cross-referencing live CoinGecko valuations with portfolio exposure.`
+          `Macro trend analysis: CoinGecko data stream remains stable.`,
+          `Cross-referencing live endpoint valuations with portfolio exposure.`
         ],
         'ROBBIEBOT 9000': [
-          actionType === 'buy' ? `Treasury cash debited for ${coin.symbol} accumulation.` : `Capital authority audit: Net reward recorded at ${fmtCurrency(pnlDelta)}.`,
-          `Reserves and ledger balances reconciling in real-time.`
+          actionType === 'buy' ? `Treasury cash debited. Fee paid: ${fmtCurrency(feeAmount)}.` : `Capital authority audit: Net reward recorded at ${fmtCurrency(pnlDelta)}.`,
+          `Reserves and cumulative fee ledgers reconciling in real-time.`
         ]
       };
       const pool = conversations[agent.name] || [`Executing routine ledger verification.`];
@@ -505,30 +512,19 @@
           document.getElementById('sol-price').textContent = fmtCurrency(solObj.price);
         }
 
-        const geckoStatus = document.getElementById('status-gecko');
-        if (geckoStatus) {
-          geckoStatus.textContent = "● CONNECTED (LIVE)";
-          geckoStatus.style.color = "var(--green)";
-        }
-
         const newsStatus = document.getElementById('status-news');
         if (newsStatus) {
-          newsStatus.textContent = "● STREAMING ACTIVE";
+          newsStatus.textContent = "● STREAMING ACTIVE (COINGECKO)";
           newsStatus.style.color = "var(--green)";
         }
 
-        addSystemLog(`[API] Live USD market prices synced.`);
+        addSystemLog(`[API] Live USD market prices synced from CoinGecko API.`);
         runTradingLoop();
       } catch (err) {
         console.error("API fetch error caught safely:", err);
-        const geckoStatus = document.getElementById('status-gecko');
-        if (geckoStatus) {
-          geckoStatus.textContent = "● WARNING (DELAYED)";
-          geckoStatus.style.color = "var(--amber)";
-        }
         const newsStatus = document.getElementById('status-news');
         if (newsStatus) {
-          newsStatus.textContent = "● FEED DELAYED";
+          newsStatus.textContent = "● FEED DELAYED (COINGECKO)";
           newsStatus.style.color = "var(--amber)";
         }
         addSystemLog(`[API WARNING] Network delay. Maintaining state loop.`);
@@ -545,6 +541,7 @@
 
         let actionType = 'buy';
         let pnlDelta = 0;
+        let fee = 0;
         const feeRate = 0.003; // 0.3% DEX fee
 
         const currentHolding = state.positions[coin.symbol] || 0;
@@ -553,7 +550,7 @@
         
         if (state.cash > 50 && (Math.random() > 0.5 || currentHolding === 0)) {
           const spendAmount = state.cash * 0.15;
-          const fee = spendAmount * feeRate;
+          fee = spendAmount * feeRate;
           const netSpend = spendAmount - fee;
           
           state.cash -= spendAmount;
@@ -566,12 +563,15 @@
           state.costBasis[coin.symbol] = totalTokens > 0 ? newTotalVal / totalTokens : coin.price;
           state.positions[coin.symbol] = totalTokens;
 
-          addSystemLog(`[TRADE] ${agent.name} bought ${tokensBought > 100 ? tokensBought.toLocaleString('en-US', {maximumFractionDigits: 0}) : tokensBought.toFixed(2)} ${coin.symbol} at ${fmtPrice(coin.price)}`);
+          state.totalFeesPaid += fee;
+          state.txCount += 1;
+
+          addSystemLog(`[TRADE] ${agent.name} bought ${tokensBought > 100 ? tokensBought.toLocaleString('en-US', {maximumFractionDigits: 0}) : tokensBought.toFixed(2)} ${coin.symbol} (Fee: ${fmtCurrency(fee)})`);
           actionType = 'buy';
         } else if (currentHolding > 0.00001 && (priceChangePct > 0.008 || Math.random() > 0.7)) {
           const tokensToSell = currentHolding * 0.5;
           const grossReturn = tokensToSell * coin.price;
-          const fee = grossReturn * feeRate;
+          fee = grossReturn * feeRate;
           const netReturn = grossReturn - fee;
 
           const costOfTokensSold = tokensToSell * avgCost;
@@ -581,6 +581,9 @@
           state.cash += netReturn;
 
           state.realizedPnl += pnlDelta;
+          state.totalFeesPaid += fee;
+          state.txCount += 1;
+
           agent.pnl += pnlDelta;
           agent.minPnl += pnlDelta;
           agent.hrPnl += pnlDelta;
@@ -590,19 +593,21 @@
           if (pnlDelta >= 0) playSound('coin');
 
           const signStr = pnlDelta >= 0 ? '+' : '';
-          addSystemLog(`[TRADE] ${agent.name} sold ${coin.symbol} [Net P&L: ${signStr}${fmtCurrency(pnlDelta)}]`);
+          addSystemLog(`[TRADE] ${agent.name} sold ${coin.symbol} [P&L: ${signStr}${fmtCurrency(pnlDelta)}] (Fee: ${fmtCurrency(fee)})`);
           actionType = 'sell';
         } else {
           return;
         }
 
-        const conversationalSpeech = generateAgentDialogue(agent, coin, actionType, pnlDelta);
+        const conversationalSpeech = generateAgentDialogue(agent, coin, actionType, pnlDelta, fee);
 
         state.councilFeed.unshift({ sender: agent.name, text: conversationalSpeech, color: agent.color, time: new Date().toLocaleTimeString() });
         state.councilFeed = state.councilFeed.slice(0, 30);
 
         localStorage.setItem('solaris_cash', state.cash);
         localStorage.setItem('solaris_pnl', state.realizedPnl);
+        localStorage.setItem('solaris_fees', state.totalFeesPaid);
+        localStorage.setItem('solaris_tx_count', state.txCount);
         localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
         localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
 
@@ -625,6 +630,15 @@
 
       const cbEl = document.getElementById('cash-balance');
       if (cbEl) cbEl.textContent = fmtCurrency(state.cash);
+
+      const feesEl = document.getElementById('total-fees');
+      if (feesEl) feesEl.textContent = fmtCurrency(state.totalFeesPaid);
+
+      const statusFeesEl = document.getElementById('status-fees');
+      if (statusFeesEl) statusFeesEl.textContent = `${fmtCurrency(state.totalFeesPaid)} CUMULATIVE`;
+
+      const txCountEl = document.getElementById('status-tx-count');
+      if (txCountEl) txCountEl.textContent = `${state.txCount} EXECUTED`;
 
       const pnlEl = document.getElementById('realized-pnl');
       if (pnlEl) {
