@@ -180,14 +180,9 @@
     .agent-card {
       background: rgba(0, 0, 0, 0.6);
       border: 1px solid var(--border-color);
-      padding: 10px;
-      margin-bottom: 8px;
+      padding: 8px;
+      margin-bottom: 6px;
       cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .agent-card:hover {
-      border-color: var(--cyan);
-      background: rgba(56, 189, 248, 0.05);
     }
     .agent-header {
       display: flex;
@@ -195,23 +190,23 @@
       gap: 8px;
     }
     .robot-head {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       border: 1px solid;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 14px;
       background: #020617;
     }
     .metrics-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 2px;
-      margin-top: 6px;
+      margin-top: 4px;
       font-size: 8px;
       background: #020617;
-      padding: 4px;
+      padding: 3px;
       border: 1px solid rgba(255,255,255,0.05);
       text-align: center;
     }
@@ -223,7 +218,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">AUTONOMOUS SWARM V4</div>
+        <div style="font-size: 8px; color: var(--text-dim);">AUTONOMOUS SWARM V4.1</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn" id="audio-toggle-btn" onclick="toggleAudio()">AUDIO: OFF</button>
@@ -258,7 +253,7 @@
 
     <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 10px;">
       <span>SOL: <strong id="sol-price" style="color: var(--cyan);">FETCHING...</strong></span>
-      <span>BOSS BOT: <strong style="color: var(--green);" id="boss-status">ONLINE (ACTIVE)</strong></span>
+      <span>BOSS: <strong style="color: var(--green);" id="boss-status">ONLINE</strong></span>
     </div>
 
     <div class="nav-tabs">
@@ -274,19 +269,19 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Boss Bot circuit breaker telemetry active.</div>
+        <div style="color: var(--green);">[00:01] System operational. Core telemetry active.</div>
       </div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// LIVE TELEMETRY & AGENT SWARM DEBATE</div>
-      <div class="terminal-box" style="height: 260px;" id="council-feed-container"></div>
+      <div class="terminal-box" style="height: 240px;" id="council-feed-container"></div>
     </div>
 
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">COINGECKO API v3</strong></div>
-      <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 (ACTIVE)</strong></div>
+      <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1</strong></div>
       <div class="status-row"><span>MARKET NEWS FEED:</span> <strong id="status-news" style="color: var(--green);">● STREAMING ACTIVE</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
       <div class="status-row"><span>TOTAL TRANSACTIONS:</span> <strong style="color: var(--cyan);" id="status-tx-count">0 EXECUTED</strong></div>
@@ -297,25 +292,25 @@
 
     <div id="tab-warroom" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (CLICK AGENT FOR INTEL)</div>
-      <div id="war-room-container" style="max-height: 260px; overflow-y: auto;"></div>
+      <div id="war-room-container" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
     </div>
   </div>
 
   <script>
     const marketCoins = [
-      { symbol: 'SOL', id: 'solana', price: 0 },
-      { symbol: 'BONK', id: 'bonk', price: 0 },
-      { symbol: 'JTO', id: 'jito-governance-token', price: 0 },
-      { symbol: 'RAY', id: 'raydium', price: 0 },
-      { symbol: 'WIF', id: 'dogwifcoin', price: 0 }
+      { symbol: 'SOL', id: 'solana', price: 105.50 },
+      { symbol: 'BONK', id: 'bonk', price: 0.000025 },
+      { symbol: 'JTO', id: 'jito-governance-token', price: 2.10 },
+      { symbol: 'RAY', id: 'raydium', price: 1.85 },
+      { symbol: 'WIF', id: 'dogwifcoin', price: 1.45 }
     ];
 
     const agentDefs = [
-      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Chief Risk Officer (Boss)', color: '#a855f7', icon: '👁️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'STANDBY' },
+      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Chief Risk Officer', color: '#a855f7', icon: '👁️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'STANDBY' },
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Portfolio Manager', color: '#38bdf8', icon: '🤖', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', color: '#f59e0b', icon: '🛡️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', color: '#ef4444', icon: '⚡', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
-      { id: 'macro', name: 'MACRO_9', role: 'Strategy Planner', color: '#38bdf8', icon: '🌐', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
+      { id: 'macro', name: 'MACRO_9', role: 'Strategy Planner', color: '#a855f7', icon: '🌐', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Capital Authority', color: '#22c55e', icon: '🏛️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' }
     ];
 
@@ -326,72 +321,27 @@
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
-      agentStats: JSON.parse(localStorage.getItem('solaris_agent_stats')) || {},
-      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'Chief Risk Officer online. Monitoring agent swarm for capital bleed.', color: '#a855f7', time: '00:00' }],
-      soundEnabled: false
+      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'System diagnostics online. Swarm initialized.', color: '#a855f7', time: '00:00' }]
     };
 
-    // Restore saved agent stats
+    let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
     agentDefs.forEach(a => {
-      if (state.agentStats[a.id]) {
-        a.pnl = state.agentStats[a.id].pnl || 0;
-        a.minPnl = state.agentStats[a.id].minPnl || 0;
-        a.hrPnl = state.agentStats[a.id].hrPnl || 0;
-        a.dayPnl = state.agentStats[a.id].dayPnl || 0;
-        a.wkPnl = state.agentStats[a.id].wkPnl || 0;
-        a.status = state.agentStats[a.id].status || 'ACTIVE';
+      if (savedStats[a.id]) {
+        a.pnl = savedStats[a.id].pnl || 0;
+        a.minPnl = savedStats[a.id].minPnl || 0;
+        a.hrPnl = savedStats[a.id].hrPnl || 0;
+        a.dayPnl = savedStats[a.id].dayPnl || 0;
+        a.wkPnl = savedStats[a.id].wkPnl || 0;
+        a.status = savedStats[a.id].status || a.status;
       }
     });
-
-    let audioCtx = null;
-
-    function toggleAudio() {
-      state.soundEnabled = !state.soundEnabled;
-      const btn = document.getElementById('audio-toggle-btn');
-      if (state.soundEnabled) {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        btn.textContent = "AUDIO: ON";
-        btn.classList.add('active-sound');
-        playSound('coin');
-      } else {
-        btn.textContent = "AUDIO: OFF";
-        btn.classList.remove('active-sound');
-      }
-    }
-
-    function playSound(type) {
-      if (!state.soundEnabled || !audioCtx) return;
-      try {
-        const now = audioCtx.currentTime;
-        if (type === 'coin') {
-          const frequencies = [987.77, 1318.51, 1975.54];
-          frequencies.forEach((freq, index) => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = 'triangle';
-            const startTime = now + (index * 0.05);
-            osc.frequency.setValueAtTime(freq, startTime);
-            gain.gain.setValueAtTime(0.06, startTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15);
-            osc.start(startTime);
-            osc.stop(startTime + 0.15);
-          });
-        }
-      } catch (e) {
-        console.error("Audio error:", e);
-      }
-    }
 
     function fmtCurrency(val) {
       return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function fmtPrice(val) {
-      if (val < 0.01) return '$' + val.toFixed(6);
-      return '$' + val.toFixed(2);
+      return val < 0.01 ? '$' + val.toFixed(6) : '$' + val.toFixed(2);
     }
 
     function switchTab(tabId, btnElement) {
@@ -400,103 +350,7 @@
       const target = document.getElementById('tab-' + tabId);
       if (target) target.classList.add('active');
       if (btnElement) btnElement.classList.add('active');
-      updateKeyStatus();
-    }
-
-    function updateKeyStatus() {
-      const el = document.getElementById('key-status');
-      if (!el) return;
-      const key = localStorage.getItem('gemini_api_key');
-      if (key && key.length > 5) {
-        el.textContent = "● CONFIGURED (SECURE)";
-        el.style.color = "var(--green)";
-      } else {
-        el.textContent = "● NOT CONFIGURED";
-        el.style.color = "var(--text-dim)";
-      }
-    }
-
-    function saveAgentStats() {
-      const statsMap = {};
-      agentDefs.forEach(a => {
-        statsMap[a.id] = { pnl: a.pnl, minPnl: a.minPnl, hrPnl: a.hrPnl, dayPnl: a.dayPnl, wkPnl: a.wkPnl, status: a.status };
-      });
-      localStorage.setItem('solaris_agent_stats', JSON.stringify(statsMap));
-    }
-
-    function resetTreasuryAndBots() {
-      if (confirm("Reset treasury cash, active positions, bot metrics, and fees?")) {
-        state.cash = 100;
-        state.positions = { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 };
-        state.costBasis = { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 };
-        state.realizedPnl = 0;
-        state.totalFeesPaid = 0;
-        state.txCount = 0;
-        agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = a.id === 'boss' ? 'STANDBY' : 'ACTIVE'; });
-        
-        localStorage.setItem('solaris_cash', state.cash);
-        localStorage.setItem('solaris_pnl', 0);
-        localStorage.setItem('solaris_fees', 0);
-        localStorage.setItem('solaris_tx_count', 0);
-        localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
-        localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
-        localStorage.removeItem('solaris_agent_stats');
-
-        addSystemLog(`[CONFIG] Treasury and bot telemetry successfully wiped and reset.`);
-        renderAll();
-      }
-    }
-
-    function resetPnlOnly() {
-      state.realizedPnl = 0;
-      state.totalFeesPaid = 0;
-      state.txCount = 0;
-      localStorage.setItem('solaris_pnl', 0);
-      localStorage.setItem('solaris_fees', 0);
-      localStorage.setItem('solaris_tx_count', 0);
-      agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = a.id === 'boss' ? 'STANDBY' : 'ACTIVE'; });
-      localStorage.removeItem('solaris_agent_stats');
-      addSystemLog(`[CONFIG] Realized P&L and fee metrics zeroed out.`);
       renderAll();
-    }
-
-    function promptApiKey() {
-      const key = prompt("Enter Gemini API key:", localStorage.getItem('gemini_api_key') || '');
-      if (key !== null) {
-        localStorage.setItem('gemini_api_key', key.trim());
-        updateKeyStatus();
-        addSystemLog(`[CONFIG] Gemini API Key updated securely in local sandbox.`);
-      }
-    }
-
-    function adjustFunds() {
-      const input = prompt("Enter new starting cash reserve amount ($):", state.cash);
-      if (input !== null) {
-        const newAmount = parseFloat(input);
-        if (!isNaN(newAmount) && newAmount >= 0) {
-          state.cash = newAmount;
-          localStorage.setItem('solaris_cash', state.cash);
-          addSystemLog(`[CONFIG] Cash reserve adjusted to ${fmtCurrency(state.cash)}`);
-          renderAll();
-        } else {
-          alert("Invalid entry.");
-        }
-      }
-    }
-
-    function requestBriefing() {
-      let net = state.cash;
-      marketCoins.forEach(c => { net += (state.positions[c.symbol] || 0) * c.price; });
-      const brief = `EXECUTIVE BRIEF: Net Worth is ${fmtCurrency(net)}. Realized P&L: ${fmtCurrency(state.realizedPnl)}. Total Fees Paid: ${fmtCurrency(state.totalFeesPaid)}. Chief Risk Officer active. All systems green.`;
-      state.councilFeed.unshift({ sender: 'ORCHESTRATOR-1 // BRIEFING', text: brief, color: '#a855f7', time: new Date().toLocaleTimeString() });
-      renderAll();
-      switchTab('council', document.querySelectorAll('.tab-btn')[1]);
-    }
-
-    function inspectAgent(agentId) {
-      const agent = agentDefs.find(a => a.id === agentId);
-      if (!agent) return;
-      alert(`AGENT INTEL: ${agent.name} (${agent.role})\n- Status: ${agent.status}\n- Lifetime P&L: ${fmtCurrency(agent.pnl)}\n- Per Min: ${fmtCurrency(agent.minPnl)}\n- Per Hour: ${fmtCurrency(agent.hrPnl)}`);
     }
 
     function addSystemLog(msg) {
@@ -506,85 +360,145 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
+    function saveState() {
+      localStorage.setItem('solaris_cash', state.cash);
+      localStorage.setItem('solaris_pnl', state.realizedPnl);
+      localStorage.setItem('solaris_fees', state.totalFeesPaid);
+      localStorage.setItem('solaris_tx_count', state.txCount);
+      localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
+      localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
+      
+      const statsMap = {};
+      agentDefs.forEach(a => {
+        statsMap[a.id] = { pnl: a.pnl, minPnl: a.minPnl, hrPnl: a.hrPnl, dayPnl: a.dayPnl, wkPnl: a.wkPnl, status: a.status };
+      });
+      localStorage.setItem('solaris_agent_stats', JSON.stringify(statsMap));
+    }
+
+    function resetTreasuryAndBots() {
+      if (confirm("Reset treasury cash, positions, and bot metrics?")) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
+
+    function resetPnlOnly() {
+      state.realizedPnl = 0;
+      state.totalFeesPaid = 0;
+      state.txCount = 0;
+      agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = a.id === 'boss' ? 'STANDBY' : 'ACTIVE'; });
+      saveState();
+      addSystemLog(`[CONFIG] P&L and fee metrics zeroed out.`);
+      renderAll();
+    }
+
+    function promptApiKey() {
+      const key = prompt("Enter Gemini API key:", localStorage.getItem('gemini_api_key') || '');
+      if (key !== null) {
+        localStorage.setItem('gemini_api_key', key.trim());
+        const el = document.getElementById('key-status');
+        if (el) { el.textContent = "● CONFIGURED"; el.style.color = "var(--green)"; }
+        addSystemLog(`[CONFIG] API Key updated.`);
+      }
+    }
+
+    function adjustFunds() {
+      const input = prompt("Enter new cash reserve amount ($):", state.cash);
+      if (input !== null) {
+        const amt = parseFloat(input);
+        if (!isNaN(amt) && amt >= 0) {
+          state.cash = amt;
+          saveState();
+          renderAll();
+        }
+      }
+    }
+
+    function requestBriefing() {
+      let net = state.cash;
+      marketCoins.forEach(c => { net += (state.positions[c.symbol] || 0) * c.price; });
+      const brief = `BRIEF: Net Worth ${fmtCurrency(net)}. P&L: ${fmtCurrency(state.realizedPnl)}. Fees: ${fmtCurrency(state.totalFeesPaid)}. All systems nominal.`;
+      state.councilFeed.unshift({ sender: 'ORCHESTRATOR-1', text: brief, color: '#a855f7', time: new Date().toLocaleTimeString() });
+      switchTab('council', document.querySelectorAll('.tab-btn')[1]);
+      renderAll();
+    }
+
+    function inspectAgent(id) {
+      const a = agentDefs.find(x => x.id === id);
+      if (a) alert(`${a.name} (${a.role})\nStatus: ${a.status}\nP&L: ${fmtCurrency(a.pnl)}`);
+    }
+
+    async function updateMarketData() {
+      try {
+        const ids = marketCoins.map(c => c.id).join(',');
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+        const data = await res.json();
+        marketCoins.forEach(c => {
+          if (data[c.id] && data[c.id].usd) c.price = data[c.id].usd;
+        });
+      } catch (e) {
+        console.log("Using cached/fallback prices");
+      }
+      runTradingLoop();
+    }
+
     function runTradingLoop() {
       try {
-        // Filter out the Boss Bot (index 0) and any agents suspended by the circuit breaker
         const activeAgents = agentDefs.filter(a => a.id !== 'boss' && a.status === 'ACTIVE');
-        
-        // BOSS BOT AUDIT & CIRCUIT BREAKER LOGIC
-        const bossBot = agentDefs.find(a => a.id === 'boss');
-        const troubledAgents = agentDefs.filter(a => a.id !== 'boss' && a.pnl < -3.0 && a.status === 'ACTIVE');
+        const boss = agentDefs.find(a => a.id === 'boss');
+        const troubled = agentDefs.filter(a => a.id !== 'boss' && a.pnl < -3.0 && a.status === 'ACTIVE');
 
-        if (troubledAgents.length > 0 && Math.random() > 0.3) {
-          const culprit = troubledAgents[Math.floor(Math.random() * troubledAgents.length)];
+        if (troubled.length > 0 && Math.random() > 0.3) {
+          const culprit = troubled[0];
           culprit.status = 'SUSPENDED';
-          bossBot.status = 'INTERVENING';
-          
-          const interventionMsg = `CIRCUIT BREAKER ENGAGED: ${culprit.name} is bleeding capital (P&L: ${fmtCurrency(culprit.pnl)}). Suspending trading privileges for risk realignment.`;
-          state.councilFeed.unshift({ sender: bossBot.name, text: interventionMsg, color: bossBot.color, time: new Date().toLocaleTimeString() });
-          addSystemLog(`[BOSS BOT] Suspended ${culprit.name} due to negative P&L drawdown.`);
-          saveAgentStats();
+          boss.status = 'INTERVENING';
+          state.councilFeed.unshift({ sender: boss.name, text: `Circuit breaker engaged: ${culprit.name} suspended due to drawdown (${fmtCurrency(culprit.pnl)}).`, color: boss.color, time: new Date().toLocaleTimeString() });
+          saveState();
           renderAll();
           return;
         } else if (activeAgents.length === 0) {
-          // If all agents are suspended, Boss Bot resets them after a cooling-off audit
           agentDefs.forEach(a => { if (a.id !== 'boss') a.status = 'ACTIVE'; });
-          bossBot.status = 'ACTIVE';
-          const resetMsg = `Risk audit complete. All agent trading privileges restored by Chief Risk Officer.`;
-          state.councilFeed.unshift({ sender: bossBot.name, text: resetMsg, color: bossBot.color, time: new Date().toLocaleTimeString() });
-          addSystemLog(`[BOSS BOT] Restored operational status to all trading agents.`);
-          saveAgentStats();
+          boss.status = 'ACTIVE';
+          state.councilFeed.unshift({ sender: boss.name, text: `Risk reset complete. All agents restored to active pool.`, color: boss.color, time: new Date().toLocaleTimeString() });
+          saveState();
           renderAll();
           return;
         }
 
         const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
         const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-
         if (coin.price <= 0) return;
 
-        let actionType = 'buy';
+        let action = 'buy';
         let pnlDelta = 0;
         let fee = 0;
-        const feeRate = 0.003;
-
-        const currentHolding = state.positions[coin.symbol] || 0;
+        const curHold = state.positions[coin.symbol] || 0;
         const avgCost = state.costBasis[coin.symbol] || coin.price;
-        const priceChangePct = avgCost > 0 ? (coin.price - avgCost) / avgCost : 0;
-        
-        if (state.cash > 5.0 && (Math.random() > 0.4 || currentHolding === 0)) {
-          let spendAmount = state.cash * 0.10; 
-          if (spendAmount < 1.0) spendAmount = state.cash;
-          if (spendAmount > state.cash) spendAmount = state.cash;
 
-          fee = spendAmount * feeRate;
-          const netSpend = spendAmount - fee;
+        if (state.cash > 5.0 && (Math.random() > 0.4 || curHold === 0)) {
+          let spend = state.cash * 0.10;
+          fee = spend * 0.003;
+          let netSpend = spend - fee;
+          state.cash -= spend;
           
-          state.cash -= spendAmount;
-          const tokensBought = netSpend / coin.price;
-
-          const oldTotalVal = currentHolding * avgCost;
-          const newTotalVal = oldTotalVal + netSpend;
-          const totalTokens = currentHolding + tokensBought;
-          
-          state.costBasis[coin.symbol] = totalTokens > 0 ? newTotalVal / totalTokens : coin.price;
+          let tokens = netSpend / coin.price;
+          let oldVal = curHold * avgCost;
+          let totalTokens = curHold + tokens;
+          state.costBasis[coin.symbol] = totalTokens > 0 ? (oldVal + netSpend) / totalTokens : coin.price;
           state.positions[coin.symbol] = totalTokens;
 
           state.totalFeesPaid += fee;
           state.txCount += 1;
+          addSystemLog(`[TRADE] ${agent.name} bought ${tokens.toFixed(2)} ${coin.symbol} for $${spend.toFixed(2)} (Fee: ${fmtCurrency(fee)})`);
+          action = 'buy';
+        } else if (curHold > 0.00001 && Math.random() > 0.5) {
+          let sellTokens = curHold * 0.5;
+          let gross = sellTokens * coin.price;
+          fee = gross * 0.003;
+          let netReturn = gross - fee;
 
-          addSystemLog(`[TRADE] ${agent.name} bought ${tokensBought > 100 ? tokensBought.toLocaleString('en-US', {maximumFractionDigits: 0}) : tokensBought.toFixed(2)} ${coin.symbol} for $${spendAmount.toFixed(2)} (Fee: ${fmtCurrency(fee)})`);
-          actionType = 'buy';
-        } else if (currentHolding > 0.00001 && (priceChangePct > 0.008 || Math.random() > 0.7)) {
-          const tokensToSell = currentHolding * 0.5;
-          const grossReturn = tokensToSell * coin.price;
-          fee = grossReturn * feeRate;
-          const netReturn = grossReturn - fee;
-
-          const costOfTokensSold = tokensToSell * avgCost;
-          pnlDelta = netReturn - costOfTokensSold;
-
-          state.positions[coin.symbol] -= tokensToSell;
+          pnlDelta = netReturn - (sellTokens * avgCost);
+          state.positions[coin.symbol] -= sellTokens;
           state.cash += netReturn;
 
           state.realizedPnl += pnlDelta;
@@ -597,72 +511,55 @@
           agent.dayPnl += pnlDelta;
           agent.wkPnl += pnlDelta;
 
-          if (pnlDelta >= 0) playSound('coin');
-
-          const signStr = pnlDelta >= 0 ? '+' : '';
-          addSystemLog(`[TRADE] ${agent.name} sold ${coin.symbol} [P&L: ${signStr}${fmtCurrency(pnlDelta)}] (Fee: ${fmtCurrency(fee)})`);
-          actionType = 'sell';
+          addSystemLog(`[TRADE] ${agent.name} sold ${coin.symbol} [P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}] (Fee: ${fmtCurrency(fee)})`);
+          action = 'sell';
         } else {
           return;
         }
 
-        saveAgentStats();
-
-        const conversationalSpeech = actionType === 'buy' ? 
-          `Allocating 10% bankroll stake into ${coin.symbol}. Fee: ${fmtCurrency(fee)}.` : 
-          `Position closed on ${coin.symbol}. Net P&L: ${fmtCurrency(pnlDelta)}.`;
-
-        state.councilFeed.unshift({ sender: agent.name, text: conversationalSpeech, color: agent.color, time: new Date().toLocaleTimeString() });
+        saveState();
+        state.councilFeed.unshift({ 
+          sender: agent.name, 
+          text: action === 'buy' ? `Allocating 10% into ${coin.symbol}. Fee: ${fmtCurrency(fee)}.` : `Position closed on ${coin.symbol}. P&L: ${fmtCurrency(pnlDelta)}.`, 
+          color: agent.color, 
+          time: new Date().toLocaleTimeString() 
+        });
         state.councilFeed = state.councilFeed.slice(0, 30);
-
-        localStorage.setItem('solaris_cash', state.cash);
-        localStorage.setItem('solaris_pnl', state.realizedPnl);
-        localStorage.setItem('solaris_fees', state.totalFeesPaid);
-        localStorage.setItem('solaris_tx_count', state.txCount);
-        localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
-        localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
-
         renderAll();
       } catch (err) {
-        console.error("Trading loop error caught safely:", err);
+        console.error("Loop error:", err);
       }
     }
 
     function renderAll() {
-      let portfolioValue = 0;
-      marketCoins.forEach(c => { 
-        portfolioValue += (state.positions[c.symbol] || 0) * c.price; 
-      });
+      let portfolioVal = 0;
+      marketCoins.forEach(c => { portfolioVal += (state.positions[c.symbol] || 0) * c.price; });
+      let netWorth = state.cash + portfolioVal;
 
-      let netWorth = state.cash + portfolioValue;
-      
-      const nwEl = document.getElementById('net-worth');
-      if (nwEl) nwEl.textContent = fmtCurrency(netWorth);
+      const nw = document.getElementById('net-worth');
+      if (nw) nw.textContent = fmtCurrency(netWorth);
 
-      const cbEl = document.getElementById('cash-balance');
-      if (cbEl) cbEl.textContent = fmtCurrency(state.cash);
+      const cb = document.getElementById('cash-balance');
+      if (cb) cb.textContent = fmtCurrency(state.cash);
 
-      const feesEl = document.getElementById('total-fees');
-      if (feesEl) feesEl.textContent = fmtCurrency(state.totalFeesPaid);
+      const tf = document.getElementById('total-fees');
+      if (tf) tf.textContent = fmtCurrency(state.totalFeesPaid);
 
-      const statusFeesEl = document.getElementById('status-fees');
-      if (statusFeesEl) statusFeesEl.textContent = `${fmtCurrency(state.totalFeesPaid)} CUMULATIVE`;
+      const sf = document.getElementById('status-fees');
+      if (sf) sf.textContent = `${fmtCurrency(state.totalFeesPaid)} CUMULATIVE`;
 
-      const txCountEl = document.getElementById('status-tx-count');
-      if (txCountEl) txCountEl.textContent = `${state.txCount} EXECUTED`;
+      const tx = document.getElementById('status-tx-count');
+      if (tx) tx.textContent = `${state.txCount} EXECUTED`;
 
-      const pnlEl = document.getElementById('realized-pnl');
-      if (pnlEl) {
-        pnlEl.textContent = (state.realizedPnl >= 0 ? '+' : '') + fmtCurrency(state.realizedPnl);
-        pnlEl.className = `stat-value ${state.realizedPnl >= 0 ? 'green' : 'red'}`;
+      const pnl = document.getElementById('realized-pnl');
+      if (pnl) {
+        pnl.textContent = (state.realizedPnl >= 0 ? '+' : '') + fmtCurrency(state.realizedPnl);
+        pnl.className = `stat-value ${state.realizedPnl >= 0 ? 'green' : 'red'}`;
       }
 
-      const bossStatusEl = document.getElementById('boss-status');
-      const bossAgent = agentDefs.find(a => a.id === 'boss');
-      if (bossStatusEl && bossAgent) {
-        bossStatusEl.textContent = bossAgent.status;
-        bossStatusEl.style.color = bossAgent.status === 'ACTIVE' ? 'var(--green)' : 'var(--amber)';
-      }
+      const solPriceEl = document.getElementById('sol-price');
+      const solObj = marketCoins.find(c => c.symbol === 'SOL');
+      if (solPriceEl && solObj) solPriceEl.textContent = fmtCurrency(solObj.price);
 
       const warContainer = document.getElementById('war-room-container');
       if (warContainer) {
@@ -673,7 +570,7 @@
               <div style="flex-grow: 1;">
                 <div style="display: flex; justify-content: space-between;">
                   <strong style="color: ${a.color}; font-size: 11px;">${a.name}</strong>
-                  <span style="font-size: 9px; color: ${a.status === 'ACTIVE' ? 'var(--green)' : 'var(--red)'};">[${a.status}]</span>
+                  <span style="font-size: 9px; color: ${a.status === 'ACTIVE' || a.status === 'STANDBY' ? 'var(--green)' : 'var(--red)'};">[${a.status}]</span>
                 </div>
                 <div style="font-size: 9px; color: var(--text-dim);">${a.role}</div>
               </div>
@@ -699,10 +596,25 @@
       }
     }
 
+    let audioCtx = null;
+    function toggleAudio() {
+      state.soundEnabled = !state.soundEnabled;
+      const btn = document.getElementById('audio-toggle-btn');
+      if (state.soundEnabled) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        btn.textContent = "AUDIO: ON";
+        btn.classList.add('active-sound');
+      } else {
+        btn.textContent = "AUDIO: OFF";
+        btn.classList.remove('active-sound');
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
-      fetchLiveMarketData();
       renderAll();
-      setInterval(fetchLiveMarketData, 15000);
+      updateMarketData();
+      setInterval(updateMarketData, 15000);
     });
   </script>
 </body>
