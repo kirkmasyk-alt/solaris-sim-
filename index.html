@@ -246,7 +246,7 @@
 
     <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 11px;">
       <span>SOL: <strong id="sol-price" style="color: var(--cyan);">FETCHING...</strong></span>
-      <span>FEED: <strong style="color: var(--green);">COINGECKO API</strong></span>
+      <span>FEE: <strong style="color: var(--amber);">0.3% DEX</strong></span>
       <span>MODE: <strong style="color: var(--green);">LIVE (USD)</strong></span>
     </div>
 
@@ -262,7 +262,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Swarm initialized. Dynamic conversation matrix active.</div>
+        <div style="color: var(--green);">[00:01] True cost-basis ledger & market-driven P&L online.</div>
       </div>
     </div>
 
@@ -296,9 +296,10 @@
 
     let state = {
       cash: parseFloat(localStorage.getItem('solaris_cash')) || 10000,
-      positions: { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
+      positions: JSON.parse(localStorage.getItem('solaris_positions')) || { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
+      costBasis: JSON.parse(localStorage.getItem('solaris_cost_basis')) || { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
-      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online. Conversational telemetry active.', color: '#38bdf8', time: '00:00' }],
+      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online. True cost-basis ledger active.', color: '#38bdf8', time: '00:00' }],
       soundEnabled: false
     };
 
@@ -394,7 +395,7 @@
     function requestBriefing() {
       let net = state.cash;
       marketCoins.forEach(c => { net += (state.positions[c.symbol] || 0) * c.price; });
-      const brief = `EXECUTIVE BRIEF: Net Worth is ${fmtCurrency(net)}. Realized P&L: ${fmtCurrency(state.realizedPnl)}. Cash Reserve: ${fmtCurrency(state.cash)}. All systems green.`;
+      const brief = `EXECUTIVE BRIEF: Net Worth is ${fmtCurrency(net)}. Realized P&L: ${fmtCurrency(state.realizedPnl)}. Cash Reserve: ${fmtCurrency(state.cash)}. Systems operating on live market metrics.`;
       state.councilFeed.unshift({ sender: 'ROBBIEBOT 9000 // BRIEFING', text: brief, color: '#22c55e', time: new Date().toLocaleTimeString() });
       renderAll();
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
@@ -413,39 +414,31 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // Dynamic Conversational Banter Generator
-    function generateAgentDialogue(agent, coin, actionType, amount) {
+    function generateAgentDialogue(agent, coin, actionType, pnlDelta) {
       const priceStr = coin.price > 0 ? `at $${coin.price.toFixed(2)}` : '';
-      
       const conversations = {
         'KIRKTRON 9001': [
-          actionType === 'buy' ? `Analyzing order books. Deploying capital into ${coin.symbol} ${priceStr}. What do you think, ${agentDefs[1].name}?` : `Secured alpha gains on ${coin.symbol}! Capital efficiency looking pristine.`,
-          `Reviewing portfolio weights. ${coin.symbol} momentum is aligning with our macro projections.`,
-          `Executing structural rebalance. ${agentDefs[2].name}, keep eyes on slippage parameters.`
+          actionType === 'buy' ? `Deploying capital into ${coin.symbol} ${priceStr}. Average entry logged.` : `Closed ${coin.symbol} position. Realized P&L delta: ${fmtCurrency(pnlDelta)}.`,
+          `Evaluating asset cost basis against live market trend.`
         ],
         'RISK_CORE': [
-          actionType === 'buy' ? `Exposure check passed for ${coin.symbol}. Holding downside volatility bands tight.` : `Profit locked on ${coin.symbol}. Risk metrics optimal, reserve buffers holding steady.`,
-          `Warning: Volatility spike detected across altcoin pools. Maintaining defensive posture.`,
-          `Risk parameters verified. No unauthorized exposure permitted in this sector.`
+          actionType === 'buy' ? `DEX fee accounted for. Risk limits respected for ${coin.symbol}.` : `Position unwind complete. Profit/loss reconciled directly from market fills.`,
+          `Monitoring volatility spreads on active token holdings.`
         ],
         'ALPHA_X': [
-          actionType === 'buy' ? `Execution matrix engaged! Sweeping liquidity pools for ${coin.symbol}.` : `Clean fill on ${coin.symbol} exit. Order routing latency under 12ms.`,
-          `Momentum divergence spotted on order flow. Scaling execution speed.`,
-          `Executing high-frequency arbitrage sweep across secondary liquidity nodes.`
+          actionType === 'buy' ? `Order execution routed cleanly for ${coin.symbol}.` : `Exit fill executed on ${coin.symbol} based on live price movement.`,
+          `Scanning liquidity pools for optimal execution windows.`
         ],
         'MACRO_9': [
-          `Macro trend analysis: On-chain velocity for Solana ecosystem remains heavily bullish.`,
-          `Cross-referencing global liquidity indexes. Expecting higher volatility windows soon.`,
-          `Strategy alignment confirmed with ${agentDefs[0].name}. Capital allocation is well-calibrated.`
+          `Macro trend analysis: Price action aligning with order flow telemetry.`,
+          `Cross-referencing live CoinGecko valuations with portfolio exposure.`
         ],
         'ROBBIEBOT 9000': [
-          actionType === 'buy' ? `Treasury liquidity authorized for ${coin.symbol} deployment. Cash reserves managed.` : `Yield harvested successfully! Adding $${amount} to realized P&L reserves. Excellent work swarm.`,
-          `Capital authority check: Treasury health is operating above target threshold.`,
-          `Reserves secured. Autonomous compounding loop running smoothly without friction.`
+          actionType === 'buy' ? `Treasury cash debited for ${coin.symbol} accumulation.` : `Capital audit: P&L adjusted by ${fmtCurrency(pnlDelta)} from true market delta.`,
+          `Reserves and ledger balances reconciling in real-time.`
         ]
       };
-
-      const pool = conversations[agent.name] || [`Executing routine telemetry cycle for ${coin.symbol}.`];
+      const pool = conversations[agent.name] || [`Executing routine ledger verification.`];
       return pool[Math.floor(Math.random() * pool.length)];
     }
 
@@ -483,35 +476,70 @@
         if (coin.price <= 0) return;
 
         let actionType = 'buy';
-        let tradePnl = 0;
+        let pnlDelta = 0;
+        const feeRate = 0.003; // 0.3% DEX fee
 
-        if (state.cash > 10 && Math.random() > 0.35) {
-          const allocation = Math.min(state.cash * 0.5, 300);
-          state.cash -= allocation;
-          state.positions[coin.symbol] = (state.positions[coin.symbol] || 0) + (allocation / coin.price);
-          addSystemLog(`[TRADE] ${agent.name} deployed $${allocation.toFixed(2)} into live ${coin.symbol}`);
+        const currentHolding = state.positions[coin.symbol] || 0;
+        
+        // Decide whether to buy or sell
+        if (state.cash > 50 && (Math.random() > 0.4 || currentHolding === 0)) {
+          // BUY ACTION
+          const spendAmount = state.cash * 0.15;
+          const fee = spendAmount * feeRate;
+          const netSpend = spendAmount - fee;
+          
+          state.cash -= spendAmount;
+          const tokensBought = netSpend / coin.price;
+
+          // Update weighted average cost basis
+          const oldTotalVal = currentHolding * (state.costBasis[coin.symbol] || coin.price);
+          const newTotalVal = oldTotalVal + netSpend;
+          const totalTokens = currentHolding + tokensBought;
+          
+          state.costBasis[coin.symbol] = totalTokens > 0 ? newTotalVal / totalTokens : coin.price;
+          state.positions[coin.symbol] = totalTokens;
+
+          addSystemLog(`[TRADE] ${agent.name} bought ${tokensBought.toFixed(2)} ${coin.symbol} at $${coin.price.toFixed(2)}`);
           actionType = 'buy';
-        } else {
-          tradePnl = Math.floor(Math.random() * 40) + 10;
-          state.cash += (200 + tradePnl);
-          state.realizedPnl += tradePnl;
-          agent.pnl += tradePnl;
-          agent.minPnl += tradePnl;
-          agent.hrPnl += tradePnl;
-          agent.dayPnl += tradePnl;
-          agent.wkPnl += tradePnl;
-          addSystemLog(`[TRADE] ${agent.name} secured profit on ${coin.symbol} [+$${tradePnl}.00]`);
-          playSound('coin');
+        } else if (currentHolding > 0.00001) {
+          // SELL ACTION (Real market-driven P&L)
+          const tokensToSell = currentHolding * 0.5;
+          const grossReturn = tokensToSell * coin.price;
+          const fee = grossReturn * feeRate;
+          const netReturn = grossReturn - fee;
+
+          // Calculate profit/loss based on actual cost basis
+          const costOfTokensSold = tokensToSell * (state.costBasis[coin.symbol] || coin.price);
+          pnlDelta = netReturn - costOfTokensSold;
+
+          state.positions[coin.symbol] -= tokensToSell;
+          state.cash += netReturn;
+
+          state.realizedPnl += pnlDelta;
+          agent.pnl += pnlDelta;
+          agent.minPnl += pnlDelta;
+          agent.hrPnl += pnlDelta;
+          agent.dayPnl += pnlDelta;
+          agent.wkPnl += pnlDelta;
+
+          if (pnlDelta >= 0) playSound('coin');
+
+          const signStr = pnlDelta >= 0 ? '+' : '';
+          addSystemLog(`[TRADE] ${agent.name} sold ${coin.symbol} [P&L: ${signStr}${fmtCurrency(pnlDelta)}]`);
           actionType = 'sell';
+        } else {
+          return;
         }
 
-        const conversationalSpeech = generateAgentDialogue(agent, coin, actionType, tradePnl);
+        const conversationalSpeech = generateAgentDialogue(agent, coin, actionType, pnlDelta);
 
         state.councilFeed.unshift({ sender: agent.name, text: conversationalSpeech, color: agent.color, time: new Date().toLocaleTimeString() });
         state.councilFeed = state.councilFeed.slice(0, 30);
 
         localStorage.setItem('solaris_cash', state.cash);
         localStorage.setItem('solaris_pnl', state.realizedPnl);
+        localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
+        localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
 
         renderAll();
       } catch (err) {
@@ -520,11 +548,15 @@
     }
 
     function renderAll() {
-      let net = state.cash;
-      marketCoins.forEach(c => { net += (state.positions[c.symbol] || 0) * c.price; });
+      let portfolioValue = 0;
+      marketCoins.forEach(c => { 
+        portfolioValue += (state.positions[c.symbol] || 0) * c.price; 
+      });
+
+      let netWorth = state.cash + portfolioValue;
       
       const nwEl = document.getElementById('net-worth');
-      if (nwEl) nwEl.textContent = fmtCurrency(net);
+      if (nwEl) nwEl.textContent = fmtCurrency(netWorth);
 
       const cbEl = document.getElementById('cash-balance');
       if (cbEl) cbEl.textContent = fmtCurrency(state.cash);
