@@ -23,7 +23,7 @@ let state = {
   history: ['High-stakes treasury matrix initialized.'],
   councilFeed: [],
   agentState: {}
-];
+};
 
 const bigMoneyBanter = [
   "Deploying 40% of cash reserves into this SOL breakout. Let's ride.",
@@ -34,7 +34,7 @@ const bigMoneyBanter = [
 ];
 
 function loadFromStorage() {
-  const saved = localStorage.getItem('solaris_sim_state_v18');
+  const saved = localStorage.getItem('solaris_sim_state_v19');
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
@@ -54,7 +54,7 @@ function loadFromStorage() {
 }
 
 function saveToStorage() {
-  localStorage.setItem('solaris_sim_state_v18', JSON.stringify({
+  localStorage.setItem('solaris_sim_state_v19', JSON.stringify({
     cash: state.cash,
     positions: state.positions,
     avgBuyPrice: state.avgBuyPrice,
@@ -92,19 +92,18 @@ function renderWarRoom() {
   }).join('');
 }
 
-async function runAgentTurn() {
+function processMarketLoop() {
   marketCoins.forEach(coin => {
-    const fluctuation = (Math.random() - 0.48) * 0.03; // Higher volatility for bigger swings
+    const fluctuation = (Math.random() - 0.48) * 0.03;
     coin.price = Math.max(0.000001, coin.price * (1 + fluctuation));
   });
 
   const agent = agentDefs[Math.floor(Math.random() * agentDefs.length)];
   const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-  const action = ['buy', 'buy', 'sell', 'hold'][Math.floor(Math.random() * 4)]; // Weight slightly toward action
+  const action = ['buy', 'buy', 'sell', 'hold'][Math.floor(Math.random() * 4)];
   const speech = bigMoneyBanter[Math.floor(Math.random() * bigMoneyBanter.length)];
 
   if (action === 'buy') {
-    // Risk-weighted allocation: High risk agents risk more cash per trade
     const riskMultiplier = agent.risk === 'High' ? 0.4 : agent.risk === 'Med' ? 0.25 : 0.15;
     const allocation = state.cash * riskMultiplier;
     
@@ -116,13 +115,12 @@ async function runAgentTurn() {
       
       state.avgBuyPrice[coin.symbol] = currentQty > 0 ? ((currentQty * currentAvg) + allocation) / (currentQty + qtyPurchased) : coin.price;
       state.positions[coin.symbol] = currentQty + qtyPurchased;
-      
       agent.wins++;
     }
   } else if (action === 'sell') {
     const currentQty = state.positions[coin.symbol] || 0;
     if (currentQty > 0) {
-      const sellQty = currentQty * (agent.risk === 'High' ? 0.8 : 0.4); // Sell big chunks
+      const sellQty = currentQty * (agent.risk === 'High' ? 0.8 : 0.4);
       const revenue = sellQty * coin.price;
       const costBasis = sellQty * state.avgBuyPrice[coin.symbol];
       const tradePnl = revenue - costBasis;
@@ -155,7 +153,7 @@ async function runAgentTurn() {
 
 function updateMarketStats() {
   const sol = marketCoins.find(c => c.symbol === 'SOL');
-  if (document.getElementById('sol-price')) document.getElementById('sol-price'].textContent = fmtCurrency(sol.price);
+  if (document.getElementById('sol-price')) document.getElementById('sol-price').textContent = fmtCurrency(sol.price);
   if (document.getElementById('net-worth')) document.getElementById('net-worth').textContent = fmtCurrency(getNetWorth());
   if (document.getElementById('cash-balance')) document.getElementById('cash-balance').textContent = fmtCurrency(state.cash);
   if (document.getElementById('realized-pnl')) document.getElementById('realized-pnl').textContent = fmtCurrency(state.realizedPnl);
@@ -168,5 +166,5 @@ window.addEventListener('DOMContentLoaded', () => {
   loadFromStorage();
   updateMarketStats();
   initTabs();
-  setInterval(processMarketLoop || runAgentTurn, 7000);
+  setInterval(processMarketLoop, 7000);
 });
