@@ -223,7 +223,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">AUTONOMOUS SWARM V3</div>
+        <div style="font-size: 8px; color: var(--text-dim);">AUTONOMOUS SWARM V4</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn" id="audio-toggle-btn" onclick="toggleAudio()">AUDIO: OFF</button>
@@ -258,7 +258,7 @@
 
     <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 10px;">
       <span>SOL: <strong id="sol-price" style="color: var(--cyan);">FETCHING...</strong></span>
-      <span>SOURCE: <strong style="color: var(--green);">COINGECKO API</strong></span>
+      <span>BOSS BOT: <strong style="color: var(--green);" id="boss-status">ONLINE (ACTIVE)</strong></span>
     </div>
 
     <div class="nav-tabs">
@@ -274,7 +274,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Autonomous treasury & bot telemetry online.</div>
+        <div style="color: var(--green);">[00:01] Boss Bot circuit breaker telemetry active.</div>
       </div>
     </div>
 
@@ -286,11 +286,11 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">COINGECKO API v3</strong></div>
-      <div class="status-row"><span>ALLOCATION MODEL:</span> <strong style="color: var(--cyan);">10% PROPORTIONAL RISK</strong></div>
+      <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 (ACTIVE)</strong></div>
       <div class="status-row"><span>MARKET NEWS FEED:</span> <strong id="status-news" style="color: var(--green);">● STREAMING ACTIVE</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
       <div class="status-row"><span>TOTAL TRANSACTIONS:</span> <strong style="color: var(--cyan);" id="status-tx-count">0 EXECUTED</strong></div>
-      <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 5/5 UNITS OPERATIONAL</strong></div>
+      <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 6/6 UNITS OPERATIONAL</strong></div>
       <div class="status-row"><span>LOCAL STORAGE:</span> <strong style="color: var(--cyan);">● ISOLATED SANDBOX</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
@@ -311,11 +311,12 @@
     ];
 
     const agentDefs = [
-      { id: 'finance', name: 'KIRKTRON 9001', role: 'Portfolio Manager', color: '#38bdf8', icon: '🤖', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
-      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', color: '#f59e0b', icon: '🛡️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
-      { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', color: '#ef4444', icon: '⚡', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
-      { id: 'macro', name: 'MACRO_9', role: 'Strategy Planner', color: '#a855f7', icon: '🌐', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
-      { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Capital Authority', color: '#22c55e', icon: '🏛️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 }
+      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Chief Risk Officer (Boss)', color: '#a855f7', icon: '👁️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'STANDBY' },
+      { id: 'finance', name: 'KIRKTRON 9001', role: 'Portfolio Manager', color: '#38bdf8', icon: '🤖', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
+      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', color: '#f59e0b', icon: '🛡️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
+      { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', color: '#ef4444', icon: '⚡', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
+      { id: 'macro', name: 'MACRO_9', role: 'Strategy Planner', color: '#38bdf8', icon: '🌐', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
+      { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Capital Authority', color: '#22c55e', icon: '🏛️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' }
     ];
 
     let state = {
@@ -326,11 +327,11 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       agentStats: JSON.parse(localStorage.getItem('solaris_agent_stats')) || {},
-      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online. War room telemetry linked.', color: '#38bdf8', time: '00:00' }],
+      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'Chief Risk Officer online. Monitoring agent swarm for capital bleed.', color: '#a855f7', time: '00:00' }],
       soundEnabled: false
     };
 
-    // Restore saved agent stats if they exist
+    // Restore saved agent stats
     agentDefs.forEach(a => {
       if (state.agentStats[a.id]) {
         a.pnl = state.agentStats[a.id].pnl || 0;
@@ -338,6 +339,7 @@
         a.hrPnl = state.agentStats[a.id].hrPnl || 0;
         a.dayPnl = state.agentStats[a.id].dayPnl || 0;
         a.wkPnl = state.agentStats[a.id].wkPnl || 0;
+        a.status = state.agentStats[a.id].status || 'ACTIVE';
       }
     });
 
@@ -417,7 +419,7 @@
     function saveAgentStats() {
       const statsMap = {};
       agentDefs.forEach(a => {
-        statsMap[a.id] = { pnl: a.pnl, minPnl: a.minPnl, hrPnl: a.hrPnl, dayPnl: a.dayPnl, wkPnl: a.wkPnl };
+        statsMap[a.id] = { pnl: a.pnl, minPnl: a.minPnl, hrPnl: a.hrPnl, dayPnl: a.dayPnl, wkPnl: a.wkPnl, status: a.status };
       });
       localStorage.setItem('solaris_agent_stats', JSON.stringify(statsMap));
     }
@@ -430,7 +432,7 @@
         state.realizedPnl = 0;
         state.totalFeesPaid = 0;
         state.txCount = 0;
-        agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; });
+        agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = a.id === 'boss' ? 'STANDBY' : 'ACTIVE'; });
         
         localStorage.setItem('solaris_cash', state.cash);
         localStorage.setItem('solaris_pnl', 0);
@@ -452,7 +454,7 @@
       localStorage.setItem('solaris_pnl', 0);
       localStorage.setItem('solaris_fees', 0);
       localStorage.setItem('solaris_tx_count', 0);
-      agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; });
+      agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = a.id === 'boss' ? 'STANDBY' : 'ACTIVE'; });
       localStorage.removeItem('solaris_agent_stats');
       addSystemLog(`[CONFIG] Realized P&L and fee metrics zeroed out.`);
       renderAll();
@@ -485,8 +487,8 @@
     function requestBriefing() {
       let net = state.cash;
       marketCoins.forEach(c => { net += (state.positions[c.symbol] || 0) * c.price; });
-      const brief = `EXECUTIVE BRIEF: Net Worth is ${fmtCurrency(net)}. Realized P&L: ${fmtCurrency(state.realizedPnl)}. Total Fees Paid: ${fmtCurrency(state.totalFeesPaid)}. Source: CoinGecko API. All systems green.`;
-      state.councilFeed.unshift({ sender: 'ROBBIEBOT 9000 // BRIEFING', text: brief, color: '#22c55e', time: new Date().toLocaleTimeString() });
+      const brief = `EXECUTIVE BRIEF: Net Worth is ${fmtCurrency(net)}. Realized P&L: ${fmtCurrency(state.realizedPnl)}. Total Fees Paid: ${fmtCurrency(state.totalFeesPaid)}. Chief Risk Officer active. All systems green.`;
+      state.councilFeed.unshift({ sender: 'ORCHESTRATOR-1 // BRIEFING', text: brief, color: '#a855f7', time: new Date().toLocaleTimeString() });
       renderAll();
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
     }
@@ -494,7 +496,7 @@
     function inspectAgent(agentId) {
       const agent = agentDefs.find(a => a.id === agentId);
       if (!agent) return;
-      alert(`AGENT INTEL: ${agent.name} (${agent.role})\n- Lifetime P&L: ${fmtCurrency(agent.pnl)}\n- Per Min: ${fmtCurrency(agent.minPnl)}\n- Per Hour: ${fmtCurrency(agent.hrPnl)}`);
+      alert(`AGENT INTEL: ${agent.name} (${agent.role})\n- Status: ${agent.status}\n- Lifetime P&L: ${fmtCurrency(agent.pnl)}\n- Per Min: ${fmtCurrency(agent.minPnl)}\n- Per Hour: ${fmtCurrency(agent.hrPnl)}`);
     }
 
     function addSystemLog(msg) {
@@ -504,74 +506,39 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
-    function generateAgentDialogue(agent, coin, actionType, pnlDelta, feeAmount) {
-      const priceStr = coin.price > 0 ? `at ${fmtPrice(coin.price)}` : '';
-      const conversations = {
-        'KIRKTRON 9001': [
-          actionType === 'buy' ? `Allocating 10% bankroll stake into ${coin.symbol} ${priceStr}. Fee: ${fmtCurrency(feeAmount)}.` : `Position closed on ${coin.symbol}. Net P&L: ${fmtCurrency(pnlDelta)} (Fee: ${fmtCurrency(feeAmount)}).`,
-          `Evaluating asset yield against cumulative 0.3% DEX protocol fees.`
-        ],
-        'RISK_CORE': [
-          actionType === 'buy' ? `10% risk limit verified. Exposure approved for ${coin.symbol}.` : `Position successfully unwound. Cumulative fee drag accounted for.`,
-          `Monitoring volatility bands to protect treasury capital.`
-        ],
-        'ALPHA_X': [
-          actionType === 'buy' ? `Proportional order routed cleanly for ${coin.symbol}.` : `Exit fill executed on ${coin.symbol}. Slippage minimal.`,
-          `Scanning liquidity depth for optimal execution windows.`
-        ],
-        'MACRO_9': [
-          `Macro trend analysis: CoinGecko data stream remains stable.`,
-          `Cross-referencing live endpoint valuations with portfolio exposure.`
-        ],
-        'ROBBIEBOT 9000': [
-          actionType === 'buy' ? `Treasury cash debited. 10% risk allocation met. Fee: ${fmtCurrency(feeAmount)}.` : `Capital authority audit: Net reward recorded at ${fmtCurrency(pnlDelta)}.`,
-          `Reserves and cumulative fee ledgers reconciling in real-time.`
-        ]
-      };
-      const pool = conversations[agent.name] || [`Executing routine ledger verification.`];
-      return pool[Math.floor(Math.random() * pool.length)];
-    }
-
-    async function fetchLiveMarketData() {
-      try {
-        const ids = marketCoins.map(c => c.id).join(',');
-        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
-        const data = await response.json();
-
-        marketCoins.forEach(coin => {
-          if (data[coin.id] && data[coin.id].usd) {
-            coin.price = data[coin.id].usd;
-          }
-        });
-
-        const solObj = marketCoins.find(c => c.symbol === 'SOL');
-        if (solObj && document.getElementById('sol-price')) {
-          document.getElementById('sol-price').textContent = fmtCurrency(solObj.price);
-        }
-
-        const newsStatus = document.getElementById('status-news');
-        if (newsStatus) {
-          newsStatus.textContent = "● STREAMING ACTIVE (COINGECKO)";
-          newsStatus.style.color = "var(--green)";
-        }
-
-        addSystemLog(`[API] Live USD market prices synced from CoinGecko API.`);
-        runTradingLoop();
-      } catch (err) {
-        console.error("API fetch error caught safely:", err);
-        const newsStatus = document.getElementById('status-news');
-        if (newsStatus) {
-          newsStatus.textContent = "● FEED DELAYED (COINGECKO)";
-          newsStatus.style.color = "var(--amber)";
-        }
-        addSystemLog(`[API WARNING] Network delay. Maintaining state loop.`);
-        runTradingLoop();
-      }
-    }
-
     function runTradingLoop() {
       try {
-        const agent = agentDefs[Math.floor(Math.random() * agentDefs.length)];
+        // Filter out the Boss Bot (index 0) and any agents suspended by the circuit breaker
+        const activeAgents = agentDefs.filter(a => a.id !== 'boss' && a.status === 'ACTIVE');
+        
+        // BOSS BOT AUDIT & CIRCUIT BREAKER LOGIC
+        const bossBot = agentDefs.find(a => a.id === 'boss');
+        const troubledAgents = agentDefs.filter(a => a.id !== 'boss' && a.pnl < -3.0 && a.status === 'ACTIVE');
+
+        if (troubledAgents.length > 0 && Math.random() > 0.3) {
+          const culprit = troubledAgents[Math.floor(Math.random() * troubledAgents.length)];
+          culprit.status = 'SUSPENDED';
+          bossBot.status = 'INTERVENING';
+          
+          const interventionMsg = `CIRCUIT BREAKER ENGAGED: ${culprit.name} is bleeding capital (P&L: ${fmtCurrency(culprit.pnl)}). Suspending trading privileges for risk realignment.`;
+          state.councilFeed.unshift({ sender: bossBot.name, text: interventionMsg, color: bossBot.color, time: new Date().toLocaleTimeString() });
+          addSystemLog(`[BOSS BOT] Suspended ${culprit.name} due to negative P&L drawdown.`);
+          saveAgentStats();
+          renderAll();
+          return;
+        } else if (activeAgents.length === 0) {
+          // If all agents are suspended, Boss Bot resets them after a cooling-off audit
+          agentDefs.forEach(a => { if (a.id !== 'boss') a.status = 'ACTIVE'; });
+          bossBot.status = 'ACTIVE';
+          const resetMsg = `Risk audit complete. All agent trading privileges restored by Chief Risk Officer.`;
+          state.councilFeed.unshift({ sender: bossBot.name, text: resetMsg, color: bossBot.color, time: new Date().toLocaleTimeString() });
+          addSystemLog(`[BOSS BOT] Restored operational status to all trading agents.`);
+          saveAgentStats();
+          renderAll();
+          return;
+        }
+
+        const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
         const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
 
         if (coin.price <= 0) return;
@@ -579,7 +546,7 @@
         let actionType = 'buy';
         let pnlDelta = 0;
         let fee = 0;
-        const feeRate = 0.003; // 0.3% DEX fee
+        const feeRate = 0.003;
 
         const currentHolding = state.positions[coin.symbol] || 0;
         const avgCost = state.costBasis[coin.symbol] || coin.price;
@@ -641,7 +608,9 @@
 
         saveAgentStats();
 
-        const conversationalSpeech = generateAgentDialogue(agent, coin, actionType, pnlDelta, fee);
+        const conversationalSpeech = actionType === 'buy' ? 
+          `Allocating 10% bankroll stake into ${coin.symbol}. Fee: ${fmtCurrency(fee)}.` : 
+          `Position closed on ${coin.symbol}. Net P&L: ${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ sender: agent.name, text: conversationalSpeech, color: agent.color, time: new Date().toLocaleTimeString() });
         state.councilFeed = state.councilFeed.slice(0, 30);
@@ -688,9 +657,11 @@
         pnlEl.className = `stat-value ${state.realizedPnl >= 0 ? 'green' : 'red'}`;
       }
 
-      const posEl = document.getElementById('position-count');
-      if (posEl) {
-        posEl.textContent = Object.values(state.positions).filter(v => v > 0.0001).length;
+      const bossStatusEl = document.getElementById('boss-status');
+      const bossAgent = agentDefs.find(a => a.id === 'boss');
+      if (bossStatusEl && bossAgent) {
+        bossStatusEl.textContent = bossAgent.status;
+        bossStatusEl.style.color = bossAgent.status === 'ACTIVE' ? 'var(--green)' : 'var(--amber)';
       }
 
       const warContainer = document.getElementById('war-room-container');
@@ -702,13 +673,13 @@
               <div style="flex-grow: 1;">
                 <div style="display: flex; justify-content: space-between;">
                   <strong style="color: ${a.color}; font-size: 11px;">${a.name}</strong>
-                  <span style="font-size: 9px; color: ${a.pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${a.pnl >= 0 ? '+' : ''}${fmtCurrency(a.pnl)}</span>
+                  <span style="font-size: 9px; color: ${a.status === 'ACTIVE' ? 'var(--green)' : 'var(--red)'};">[${a.status}]</span>
                 </div>
                 <div style="font-size: 9px; color: var(--text-dim);">${a.role}</div>
               </div>
             </div>
             <div class="metrics-grid">
-              <div>MIN: $${a.minPnl.toFixed(2)}</div>
+              <div>P&L: $${a.pnl.toFixed(2)}</div>
               <div>HR: $${a.hrPnl.toFixed(2)}</div>
               <div>DAY: $${a.dayPnl.toFixed(2)}</div>
               <div>WK: $${a.wkPnl.toFixed(2)}</div>
