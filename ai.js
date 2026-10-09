@@ -21,7 +21,9 @@ let state = {
   baseline: 10000,
   realizedPnl: 0,
   history: ['Fresh session initialized with $10,000 baseline.'],
-  councilFeed: [],
+  councilFeed: [
+    { sender: 'SYSTEM', text: 'Table session active. Agents are seated and awaiting Gemini neural link...', color: '#38bdf8', time: new Date().toLocaleTimeString() }
+  ],
   latestConsensus: 'Awaiting signal',
   latestNews: 'Standby',
   newsFeed: [{ title: 'System Online', detail: 'Stable price matrix active.', tone: 'positive' }],
@@ -37,12 +39,11 @@ const localTableBanter = [
   "Are we seriously staring at BONK order books while SOL is screaming upward?",
   "Let's rotate some capital out of dead weight and fund a proper breakout trade.",
   "If Risk Core blocks this trade one more time, I'm bypassing the safety matrix.",
-  "Volume is pooling into JTO. If we miss this wave, don't blame my portfolio math.",
-  "That last liquidation cascade was brutal. Let's tighten stops before getting greedy."
+  "Volume is pooling into JTO. If we miss this wave, don't blame my portfolio math."
 ];
 
 function loadFromStorage() {
-  const saved = localStorage.getItem('solaris_sim_state_v16');
+  const saved = localStorage.getItem('solaris_sim_state_v17');
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
@@ -52,7 +53,9 @@ function loadFromStorage() {
       state.baseline = parsed.baseline ?? state.baseline;
       state.realizedPnl = parsed.realizedPnl ?? state.realizedPnl;
       state.history = parsed.history ?? state.history;
-      state.councilFeed = parsed.councilFeed ?? state.councilFeed;
+      if (parsed.councilFeed && parsed.councilFeed.length > 0) {
+        state.councilFeed = parsed.councilFeed;
+      }
       state.newsFeed = parsed.newsFeed ?? state.newsFeed;
       if (parsed.marketCoins) {
         parsed.marketCoins.forEach(savedCoin => {
@@ -95,14 +98,18 @@ function saveToStorage() {
     agentDefs: agentDefs.map(a => ({ id: a.id, wins: a.wins, losses: a.losses, pnl: a.pnl, history: a.history, strategyDirective: a.strategyDirective })),
     lastTimestamp: state.lastTimestamp
   };
-  localStorage.setItem('solaris_sim_state_v16', JSON.stringify(payload));
+  localStorage.setItem('solaris_sim_state_v17', JSON.stringify(payload));
 }
 
 function resetTreasury() {
   if (confirm("Reset treasury back to $10,000 fresh slate?")) {
-    localStorage.removeItem('solaris_sim_state_v16');
+    localStorage.removeItem('solaris_sim_state_v17');
     location.reload();
   }
+}
+
+function randomFrom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 function getNetWorth() {
@@ -180,7 +187,7 @@ function updateMarketStats() {
 
 function applyAgentDecision(agent, action, targetCoinSymbol, speechText, newStrategyDirective) {
   const coin = marketCoins.find(c => c.symbol === targetCoinSymbol) || marketCoins[0];
-  if (newStrategyDirective && newStrategyDirective.length > 10) agent.strategyDirective = newStrategyDirective;
+  if (newStrategyDirective && newStrategyDirective.length > 5) agent.strategyDirective = newStrategyDirective;
 
   if (action === 'buy') {
     const cost = coin.price * 2;
@@ -234,7 +241,7 @@ function applyAgentDecision(agent, action, targetCoinSymbol, speechText, newStra
 async function fetchGeminiDecision(agent) {
   const apiKey = localStorage.getItem('gemini_api_key');
   if (!apiKey) {
-    log(`[AI Status] No API Key found. Running local fallback.`);
+    log(`[AI Status] No API Key saved. Using local banter.`);
     return false;
   }
 
@@ -285,19 +292,21 @@ async function fetchGeminiDecision(agent) {
     const data = await response.json();
     
     if (data.error) {
-      log(`[AI ERROR] Gemini rejected key: ${data.error.message}`);
+      log(`[AI ERROR] Gemini API rejected key: ${data.error.message}`);
       return false;
     }
 
-    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (resultText) {
-      const parsed = JSON.parse(resultText);
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (rawText) {
+      // Clean potential markdown code blocks if the model outputs them
+      const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleanJson);
       log(`[AI SUCCESS] Gemini live response generated for ${agent.name}!`);
       applyAgentDecision(agent, parsed.action, parsed.coin, parsed.speech, parsed.newStrategyDirective);
       return true;
     }
   } catch (err) {
-    log(`[AI EXCEPTION] Network/Parse error: ${err.message}`);
+    log(`[AI EXCEPTION] Parse/Network error: ${err.message}`);
   }
   return false;
 }
