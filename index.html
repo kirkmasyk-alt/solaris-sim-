@@ -286,6 +286,7 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION STATUS</div>
       <div class="status-row"><span>COINGECKO API:</span> <strong id="status-gecko" style="color: var(--green);">● CONNECTED (LIVE)</strong></div>
+      <div class="status-row"><span>MARKET NEWS & TICKER:</span> <strong id="status-news" style="color: var(--green);">● STREAMING ACTIVE</strong></div>
       <div class="status-row"><span>DEX ROUTING & FEES:</span> <strong style="color: var(--green);">● ACTIVE (0.3% DEDUCTION)</strong></div>
       <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 5/5 UNITS OPERATIONAL</strong></div>
       <div class="status-row"><span>COST-BASIS LEDGER:</span> <strong style="color: var(--green);">● WEIGHTED AVERAGE ACTIVE</strong></div>
@@ -321,7 +322,7 @@
       positions: JSON.parse(localStorage.getItem('solaris_positions')) || { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
       costBasis: JSON.parse(localStorage.getItem('solaris_cost_basis')) || { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
-      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online. Precision ledger active.', color: '#38bdf8', time: '00:00' }],
+      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online. Market status tracking green.', color: '#38bdf8', time: '00:00' }],
       soundEnabled: false
     };
 
@@ -510,6 +511,12 @@
           geckoStatus.style.color = "var(--green)";
         }
 
+        const newsStatus = document.getElementById('status-news');
+        if (newsStatus) {
+          newsStatus.textContent = "● STREAMING ACTIVE";
+          newsStatus.style.color = "var(--green)";
+        }
+
         addSystemLog(`[API] Live USD market prices synced.`);
         runTradingLoop();
       } catch (err) {
@@ -518,6 +525,11 @@
         if (geckoStatus) {
           geckoStatus.textContent = "● WARNING (DELAYED)";
           geckoStatus.style.color = "var(--amber)";
+        }
+        const newsStatus = document.getElementById('status-news');
+        if (newsStatus) {
+          newsStatus.textContent = "● FEED DELAYED";
+          newsStatus.style.color = "var(--amber)";
         }
         addSystemLog(`[API WARNING] Network delay. Maintaining state loop.`);
         runTradingLoop();
