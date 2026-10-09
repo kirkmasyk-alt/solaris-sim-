@@ -769,7 +769,7 @@
             <ul class="trait-list">
               <li><span>Consensus</span><strong id="latest-ai-move">Awaiting signal</strong></li>
               <li><span>Catalyst</span><strong id="burn-check">Standby</strong></li>
-              <li><span>Craft Level</strong><strong id="capital-mix">100/0/0</strong></li>
+              <li><span>Capital Mix</span><strong id="capital-mix">100/0/0</strong></li>
             </ul>
           </div>
 
@@ -816,7 +816,7 @@
     };
 
     function loadFromStorage() {
-      const saved = localStorage.getItem('solaris_sim_state_v8');
+      const saved = localStorage.getItem('solaris_sim_state_v9');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -865,12 +865,12 @@
         agentDefs: agentDefs.map(a => ({ id: a.id, wins: a.wins, losses: a.losses, pnl: a.pnl, history: a.history })),
         lastTimestamp: state.lastTimestamp
       };
-      localStorage.setItem('solaris_sim_state_v8', JSON.stringify(payload));
+      localStorage.setItem('solaris_sim_state_v9', JSON.stringify(payload));
     }
 
     function resetTreasury() {
       if (confirm("Reset treasury back to $10,000 fresh slate?")) {
-        localStorage.removeItem('solaris_sim_state_v8');
+        localStorage.removeItem('solaris_sim_state_v9');
         location.reload();
       }
     }
