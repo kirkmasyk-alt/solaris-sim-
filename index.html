@@ -230,25 +230,25 @@
         <button class="cyber-btn accent" onclick="adjustFunds()">FUND</button>
         <button class="cyber-btn" onclick="requestBriefing()">BRIEF</button>
         <button class="cyber-btn" onclick="promptApiKey()">KEY</button>
-        <button class="cyber-btn danger" onclick="resetTreasury()">RESET</button>
+        <button class="cyber-btn danger" onclick="resetTreasuryAndBots()">RESET</button>
       </div>
     </div>
 
     <div class="stats-grid">
       <div class="stat-box">
         <div class="stat-label">Net Worth</div>
-        <div class="stat-value" id="net-worth">$10,000.00</div>
+        <div class="stat-value" id="net-worth">$100.00</div>
       </div>
       <div class="stat-box">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div class="stat-label">Realized P&L</div>
-          <button class="cyber-btn danger" style="font-size: 7px; padding: 1px 3px;" onclick="resetPnlOnly()">ZERO P&L</button>
+          <button class="cyber-btn danger" style="font-size: 7px; padding: 1px 3px;" onclick="resetPnlOnly()">ZERO</button>
         </div>
         <div class="stat-value green" id="realized-pnl">+$0.00</div>
       </div>
       <div class="stat-box">
         <div class="stat-label">Cash Reserve</div>
-        <div class="stat-value" style="color: var(--amber);" id="cash-balance">$10,000.00</div>
+        <div class="stat-value" style="color: var(--amber);" id="cash-balance">$100.00</div>
       </div>
       <div class="stat-box">
         <div class="stat-label">Total Fees Paid</div>
@@ -274,7 +274,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Market data source tracking initialized.</div>
+        <div style="color: var(--green);">[00:01] Autonomous treasury & bot telemetry online.</div>
       </div>
     </div>
 
@@ -286,7 +286,7 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">COINGECKO API v3</strong></div>
-      <div class="status-row"><span>API ROUTE:</span> <strong style="color: var(--text-dim); font-size: 9px;">api.coingecko.com/simple/price</strong></div>
+      <div class="status-row"><span>ALLOCATION MODEL:</span> <strong style="color: var(--cyan);">10% PROPORTIONAL RISK</strong></div>
       <div class="status-row"><span>MARKET NEWS FEED:</span> <strong id="status-news" style="color: var(--green);">● STREAMING ACTIVE</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
       <div class="status-row"><span>TOTAL TRANSACTIONS:</span> <strong style="color: var(--cyan);" id="status-tx-count">0 EXECUTED</strong></div>
@@ -319,15 +319,27 @@
     ];
 
     let state = {
-      cash: parseFloat(localStorage.getItem('solaris_cash')) || 10000,
+      cash: parseFloat(localStorage.getItem('solaris_cash')) || 100,
       positions: JSON.parse(localStorage.getItem('solaris_positions')) || { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
       costBasis: JSON.parse(localStorage.getItem('solaris_cost_basis')) || { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
-      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online. Market source tracking active.', color: '#38bdf8', time: '00:00' }],
+      agentStats: JSON.parse(localStorage.getItem('solaris_agent_stats')) || {},
+      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online. War room telemetry linked.', color: '#38bdf8', time: '00:00' }],
       soundEnabled: false
     };
+
+    // Restore saved agent stats if they exist
+    agentDefs.forEach(a => {
+      if (state.agentStats[a.id]) {
+        a.pnl = state.agentStats[a.id].pnl || 0;
+        a.minPnl = state.agentStats[a.id].minPnl || 0;
+        a.hrPnl = state.agentStats[a.id].hrPnl || 0;
+        a.dayPnl = state.agentStats[a.id].dayPnl || 0;
+        a.wkPnl = state.agentStats[a.id].wkPnl || 0;
+      }
+    });
 
     let audioCtx = null;
 
@@ -402,10 +414,34 @@
       }
     }
 
-    function resetTreasury() {
-      if (confirm("Reset treasury matrix?")) {
-        localStorage.clear();
-        location.reload();
+    function saveAgentStats() {
+      const statsMap = {};
+      agentDefs.forEach(a => {
+        statsMap[a.id] = { pnl: a.pnl, minPnl: a.minPnl, hrPnl: a.hrPnl, dayPnl: a.dayPnl, wkPnl: a.wkPnl };
+      });
+      localStorage.setItem('solaris_agent_stats', JSON.stringify(statsMap));
+    }
+
+    function resetTreasuryAndBots() {
+      if (confirm("Reset treasury cash, active positions, bot metrics, and fees?")) {
+        state.cash = 100;
+        state.positions = { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 };
+        state.costBasis = { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 };
+        state.realizedPnl = 0;
+        state.totalFeesPaid = 0;
+        state.txCount = 0;
+        agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; });
+        
+        localStorage.setItem('solaris_cash', state.cash);
+        localStorage.setItem('solaris_pnl', 0);
+        localStorage.setItem('solaris_fees', 0);
+        localStorage.setItem('solaris_tx_count', 0);
+        localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
+        localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
+        localStorage.removeItem('solaris_agent_stats');
+
+        addSystemLog(`[CONFIG] Treasury and bot telemetry successfully wiped and reset.`);
+        renderAll();
       }
     }
 
@@ -417,6 +453,7 @@
       localStorage.setItem('solaris_fees', 0);
       localStorage.setItem('solaris_tx_count', 0);
       agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; });
+      localStorage.removeItem('solaris_agent_stats');
       addSystemLog(`[CONFIG] Realized P&L and fee metrics zeroed out.`);
       renderAll();
     }
@@ -471,23 +508,23 @@
       const priceStr = coin.price > 0 ? `at ${fmtPrice(coin.price)}` : '';
       const conversations = {
         'KIRKTRON 9001': [
-          actionType === 'buy' ? `Deploying capital into ${coin.symbol} ${priceStr} via CoinGecko feed. Fee: ${fmtCurrency(feeAmount)}.` : `Position closed on ${coin.symbol}. Net P&L: ${fmtCurrency(pnlDelta)} (Fee: ${fmtCurrency(feeAmount)}).`,
+          actionType === 'buy' ? `Allocating 10% bankroll stake into ${coin.symbol} ${priceStr}. Fee: ${fmtCurrency(feeAmount)}.` : `Position closed on ${coin.symbol}. Net P&L: ${fmtCurrency(pnlDelta)} (Fee: ${fmtCurrency(feeAmount)}).`,
           `Evaluating asset yield against cumulative 0.3% DEX protocol fees.`
         ],
         'RISK_CORE': [
-          actionType === 'buy' ? `Fee hurdle verified. Risk parameters approved for ${coin.symbol}.` : `Position successfully unwound. Cumulative fee drag accounted for.`,
+          actionType === 'buy' ? `10% risk limit verified. Exposure approved for ${coin.symbol}.` : `Position successfully unwound. Cumulative fee drag accounted for.`,
           `Monitoring volatility bands to protect treasury capital.`
         ],
         'ALPHA_X': [
-          actionType === 'buy' ? `Order execution routed cleanly for ${coin.symbol}.` : `Exit fill executed on ${coin.symbol}. Slippage minimal.`,
-          `Scanning liquidity depth for high-reward entry setups.`
+          actionType === 'buy' ? `Proportional order routed cleanly for ${coin.symbol}.` : `Exit fill executed on ${coin.symbol}. Slippage minimal.`,
+          `Scanning liquidity depth for optimal execution windows.`
         ],
         'MACRO_9': [
           `Macro trend analysis: CoinGecko data stream remains stable.`,
           `Cross-referencing live endpoint valuations with portfolio exposure.`
         ],
         'ROBBIEBOT 9000': [
-          actionType === 'buy' ? `Treasury cash debited. Fee paid: ${fmtCurrency(feeAmount)}.` : `Capital authority audit: Net reward recorded at ${fmtCurrency(pnlDelta)}.`,
+          actionType === 'buy' ? `Treasury cash debited. 10% risk allocation met. Fee: ${fmtCurrency(feeAmount)}.` : `Capital authority audit: Net reward recorded at ${fmtCurrency(pnlDelta)}.`,
           `Reserves and cumulative fee ledgers reconciling in real-time.`
         ]
       };
@@ -548,8 +585,11 @@
         const avgCost = state.costBasis[coin.symbol] || coin.price;
         const priceChangePct = avgCost > 0 ? (coin.price - avgCost) / avgCost : 0;
         
-        if (state.cash > 50 && (Math.random() > 0.5 || currentHolding === 0)) {
-          const spendAmount = state.cash * 0.15;
+        if (state.cash > 5.0 && (Math.random() > 0.4 || currentHolding === 0)) {
+          let spendAmount = state.cash * 0.10; 
+          if (spendAmount < 1.0) spendAmount = state.cash;
+          if (spendAmount > state.cash) spendAmount = state.cash;
+
           fee = spendAmount * feeRate;
           const netSpend = spendAmount - fee;
           
@@ -566,7 +606,7 @@
           state.totalFeesPaid += fee;
           state.txCount += 1;
 
-          addSystemLog(`[TRADE] ${agent.name} bought ${tokensBought > 100 ? tokensBought.toLocaleString('en-US', {maximumFractionDigits: 0}) : tokensBought.toFixed(2)} ${coin.symbol} (Fee: ${fmtCurrency(fee)})`);
+          addSystemLog(`[TRADE] ${agent.name} bought ${tokensBought > 100 ? tokensBought.toLocaleString('en-US', {maximumFractionDigits: 0}) : tokensBought.toFixed(2)} ${coin.symbol} for $${spendAmount.toFixed(2)} (Fee: ${fmtCurrency(fee)})`);
           actionType = 'buy';
         } else if (currentHolding > 0.00001 && (priceChangePct > 0.008 || Math.random() > 0.7)) {
           const tokensToSell = currentHolding * 0.5;
@@ -598,6 +638,8 @@
         } else {
           return;
         }
+
+        saveAgentStats();
 
         const conversationalSpeech = generateAgentDialogue(agent, coin, actionType, pnlDelta, fee);
 
@@ -660,6 +702,7 @@
               <div style="flex-grow: 1;">
                 <div style="display: flex; justify-content: space-between;">
                   <strong style="color: ${a.color}; font-size: 11px;">${a.name}</strong>
+                  <span style="font-size: 9px; color: ${a.pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${a.pnl >= 0 ? '+' : ''}${fmtCurrency(a.pnl)}</span>
                 </div>
                 <div style="font-size: 9px; color: var(--text-dim);">${a.role}</div>
               </div>
@@ -687,6 +730,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       fetchLiveMarketData();
+      renderAll();
       setInterval(fetchLiveMarketData, 15000);
     });
   </script>
