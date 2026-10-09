@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.7</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.8</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -313,7 +313,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Smart-entry filters and cool-down gates active.</div>
+        <div style="color: var(--green);">[00:01] Aggressive Chief Risk Officer matrix active.</div>
       </div>
     </div>
 
@@ -381,7 +381,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'Smart-entry filters online. Enforcing trade cool-downs.', color: '#a855f7', time: '00:00' }]
+      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'Active drawdown monitor online. Chief Risk Officer watching.', color: '#a855f7', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -576,29 +576,48 @@
     function runTradingLoop() {
       try {
         const now = Date.now();
-        // Enforce a 20-second cool-down between trades to prevent spam-buying overlapping bad positions
-        if (state.lastTradeTime && (now - state.lastTradeTime < 20000)) {
+        if (state.lastTradeTime && (now - state.lastTradeTime < 15000)) {
           return;
         }
 
         const boss = agentDefs.find(a => a.id === 'boss');
-        const activeAgents = agentDefs.filter(a => a.id !== 'boss' && a.status === 'ACTIVE');
-        const troubled = agentDefs.filter(a => a.id !== 'boss' && (a.pnl < -1.0 || state.realizedPnl < -0.5));
+        
+        // AGGRESSIVE BOSS BOT INTERVENTION: Scan open positions for any negative unrealized movement or negative P&L
+        let hasOpenDrawdown = false;
+        marketCoins.forEach(c => {
+          let qty = state.positions[c.symbol] || 0;
+          let cost = state.costBasis[c.symbol] || c.price;
+          if (qty > 0.00001 && (qty * c.price) < (qty * cost)) {
+            hasOpenDrawdown = true;
+          }
+        });
 
-        if (troubled.length > 0) {
+        if (hasOpenDrawdown || state.realizedPnl < 0) {
           boss.status = 'INTERVENING';
-          const culprit = troubled[0];
-          culprit.status = 'SUSPENDED';
-          const alertMsg = `CIRCUIT BREAKER TRIGGERED: ${culprit.name} suspended due to drawdown (${fmtCurrency(culprit.pnl)}). Capital preservation protocol engaged.`;
+          
+          // Emergency force-liquidation of all open positions back to cash
+          marketCoins.forEach(c => {
+            let qty = state.positions[c.symbol] || 0;
+            if (qty > 0.00001) {
+              let gross = qty * c.price;
+              let fee = gross * 0.003;
+              state.cash += (gross - fee);
+              let loss = (gross - fee) - (qty * (state.costBasis[c.symbol] || c.price));
+              state.realizedPnl += loss;
+              state.totalFeesPaid += fee;
+              state.positions[c.symbol] = 0;
+              state.costBasis[c.symbol] = 0;
+            }
+          });
+
+          const alertMsg = `EMERGENCY OVERRIDE: Open drawdown detected. Chief Risk Officer force-liquidated all holdings to protect capital.`;
           state.councilFeed.unshift({ sender: boss.name, text: alertMsg, color: boss.color, time: new Date().toLocaleTimeString() });
-          addSystemLog(`[BOSS BOT] Intervention: Suspended ${culprit.name}. P&L: ${fmtCurrency(culprit.pnl)}`);
+          addSystemLog(`[BOSS BOT] Emergency intervention executed: All positions flattened.`);
           saveState();
           renderAll();
           return;
-        } else if (boss.status === 'INTERVENING' && activeAgents.length >= 4) {
-          boss.status = 'ACTIVE';
-          state.councilFeed.unshift({ sender: boss.name, text: `Portfolio metrics stabilized. Resuming standard autonomous allocation matrix.`, color: boss.color, time: new Date().toLocaleTimeString() });
-          saveState();
+        } else {
+          boss.status = 'STANDBY';
         }
 
         if (state.cash < 15.0 && state.vault >= 25.0) {
@@ -606,24 +625,22 @@
           state.vault -= tranche;
           state.cash += tranche;
           boss.status = 'INTERVENING';
-          state.councilFeed.unshift({ sender: boss.name, text: `Vault Tranche Release: Transferred ${fmtCurrency(tranche)} from Main Vault to shore up active bankroll.`, color: boss.color, time: new Date().toLocaleTimeString() });
+          state.councilFeed.unshift({ sender: boss.name, text: `Vault Tranche Release: Transferred ${fmtCurrency(tranche)} from Main Vault to bankroll.`, color: boss.color, time: new Date().toLocaleTimeString() });
           addSystemLog(`[BOSS BOT] Released ${fmtCurrency(tranche)} Main Vault tranche.`);
           saveState();
           renderAll();
           return;
         }
 
+        const activeAgents = agentDefs.filter(a => a.id !== 'boss' && a.status === 'ACTIVE');
         if (activeAgents.length === 0) {
           agentDefs.forEach(a => { if (a.id !== 'boss') a.status = 'ACTIVE'; });
-          boss.status = 'STANDBY';
           saveState();
           renderAll();
           return;
         }
 
         const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
-        
-        // Smart-Entry Filter: Only pick coins that have neutral-to-positive 24h momentum or existing holdings
         const candidateCoins = marketCoins.filter(c => c.change24h >= 0 || (state.positions[c.symbol] || 0) > 0);
         const coin = candidateCoins.length > 0 ? candidateCoins[Math.floor(Math.random() * candidateCoins.length)] : marketCoins[0];
         if (!coin || coin.price <= 0) return;
@@ -638,7 +655,6 @@
         let originalCostBasisValue = curHold * avgCost;
         let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPositionValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
 
-        // Hold until at least +2% target is met, preventing micro-fee loss cycles
         if (curHold > 0.00001 && (unrealizedGainPct >= 2.0 || Math.random() > 0.8)) {
           let sellTokens = curHold;
           let gross = sellTokens * coin.price;
@@ -672,7 +688,7 @@
           addSystemLog(`[EXEC] ${agent.name} SELL ${coin.symbol} | P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)} | Fee: ${fmtCurrency(fee)}`);
           action = 'sell';
         } else if (state.cash > 15.0 && curHold === 0) {
-          let spend = state.cash * 0.20; // Controlled 20% block size allocation
+          let spend = state.cash * 0.20;
           fee = spend * 0.003;
           let netSpend = spend - fee;
           state.cash -= spend;
@@ -693,7 +709,7 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `Smart-entry filter passed for ${coin.symbol} (+${coin.change24h}% 24h). Allocating 20% block.` :
+          `Smart-entry filter passed for ${coin.symbol}. Allocating 20% block.` :
           `Profit target hit on ${coin.symbol}. Position closed with P&L: ${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ 
