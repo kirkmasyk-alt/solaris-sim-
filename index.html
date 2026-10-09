@@ -218,7 +218,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">AUTONOMOUS SWARM V4.2</div>
+        <div style="font-size: 8px; color: var(--text-dim);">AUTONOMOUS SWARM V4.3</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn" id="audio-toggle-btn" onclick="toggleAudio()">AUDIO: OFF</button>
@@ -269,7 +269,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] System operational. Core telemetry active.</div>
+        <div style="color: var(--green);">[00:01] Accounting ledger recalibrated.</div>
       </div>
     </div>
 
@@ -310,7 +310,7 @@
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Portfolio Manager', color: '#38bdf8', icon: '🤖', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', color: '#f59e0b', icon: '🛡️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', color: '#ef4444', icon: '⚡', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
-      { id: 'macro', name: 'MACRO_9', role: 'Strategy Planner', color: '#38bdf8', icon: '🌐', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
+      { id: 'macro', name: 'MACRO_9', role: 'Strategy Planner', color: '#a855f7', icon: '🌐', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Capital Authority', color: '#22c55e', icon: '🏛️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' }
     ];
 
@@ -321,7 +321,7 @@
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
-      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'System diagnostics online. Swarm initialized.', color: '#a855f7', time: '00:00' }]
+      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'Ledger synchronization complete.', color: '#a855f7', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -338,10 +338,6 @@
 
     function fmtCurrency(val) {
       return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    function fmtPrice(val) {
-      return val < 0.01 ? '$' + val.toFixed(6) : '$' + val.toFixed(2);
     }
 
     function switchTab(tabId, btnElement) {
@@ -386,9 +382,11 @@
       state.realizedPnl = 0;
       state.totalFeesPaid = 0;
       state.txCount = 0;
+      state.cash = 100;
+      state.positions = { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 };
       agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = a.id === 'boss' ? 'STANDBY' : 'ACTIVE'; });
       saveState();
-      addSystemLog(`[CONFIG] P&L and fee metrics zeroed out.`);
+      addSystemLog(`[CONFIG] Treasury completely zeroed out to clean $100 baseline.`);
       renderAll();
     }
 
@@ -415,9 +413,10 @@
     }
 
     function requestBriefing() {
-      let net = state.cash;
-      marketCoins.forEach(c => { net += (state.positions[c.symbol] || 0) * c.price; });
-      const brief = `BRIEF: Net Worth ${fmtCurrency(net)}. P&L: ${fmtCurrency(state.realizedPnl)}. Fees: ${fmtCurrency(state.totalFeesPaid)}. All systems nominal.`;
+      let portfolioVal = 0;
+      marketCoins.forEach(c => { portfolioVal += (state.positions[c.symbol] || 0) * c.price; });
+      let net = state.cash + portfolioVal;
+      const brief = `BRIEF: Net Worth ${fmtCurrency(net)} (Cash: ${fmtCurrency(state.cash)} | Holdings: ${fmtCurrency(portfolioVal)}). P&L: ${fmtCurrency(state.realizedPnl)}.`;
       state.councilFeed.unshift({ sender: 'ORCHESTRATOR-1', text: brief, color: '#a855f7', time: new Date().toLocaleTimeString() });
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
       renderAll();
