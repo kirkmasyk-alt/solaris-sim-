@@ -270,62 +270,175 @@
     .ai-table {
       border: 3px solid var(--line);
       background: linear-gradient(180deg, rgba(19,28,37,0.95), rgba(12,18,29,0.98));
-      padding: 8px;
-      min-height: 230px;
+      padding: 10px;
+      min-height: 270px;
     }
 
     .ai-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 10px;
     }
 
-    .ai-card {
+    .ai-agent {
       border: 3px solid var(--line);
       background: rgba(14,20,31,0.95);
-      padding: 8px;
-      min-height: 170px;
+      padding: 10px 8px 12px;
+      min-height: 220px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-    }
-
-    .ai-avatar {
-      width: 72px;
-      height: 72px;
-      margin: 0 auto 10px;
-      border: 3px solid var(--line);
-      background: linear-gradient(180deg, rgba(121,151,255,0.15), rgba(0,0,0,0.3));
       position: relative;
+      overflow: hidden;
     }
 
-    .ai-avatar::before,
-    .ai-avatar::after { content: ''; position: absolute; }
+    .ai-agent::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent 35%, transparent 100%);
+      pointer-events: none;
+    }
 
-    .ai-avatar.finance::before { left: 18px; top: 16px; width: 34px; height: 26px; background: var(--green); }
-    .ai-avatar.finance::after { left: 12px; bottom: 10px; width: 48px; height: 18px; background: var(--cyan); }
+    .ai-portrait {
+      position: relative;
+      width: 92px;
+      height: 112px;
+      margin: 0 auto 10px;
+      border: 3px solid rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, rgba(102,231,255,0.08), rgba(0,0,0,0.25));
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 3px rgba(0,0,0,0.2);
+    }
 
-    .ai-avatar.risk::before { left: 18px; top: 16px; width: 34px; height: 26px; background: var(--purple); }
-    .ai-avatar.risk::after { left: 12px; bottom: 10px; width: 48px; height: 18px; background: var(--magenta); }
+    .ai-portrait .head {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%);
+      background: #e9c9a8;
+      border-radius: 50%;
+      z-index: 2;
+      box-shadow: inset -4px 0 0 rgba(0,0,0,0.06);
+    }
 
-    .ai-name {
+    .ai-portrait .hair {
+      position: absolute;
+      left: 50%;
+      top: 12px;
+      width: 36px;
+      height: 22px;
+      transform: translateX(-50%);
+      background: #0f1724;
+      border-radius: 18px 18px 10px 10px;
+      z-index: 3;
+    }
+
+    .ai-portrait .body {
+      position: absolute;
+      left: 50%;
+      bottom: 10px;
+      width: 58px;
+      height: 54px;
+      transform: translateX(-50%);
+      border-radius: 12px 12px 10px 10px;
+      z-index: 1;
+    }
+
+    .ai-portrait .tie {
+      position: absolute;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 14px solid #f2d785;
+      z-index: 4;
+      opacity: 0.9;
+    }
+
+    .ai-portrait.finance .hair { background: #1d2d3d; }
+    .ai-portrait.finance .body { background: linear-gradient(180deg, #60d1ff, #2f6ad9); }
+    .ai-portrait.finance .tie { border-top-color: #f4c95d; }
+
+    .ai-portrait.risk .hair { background: #1d1d1d; }
+    .ai-portrait.risk .body { background: linear-gradient(180deg, #d6d7df, #9097a7); }
+    .ai-portrait.risk .tie { border-top-color: #d36cff; }
+
+    .ai-portrait.trader .hair { background: #2a1d17; }
+    .ai-portrait.trader .body { background: linear-gradient(180deg, #b6c0d6, #53627b); }
+    .ai-portrait.trader .tie { border-top-color: #f7df7d; }
+
+    .ai-portrait.advisor .hair { background: #1d2a1e; }
+    .ai-portrait.advisor .body { background: linear-gradient(180deg, #c9d3d9, #7a7d8a); }
+    .ai-portrait.advisor .tie { border-top-color: #d3a7ff; }
+
+    .ai-portrait.cfo .hair { background: #10172c; }
+    .ai-portrait.cfo .body { background: linear-gradient(180deg, #f1f3f8, #bac0cf); }
+    .ai-portrait.cfo .tie { border-top-color: #7ef7b2; }
+
+    .agent-name {
       font-family: 'Press Start 2P', monospace;
       font-size: 7px;
       text-transform: uppercase;
       text-align: center;
+      line-height: 1.7;
       color: var(--text);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      min-height: 28px;
+      position: relative;
+      z-index: 1;
     }
 
-    .ai-status {
+    .agent-status {
       font-family: 'Press Start 2P', monospace;
       font-size: 7px;
       text-transform: uppercase;
       text-align: center;
       color: var(--green);
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
     }
 
-    .ai-status.risk { color: var(--magenta); }
+    .agent-status.warn { color: var(--gold); }
+    .agent-status.risk { color: var(--magenta); }
+
+    .agent-chat {
+      background: #f0e7b2;
+      color: #16202d;
+      border-radius: 12px;
+      padding: 8px 9px;
+      font-size: 0.7rem;
+      line-height: 1.4;
+      text-align: center;
+      border: 2px solid rgba(0,0,0,0.18);
+      position: relative;
+      z-index: 1;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.2);
+    }
+
+    .agent-chat::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -10px;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 10px solid #f0e7b2;
+    }
 
     .floating-box {
       border: 3px solid var(--line);
@@ -506,15 +619,64 @@
           <div class="room-view" data-room="ai">
             <div class="ai-table">
               <div class="ai-row">
-                <div class="ai-card">
-                  <div class="ai-avatar finance"></div>
-                  <div class="ai-name">Finance AI</div>
-                  <div class="ai-status">Ready</div>
+                <div class="ai-agent" data-role="finance">
+                  <div class="ai-portrait finance">
+                    <span class="hair"></span>
+                    <span class="head"></span>
+                    <span class="body"></span>
+                    <span class="tie"></span>
+                  </div>
+                  <div class="agent-name">Finance AI</div>
+                  <div class="agent-status">Ready</div>
+                  <div class="agent-chat">I’m rebalancing the portfolio toward lower-risk gains.</div>
                 </div>
-                <div class="ai-card">
-                  <div class="ai-avatar risk"></div>
-                  <div class="ai-name">Risk Analyst</div>
-                  <div class="ai-status risk">Scanning</div>
+
+                <div class="ai-agent" data-role="risk">
+                  <div class="ai-portrait risk">
+                    <span class="hair"></span>
+                    <span class="head"></span>
+                    <span class="body"></span>
+                    <span class="tie"></span>
+                  </div>
+                  <div class="agent-name">Risk Analyst</div>
+                  <div class="agent-status risk">Scanning</div>
+                  <div class="agent-chat">I’m checking volatility and setting hedges before the next move.</div>
+                </div>
+
+                <div class="ai-agent" data-role="trader">
+                  <div class="ai-portrait trader">
+                    <span class="hair"></span>
+                    <span class="head"></span>
+                    <span class="body"></span>
+                    <span class="tie"></span>
+                  </div>
+                  <div class="agent-name">Trader Alpha</div>
+                  <div class="agent-status warn">Momentum</div>
+                  <div class="agent-chat">Momentum is strong, so I’m timing entries on the breakout.</div>
+                </div>
+
+                <div class="ai-agent" data-role="advisor">
+                  <div class="ai-portrait advisor">
+                    <span class="hair"></span>
+                    <span class="head"></span>
+                    <span class="body"></span>
+                    <span class="tie"></span>
+                  </div>
+                  <div class="agent-name">Strategy Advisor</div>
+                  <div class="agent-status warn">Macro</div>
+                  <div class="agent-chat">We should keep a disciplined strategy and avoid emotional trades.</div>
+                </div>
+
+                <div class="ai-agent" data-role="cfo" style="grid-column: span 2;">
+                  <div class="ai-portrait cfo">
+                    <span class="hair"></span>
+                    <span class="head"></span>
+                    <span class="body"></span>
+                    <span class="tie"></span>
+                  </div>
+                  <div class="agent-name">Treasury CFO</div>
+                  <div class="agent-status">Balancing</div>
+                  <div class="agent-chat">The treasury is protecting capital while preserving upside exposure.</div>
                 </div>
               </div>
             </div>
@@ -661,6 +823,34 @@
       ]
     };
 
+    const aiChatter = {
+      finance: [
+        'I’m rebalancing the portfolio toward lower-risk gains.',
+        'I’ve reduced exposure after watching the trend weaken.',
+        'I’m increasing BTC allocation only after the trend confirms.'
+      ],
+      risk: [
+        'I’m checking volatility and setting hedges before the next move.',
+        'Risk remains elevated, so I’m keeping the drawdown tight.',
+        'I’m flagging overconfidence in the current market conditions.'
+      ],
+      trader: [
+        'Momentum is strong, so I’m timing entries on the breakout.',
+        'I’ve closed a bad trade and am waiting for confirmation.',
+        'I’m taking profits before the next reversal signal.'
+      ],
+      advisor: [
+        'We should stay disciplined and avoid emotional trades.',
+        'The macro picture still supports a slow, defensive strategy.',
+        'I’m forcing a better risk-adjusted plan than the last cycle.'
+      ],
+      cfo: [
+        'The treasury is protecting capital while preserving upside exposure.',
+        'I’m maintaining a strong reserve while we wait for confirmation.',
+        'Capital efficiency matters more than chasing every move.'
+      ]
+    };
+
     function fmtCurrency(value) {
       return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
@@ -803,6 +993,22 @@
       log(`🤖 AI SIGNAL // ${state.latestAIMove} | ${state.capitalMix}`);
     }
 
+    function initAIChats() {
+      const cards = document.querySelectorAll('.ai-agent');
+      cards.forEach((card) => {
+        const role = card.dataset.role;
+        const bubble = card.querySelector('.agent-chat');
+        const queue = aiChatter[role] || aiChatter.finance;
+        let index = 0;
+
+        bubble.textContent = queue[index];
+        setInterval(() => {
+          index = (index + 1) % queue.length;
+          bubble.textContent = queue[index];
+        }, 3200);
+      });
+    }
+
     function startSimulation() {
       if (state.marketTick) clearInterval(state.marketTick);
       state.marketTick = setInterval(() => {
@@ -826,6 +1032,7 @@
 
     function init() {
       initTabs();
+      initAIChats();
       render();
       startSimulation();
     }
