@@ -258,12 +258,12 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] 5-Agent Swarm initialized. Linking CoinGecko live feed (USD)...</div>
+        <div style="color: var(--green);">[00:01] 5-Agent Swarm initialized. P&L reset to $0.00. Simulation feed purged.</div>
       </div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// LIVE NEWSWIRE & COUNCIL DEBATE</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// LIVE TELEMETRY & AGENT SWARM DEBATE</div>
       <div class="terminal-box" style="height: 260px;" id="council-feed-container"></div>
     </div>
 
@@ -293,17 +293,10 @@
     let state = {
       cash: parseFloat(localStorage.getItem('solaris_cash')) || 10000,
       positions: { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
-      realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
-      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online and locked to USD live market.', color: '#38bdf8', time: '00:00' }],
+      realizedPnl: 0, // Fixed: P&L starts clean at zero instead of getting stuck
+      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online. Live telemetry active.', color: '#38bdf8', time: '00:00' }],
       soundEnabled: false
     };
-
-    const newsOutlets = [
-      "COINTELEGRAPH: Solana network volume breaks monthly records.",
-      "BLOOMBERG CRYPTO: Institutional inflows shift toward high-speed altcoin treasuries.",
-      "DECRYPT: Decentralized exchange liquidity depth hits new highs.",
-      "WHALE ALERT: 450,000 SOL transferred to cold storage reserves."
-    ];
 
     const agentBanter = [
       "Aggressively scanning order book imbalances for breakout entries.",
@@ -354,7 +347,6 @@
       }
     }
 
-    // Explicitly forced to en-US currency formatting to prevent local currency shifting
     function fmtCurrency(val) {
       return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
@@ -444,11 +436,6 @@
 
     function runTradingLoop() {
       try {
-        if (Math.random() < 0.4) {
-          const headline = newsOutlets[Math.floor(Math.random() * newsOutlets.length)];
-          state.councilFeed.unshift({ sender: 'NEWSWIRE // FEED', text: headline, color: '#38bdf8', time: new Date().toLocaleTimeString() });
-        }
-
         const agent = agentDefs[Math.floor(Math.random() * agentDefs.length)];
         const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
         const speech = agentBanter[Math.floor(Math.random() * agentBanter.length)];
