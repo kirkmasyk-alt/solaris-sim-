@@ -816,7 +816,7 @@
     };
 
     function loadFromStorage() {
-      const saved = localStorage.getItem('solaris_sim_state_v10');
+      const saved = localStorage.getItem('solaris_sim_state_v11');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -865,12 +865,12 @@
         agentDefs: agentDefs.map(a => ({ id: a.id, wins: a.wins, losses: a.losses, pnl: a.pnl, history: a.history })),
         lastTimestamp: state.lastTimestamp
       };
-      localStorage.setItem('solaris_sim_state_v10', JSON.stringify(payload));
+      localStorage.setItem('solaris_sim_state_v11', JSON.stringify(payload));
     }
 
     function resetTreasury() {
       if (confirm("Reset treasury back to $10,000 fresh slate?")) {
-        localStorage.removeItem('solaris_sim_state_v10');
+        localStorage.removeItem('solaris_sim_state_v11');
         location.reload();
       }
     }
@@ -933,7 +933,7 @@
           <div class="mini-metric">Losses <span>${agent.losses}</span></div>
           <div class="mini-metric">Win Rate <span>${winRate}</span></div>
         </div>
-        <p><strong>Net Agent P&L:</strong> <span style="color:${agent.pnl >= 0 ? 'var(--green)' : 'var(--red)}">${agent.pnl >= 0 ? '+' : ''}${fmtCurrency(agent.pnl)}</span></p>
+        <p><strong>Net Agent P&L:</strong> <span style="color:${agent.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${agent.pnl >= 0 ? '+' : ''}${fmtCurrency(agent.pnl)}</span></p>
         <h4 style="font-family:'Press Start 2P',monospace; font-size:7px; color:var(--gold); margin: 14px 0 6px; text-transform:uppercase;">Agent Activity Ledger</h4>
         <div style="max-height: 150px; overflow-y: auto; background:#04070d; border:1px solid var(--line); padding:8px;">
           ${historyHtml}
