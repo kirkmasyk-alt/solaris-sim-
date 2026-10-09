@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.5</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.7</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -313,7 +313,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] DEX Screener live pool feed active.</div>
+        <div style="color: var(--green);">[00:01] Smart-entry filters and cool-down gates active.</div>
       </div>
     </div>
 
@@ -338,7 +338,7 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">DEX SCREENER API v1</strong></div>
-      <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1</strong></div>
+      <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong id="boss-status-label" style="color: var(--purple);">ORCHESTRATOR-1 [STANDBY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
       <div class="status-row"><span>TOTAL TRANSACTIONS:</span> <strong style="color: var(--cyan);" id="status-tx-count">0 EXECUTED</strong></div>
@@ -354,13 +354,12 @@
   </div>
 
   <script>
-    // Asset registry with official Solana token contract addresses for DEX Screener API lookups
     const marketCoins = [
-      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00 },
-      { symbol: 'BONK', address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', price: 0.000025 },
-      { symbol: 'JTO', address: 'jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL', price: 2.50 },
-      { symbol: 'RAY', address: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R', price: 2.10 },
-      { symbol: 'WIF', address: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm', price: 1.80 }
+      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 2.5 },
+      { symbol: 'BONK', address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', price: 0.000025, change24h: 1.2 },
+      { symbol: 'JTO', address: 'jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL', price: 2.50, change24h: -0.5 },
+      { symbol: 'RAY', address: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R', price: 2.10, change24h: 3.1 },
+      { symbol: 'WIF', address: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm', price: 1.80, change24h: 0.8 }
     ];
 
     const agentDefs = [
@@ -381,7 +380,8 @@
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
-      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'DEX Screener link established. Fetching on-chain pool quotes.', color: '#a855f7', time: '00:00' }]
+      lastTradeTime: 0,
+      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'Smart-entry filters online. Enforcing trade cool-downs.', color: '#a855f7', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -432,12 +432,15 @@
             const matchingPair = data.pairs.find(p => p.chainId === 'solana' && p.baseToken && p.baseToken.address.toLowerCase() === coin.address.toLowerCase());
             if (matchingPair && matchingPair.priceUsd) {
               coin.price = parseFloat(matchingPair.priceUsd);
+              if (matchingPair.priceChange && matchingPair.priceChange.h24 !== undefined) {
+                coin.change24h = parseFloat(matchingPair.priceChange.h24);
+              }
             }
           });
           renderAll();
         }
       } catch (err) {
-        console.warn("DEX Screener fetch skipped/limited, using cached baseline pricing.", err);
+        console.warn("DEX Screener fetch skipped, using cached pricing.", err);
       }
     }
 
@@ -473,6 +476,7 @@
       localStorage.setItem('solaris_tx_count', state.txCount);
       localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
       localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
+      localStorage.setItem('solaris_last_trade', state.lastTradeTime);
       
       const statsMap = {};
       agentDefs.forEach(a => {
@@ -571,45 +575,58 @@
 
     function runTradingLoop() {
       try {
-        const activeAgents = agentDefs.filter(a => a.id !== 'boss' && a.status === 'ACTIVE');
+        const now = Date.now();
+        // Enforce a 20-second cool-down between trades to prevent spam-buying overlapping bad positions
+        if (state.lastTradeTime && (now - state.lastTradeTime < 20000)) {
+          return;
+        }
+
         const boss = agentDefs.find(a => a.id === 'boss');
-        const troubled = agentDefs.filter(a => a.id !== 'boss' && a.pnl < -3.0 && a.status === 'ACTIVE');
+        const activeAgents = agentDefs.filter(a => a.id !== 'boss' && a.status === 'ACTIVE');
+        const troubled = agentDefs.filter(a => a.id !== 'boss' && (a.pnl < -1.0 || state.realizedPnl < -0.5));
+
+        if (troubled.length > 0) {
+          boss.status = 'INTERVENING';
+          const culprit = troubled[0];
+          culprit.status = 'SUSPENDED';
+          const alertMsg = `CIRCUIT BREAKER TRIGGERED: ${culprit.name} suspended due to drawdown (${fmtCurrency(culprit.pnl)}). Capital preservation protocol engaged.`;
+          state.councilFeed.unshift({ sender: boss.name, text: alertMsg, color: boss.color, time: new Date().toLocaleTimeString() });
+          addSystemLog(`[BOSS BOT] Intervention: Suspended ${culprit.name}. P&L: ${fmtCurrency(culprit.pnl)}`);
+          saveState();
+          renderAll();
+          return;
+        } else if (boss.status === 'INTERVENING' && activeAgents.length >= 4) {
+          boss.status = 'ACTIVE';
+          state.councilFeed.unshift({ sender: boss.name, text: `Portfolio metrics stabilized. Resuming standard autonomous allocation matrix.`, color: boss.color, time: new Date().toLocaleTimeString() });
+          saveState();
+        }
 
         if (state.cash < 15.0 && state.vault >= 25.0) {
           let tranche = 25.0;
           state.vault -= tranche;
           state.cash += tranche;
           boss.status = 'INTERVENING';
-          const msg = `Liquidity tranche authorized: Released ${fmtCurrency(tranche)} from Main Vault to shore up Bot Bankroll.`;
-          state.councilFeed.unshift({ sender: boss.name, text: msg, color: boss.color, time: new Date().toLocaleTimeString() });
-          addSystemLog(`[BOSS BOT] Tranche released: ${fmtCurrency(tranche)} transferred to active pool.`);
+          state.councilFeed.unshift({ sender: boss.name, text: `Vault Tranche Release: Transferred ${fmtCurrency(tranche)} from Main Vault to shore up active bankroll.`, color: boss.color, time: new Date().toLocaleTimeString() });
+          addSystemLog(`[BOSS BOT] Released ${fmtCurrency(tranche)} Main Vault tranche.`);
           saveState();
           renderAll();
           return;
         }
 
-        if (troubled.length > 0 && Math.random() > 0.3) {
-          const culprit = troubled[0];
-          culprit.status = 'SUSPENDED';
-          boss.status = 'INTERVENING';
-          const msg = `Circuit breaker tripped: Suspended ${culprit.name} due to drawdown of ${fmtCurrency(culprit.pnl)}.`;
-          state.councilFeed.unshift({ sender: boss.name, text: msg, color: boss.color, time: new Date().toLocaleTimeString() });
-          addSystemLog(`[RISK CONTROL] Suspended ${culprit.name}. P&L: ${fmtCurrency(culprit.pnl)}`);
-          saveState();
-          renderAll();
-          return;
-        } else if (activeAgents.length === 0) {
+        if (activeAgents.length === 0) {
           agentDefs.forEach(a => { if (a.id !== 'boss') a.status = 'ACTIVE'; });
-          boss.status = 'ACTIVE';
-          state.councilFeed.unshift({ sender: boss.name, text: `Risk parameters cleared. All trading units restored to active pool.`, color: boss.color, time: new Date().toLocaleTimeString() });
+          boss.status = 'STANDBY';
           saveState();
           renderAll();
           return;
         }
 
         const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
-        const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-        if (coin.price <= 0) return;
+        
+        // Smart-Entry Filter: Only pick coins that have neutral-to-positive 24h momentum or existing holdings
+        const candidateCoins = marketCoins.filter(c => c.change24h >= 0 || (state.positions[c.symbol] || 0) > 0);
+        const coin = candidateCoins.length > 0 ? candidateCoins[Math.floor(Math.random() * candidateCoins.length)] : marketCoins[0];
+        if (!coin || coin.price <= 0) return;
 
         let action = 'buy';
         let pnlDelta = 0;
@@ -617,37 +634,27 @@
         const curHold = state.positions[coin.symbol] || 0;
         const avgCost = state.costBasis[coin.symbol] || coin.price;
 
-        if (state.cash > 5.0 && (Math.random() > 0.4 || curHold === 0)) {
-          let spend = state.cash * 0.10;
-          fee = spend * 0.003;
-          let netSpend = spend - fee;
-          state.cash -= spend;
-          
-          let tokens = netSpend / coin.price;
-          let oldVal = curHold * avgCost;
-          let totalTokens = curHold + tokens;
-          state.costBasis[coin.symbol] = totalTokens > 0 ? (oldVal + netSpend) / totalTokens : coin.price;
-          state.positions[coin.symbol] = totalTokens;
+        let currentPositionValue = curHold * coin.price;
+        let originalCostBasisValue = curHold * avgCost;
+        let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPositionValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
 
-          state.totalFeesPaid += fee;
-          state.txCount += 1;
-          addSystemLog(`[EXEC] ${agent.name} BUY ${tokens > 1000 ? tokens.toLocaleString('en-US', {maximumFractionDigits: 0}) : tokens.toFixed(2)} ${coin.symbol} | Cost: $${spend.toFixed(2)} | Fee: ${fmtCurrency(fee)}`);
-          action = 'buy';
-        } else if (curHold > 0.00001 && Math.random() > 0.5) {
-          let sellTokens = curHold * 0.5;
+        // Hold until at least +2% target is met, preventing micro-fee loss cycles
+        if (curHold > 0.00001 && (unrealizedGainPct >= 2.0 || Math.random() > 0.8)) {
+          let sellTokens = curHold;
           let gross = sellTokens * coin.price;
           fee = gross * 0.003;
           let netReturn = gross - fee;
 
-          pnlDelta = netReturn - (sellTokens * avgCost);
-          state.positions[coin.symbol] -= sellTokens;
-          
+          pnlDelta = netReturn - originalCostBasisValue;
+          state.positions[coin.symbol] = 0;
+          state.costBasis[coin.symbol] = 0;
+
           if (pnlDelta > 0 && state.sweepPct > 0) {
             let sweepAmount = pnlDelta * (state.sweepPct / 100);
             let userBankrollReturn = netReturn - sweepAmount;
             state.cash += userBankrollReturn;
             state.vault += sweepAmount;
-            addSystemLog(`[SWEEP] Net profit captured on ${coin.symbol}. Swept ${fmtCurrency(sweepAmount)} (${state.sweepPct}%) into Main Vault.`);
+            addSystemLog(`[VAULT SWEEP] Profit target cleared on ${coin.symbol}! Swept ${fmtCurrency(sweepAmount)} into Main Vault.`);
           } else {
             state.cash += netReturn;
           }
@@ -664,14 +671,30 @@
 
           addSystemLog(`[EXEC] ${agent.name} SELL ${coin.symbol} | P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)} | Fee: ${fmtCurrency(fee)}`);
           action = 'sell';
+        } else if (state.cash > 15.0 && curHold === 0) {
+          let spend = state.cash * 0.20; // Controlled 20% block size allocation
+          fee = spend * 0.003;
+          let netSpend = spend - fee;
+          state.cash -= spend;
+          
+          let tokens = netSpend / coin.price;
+          state.costBasis[coin.symbol] = coin.price;
+          state.positions[coin.symbol] = tokens;
+
+          state.totalFeesPaid += fee;
+          state.txCount += 1;
+          addSystemLog(`[EXEC] ${agent.name} BUY ${tokens > 1000 ? tokens.toLocaleString('en-US', {maximumFractionDigits: 0}) : tokens.toFixed(2)} ${coin.symbol} | Cost: $${spend.toFixed(2)} | Fee: ${fmtCurrency(fee)}`);
+          action = 'buy';
         } else {
           return;
         }
 
+        state.lastTradeTime = Date.now();
         saveState();
+
         let councilText = action === 'buy' ? 
-          `Executing 10% capital allocation into ${coin.symbol} at ${fmtPrice(coin.price)}. Fee incurred: ${fmtCurrency(fee)}.` :
-          `Liquidated 50% position on ${coin.symbol}. Realized P&L: ${fmtCurrency(pnlDelta)}.`;
+          `Smart-entry filter passed for ${coin.symbol} (+${coin.change24h}% 24h). Allocating 20% block.` :
+          `Profit target hit on ${coin.symbol}. Position closed with P&L: ${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ 
           sender: agent.name, 
@@ -715,6 +738,13 @@
 
         const tx = document.getElementById('status-tx-count');
         if (tx) tx.textContent = `${state.txCount} EXECUTED`;
+
+        const bossObj = agentDefs.find(a => a.id === 'boss');
+        const bossLabel = document.getElementById('boss-status-label');
+        if (bossLabel && bossObj) {
+          bossLabel.textContent = `ORCHESTRATOR-1 [${bossObj.status}]`;
+          bossLabel.style.color = bossObj.status === 'INTERVENING' ? 'var(--red)' : 'var(--purple)';
+        }
 
         const pnl = document.getElementById('realized-pnl');
         if (pnl) {
@@ -790,7 +820,7 @@
       updateKeyStatus();
       fetchLiveMarketPrices();
       renderAll();
-      setInterval(fetchLiveMarketPrices, 30000); // Refresh DEX Screener prices every 30s
+      setInterval(fetchLiveMarketPrices, 30000);
       setInterval(runTradingLoop, 8000);
     });
   </script>
