@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>$SOLARIS Treasury & Bot Simulator</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 16px;
+        }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 4px;
+            color: var(--accent);
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .metric-box {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .metric-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+        .terminal {
+            background-color: #000;
+            color: var(--accent);
+            font-family: monospace;
+            font-size: 0.8rem;
+            padding: 12px;
+            border-radius: 8px;
+            height: 120px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+        button {
+            width: 100%;
+            background-color: var(--accent);
+            color: #000;
+            font-weight: bold;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            margin-top: 8px;
+        }
+        button:active {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🪙 $SOLARIS</h1>
+    <div class="subtitle">Autonomous Treasury & Paper Trading Sandbox</div>
+
+    <div class="card">
+        <div class="metric-grid">
+            <div class="metric-box">
+                <div class="metric-label">SOL Price</div>
+                <div class="metric-value" id="sol-price">$110.10</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Treasury Net Worth</div>
+                <div class="metric-value" id="net-worth">$7,778.72</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Stablecoin Cash</div>
+                <div class="metric-value" id="cash-balance">$5,003.72</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Staked SOL</div>
+                <div class="metric-value" id="sol-balance">25.0 SOL</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="metric-label" style="margin-bottom: 8px;">🤖 Autonomous Bot Live Terminal</div>
+        <div class="terminal" id="terminal-log">
+            [00:01] System initialized. Live feed connected.<br>
+            [00:02] Staking vault active (6% APY baseline).<br>
+            [00:03] Scanning spreads > 0.5% (DEX fee 0.25% active)...<br>
+        </div>
+        <button onclick="triggerManualTrade()">Simulate Market Dip & Bot Trade</button>
+    </div>
+</div>
+
+<script>
+    let cash = 5003.72;
+    let sol = 25.0;
+    let price = 110.10;
+
+    function log(message) {
+        const term = document.getElementById('terminal-log');
+        term.innerHTML += `<br>${message}`;
+        term.scrollTop = term.scrollHeight;
+    }
+
+    function triggerManualTrade() {
+        price -= 2.50;
+        let dexFee = price * 0.0025;
+        let gasFee = 0.002;
+        cash -= (price + dexFee + gasFee);
+        sol += 1.0;
+        
+        let totalVal = cash + (sol * price);
+
+        document.getElementById('sol-price').innerText = `$${price.toFixed(2)}`;
+        document.getElementById('cash-balance').innerText = `$${cash.toFixed(2)}`;
+        document.getElementById('sol-balance').innerText = `${sol.toFixed(1)} SOL`;
+        document.getElementById('net-worth').innerText = `$${totalVal.toFixed(2)}`;
+
+        log(`[TRADE] SOL dipped to $${price.toFixed(2)}. Bot bought 1 SOL! Fee: $${dexFee.toFixed(2)}`);
+    }
+</script>
+
+</body>
+</html>
