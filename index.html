@@ -132,13 +132,16 @@
 </div>
 
 <script>
-    const startingCash = 5003.72;
-    const startingSol = 25.0;
-    const startingPrice = 110.10;
+    // Starting baseline values (immutable reference)
+    const STARTING_CASH = 5003.72;
+    const STARTING_SOL = 25.0;
+    const STARTING_PRICE = 110.10;
+    const DEX_FEE_RATE = 0.0025; // 0.25%
 
-    let cash = startingCash;
-    let sol = startingSol;
-    let price = startingPrice;
+    // State variables - these update with every trade
+    let cash = STARTING_CASH;
+    let sol = STARTING_SOL;
+    let price = STARTING_PRICE;
 
     function log(message) {
         const term = document.getElementById('terminal-log');
@@ -146,30 +149,53 @@
         term.scrollTop = term.scrollHeight;
     }
 
+    /**
+     * Render the dashboard with dynamically calculated Net Worth
+     * Net Worth = Stablecoin Cash + (Staked SOL * Current SOL Price)
+     */
     function renderDashboard() {
+        // Calculate net worth dynamically on every render
         const netWorth = cash + (sol * price);
 
+        // Update all UI elements with current state
         document.getElementById('sol-price').innerText = `$${price.toFixed(2)}`;
         document.getElementById('cash-balance').innerText = `$${cash.toFixed(2)}`;
         document.getElementById('sol-balance').innerText = `${sol.toFixed(1)} SOL`;
         document.getElementById('net-worth').innerText = `$${netWorth.toFixed(2)}`;
     }
 
+    /**
+     * Execute a single trade:
+     * 1. Price drops by $2.50
+     * 2. Bot buys exactly 1 SOL at new price + DEX fee
+     * 3. Stablecoin Cash decreases by: SOL Price + (SOL Price * DEX_FEE_RATE)
+     * 4. Staked SOL increases by exactly 1.0
+     * 5. Dashboard updates with new Net Worth calculation
+     */
     function triggerManualTrade() {
+        // Step 1: Price drops
         price -= 2.50;
 
-        const tradeFee = price * 0.0025;
-        const purchaseCost = price + tradeFee;
+        // Step 2: Calculate exact costs
+        const dexFee = price * DEX_FEE_RATE;
+        const totalPurchaseCost = price + dexFee;
 
-        cash -= purchaseCost;
+        // Step 3: Update state - cash deducted, SOL incremented
+        cash -= totalPurchaseCost;
         sol += 1.0;
 
+        // Step 4: Render dashboard with dynamically calculated Net Worth
         renderDashboard();
 
-        log(`[TRADE] SOL dipped to $${price.toFixed(2)}. Bot bought 1 SOL!`);
-        log(`        Purchase Price: $${price.toFixed(2)} | Trade Fee: $${tradeFee.toFixed(2)} | Total Deducted: $${purchaseCost.toFixed(2)}`);
+        // Step 5: Log transaction details
+        log(`[TRADE] SOL price dropped to $${price.toFixed(2)}`);
+        log(`        ✓ Bought: 1 SOL | Price: $${price.toFixed(2)}`);
+        log(`        ✓ DEX Fee (0.25%): $${dexFee.toFixed(4)}`);
+        log(`        ✓ Cash Deducted: -$${totalPurchaseCost.toFixed(2)}`);
+        log(`        ✓ Staked SOL: ${sol.toFixed(1)} | Treasury Value: $${(cash + (sol * price)).toFixed(2)}`);
     }
 
+    // Initialize dashboard on page load
     renderDashboard();
 </script>
 
