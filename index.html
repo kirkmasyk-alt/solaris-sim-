@@ -51,7 +51,7 @@
     }
 
     .app {
-      max-width: 1180px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 18px 16px 90px;
       position: relative;
@@ -594,6 +594,23 @@
       color: var(--muted);
     }
 
+    .news-feed {
+      display: grid;
+      gap: 8px;
+      max-height: 180px;
+      overflow: auto;
+    }
+
+    .news-item {
+      border: 2px solid var(--line);
+      background: rgba(13,20,31,0.8);
+      padding: 8px;
+      font-size: 0.74rem;
+      color: var(--text);
+    }
+
+    .news-item strong { color: var(--gold); }
+
     @media (max-width: 920px) {
       .scene { grid-template-columns: 1fr; }
       .room-tabs { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -640,12 +657,12 @@
                 <div class="stat-value green" id="pnl-total">+$0.00</div>
               </div>
               <div class="stat-box">
-                <div class="stat-label">USDC Cash</div>
+                <div class="stat-label">Cash Reserve</div>
                 <div class="stat-value gold" id="cash-balance">$0.00</div>
               </div>
               <div class="stat-box">
-                <div class="stat-label">SOL Holdings</div>
-                <div class="stat-value" id="sol-balance">0.00 SOL</div>
+                <div class="stat-label">Active Positions</div>
+                <div class="stat-value" id="position-count">0</div>
               </div>
             </div>
 
@@ -655,12 +672,12 @@
                 <div class="mini-value" id="sol-price">$0.00</div>
               </div>
               <div class="mini-box">
-                <div class="mini-label">Volume</div>
-                <div class="mini-value" id="trading-volume">$0.00</div>
+                <div class="mini-label">Top Coin</div>
+                <div class="mini-value" id="leading-coin">SOL</div>
               </div>
               <div class="mini-box">
-                <div class="mini-label">Fees Collected</div>
-                <div class="mini-value" id="fees-collected">$0.00</div>
+                <div class="mini-label">Trading Sentiment</div>
+                <div class="mini-value" id="sentiment-level">Neutral</div>
               </div>
             </div>
 
@@ -845,9 +862,9 @@
               <h3>AI Brief</h3>
               <ul class="trait-list">
                 <li><span>Strategy</span><strong>Accumulate low, hedge high</strong></li>
+                <li><span>Consensus</span><strong>Majority vote</strong></li>
                 <li><span>Risk Bias</span><strong>Moderate</strong></li>
-                <li><span>Whale Signal</span><strong>Watching</strong></li>
-                <li><span>Burn Signal</span><strong>Standby</strong></li>
+                <li><span>News Feed</span><strong>Live</strong></li>
               </ul>
             </div>
           </div>
@@ -855,19 +872,15 @@
           <div class="room-view" data-room="market">
             <div class="summary-grid">
               <div class="summary-box">
-                <h4>Buyers</h4>
-                <div class="list">
-                  <div>Retail: <strong id="buyers-retail">0</strong></div>
-                  <div>Wallets: <strong id="buyers-wallets">0</strong></div>
-                  <div>Whales: <strong id="buyers-whales">0</strong></div>
+                <h4>Position Leaders</h4>
+                <div class="list" id="coin-leaders">
+                  <div>Loading market...</div>
                 </div>
               </div>
               <div class="summary-box">
-                <h4>Sellers</h4>
-                <div class="list">
-                  <div>Profit Takers: <strong id="sellers-profit">0</strong></div>
-                  <div>Stakers: <strong id="sellers-stakers">0</strong></div>
-                  <div>Large Dumps: <strong id="sellers-dumps">0</strong></div>
+                <h4>Market Narrative</h4>
+                <div class="list" id="market-narrative">
+                  <div>Neutral market structure.</div>
                 </div>
               </div>
             </div>
@@ -876,19 +889,19 @@
           <div class="room-view" data-room="holdings">
             <div class="holding-grid">
               <div class="asset-card">
-                <div class="coin-tag">USDC</div>
-                <div class="coin-value" id="asset-usdc">$0.00</div>
-                <div class="coin-meta">Reserve cash</div>
+                <div class="coin-tag">CASH</div>
+                <div class="coin-value" id="asset-cash">$0.00</div>
+                <div class="coin-meta">Reserve treasury</div>
               </div>
               <div class="asset-card">
                 <div class="coin-tag">SOL</div>
                 <div class="coin-value" id="asset-sol">0.00</div>
-                <div class="coin-meta">Staked + active</div>
+                <div class="coin-meta">Primary market leader</div>
               </div>
               <div class="asset-card">
-                <div class="coin-tag">$SOLARIS</div>
-                <div class="coin-value" id="asset-solaris">0</div>
-                <div class="coin-meta">Community memecoin</div>
+                <div class="coin-tag">ALT ROTATION</div>
+                <div class="coin-value" id="asset-alt">0</div>
+                <div class="coin-meta">High beta exposure</div>
               </div>
             </div>
           </div>
@@ -934,8 +947,8 @@
           <div class="floating-box">
             <h3>Market Pulse</h3>
             <ul class="trait-list">
-              <li><span>Holders</span><strong id="holders-count">0</strong></li>
-              <li><span>Whales</span><strong id="whales-count">0</strong></li>
+              <li><span>Cash</span><strong id="holders-count">0</strong></li>
+              <li><span>Volume</span><strong id="whales-count">0</strong></li>
               <li><span>Volatility</span><strong id="volatility-level">Low</strong></li>
               <li><span>Risk Level</span><strong id="risk-level">Balanced</strong></li>
             </ul>
@@ -944,10 +957,15 @@
           <div class="floating-box">
             <h3>AI Decisions</h3>
             <ul class="trait-list">
-              <li><span>Latest Move</span><strong id="latest-ai-move">Awaiting signal</strong></li>
-              <li><span>Burn Check</span><strong id="burn-check">Standby</strong></li>
+              <li><span>Consensus</span><strong id="latest-ai-move">Awaiting signal</strong></li>
+              <li><span>News Event</span><strong id="burn-check">Standby</strong></li>
               <li><span>Capital Mix</span><strong id="capital-mix">60/35/5</strong></li>
             </ul>
+          </div>
+
+          <div class="floating-box">
+            <h3>News Feed</h3>
+            <div class="news-feed" id="news-feed"></div>
           </div>
         </div>
       </aside>
@@ -955,39 +973,48 @@
   </div>
 
   <script>
+    const marketCoins = [
+      { symbol: 'SOL', price: 145.2, sentiment: 0.12, volume: 12000, momentum: 0.8 },
+      { symbol: 'BONK', price: 0.000025, sentiment: 0.18, volume: 9000, momentum: 0.95 },
+      { symbol: 'JTO', price: 1.84, sentiment: 0.14, volume: 7800, momentum: 0.78 },
+      { symbol: 'RAY', price: 3.46, sentiment: 0.1, volume: 7000, momentum: 0.66 },
+      { symbol: 'WIF', price: 1.32, sentiment: 0.09, volume: 6600, momentum: 0.64 }
+    ];
+
+    const agentDefs = [
+      { id: 'finance', name: 'Finance AI', role: 'Portfolio', style: 'conservative', bias: 0.75 },
+      { id: 'risk', name: 'Risk Analyst', role: 'Exposure', style: 'defensive', bias: 0.82 },
+      { id: 'trader', name: 'Trader Alpha', role: 'Execution', style: 'aggressive', bias: 1.22 },
+      { id: 'advisor', name: 'Strategy Advisor', role: 'Macro', style: 'macro', bias: 1.05 },
+      { id: 'cfo', name: 'Treasury CFO', role: 'Capital', style: 'balanced', bias: 0.9 }
+    ];
+
     const state = {
-      cash: 5003.72,
-      sol: 25.0,
-      solaris: 42000,
-      price: 110.10,
-      baselinePrice: 110.10,
-      baselineCash: 5003.72,
-      baselineSol: 25.0,
-      baselineNetWorth: 5003.72 + (25 * 110.10),
-      feesCollected: 0,
-      tradingVolume: 0,
-      marketTick: null,
-      buyers: { retail: 0, wallets: 0, whales: 0 },
-      sellers: { profit: 0, stakers: 0, dumps: 0 },
-      holders: 0,
-      whales: 0,
-      volatility: 'Low',
-      riskLevel: 'Balanced',
-      latestAIMove: 'Awaiting signal',
-      burnCheck: 'Standby',
-      capitalMix: '60/35/5',
+      cash: 10000,
+      positions: { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
+      baseline: 10000,
       history: [
         'Market opened with treasury baseline set.',
         'AI agents online and idle scanning.',
         'Organic flow waiting for buyers and sellers.'
-      ]
+      ],
+      latestConsensus: 'Awaiting signal',
+      latestNews: 'Standby',
+      capitalMix: '60/35/5',
+      marketTick: null,
+      newsFeed: [
+        { title: 'Market neutral', detail: 'No major catalyst yet — radar is active.', tone: 'neutral' },
+        { title: 'Ecosystem update', detail: 'Layer-1 narratives remain constructive.', tone: 'positive' },
+        { title: 'Risk watch', detail: 'Volatility remains elevated in alt pairs.', tone: 'caution' }
+      ],
+      signals: []
     };
 
     const aiChatter = {
       finance: [
         'I’m rebalancing the portfolio toward lower-risk gains.',
         'I’ve reduced exposure after watching the trend weaken.',
-        'I’m increasing BTC allocation only after the trend confirms.'
+        'I’m increasing quality exposure only after the trend confirms.'
       ],
       risk: [
         'I’m checking volatility and setting hedges before the next move.',
@@ -1001,12 +1028,12 @@
       ],
       advisor: [
         'We should stay disciplined and avoid emotional trades.',
-        'The macro picture still supports a slow, defensive strategy.',
+        'The macro picture supports steady rotation into quality narratives.',
         'I’m forcing a better risk-adjusted plan than the last cycle.'
       ],
       cfo: [
         'The treasury is protecting capital while preserving upside exposure.',
-        'I’m maintaining a strong reserve while we wait for confirmation.',
+        'I’m balancing liquidity while we evaluate catalysts.',
         'Capital efficiency matters more than chasing every move.'
       ]
     };
@@ -1023,64 +1050,29 @@
       return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
+    function fmtCompactNum(value) {
+      return Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    }
+
     function getNetWorth() {
-      return state.cash + (state.sol * state.price);
+      let total = state.cash;
+      marketCoins.forEach((coin) => {
+        total += (state.positions[coin.symbol] || 0) * coin.price;
+      });
+      return total;
     }
 
     function getPnl() {
-      return getNetWorth() - state.baselineNetWorth;
+      return getNetWorth() - state.baseline;
     }
 
-    function updateVolatility() {
-      const delta = Math.abs(state.price - state.baselinePrice) / state.baselinePrice;
-      if (delta < 0.015) state.volatility = 'Low';
-      else if (delta < 0.045) state.volatility = 'Medium';
-      else state.volatility = 'High';
-
-      if (state.volatility === 'High') state.riskLevel = 'Defensive';
-      else if (state.volatility === 'Medium') state.riskLevel = 'Balanced';
-      else state.riskLevel = 'Aggressive';
+    function randomFrom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    function render() {
-      const netWorth = getNetWorth();
-      const pnl = getPnl();
-
-      document.getElementById('net-worth').textContent = fmtCurrency(netWorth);
-      document.getElementById('pnl-total').textContent = `${pnl >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(pnl))}`;
-      document.getElementById('pnl-total').className = `stat-value ${pnl >= 0 ? 'green' : 'red'}`;
-      document.getElementById('cash-balance').textContent = fmtCurrency(state.cash);
-      document.getElementById('sol-balance').textContent = `${state.sol.toFixed(2)} SOL`;
-      document.getElementById('sol-price').textContent = fmtCurrency(state.price);
-      document.getElementById('trading-volume').textContent = fmtCurrency(state.tradingVolume);
-      document.getElementById('fees-collected').textContent = fmtCurrency(state.feesCollected);
-
-      document.getElementById('realized-pnl').textContent = `${pnl >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(pnl))}`;
-      document.getElementById('unrealized-pnl').textContent = `${pnl >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(pnl * 0.42))}`;
-      document.getElementById('best-day').textContent = pnl >= 0 ? 'Bull Pulse' : 'Risk Guard';
-      document.getElementById('worst-day').textContent = pnl >= 0 ? 'Whale Shock' : 'Dump Echo';
-
-      document.getElementById('buyers-retail').textContent = state.buyers.retail;
-      document.getElementById('buyers-wallets').textContent = state.buyers.wallets;
-      document.getElementById('buyers-whales').textContent = state.buyers.whales;
-      document.getElementById('sellers-profit').textContent = state.sellers.profit;
-      document.getElementById('sellers-stakers').textContent = state.sellers.stakers;
-      document.getElementById('sellers-dumps').textContent = state.sellers.dumps;
-
-      document.getElementById('holders-count').textContent = state.holders;
-      document.getElementById('whales-count').textContent = state.whales;
-      document.getElementById('volatility-level').textContent = state.volatility;
-      document.getElementById('risk-level').textContent = state.riskLevel;
-      document.getElementById('latest-ai-move').textContent = state.latestAIMove;
-      document.getElementById('burn-check').textContent = state.burnCheck;
-      document.getElementById('capital-mix').textContent = state.capitalMix;
-
-      document.getElementById('asset-usdc').textContent = fmtCurrency(state.cash);
-      document.getElementById('asset-sol').textContent = `${state.sol.toFixed(2)} SOL`;
-      document.getElementById('asset-solaris').textContent = `${state.solaris.toLocaleString()}`;
-
-      const historyEl = document.getElementById('history-list');
-      historyEl.innerHTML = state.history.slice(0, 6).map(item => `<div>• ${item}</div>`).join('');
+    function addHistory(message) {
+      state.history.unshift(message);
+      state.history = state.history.slice(0, 8);
     }
 
     function log(message) {
@@ -1089,116 +1081,266 @@
       term.scrollTop = term.scrollHeight;
     }
 
-    function addHistory(message) {
-      state.history.unshift(message);
-      state.history = state.history.slice(0, 8);
-    }
-
-    function randomFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-
-    function generateOrganicMarketEvent() {
-      const actorTypes = ['retail', 'wallet', 'whale'];
-      const actor = randomFrom(actorTypes);
-      const isBuy = Math.random() < 0.55;
-      const size = actor === 'whale' ? (Math.random() * 18 + 8) : (Math.random() * 4 + 0.5);
-      const impact = (Math.random() * 0.8 + 0.2) / 100;
-
-      if (isBuy) {
-        state.price *= 1 + impact;
-        state.cash += size * state.price * 0.12;
-        state.tradingVolume += size * state.price;
-        state.buyers.retail += actor === 'retail' ? 1 : 0;
-        state.buyers.wallets += actor === 'wallet' ? 1 : 0;
-        state.buyers.whales += actor === 'whale' ? 1 : 0;
-        state.holders += actor === 'retail' ? 1 : 0;
-        state.whales += actor === 'whale' ? 1 : 0;
-        log(`🟢 ORGANIC BUY // ${actor.toUpperCase()} ${size.toFixed(1)} SOL @ $${state.price.toFixed(2)}`);
-        addHistory(`Organic buy: ${actor} size ${size.toFixed(1)} SOL`);
-      } else {
-        state.price *= 1 - impact;
-        state.tradingVolume += size * state.price;
-        state.sellers.profit += actor === 'retail' ? 1 : 0;
-        state.sellers.stakers += actor === 'wallet' ? 1 : 0;
-        state.sellers.dumps += actor === 'whale' ? 1 : 0;
-        state.holders = Math.max(0, state.holders - (actor === 'whale' ? 2 : 1));
-        log(`🔴 ORGANIC SELL // ${actor.toUpperCase()} ${size.toFixed(1)} SOL @ $${state.price.toFixed(2)}`);
-        addHistory(`Organic sell: ${actor} exited ${size.toFixed(1)} SOL`);
-      }
-
-      updateVolatility();
-      render();
-    }
-
-    function decideAI() {
-      const delta = ((state.price - state.baselinePrice) / state.baselinePrice) * 100;
-
-      if (delta <= -2.5) {
-        state.latestAIMove = 'Buy the dip';
-        state.burnCheck = 'Pause';
-        state.capitalMix = '50/40/10';
-        state.cash = Math.max(0, state.cash - (state.price * 1.05));
-        state.sol += 1.0;
-        state.feesCollected += state.price * 0.0025 + 0.002;
-        addHistory('Finance AI bought SOL on dip signal.');
-      } else if (delta >= 4.5) {
-        state.latestAIMove = 'Trim winners';
-        state.burnCheck = 'Evaluate';
-        state.capitalMix = '65/25/10';
-        if (state.sol >= 1) {
-          state.cash += (state.price * 0.98) - 0.002;
-          state.sol -= 1.0;
-          state.feesCollected += state.price * 0.0025 + 0.002;
-        }
-        addHistory('Finance AI reduced exposure during rally.');
-      } else {
-        state.latestAIMove = 'Hedge and hold';
-        state.burnCheck = 'Standby';
-        state.capitalMix = '60/35/5';
-        addHistory('AI held capital and preserved treasury balance.');
-      }
-
-      render();
-      log(`🤖 AI SIGNAL // ${state.latestAIMove} | ${state.capitalMix}`);
-    }
-
     function renderAgentMetrics() {
       document.querySelectorAll('.ai-agent').forEach((card) => {
         const role = card.dataset.role;
         const stats = aiStats[role] || aiStats.finance;
         const fields = card.querySelectorAll('[data-metric]');
-
         fields.forEach((field) => {
           const key = field.dataset.metric;
-          const value = stats[key];
-          if (value) {
-            field.textContent = value;
-          }
+          if (stats[key]) field.textContent = stats[key];
         });
       });
     }
 
-    function initAIChats() {
-      const cards = document.querySelectorAll('.ai-agent');
-      cards.forEach((card) => {
+    function renderAgents() {
+      document.querySelectorAll('.ai-agent').forEach((card) => {
         const role = card.dataset.role;
         const bubble = card.querySelector('.agent-chat');
         const queue = aiChatter[role] || aiChatter.finance;
-        let index = 0;
-
+        const index = Math.floor(Math.random() * queue.length);
         bubble.textContent = queue[index];
-        setInterval(() => {
-          index = (index + 1) % queue.length;
-          bubble.textContent = queue[index];
-        }, 3200);
       });
     }
 
-    function startSimulation() {
-      if (state.marketTick) clearInterval(state.marketTick);
-      state.marketTick = setInterval(() => {
-        generateOrganicMarketEvent();
-        if (Math.random() < 0.55) decideAI();
-      }, 3000);
+    function renderNews() {
+      const feed = document.getElementById('news-feed');
+      feed.innerHTML = state.newsFeed.slice(0, 5).map(item => {
+        const tone = item.tone === 'positive' ? 'green' : item.tone === 'caution' ? 'gold' : 'cyan';
+        return `<div class="news-item"><strong style="color:var(--${tone});">${item.title}</strong><br>${item.detail}</div>`;
+      }).join('');
+    }
+
+    function updateMarketPulse() {
+      const top = [...marketCoins].sort((a, b) => b.sentiment - a.sentiment)[0];
+      const sentiment = top.sentiment > 0.15 ? 'Bullish' : top.sentiment > 0.05 ? 'Neutral' : 'Risk-Off';
+      document.getElementById('leading-coin').textContent = top.symbol;
+      document.getElementById('sentiment-level').textContent = sentiment;
+      document.getElementById('volatility-level').textContent = state.marketVolatility || 'Low';
+      document.getElementById('risk-level').textContent = state.marketRisk || 'Balanced';
+      document.getElementById('latest-ai-move').textContent = state.latestConsensus;
+      document.getElementById('burn-check').textContent = state.latestNews;
+      document.getElementById('capital-mix').textContent = state.capitalMix;
+    }
+
+    function buildMarketNarrative() {
+      const best = [...marketCoins].sort((a, b) => b.sentiment - a.sentiment)[0];
+      const worst = [...marketCoins].sort((a, b) => a.sentiment - b.sentiment)[0];
+      const leaders = [...marketCoins].sort((a, b) => b.sentiment - a.sentiment).slice(0, 3);
+      const list = leaders.map(coin => `${coin.symbol}: ${coin.sentiment > 0 ? '+' : ''}${coin.sentiment.toFixed(2)}`).join(' • ');
+      document.getElementById('coin-leaders').innerHTML = leaders.map(coin => `<div>${coin.symbol}: <strong>${coin.price}</strong></div>`).join('');
+      document.getElementById('market-narrative').innerHTML = `<div>Best momentum: <strong>${best.symbol}</strong></div><div>Weakest: <strong>${worst.symbol}</strong></div><div>Theme: <strong>${list}</strong></div>`;
+    }
+
+    function renderPortfolio() {
+      const totalPositions = Object.values(state.positions).filter(v => v > 0).length;
+      document.getElementById('position-count').textContent = totalPositions;
+      document.getElementById('asset-cash').textContent = fmtCurrency(state.cash);
+      document.getElementById('asset-sol').textContent = `${(state.positions.SOL || 0).toFixed(2)} SOL`;
+      document.getElementById('asset-alt').textContent = String(totalPositions - 1);
+      document.getElementById('holders-count').textContent = fmtCurrency(state.cash);
+      document.getElementById('whales-count').textContent = `${marketCoins.length} coins`;
+      document.getElementById('realized-pnl').textContent = `${getPnl() >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(getPnl()))}`;
+      document.getElementById('unrealized-pnl').textContent = `${getPnl() >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(getPnl() * 0.42))}`;
+      document.getElementById('best-day').textContent = getPnl() >= 0 ? 'Bull Pulse' : 'Risk Guard';
+      document.getElementById('worst-day').textContent = getPnl() >= 0 ? 'Whale Shock' : 'Dump Echo';
+    }
+
+    function updateMarketStats() {
+      const prices = marketCoins.map(c => c.price);
+      const avg = prices.reduce((t, p) => t + p, 0) / prices.length;
+      const trend = marketCoins.reduce((t, c) => t + c.momentum, 0) / marketCoins.length;
+      state.marketVolatility = trend > 0.8 ? 'High' : trend > 0.65 ? 'Medium' : 'Low';
+      state.marketRisk = trend > 0.8 ? 'Aggressive' : trend > 0.65 ? 'Balanced' : 'Defensive';
+      const price = marketCoins.find(c => c.symbol === 'SOL').price;
+      document.getElementById('sol-price').textContent = fmtCurrency(price);
+      document.getElementById('net-worth').textContent = fmtCurrency(getNetWorth());
+      document.getElementById('pnl-total').textContent = `${getPnl() >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(getPnl()))}`;
+      document.getElementById('pnl-total').className = `stat-value ${getPnl() >= 0 ? 'green' : 'red'}`;
+      document.getElementById('cash-balance').textContent = fmtCurrency(state.cash);
+      updateMarketPulse();
+      renderPortfolio();
+    }
+
+    function generateNewsEvent() {
+      const eventTemplates = [
+        { title: 'Solana ecosystem expansion', detail: 'Developer activity rises across the ecosystem, lifting sentiment.', tone: 'positive', coins: ['SOL', 'JTO', 'RAY'] },
+        { title: 'Whale accumulation alerts', detail: 'Large wallets are being spotted in mid-cap meme plays.', tone: 'positive', coins: ['BONK', 'WIF'] },
+        { title: 'Regulatory caution', detail: 'Investors rotate into safer large-cap layers.', tone: 'caution', coins: ['SOL', 'RAY'] },
+        { title: 'Listing rumor', detail: 'Exchange rumor drives attention toward smaller caps.', tone: 'positive', coins: ['JTO', 'BONK'] },
+        { title: 'Risk-off sentiment', detail: 'Traders pull back as macro risk grows.', tone: 'caution', coins: ['BONK', 'WIF'] },
+        { title: 'Market neutral', detail: 'No immediate catalyst; traders wait for clarity.', tone: 'neutral', coins: ['SOL', 'JTO'] }
+      ];
+
+      const event = randomFrom(eventTemplates);
+      const coinList = event.coins.join(', ');
+      state.newsFeed.unshift({ title: event.title, detail: `${event.detail} (${coinList})`, tone: event.tone });
+      state.newsFeed = state.newsFeed.slice(0, 6);
+      state.latestNews = event.title;
+      renderNews();
+      return event;
+    }
+
+    function scoreCoinForAgent(agent, coin, event) {
+      const item = marketCoins.find(c => c.symbol === coin.symbol || c.symbol === coin);
+      const base = item ? item.sentiment : 0;
+      let score = base * 5;
+      const sentimentBias = event && event.tone === 'positive' ? 1.2 : event && event.tone === 'caution' ? -0.9 : 0;
+      const styleBias = agent.style === 'aggressive' ? 1.4 : agent.style === 'defensive' ? -0.6 : 0.6;
+      const macroBias = agent.style === 'macro' ? 1.1 : 0.2;
+      score += (sentimentBias + styleBias + macroBias + item.momentum) * agent.bias;
+      return score;
+    }
+
+    function runAgentDecision(agent, event) {
+      const candidates = marketCoins.map((coin) => ({
+        coin: coin.symbol,
+        score: scoreCoinForAgent(agent, coin, event)
+      })).sort((a, b) => b.score - a.score);
+
+      const best = candidates[0];
+      const second = candidates[1];
+      const actionScore = best.score + (Math.random() * 0.7 - 0.2);
+      const hasPosition = (state.positions[best.coin] || 0) > 0;
+      let action = 'hold';
+      let reason = 'Wait for confirmation';
+      let confidence = 0.46;
+
+      if (agent.style === 'defensive') {
+        if (best.score > 2.8) {
+          action = 'buy';
+          reason = 'Protective upside with controlled risk';
+          confidence = 0.72;
+        } else if (best.score < 0.8) {
+          action = 'sell';
+          reason = 'Reduce exposure before drawdown expands';
+          confidence = 0.69;
+        }
+      } else if (agent.style === 'aggressive') {
+        if (best.score > 3.1) {
+          action = 'buy';
+          reason = 'Breakout momentum with strong catalyst';
+          confidence = 0.81;
+        } else if (best.score < 1.2) {
+          action = 'sell';
+          reason = 'Fast momentum reversal risk';
+          confidence = 0.7;
+        }
+      } else if (agent.style === 'macro') {
+        if (best.score > 2.5) {
+          action = 'buy';
+          reason = 'Narrative-led rotation into ecosystem strength';
+          confidence = 0.74;
+        } else if (best.score < 0.9) {
+          action = 'sell';
+          reason = 'Narrative turning weak';
+          confidence = 0.66;
+        }
+      } else {
+        if (best.score > 2.2) {
+          action = 'buy';
+          reason = 'Capitalize on efficiency and trend quality';
+          confidence = 0.75;
+        } else if (best.score < 1.0 && hasPosition) {
+          action = 'sell';
+          reason = 'Trim overexposed names';
+          confidence = 0.68;
+        }
+      }
+
+      return {
+        agent: agent.name,
+        role: agent.role,
+        action,
+        coin: best.coin,
+        confidence,
+        reason,
+        alt: second.coin,
+        score: best.score
+      };
+    }
+
+    function executeTrade(signal) {
+      const coin = marketCoins.find(c => c.symbol === signal.coin);
+      if (!coin) return;
+
+      const tradeSize = Math.min(2000, state.cash * 0.18 / coin.price);
+      const buyAmount = Math.max(0.1, tradeSize);
+      const sellAmount = state.positions[signal.coin] || 0;
+
+      if (signal.action === 'buy' && state.cash > 100) {
+        const purchase = Math.min(buyAmount, state.cash / coin.price);
+        state.positions[signal.coin] = (state.positions[signal.coin] || 0) + purchase;
+        state.cash -= purchase * coin.price;
+        addHistory(`${signal.agent} bought ${purchase.toFixed(2)} ${signal.coin}.`);
+        log(`🤖 ${signal.agent} // BUY ${signal.coin} ${purchase.toFixed(2)} @ ${fmtCurrency(coin.price)}`);
+      } else if (signal.action === 'sell' && sellAmount > 0) {
+        const sellQty = Math.min(sellAmount, sellAmount * 0.8);
+        state.positions[signal.coin] -= sellQty;
+        state.cash += sellQty * coin.price;
+        addHistory(`${signal.agent} sold ${sellQty.toFixed(2)} ${signal.coin}.`);
+        log(`🤖 ${signal.agent} // SELL ${signal.coin} ${sellQty.toFixed(2)} @ ${fmtCurrency(coin.price)}`);
+      } else {
+        addHistory(`${signal.agent} held ${signal.coin} and waited.`);
+      }
+    }
+
+    function aggregateConsensus(decisions) {
+      const voteMap = {};
+      decisions.forEach((d) => {
+        if (!voteMap[d.coin]) voteMap[d.coin] = { total: 0, buy: 0, sell: 0, hold: 0, average: 0 };
+        voteMap[d.coin].total += 1;
+        voteMap[d.coin][d.action] += 1;
+        voteMap[d.coin].average += d.confidence;
+      });
+
+      const candidates = Object.entries(voteMap).filter(([coin, data]) => data.total >= 3);
+      if (!candidates.length) {
+        state.latestConsensus = 'Hold';
+        return null;
+      }
+
+      const best = candidates.sort((a, b) => b[1].total - a[1].total)[0];
+      const [coin, data] = best;
+      const action = data.buy >= data.sell && data.buy >= data.hold ? 'buy' : data.sell >= data.hold ? 'sell' : 'hold';
+      const avgConfidence = data.average / data.total;
+
+      if (avgConfidence >= 0.68 && (action === 'buy' || action === 'sell')) {
+        state.latestConsensus = `${action.toUpperCase()} ${coin}`;
+        return { coin, action, confidence: avgConfidence, reason: `${data.total}/5 agents agreed` };
+      }
+
+      state.latestConsensus = 'Hold';
+      return null;
+    }
+
+    function processMarketLoop() {
+      const event = generateNewsEvent();
+      const decisions = agentDefs.map((agent) => runAgentDecision(agent, event));
+      state.signals = decisions;
+      const verdict = aggregateConsensus(decisions);
+
+      if (verdict) {
+        executeTrade(verdict);
+        state.capitalMix = verdict.action === 'buy' ? '62/30/8' : verdict.action === 'sell' ? '48/42/10' : '60/35/5';
+      } else {
+        state.capitalMix = '60/35/5';
+      }
+
+      marketCoins.forEach((coin) => {
+        const pulse = (Math.random() - 0.5) * 0.06;
+        coin.sentiment = Math.min(0.8, Math.max(-0.8, coin.sentiment + pulse + (event.tone === 'positive' ? 0.04 : event.tone === 'caution' ? -0.04 : 0)));
+        const move = (Math.random() * 0.04 - 0.02) + (event.tone === 'positive' ? 0.012 : event.tone === 'caution' ? -0.012 : 0);
+        coin.price *= 1 + move;
+        coin.momentum = Math.max(0.25, Math.min(1.4, coin.momentum + pulse * 0.5));
+      });
+
+      buildMarketNarrative();
+      updateMarketStats();
+      renderNews();
+      updateMarketPulse();
+      document.getElementById('history-list').innerHTML = state.history.slice(0, 6).map(item => `<div>• ${item}</div>`).join('');
+      log(`🧠 CONSENSUS // ${state.latestConsensus} | ${state.capitalMix}`);
     }
 
     function initTabs() {
@@ -1216,10 +1358,13 @@
 
     function init() {
       initTabs();
-      initAIChats();
+      renderAgents();
+      renderNews();
       renderAgentMetrics();
-      render();
-      startSimulation();
+      buildMarketNarrative();
+      updateMarketStats();
+      renderPortfolio();
+      state.marketTick = setInterval(processMarketLoop, 5000);
     }
 
     init();
