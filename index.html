@@ -17,6 +17,8 @@
       --muted: #8da3be;
       --border: #24364d;
       --shadow: rgba(0,0,0,0.3);
+      --risk: #f97316;
+      --success: #10b981;
     }
 
     * { box-sizing: border-box; }
@@ -258,6 +260,43 @@
       color: var(--muted);
       margin-top: 6px;
     }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .summary-box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.5);
+      padding: 12px;
+    }
+
+    .health-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .health-pill.good {
+      background: rgba(34, 197, 94, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.26);
+    }
+
+    .health-pill.warn {
+      background: rgba(249, 115, 22, 0.12);
+      color: var(--risk);
+      border: 1px solid rgba(249, 115, 22, 0.26);
+    }
   </style>
 </head>
 <body>
@@ -331,6 +370,21 @@
           </div>
         </div>
 
+        <div class="summary-row">
+          <div class="summary-box">
+            <div class="metric-label">Market Health</div>
+            <div id="market-health" class="health-pill good">Stable</div>
+          </div>
+          <div class="summary-box">
+            <div class="metric-label">Bot Bias</div>
+            <div id="bot-bias" class="health-pill good">Neutral</div>
+          </div>
+          <div class="summary-box">
+            <div class="metric-label">Treasury Risk</div>
+            <div id="treasury-risk" class="health-pill good">Low</div>
+          </div>
+        </div>
+
         <div style="margin-top: 18px;">
           <div class="metric-label">Recent Activity</div>
           <ul class="trade-list" id="trade-list">
@@ -399,6 +453,41 @@
       return state.cash + (state.sol * state.price);
     }
 
+    function setHealthStatus() {
+      const netWorth = getNetWorth();
+      const ratio = state.cash / netWorth;
+      const marketHealth = document.getElementById('market-health');
+      const botBias = document.getElementById('bot-bias');
+      const treasuryRisk = document.getElementById('treasury-risk');
+
+      if (ratio > 0.6) {
+        marketHealth.textContent = 'Healthy';
+        marketHealth.className = 'health-pill good';
+      } else {
+        marketHealth.textContent = 'Watch';
+        marketHealth.className = 'health-pill warn';
+      }
+
+      if (state.sol > state.cash) {
+        botBias.textContent = 'Long';
+        botBias.className = 'health-pill good';
+      } else if (state.sol < state.cash * 0.2) {
+        botBias.textContent = 'Neutral';
+        botBias.className = 'health-pill warn';
+      } else {
+        botBias.textContent = 'Neutral';
+        botBias.className = 'health-pill good';
+      }
+
+      if (state.cash < 1000) {
+        treasuryRisk.textContent = 'Elevated';
+        treasuryRisk.className = 'health-pill warn';
+      } else {
+        treasuryRisk.textContent = 'Low';
+        treasuryRisk.className = 'health-pill good';
+      }
+    }
+
     function addTradeLog(type, note) {
       state.recentTrades.unshift({ type, note });
       state.recentTrades = state.recentTrades.slice(0, 6);
@@ -424,6 +513,7 @@
       document.getElementById('tokens-burned').textContent = Number(state.tokensBurned).toLocaleString();
       document.getElementById('circulating-supply').textContent = formatSupply(state.circulatingSupply);
       document.getElementById('trading-volume').textContent = formatCurrency(state.tradingVolume);
+      setHealthStatus();
     }
 
     function renderWeekChart() {
@@ -445,10 +535,9 @@
       const maxVolume = Math.max(...state.weekData.map(d => d.volume), 1);
       chartContainer.innerHTML = state.weekData.map((dayData, idx) => {
         const height = (dayData.volume / maxVolume) * 100;
-        const isActive = idx === state.currentDay;
         return `
           <div class="chart-bar">
-            <div class="bar" style="height: ${Math.max(height, 15)}%; opacity: ${isActive ? 1 : 0.7};"></div>
+            <div class="bar" style="height: ${Math.max(height, 15)}%; opacity: ${idx === state.currentDay ? 1 : 0.7};"></div>
             <div class="bar-label">${DAYS[idx]}</div>
           </div>
         `;
@@ -582,7 +671,7 @@
 
         const dailyMove = (Math.random() * 6) - 3;
         state.price *= 1 + (dailyMove / 100);
-        log(`   �� SOL price moved to $${state.price.toFixed(2)} (${dailyMove > 0 ? '+' : ''}${dailyMove.toFixed(2)}%)`);
+        log(`   📈 SOL price moved to $${state.price.toFixed(2)} (${dailyMove > 0 ? '+' : ''}${dailyMove.toFixed(2)}%)`);
 
         if (dailyMove <= -1.0 && state.cash >= state.price) {
           buyOneSol();
