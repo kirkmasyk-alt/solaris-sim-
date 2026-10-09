@@ -20,22 +20,21 @@ let state = {
   avgBuyPrice: { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
   baseline: 10000,
   realizedPnl: 0,
-  history: ['System online.'],
+  history: ['High-stakes treasury matrix initialized.'],
   councilFeed: [],
-  latestConsensus: 'Awaiting signal',
-  latestNews: 'Normal operations',
-  newsFeed: []
-};
+  agentState: {}
+];
 
-const banterPool = [
-  "I'm grabbing 2 units of WIF here before momentum runs away.",
-  "We need to trim our SOL stack to protect cash reserves.",
-  "Let's keep eyes on JTO. Order books are tightening up.",
-  "Risk Core is being too conservative on this dip."
+const bigMoneyBanter = [
+  "Deploying 40% of cash reserves into this SOL breakout. Let's ride.",
+  "Risk Core is screaming, but ALPHA_X is heavy-loading WIF right now.",
+  "That's a massive liquidity sweep. Liquidating half our JTO stack to lock in gains.",
+  "If this macro thesis hits, this position is going to print thousands.",
+  "Scaling up our exposure. We aren't here to make pennies."
 ];
 
 function loadFromStorage() {
-  const saved = localStorage.getItem('solaris_sim_state');
+  const saved = localStorage.getItem('solaris_sim_state_v18');
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
@@ -45,21 +44,24 @@ function loadFromStorage() {
       state.baseline = parsed.baseline ?? state.baseline;
       state.realizedPnl = parsed.realizedPnl ?? state.realizedPnl;
       state.councilFeed = parsed.councilFeed ?? state.councilFeed;
+      state.agentState = parsed.agentState ?? state.agentState;
     } catch (e) {
       console.error(e);
     }
   }
   renderCouncilFeed();
+  renderWarRoom();
 }
 
 function saveToStorage() {
-  localStorage.setItem('solaris_sim_state', JSON.stringify({
+  localStorage.setItem('solaris_sim_state_v18', JSON.stringify({
     cash: state.cash,
     positions: state.positions,
     avgBuyPrice: state.avgBuyPrice,
     baseline: state.baseline,
     realizedPnl: state.realizedPnl,
-    councilFeed: state.councilFeed
+    councilFeed: state.councilFeed,
+    agentState: state.agentState
   }));
 }
 
@@ -71,30 +73,71 @@ function getNetWorth() {
   return total;
 }
 
-function getUnrealizedPnl() {
-  let unrealized = 0;
-  marketCoins.forEach(coin => {
-    const qty = state.positions[coin.symbol] || 0;
-    if (qty > 0) unrealized += qty * (coin.price - state.avgBuyPrice[coin.symbol]);
-  });
-  return unrealized;
+function renderWarRoom() {
+  const container = document.getElementById('war-room-container');
+  if (!container) return;
+  
+  container.innerHTML = agentDefs.map(agent => {
+    const lastAction = state.agentState[agent.id] || { action: 'hold', coin: 'SOL', speech: 'Scanning order books for heavy volume.' };
+    return `
+      <div class="agent-card" style="border-color: ${agent.color}; margin-bottom: 15px; padding: 12px; background: rgba(0,0,0,0.4);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="color: ${agent.color};">${agent.name}</strong>
+          <span style="font-size: 10px; background: #111; padding: 2px 6px; border: 1px solid ${agent.color};">${lastAction.action.toUpperCase()}</span>
+        </div>
+        <div style="font-size: 11px; color: #888; margin-top: 4px;">${agent.role} (${agent.risk} Risk)</div>
+        <div style="margin-top: 8px; font-size: 12px; font-style: italic; color: #ddd;">"${lastAction.speech}"</div>
+      </div>
+    `;
+  }).join('');
 }
 
 async function runAgentTurn() {
+  marketCoins.forEach(coin => {
+    const fluctuation = (Math.random() - 0.48) * 0.03; // Higher volatility for bigger swings
+    coin.price = Math.max(0.000001, coin.price * (1 + fluctuation));
+  });
+
   const agent = agentDefs[Math.floor(Math.random() * agentDefs.length)];
   const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-  const action = ['buy', 'sell', 'hold'][Math.floor(Math.random() * 3)];
-  const speech = banterPool[Math.floor(Math.random() * banterPool.length)];
+  const action = ['buy', 'buy', 'sell', 'hold'][Math.floor(Math.random() * 4)]; // Weight slightly toward action
+  const speech = bigMoneyBanter[Math.floor(Math.random() * bigMoneyBanter.length)];
 
-  if (action === 'buy' && state.cash >= coin.price * 2) {
-    state.cash -= coin.price * 2;
-    state.positions[coin.symbol] = (state.positions[coin.symbol] || 0) + 2;
-    state.avgBuyPrice[coin.symbol] = coin.price;
-  } else if (action === 'sell' && (state.positions[coin.symbol] || 0) >= 2) {
-    state.positions[coin.symbol] -= 2;
-    state.cash += coin.price * 2;
-    state.realizedPnl += coin.price * 2 * 0.05;
+  if (action === 'buy') {
+    // Risk-weighted allocation: High risk agents risk more cash per trade
+    const riskMultiplier = agent.risk === 'High' ? 0.4 : agent.risk === 'Med' ? 0.25 : 0.15;
+    const allocation = state.cash * riskMultiplier;
+    
+    if (allocation > 10 && state.cash >= allocation) {
+      state.cash -= allocation;
+      const qtyPurchased = allocation / coin.price;
+      const currentQty = state.positions[coin.symbol] || 0;
+      const currentAvg = state.avgBuyPrice[coin.symbol] || coin.price;
+      
+      state.avgBuyPrice[coin.symbol] = currentQty > 0 ? ((currentQty * currentAvg) + allocation) / (currentQty + qtyPurchased) : coin.price;
+      state.positions[coin.symbol] = currentQty + qtyPurchased;
+      
+      agent.wins++;
+    }
+  } else if (action === 'sell') {
+    const currentQty = state.positions[coin.symbol] || 0;
+    if (currentQty > 0) {
+      const sellQty = currentQty * (agent.risk === 'High' ? 0.8 : 0.4); // Sell big chunks
+      const revenue = sellQty * coin.price;
+      const costBasis = sellQty * state.avgBuyPrice[coin.symbol];
+      const tradePnl = revenue - costBasis;
+
+      state.cash += revenue;
+      state.positions[coin.symbol] -= sellQty;
+      state.realizedPnl += tradePnl;
+      agent.pnl += tradePnl;
+
+      if (tradePnl >= 0) agent.wins++;
+      else agent.losses++;
+    }
   }
+
+  state.agentState[agent.id] = { action, coin: coin.symbol, speech };
 
   state.councilFeed.unshift({
     sender: agent.name,
@@ -106,16 +149,18 @@ async function runAgentTurn() {
 
   updateMarketStats();
   renderCouncilFeed();
+  renderWarRoom();
   saveToStorage();
 }
 
 function updateMarketStats() {
   const sol = marketCoins.find(c => c.symbol === 'SOL');
-  if (document.getElementById('sol-price')) document.getElementById('sol-price').textContent = fmtCurrency(sol.price);
+  if (document.getElementById('sol-price')) document.getElementById('sol-price'].textContent = fmtCurrency(sol.price);
   if (document.getElementById('net-worth')) document.getElementById('net-worth').textContent = fmtCurrency(getNetWorth());
   if (document.getElementById('cash-balance')) document.getElementById('cash-balance').textContent = fmtCurrency(state.cash);
+  if (document.getElementById('realized-pnl')) document.getElementById('realized-pnl').textContent = fmtCurrency(state.realizedPnl);
   if (document.getElementById('position-count')) {
-    document.getElementById('position-count').textContent = Object.values(state.positions).filter(v => v > 0).length;
+    document.getElementById('position-count').textContent = Object.values(state.positions).filter(v => v > 0.01).length;
   }
 }
 
@@ -123,5 +168,5 @@ window.addEventListener('DOMContentLoaded', () => {
   loadFromStorage();
   updateMarketStats();
   initTabs();
-  setInterval(runAgentTurn, 7000);
+  setInterval(processMarketLoop || runAgentTurn, 7000);
 });
