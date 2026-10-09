@@ -840,9 +840,24 @@
       const confidence = Number((0.65 + Math.random() * 0.3).toFixed(2));
       
       let speech = `Scanning telemetry vectors on ${coin.symbol}.`;
-      if (action === 'buy') speech = `EXECUTE BUY // Accumulating ${coin.symbol} [Conf: ${(confidence * 100).toFixed(0)}%]`;
-      else if (action === 'sell') speech = `HEDGING PROTOCOL // Trimming positions on ${coin.symbol}`;
+      if (action === 'buy') {
+        speech = `EXECUTE BUY // Accumulating ${coin.symbol} [Conf: ${(confidence * 100).toFixed(0)}%]`;
+        if (state.cash >= coin.price * 2) {
+          state.cash -= coin.price * 2;
+          state.positions[coin.symbol] = (state.positions[coin.symbol] || 0) + 2;
+          addHistory(`Automated BUY: 2 ${coin.symbol} at ${fmtCurrency(coin.price)}`);
+        }
+      } else if (action === 'sell') {
+        speech = `HEDGING PROTOCOL // Trimming positions on ${coin.symbol}`;
+        if ((state.positions[coin.symbol] || 0) > 0) {
+          const sellAmount = Math.min(2, state.positions[coin.symbol]);
+          state.positions[coin.symbol] -= sellAmount;
+          state.cash += sellAmount * coin.price;
+          addHistory(`Automated SELL: ${sellAmount} ${coin.symbol} at ${fmtCurrency(coin.price)}`);
+        }
+      }
 
+      state.latestConsensus = `${agent.name} -> ${action.toUpperCase()} ${coin.symbol}`;
       const data = { action, coin: coin.symbol, confidence, speech };
       state.agentState[agent.id] = data;
       return data;
@@ -908,6 +923,7 @@
 
       updateMarketStats();
       renderWarRoom();
+      log(`[Cycle Complete] Portfolio Net Worth: ${fmtCurrency(getNetWorth())}`);
     }
 
     document.querySelectorAll('.room-tab').forEach(tab => {
