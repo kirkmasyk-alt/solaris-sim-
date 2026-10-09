@@ -463,6 +463,48 @@
     .metric-value.warn { color: var(--gold); }
     .metric-value.risk { color: var(--magenta); }
 
+    .agent-signal {
+      position: relative;
+      z-index: 1;
+      margin-top: 10px;
+      padding: 8px 7px 7px;
+      border: 2px solid var(--line);
+      background: rgba(12,22,35,0.8);
+    }
+
+    .signal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .signal-value {
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .signal-bar {
+      height: 8px;
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .signal-bar > span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+      width: 0%;
+      transition: width 0.25s ease;
+    }
+
     .agent-chat {
       background: #f0e7b2;
       color: #16202d;
@@ -721,6 +763,11 @@
                     </div>
                   </div>
 
+                  <div class="agent-signal">
+                    <div class="signal-header"><span>Signal</span><span class="signal-value signal-action">Hold</span></div>
+                    <div class="signal-bar"><span class="signal-fill" style="width:50%"></span></div>
+                  </div>
+
                   <div class="agent-chat">I’m rebalancing the portfolio toward lower-risk gains.</div>
                 </div>
 
@@ -752,6 +799,11 @@
                       <span class="metric-label">Risk</span>
                       <span class="metric-value risk" data-metric="risk">Med</span>
                     </div>
+                  </div>
+
+                  <div class="agent-signal">
+                    <div class="signal-header"><span>Signal</span><span class="signal-value signal-action">Hold</span></div>
+                    <div class="signal-bar"><span class="signal-fill" style="width:50%"></span></div>
                   </div>
 
                   <div class="agent-chat">I’m checking volatility and setting hedges before the next move.</div>
@@ -787,6 +839,11 @@
                     </div>
                   </div>
 
+                  <div class="agent-signal">
+                    <div class="signal-header"><span>Signal</span><span class="signal-value signal-action">Hold</span></div>
+                    <div class="signal-bar"><span class="signal-fill" style="width:50%"></span></div>
+                  </div>
+
                   <div class="agent-chat">Momentum is strong, so I’m timing entries on the breakout.</div>
                 </div>
 
@@ -820,6 +877,11 @@
                     </div>
                   </div>
 
+                  <div class="agent-signal">
+                    <div class="signal-header"><span>Signal</span><span class="signal-value signal-action">Hold</span></div>
+                    <div class="signal-bar"><span class="signal-fill" style="width:50%"></span></div>
+                  </div>
+
                   <div class="agent-chat">We should keep a disciplined strategy and avoid emotional trades.</div>
                 </div>
 
@@ -851,6 +913,11 @@
                       <span class="metric-label">Risk</span>
                       <span class="metric-value" data-metric="risk">Low</span>
                     </div>
+                  </div>
+
+                  <div class="agent-signal">
+                    <div class="signal-header"><span>Signal</span><span class="signal-value signal-action">Hold</span></div>
+                    <div class="signal-bar"><span class="signal-fill" style="width:50%"></span></div>
                   </div>
 
                   <div class="agent-chat">The treasury is protecting capital while preserving upside exposure.</div>
@@ -1007,7 +1074,8 @@
         { title: 'Ecosystem update', detail: 'Layer-1 narratives remain constructive.', tone: 'positive' },
         { title: 'Risk watch', detail: 'Volatility remains elevated in alt pairs.', tone: 'caution' }
       ],
-      signals: []
+      signals: [],
+      agentState: {}
     };
 
     const aiChatter = {
@@ -1050,8 +1118,8 @@
       return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
-    function fmtCompactNum(value) {
-      return Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    function randomFrom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
     }
 
     function getNetWorth() {
@@ -1064,10 +1132,6 @@
 
     function getPnl() {
       return getNetWorth() - state.baseline;
-    }
-
-    function randomFrom(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
     }
 
     function addHistory(message) {
@@ -1147,11 +1211,6 @@
     }
 
     function updateMarketStats() {
-      const prices = marketCoins.map(c => c.price);
-      const avg = prices.reduce((t, p) => t + p, 0) / prices.length;
-      const trend = marketCoins.reduce((t, c) => t + c.momentum, 0) / marketCoins.length;
-      state.marketVolatility = trend > 0.8 ? 'High' : trend > 0.65 ? 'Medium' : 'Low';
-      state.marketRisk = trend > 0.8 ? 'Aggressive' : trend > 0.65 ? 'Balanced' : 'Defensive';
       const price = marketCoins.find(c => c.symbol === 'SOL').price;
       document.getElementById('sol-price').textContent = fmtCurrency(price);
       document.getElementById('net-worth').textContent = fmtCurrency(getNetWorth());
@@ -1199,8 +1258,6 @@
       })).sort((a, b) => b.score - a.score);
 
       const best = candidates[0];
-      const second = candidates[1];
-      const actionScore = best.score + (Math.random() * 0.7 - 0.2);
       const hasPosition = (state.positions[best.coin] || 0) > 0;
       let action = 'hold';
       let reason = 'Wait for confirmation';
@@ -1248,16 +1305,27 @@
         }
       }
 
-      return {
+      const decision = {
         agent: agent.name,
+        id: agent.id,
         role: agent.role,
         action,
         coin: best.coin,
         confidence,
         reason,
-        alt: second.coin,
+        alt: candidates[1] ? candidates[1].coin : 'N/A',
         score: best.score
       };
+
+      state.agentState[agent.id] = {
+        action,
+        coin: best.coin,
+        confidence,
+        reason,
+        lastUpdated: Date.now()
+      };
+
+      return decision;
     }
 
     function executeTrade(signal) {
@@ -1314,6 +1382,25 @@
       return null;
     }
 
+    function updateAgentDisplay() {
+      document.querySelectorAll('.ai-agent').forEach((card) => {
+        const id = card.dataset.role;
+        const signal = state.agentState[id];
+        if (!signal) return;
+        const actionEl = card.querySelector('.signal-action');
+        const fillEl = card.querySelector('.signal-fill');
+        const signalText = signal.action ? signal.action.toUpperCase() : 'HOLD';
+        actionEl.textContent = signalText;
+        actionEl.style.color = signal.action === 'buy' ? 'var(--green)' : signal.action === 'sell' ? 'var(--red)' : 'var(--gold)';
+        fillEl.style.width = `${Math.min(100, Math.max(15, signal.confidence * 100))}%`;
+        fillEl.style.background = signal.action === 'buy' ? 'linear-gradient(90deg, var(--green), var(--cyan))' : signal.action === 'sell' ? 'linear-gradient(90deg, var(--red), var(--magenta))' : 'linear-gradient(90deg, var(--gold), var(--cyan))';
+        const chat = card.querySelector('.agent-chat');
+        if (signal.reason) {
+          chat.textContent = `${signal.coin} // ${signal.reason}`;
+        }
+      });
+    }
+
     function processMarketLoop() {
       const event = generateNewsEvent();
       const decisions = agentDefs.map((agent) => runAgentDecision(agent, event));
@@ -1322,7 +1409,7 @@
 
       if (verdict) {
         executeTrade(verdict);
-        state.capitalMix = verdict.action === 'buy' ? '62/30/8' : verdict.action === 'sell' ? '48/42/10' : '60/35/5';
+        state.capitalMix = verdict.action === 'buy' ? '62/30/8' : '48/42/10';
       } else {
         state.capitalMix = '60/35/5';
       }
@@ -1335,10 +1422,14 @@
         coin.momentum = Math.max(0.25, Math.min(1.4, coin.momentum + pulse * 0.5));
       });
 
+      state.marketVolatility = marketCoins.reduce((acc, coin) => acc + coin.momentum, 0) / marketCoins.length > 0.8 ? 'High' : marketCoins.reduce((acc, coin) => acc + coin.momentum, 0) / marketCoins.length > 0.65 ? 'Medium' : 'Low';
+      state.marketRisk = state.marketVolatility === 'High' ? 'Aggressive' : state.marketVolatility === 'Medium' ? 'Balanced' : 'Defensive';
+
       buildMarketNarrative();
       updateMarketStats();
       renderNews();
       updateMarketPulse();
+      updateAgentDisplay();
       document.getElementById('history-list').innerHTML = state.history.slice(0, 6).map(item => `<div>• ${item}</div>`).join('');
       log(`🧠 CONSENSUS // ${state.latestConsensus} | ${state.capitalMix}`);
     }
@@ -1364,6 +1455,7 @@
       buildMarketNarrative();
       updateMarketStats();
       renderPortfolio();
+      updateAgentDisplay();
       state.marketTick = setInterval(processMarketLoop, 5000);
     }
 
