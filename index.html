@@ -218,7 +218,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">AUTONOMOUS SWARM V4.1</div>
+        <div style="font-size: 8px; color: var(--text-dim);">AUTONOMOUS SWARM V4.2</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn" id="audio-toggle-btn" onclick="toggleAudio()">AUDIO: OFF</button>
@@ -252,7 +252,7 @@
     </div>
 
     <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 10px;">
-      <span>SOL: <strong id="sol-price" style="color: var(--cyan);">FETCHING...</strong></span>
+      <span>SOL: <strong id="sol-price" style="color: var(--cyan);">$180.00</strong></span>
       <span>BOSS: <strong style="color: var(--green);" id="boss-status">ONLINE</strong></span>
     </div>
 
@@ -298,11 +298,11 @@
 
   <script>
     const marketCoins = [
-      { symbol: 'SOL', id: 'solana', price: 105.50 },
+      { symbol: 'SOL', id: 'solana', price: 180.00 },
       { symbol: 'BONK', id: 'bonk', price: 0.000025 },
-      { symbol: 'JTO', id: 'jito-governance-token', price: 2.10 },
-      { symbol: 'RAY', id: 'raydium', price: 1.85 },
-      { symbol: 'WIF', id: 'dogwifcoin', price: 1.45 }
+      { symbol: 'JTO', id: 'jito-governance-token', price: 2.50 },
+      { symbol: 'RAY', id: 'raydium', price: 2.10 },
+      { symbol: 'WIF', id: 'dogwifcoin', price: 1.80 }
     ];
 
     const agentDefs = [
@@ -310,7 +310,7 @@
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Portfolio Manager', color: '#38bdf8', icon: '🤖', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', color: '#f59e0b', icon: '🛡️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', color: '#ef4444', icon: '⚡', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
-      { id: 'macro', name: 'MACRO_9', role: 'Strategy Planner', color: '#a855f7', icon: '🌐', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
+      { id: 'macro', name: 'MACRO_9', role: 'Strategy Planner', color: '#38bdf8', icon: '🌐', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Capital Authority', color: '#22c55e', icon: '🏛️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' }
     ];
 
@@ -428,20 +428,6 @@
       if (a) alert(`${a.name} (${a.role})\nStatus: ${a.status}\nP&L: ${fmtCurrency(a.pnl)}`);
     }
 
-    async function updateMarketData() {
-      try {
-        const ids = marketCoins.map(c => c.id).join(',');
-        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
-        const data = await res.json();
-        marketCoins.forEach(c => {
-          if (data[c.id] && data[c.id].usd) c.price = data[c.id].usd;
-        });
-      } catch (e) {
-        console.log("Using cached/fallback prices");
-      }
-      runTradingLoop();
-    }
-
     function runTradingLoop() {
       try {
         const activeAgents = agentDefs.filter(a => a.id !== 'boss' && a.status === 'ACTIVE');
@@ -532,89 +518,77 @@
     }
 
     function renderAll() {
-      let portfolioVal = 0;
-      marketCoins.forEach(c => { portfolioVal += (state.positions[c.symbol] || 0) * c.price; });
-      let netWorth = state.cash + portfolioVal;
+      try {
+        let portfolioVal = 0;
+        marketCoins.forEach(c => { portfolioVal += (state.positions[c.symbol] || 0) * c.price; });
+        let netWorth = state.cash + portfolioVal;
 
-      const nw = document.getElementById('net-worth');
-      if (nw) nw.textContent = fmtCurrency(netWorth);
+        const nw = document.getElementById('net-worth');
+        if (nw) nw.textContent = fmtCurrency(netWorth);
 
-      const cb = document.getElementById('cash-balance');
-      if (cb) cb.textContent = fmtCurrency(state.cash);
+        const cb = document.getElementById('cash-balance');
+        if (cb) cb.textContent = fmtCurrency(state.cash);
 
-      const tf = document.getElementById('total-fees');
-      if (tf) tf.textContent = fmtCurrency(state.totalFeesPaid);
+        const tf = document.getElementById('total-fees');
+        if (tf) tf.textContent = fmtCurrency(state.totalFeesPaid);
 
-      const sf = document.getElementById('status-fees');
-      if (sf) sf.textContent = `${fmtCurrency(state.totalFeesPaid)} CUMULATIVE`;
+        const sf = document.getElementById('status-fees');
+        if (sf) sf.textContent = `${fmtCurrency(state.totalFeesPaid)} CUMULATIVE`;
 
-      const tx = document.getElementById('status-tx-count');
-      if (tx) tx.textContent = `${state.txCount} EXECUTED`;
+        const tx = document.getElementById('status-tx-count');
+        if (tx) tx.textContent = `${state.txCount} EXECUTED`;
 
-      const pnl = document.getElementById('realized-pnl');
-      if (pnl) {
-        pnl.textContent = (state.realizedPnl >= 0 ? '+' : '') + fmtCurrency(state.realizedPnl);
-        pnl.className = `stat-value ${state.realizedPnl >= 0 ? 'green' : 'red'}`;
-      }
+        const pnl = document.getElementById('realized-pnl');
+        if (pnl) {
+          pnl.textContent = (state.realizedPnl >= 0 ? '+' : '') + fmtCurrency(state.realizedPnl);
+          pnl.className = `stat-value ${state.realizedPnl >= 0 ? 'green' : 'red'}`;
+        }
 
-      const solPriceEl = document.getElementById('sol-price');
-      const solObj = marketCoins.find(c => c.symbol === 'SOL');
-      if (solPriceEl && solObj) solPriceEl.textContent = fmtCurrency(solObj.price);
+        const solPriceEl = document.getElementById('sol-price');
+        const solObj = marketCoins.find(c => c.symbol === 'SOL');
+        if (solPriceEl && solObj) solPriceEl.textContent = fmtCurrency(solObj.price);
 
-      const warContainer = document.getElementById('war-room-container');
-      if (warContainer) {
-        warContainer.innerHTML = agentDefs.map(a => `
-          <div class="agent-card" style="border-color: ${a.color};" onclick="inspectAgent('${a.id}')">
-            <div class="agent-header">
-              <div class="robot-head" style="border-color: ${a.color}; color: ${a.color};">${a.icon}</div>
-              <div style="flex-grow: 1;">
-                <div style="display: flex; justify-content: space-between;">
-                  <strong style="color: ${a.color}; font-size: 11px;">${a.name}</strong>
-                  <span style="font-size: 9px; color: ${a.status === 'ACTIVE' || a.status === 'STANDBY' ? 'var(--green)' : 'var(--red)'};">[${a.status}]</span>
+        const warContainer = document.getElementById('war-room-container');
+        if (warContainer) {
+          warContainer.innerHTML = agentDefs.map(a => `
+            <div class="agent-card" style="border-color: ${a.color};" onclick="inspectAgent('${a.id}')">
+              <div class="agent-header">
+                <div class="robot-head" style="border-color: ${a.color}; color: ${a.color};">${a.icon}</div>
+                <div style="flex-grow: 1;">
+                  <div style="display: flex; justify-content: space-between;">
+                    <strong style="color: ${a.color}; font-size: 11px;">${a.name}</strong>
+                    <span style="font-size: 9px; color: ${a.status === 'ACTIVE' || a.status === 'STANDBY' ? 'var(--green)' : 'var(--red)'};">[${a.status}]</span>
+                  </div>
+                  <div style="font-size: 9px; color: var(--text-dim);">${a.role}</div>
                 </div>
-                <div style="font-size: 9px; color: var(--text-dim);">${a.role}</div>
+              </div>
+              <div class="metrics-grid">
+                <div>P&L: $${a.pnl.toFixed(2)}</div>
+                <div>HR: $${a.hrPnl.toFixed(2)}</div>
+                <div>DAY: $${a.dayPnl.toFixed(2)}</div>
+                <div>WK: $${a.wkPnl.toFixed(2)}</div>
               </div>
             </div>
-            <div class="metrics-grid">
-              <div>P&L: $${a.pnl.toFixed(2)}</div>
-              <div>HR: $${a.hrPnl.toFixed(2)}</div>
-              <div>DAY: $${a.dayPnl.toFixed(2)}</div>
-              <div>WK: $${a.wkPnl.toFixed(2)}</div>
+          `).join('');
+        }
+
+        const feedContainer = document.getElementById('council-feed-container');
+        if (feedContainer) {
+          feedContainer.innerHTML = state.councilFeed.map(f => `
+            <div class="feed-item" style="border-left-color: ${f.color};">
+              <div class="feed-sender" style="color: ${f.color};">${f.sender} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${f.time || ''}</span></div>
+              <div class="feed-text">"${f.text}"</div>
             </div>
-          </div>
-        `).join('');
-      }
-
-      const feedContainer = document.getElementById('council-feed-container');
-      if (feedContainer) {
-        feedContainer.innerHTML = state.councilFeed.map(f => `
-          <div class="feed-item" style="border-left-color: ${f.color};">
-            <div class="feed-sender" style="color: ${f.color};">${f.sender} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${f.time || ''}</span></div>
-            <div class="feed-text">"${f.text}"</div>
-          </div>
-        `).join('');
-      }
-    }
-
-    let audioCtx = null;
-    function toggleAudio() {
-      state.soundEnabled = !state.soundEnabled;
-      const btn = document.getElementById('audio-toggle-btn');
-      if (state.soundEnabled) {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        btn.textContent = "AUDIO: ON";
-        btn.classList.add('active-sound');
-      } else {
-        btn.textContent = "AUDIO: OFF";
-        btn.classList.remove('active-sound');
+          `).join('');
+        }
+      } catch (e) {
+        console.error("Render error:", e);
       }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
       renderAll();
-      updateMarketData();
-      setInterval(updateMarketData, 15000);
+      setInterval(runTradingLoop, 8000);
     });
   </script>
 </body>
