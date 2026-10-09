@@ -1,15 +1,41 @@
 import random
 import time
+import requests
 
 # --- INITIAL TREASURY STATE ---
+DEFAULT_SOL_PRICE = 109.10
+PRICE_API_URL = "https://api.coinstats.app/public/v2/coins/solana"
+
 treasury_cash_usd = 5000.0  # Stablecoins
 treasury_sol = 25.0  # Staked SOL reserve
 token_supply = 1_000_000_000  # 1 Billion total supply
-sol_price = 109.10  # Baseline SOL price from live data feed
+sol_price = DEFAULT_SOL_PRICE  # Baseline SOL price fallback
+
+
+def fetch_live_sol_price():
+  """Fetch current SOL/USD price from CoinStats with safe fallback."""
+  global sol_price
+
+  try:
+    response = requests.get(PRICE_API_URL, timeout=10)
+    response.raise_for_status()
+    payload = response.json()
+    live_price = float(payload.get("coin", {}).get("price", DEFAULT_SOL_PRICE))
+
+    if live_price > 0:
+      sol_price = live_price
+      return sol_price
+  except Exception as exc:
+    print(f"⚠️ Live market feed unavailable. Using fallback price ${DEFAULT_SOL_PRICE:.2f}. Error: {exc}")
+
+  sol_price = DEFAULT_SOL_PRICE
+  return sol_price
 
 
 def run_weekly_simulation():
   global treasury_cash_usd, treasury_sol, token_supply, sol_price
+
+  sol_price = fetch_live_sol_price()
 
   print("=" * 60)
   print("🚀 SOLARIS 7-DAY BUYER & TREASURY BOT SIMULATION")
@@ -22,6 +48,7 @@ def run_weekly_simulation():
 
   # Simulate 7 days (represented by 7 major check-in checkpoints)
   for day in range(1, 8):
+    sol_price = fetch_live_sol_price()
     print(f"\n📅 --- DAY {day} OF 7 ---")
 
     # 1. Simulate Buyer Inflows based on weekly momentum

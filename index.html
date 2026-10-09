@@ -456,6 +456,7 @@
 
   <script>
     const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const PRICE_API_URL = 'https://api.coinstats.app/public/v2/coins/solana';
 
     const state = {
       cash: 5003.72,
@@ -467,6 +468,7 @@
       tradingVolume: 0,
       autoBotEnabled: false,
       marketTickInterval: null,
+      priceFeedInterval: null,
       feed: [{ type: 'SYS', note: 'Market feed online.' }],
       weekData: Array(7).fill(0).map(() => ({ volume: 0, buyers: 0 }))
     };
@@ -477,7 +479,8 @@
       BUYER_TAX_RATE: 0.01,
       BURN_BUDGET: 300,
       TOKENS_PER_DOLLAR: 50_000,
-      LIVE_TICK_MS: 3000
+      LIVE_TICK_MS: 3000,
+      PRICE_REFRESH_MS: 15000
     };
 
     const WEEK_PATTERNS = [
@@ -544,6 +547,34 @@
       document.getElementById('trading-volume').textContent = `$${state.tradingVolume.toFixed(2)}`;
       document.getElementById('circulating-supply').textContent = `${(state.circulatingSupply / 1_000_000_000).toFixed(2)}B`;
       renderChart();
+    }
+
+    async function fetchLiveSOLPrice() {
+      try {
+        const response = await fetch(PRICE_API_URL, { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const payload = await response.json();
+        const nextPrice = Number(payload?.coin?.price);
+
+        if (Number.isFinite(nextPrice) && nextPrice > 0) {
+          state.price = nextPrice;
+          render();
+          log(`📡 LIVE PRICE | SOL @ $${state.price.toFixed(2)}`);
+          addFeed('LIVE', `SOL price refreshed at $${state.price.toFixed(2)}`);
+          return true;
+        }
+      } catch (error) {
+        log(`⚠️ LIVE PRICE UNAVAILABLE | Keeping fallback $${state.price.toFixed(2)}`);
+      }
+
+      return false;
+    }
+
+    function startPriceFeed() {
+      if (state.priceFeedInterval) clearInterval(state.priceFeedInterval);
+      fetchLiveSOLPrice();
+      state.priceFeedInterval = setInterval(fetchLiveSOLPrice, CONFIG.PRICE_REFRESH_MS);
     }
 
     function buyOneSol() {
@@ -728,6 +759,7 @@
     function init() {
       render();
       renderChart();
+      startPriceFeed();
       startLiveMarket();
     }
 
