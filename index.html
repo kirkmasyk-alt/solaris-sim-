@@ -3,503 +3,726 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>$SOLARIS Treasury & Bot Simulator</title>
+  <title>SOLARIS // Treasury Control Room</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #07111f;
-      --panel: #101c2f;
-      --panel-2: #15273d;
-      --accent: #22c55e;
-      --accent-2: #60a5fa;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --text: #ecf7ff;
-      --muted: #9bb4d1;
-      --border: #24364d;
-      --shadow: rgba(0,0,0,0.28);
+      --bg-1: #090d1a;
+      --bg-2: #111a2d;
+      --bg-3: #161f38;
+      --panel: #0f172b;
+      --panel-alt: #16263f;
+      --panel-soft: #1d2d47;
+      --line: #2d4c72;
+      --line-bright: #73d7ff;
+      --cyan: #66e7ff;
+      --blue: #5ea4ff;
+      --green: #7ef7b2;
+      --green-strong: #35d77d;
+      --purple: #ba8cff;
+      --magenta: #ff7ee8;
+      --gold: #ffd166;
+      --red: #ff6b6b;
+      --text: #eaf7ff;
+      --muted: #9bb5d1;
+      --shadow: rgba(0,0,0,0.45);
+      --scan: rgba(255,255,255,0.04);
     }
 
     * { box-sizing: border-box; }
 
     html, body {
       margin: 0;
-      background: linear-gradient(180deg, #07111f 0%, #0b1728 100%);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.4;
-    }
-
-    body {
-      padding: 12px;
       min-height: 100vh;
-    }
-
-    .container {
-      max-width: 560px;
-      margin: 0 auto;
-    }
-
-    header {
-      text-align: center;
-      padding-bottom: 10px;
-      margin-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    h1 {
-      margin: 0 0 4px;
-      font-size: clamp(1.45rem, 5vw, 2.1rem);
-      letter-spacing: -0.04em;
-      color: var(--accent);
-    }
-
-    .subtitle {
-      margin: 0;
-      font-size: 0.78rem;
-      color: var(--muted);
-      letter-spacing: 0.04em;
-    }
-
-    .top-metrics {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .metric-card {
-      background: linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      box-shadow: 0 4px 10px var(--shadow);
-      min-width: 0;
-    }
-
-    .metric-label {
-      color: var(--muted);
-      font-size: 0.62rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .metric-value {
-      font-size: clamp(0.96rem, 2.6vw, 1.35rem);
-      font-weight: 800;
+      background: radial-gradient(circle at top, rgba(102,231,255,0.12), transparent 30%), linear-gradient(180deg, var(--bg-1), var(--bg-2) 40%, var(--bg-3));
       color: var(--text);
-      word-break: break-word;
-      white-space: normal;
+      font-family: 'Inter', sans-serif;
     }
 
-    .card {
-      background: linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      box-shadow: 0 4px 12px var(--shadow);
-      margin-bottom: 12px;
-    }
-
-    .card-title {
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .terminal {
-      background: #01080d;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      height: 140px;
-      overflow-y: auto;
-      padding: 10px;
-      color: var(--accent);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.72rem;
-      line-height: 1.5;
-      margin-bottom: 10px;
-    }
-
-    .button-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .button-grid.three {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .tooltip-container {
-      position: relative;
-      display: block;
-      width: 100%;
-    }
-
-    button {
-      width: 100%;
-      border: none;
-      border-radius: 6px;
-      padding: 9px 8px;
-      background: var(--accent);
-      color: #071b14;
-      font-weight: 800;
-      font-size: 0.75rem;
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-      position: relative;
-      white-space: normal;
-      word-break: break-word;
-      min-height: 40px;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.18);
-    }
-
-    .btn-secondary { background: var(--accent-2); color: #061422; }
-    .btn-warning { background: var(--warning); color: #1d1200; }
-    .btn-danger { background: var(--danger); color: #fff; }
-
-    .tooltip {
-      position: absolute;
-      bottom: calc(100% + 8px);
-      left: 50%;
-      transform: translateX(-50%);
-      width: 170px;
-      max-width: 180px;
-      background: rgba(0,0,0,0.92);
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      border-radius: 6px;
-      padding: 6px 8px;
-      font-size: 0.66rem;
-      line-height: 1.35;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.18s ease;
-      text-align: center;
-      z-index: 10;
-      pointer-events: none;
-    }
-
-    .tooltip::after {
+    body::before {
       content: "";
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      border-width: 6px;
-      border-style: solid;
-      border-color: var(--accent) transparent transparent transparent;
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.04) 1px, transparent 2px, transparent 3px);
+      opacity: .38;
     }
 
-    .tooltip-container:hover .tooltip,
-    .tooltip-container:focus-within .tooltip {
-      opacity: 1;
-      visibility: visible;
+    .app {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 16px 90px;
+      position: relative;
     }
 
-    .status-pill {
-      display: inline-block;
-      background: rgba(34, 197, 94, 0.1);
-      border: 1px solid rgba(34, 197, 94, 0.25);
-      color: #7ef0ad;
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 0.68rem;
-      font-weight: 700;
-      margin-top: 6px;
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding: 14px 18px;
+      border: 3px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,28,45,0.9), rgba(10,18,30,0.9));
+      box-shadow: 0 0 0 4px rgba(0,0,0,0.2), 0 10px 30px var(--shadow);
     }
 
-    .status-pill.off {
-      background: rgba(155, 180, 209, 0.08);
-      border-color: rgba(155, 180, 209, 0.15);
-      color: var(--muted);
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .stat-box {
-      background: rgba(15, 23, 42, 0.55);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px;
-      min-width: 0;
-    }
-
-    .stat-label {
-      color: var(--muted);
-      font-size: 0.6rem;
+    .brand {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 2px;
-      font-weight: 700;
+      letter-spacing: .12em;
+      color: var(--green);
+      text-shadow: 3px 3px 0 rgba(0,0,0,0.4);
     }
 
-    .stat-value {
-      font-size: 0.98rem;
-      font-weight: 800;
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pixel-pill {
+      border: 2px solid var(--line);
+      background: rgba(15,23,42,0.9);
+      padding: 8px 10px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
       color: var(--text);
-      word-break: break-word;
     }
 
-    .feed-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 120px;
-      overflow-y: auto;
-    }
+    .pixel-pill.good { color: var(--green); }
+    .pixel-pill.warn { color: var(--gold); }
 
-    .feed-item {
-      background: rgba(15, 23, 42, 0.55);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      padding: 6px 8px;
-      font-size: 0.7rem;
-      color: var(--muted);
-    }
-
-    .feed-item strong {
-      color: var(--accent);
-    }
-
-    .chart-grid {
+    .scene {
       display: grid;
-      grid-template-columns: repeat(7, minmax(0, 1fr));
-      gap: 6px;
-      margin-top: 8px;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+      min-height: 620px;
     }
 
-    .chart-day {
-      text-align: center;
-    }
-
-    .chart-bar-container {
-      height: 78px;
-      background: rgba(15,23,42,0.44);
-      border-radius: 5px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      margin-bottom: 4px;
+    .panel {
+      border: 3px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,28,45,0.9), rgba(11,18,30,0.92));
+      box-shadow: 0 0 0 4px rgba(0,0,0,0.18), 0 12px 26px var(--shadow);
+      position: relative;
       overflow: hidden;
     }
 
-    .chart-bar {
-      width: 58%;
-      background: linear-gradient(180deg, var(--accent-2), var(--accent));
-      border-radius: 4px 4px 0 0;
-      min-height: 8px;
-      transition: height 0.2s ease;
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 3px solid var(--line);
+      background: rgba(13,22,34,0.9);
     }
 
-    .chart-label {
-      color: var(--muted);
-      font-size: 0.58rem;
+    .panel-title {
+      font-family: 'Press Start 2P', monospace;
       text-transform: uppercase;
-      font-weight: 700;
+      letter-spacing: .08em;
+      font-size: 9px;
+      color: var(--cyan);
     }
 
-    .chart-value {
-      font-size: 0.62rem;
+    .panel-badge {
+      border: 2px solid var(--line);
+      background: rgba(102,231,255,0.08);
+      color: var(--cyan);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      padding: 6px 8px;
+      text-transform: uppercase;
+    }
+
+    .content { padding: 14px; }
+
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .stat-box {
+      border: 3px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,39,55,0.85), rgba(12,22,35,0.95));
+      padding: 12px 10px;
+      min-height: 114px;
+      position: relative;
+    }
+
+    .stat-box::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border: 1px solid rgba(255,255,255,0.06);
+      pointer-events: none;
+    }
+
+    .stat-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .stat-value {
+      font-size: clamp(1.1rem, 2.6vw, 2rem);
+      font-weight: 900;
+      line-height: 1.1;
       color: var(--text);
-      margin-top: 2px;
-      font-weight: 700;
+      letter-spacing: -0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .warning-banner {
-      background: rgba(245, 158, 11, 0.08);
-      border: 1px solid rgba(245, 158, 11, 0.25);
-      color: #f9c96b;
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 0.72rem;
-      line-height: 1.4;
+    .stat-value.green { color: var(--green); }
+    .stat-value.cyan { color: var(--cyan); }
+    .stat-value.gold { color: var(--gold); }
+    .stat-value.red { color: var(--red); }
+
+    .market-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+      margin-top: 12px;
+      margin-bottom: 14px;
     }
 
-    @media (max-width: 420px) {
-      body { padding: 10px; }
-      .top-metrics { grid-template-columns: 1fr 1fr; }
-      .button-grid, .button-grid.three { grid-template-columns: 1fr 1fr; }
-      .button-grid .tooltip-container:last-child:nth-child(odd) {
-        grid-column: 1 / -1;
-      }
+    .mini-box {
+      border: 2px solid var(--line);
+      background: rgba(15,24,36,0.9);
+      padding: 10px;
+    }
+
+    .mini-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .mini-value {
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .terminal {
+      border: 3px solid var(--line);
+      background: #09131e;
+      height: 240px;
+      overflow-y: auto;
+      padding: 12px;
+      color: var(--green);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      line-height: 1.8;
+      text-shadow: 0 0 8px rgba(126,247,178,0.35);
+    }
+
+    .room-tabs {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .room-tab {
+      appearance: none;
+      border: 3px solid var(--line);
+      background: linear-gradient(180deg, rgba(22,40,62,0.9), rgba(11,18,29,0.9));
+      color: var(--text);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: 12px 8px;
+      cursor: pointer;
+      transition: transform .15s ease, border-color .15s ease;
+    }
+
+    .room-tab.active {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: inset 0 0 0 2px rgba(102,231,255,0.2);
+    }
+
+    .room-tab:hover { transform: translateY(-1px); }
+
+    .side-panel .content {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .ai-table {
+      border: 3px solid var(--line);
+      background: linear-gradient(180deg, rgba(19,28,37,0.95), rgba(12,18,29,0.98));
+      padding: 8px;
+      min-height: 230px;
+    }
+
+    .ai-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .ai-card {
+      border: 3px solid var(--line);
+      background: rgba(14,20,31,0.95);
+      padding: 8px;
+      min-height: 170px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .ai-avatar {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 10px;
+      border: 3px solid var(--line);
+      background: linear-gradient(180deg, rgba(121,151,255,0.15), rgba(0,0,0,0.3));
+      position: relative;
+    }
+
+    .ai-avatar::before,
+    .ai-avatar::after { content: ''; position: absolute; }
+
+    .ai-avatar.finance::before { left: 18px; top: 16px; width: 34px; height: 26px; background: var(--green); }
+    .ai-avatar.finance::after { left: 12px; bottom: 10px; width: 48px; height: 18px; background: var(--cyan); }
+
+    .ai-avatar.risk::before { left: 18px; top: 16px; width: 34px; height: 26px; background: var(--purple); }
+    .ai-avatar.risk::after { left: 12px; bottom: 10px; width: 48px; height: 18px; background: var(--magenta); }
+
+    .ai-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      text-transform: uppercase;
+      text-align: center;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .ai-status {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      text-transform: uppercase;
+      text-align: center;
+      color: var(--green);
+    }
+
+    .ai-status.risk { color: var(--magenta); }
+
+    .floating-box {
+      border: 3px solid var(--line);
+      background: rgba(15,18,26,0.95);
+      padding: 10px;
+    }
+
+    .floating-box h3 {
+      margin: 0 0 10px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .trait-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .trait-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: .78rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 6px;
+      color: var(--muted);
+    }
+
+    .trait-list strong { color: var(--text); }
+
+    .room-view { display: none; }
+    .room-view.active { display: block; }
+
+    .holding-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .asset-card {
+      border: 3px solid var(--line);
+      background: rgba(16,27,39,0.92);
+      padding: 12px 10px;
+      min-height: 150px;
+    }
+
+    .coin-tag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--cyan);
+      margin-bottom: 10px;
+    }
+
+    .coin-value {
+      font-size: clamp(1.1rem, 2.5vw, 1.7rem);
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .coin-meta {
+      font-size: .8rem;
+      color: var(--muted);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .summary-box {
+      border: 3px solid var(--line);
+      background: rgba(16,27,39,0.9);
+      padding: 12px 10px;
+    }
+
+    .summary-box h4 {
+      margin: 0 0 10px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+
+    .list {
+      display: grid;
+      gap: 8px;
+      font-size: .8rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 920px) {
+      .scene { grid-template-columns: 1fr; }
+      .room-tabs { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .holding-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .hub-grid { grid-template-columns: 1fr; }
+      .market-strip { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .ai-row { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+      .brand { font-size: 10px; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>🪙 $SOLARIS</h1>
-      <p class="subtitle">Autonomous Treasury & Paper Trading Sandbox</p>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">SOLARIS // Treasury</div>
+      <div class="status-row">
+        <div class="pixel-pill good">Market Live</div>
+        <div class="pixel-pill warn">AI Active</div>
+        <div class="pixel-pill">Volatility: Low</div>
+      </div>
     </header>
 
-    <div class="top-metrics">
-      <div class="metric-card">
-        <div class="metric-label">SOL Price</div>
-        <div class="metric-value" id="sol-price">$110.10</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Net Worth</div>
-        <div class="metric-value" id="net-worth">$7,756.22</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Cash</div>
-        <div class="metric-value" id="cash-balance">$5,003.72</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Staked SOL</div>
-        <div class="metric-value" id="sol-balance">25.0 SOL</div>
-      </div>
-    </div>
+    <main class="scene">
+      <section class="panel main-panel">
+        <div class="panel-header">
+          <div class="panel-title">Main Hub</div>
+          <div class="panel-badge">Live Feed</div>
+        </div>
 
-    <div class="card">
-      <div class="card-title">🤖 Autonomous Bot</div>
-      <div class="terminal" id="terminal-log">
-[00:01] Treasury online<br>
-[00:02] Fee engine active<br>
-[00:03] Waiting for market data...
-      </div>
+        <div class="content">
+          <div class="room-view active" data-room="hub">
+            <div class="hub-grid">
+              <div class="stat-box">
+                <div class="stat-label">Treasury Net Worth</div>
+                <div class="stat-value cyan" id="net-worth">$0.00</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">P&amp;L vs Baseline</div>
+                <div class="stat-value green" id="pnl-total">+$0.00</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">USDC Cash</div>
+                <div class="stat-value gold" id="cash-balance">$0.00</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">SOL Holdings</div>
+                <div class="stat-value" id="sol-balance">0.00 SOL</div>
+              </div>
+            </div>
 
-      <div class="button-grid three">
-        <div class="tooltip-container">
-          <button onclick="simulateMarketDip()">📉 Dip</button>
-          <span class="tooltip">Forces a market dip and buys 1 SOL</span>
-        </div>
-        <div class="tooltip-container">
-          <button class="btn-secondary" onclick="simulateMarketRally()">📈 Rally</button>
-          <span class="tooltip">Forces a rally and sells 1 SOL</span>
-        </div>
-        <div class="tooltip-container">
-          <button class="btn-secondary" id="auto-bot-toggle" onclick="toggleAutoBot()">Bot: OFF</button>
-          <span class="tooltip">Turns real-time bot trading on/off</span>
-        </div>
-      </div>
+            <div class="market-strip">
+              <div class="mini-box">
+                <div class="mini-label">SOL Price</div>
+                <div class="mini-value" id="sol-price">$0.00</div>
+              </div>
+              <div class="mini-box">
+                <div class="mini-label">Volume</div>
+                <div class="mini-value" id="trading-volume">$0.00</div>
+              </div>
+              <div class="mini-box">
+                <div class="mini-label">Fees Collected</div>
+                <div class="mini-value" id="fees-collected">$0.00</div>
+              </div>
+            </div>
 
-      <div class="button-grid">
-        <div class="tooltip-container">
-          <button class="btn-warning" onclick="simulateBuyerInflow()">💰 Inflow</button>
-          <span class="tooltip">Simulates new buyers entering the market</span>
-        </div>
-        <div class="tooltip-container">
-          <button class="btn-danger" onclick="triggerBurn()">🔥 Burn</button>
-          <span class="tooltip">Uses treasury cash to buy back and burn tokens</span>
-        </div>
-      </div>
+            <div class="terminal" id="terminal-log">
+              [00:01] Treasury console booted.<br>
+              [00:02] AI orchestration online.<br>
+              [00:03] Organic market feed synced.<br>
+            </div>
+          </div>
 
-      <div class="button-grid">
-        <div class="tooltip-container">
-          <button class="btn-secondary" onclick="runWeekSimulation()">⏩ Week</button>
-          <span class="tooltip">Runs a 7-day treasury simulation cycle</span>
-        </div>
-        <div class="tooltip-container">
-          <button onclick="resetSimulation()">🔄 Reset</button>
-          <span class="tooltip">Resets dashboard values and simulation state</span>
-        </div>
-      </div>
+          <div class="room-view" data-room="ai">
+            <div class="ai-table">
+              <div class="ai-row">
+                <div class="ai-card">
+                  <div class="ai-avatar finance"></div>
+                  <div class="ai-name">Finance AI</div>
+                  <div class="ai-status">Ready</div>
+                </div>
+                <div class="ai-card">
+                  <div class="ai-avatar risk"></div>
+                  <div class="ai-name">Risk Analyst</div>
+                  <div class="ai-status risk">Scanning</div>
+                </div>
+              </div>
+            </div>
 
-      <div id="bot-status" class="status-pill off">Bot: Idle</div>
-    </div>
+            <div class="floating-box" style="margin-top:12px;">
+              <h3>AI Brief</h3>
+              <ul class="trait-list">
+                <li><span>Strategy</span><strong>Accumulate low, hedge high</strong></li>
+                <li><span>Risk Bias</span><strong>Moderate</strong></li>
+                <li><span>Whale Signal</span><strong>Watching</strong></li>
+                <li><span>Burn Signal</span><strong>Standby</strong></li>
+              </ul>
+            </div>
+          </div>
 
-    <div class="card">
-      <div class="card-title">Treasury Stats</div>
-      <div class="stats-grid">
-        <div class="stat-box">
-          <div class="stat-label">Fees</div>
-          <div class="stat-value" id="fees-collected">$0.00</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Burned</div>
-          <div class="stat-value" id="tokens-burned">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Volume</div>
-          <div class="stat-value" id="trading-volume">$0.00</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Supply</div>
-          <div class="stat-value" id="circulating-supply">1.00B</div>
-        </div>
-      </div>
+          <div class="room-view" data-room="market">
+            <div class="summary-grid">
+              <div class="summary-box">
+                <h4>Buyers</h4>
+                <div class="list">
+                  <div>Retail: <strong id="buyers-retail">0</strong></div>
+                  <div>Wallets: <strong id="buyers-wallets">0</strong></div>
+                  <div>Whales: <strong id="buyers-whales">0</strong></div>
+                </div>
+              </div>
+              <div class="summary-box">
+                <h4>Sellers</h4>
+                <div class="list">
+                  <div>Profit Takers: <strong id="sellers-profit">0</strong></div>
+                  <div>Stakers: <strong id="sellers-stakers">0</strong></div>
+                  <div>Large Dumps: <strong id="sellers-dumps">0</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <div class="card-title" style="margin-top: 10px;">Market Feed</div>
-      <ul class="feed-list" id="feed-list">
-        <li class="feed-item"><strong>SYS</strong> Market feed online.</li>
-      </ul>
-    </div>
+          <div class="room-view" data-room="holdings">
+            <div class="holding-grid">
+              <div class="asset-card">
+                <div class="coin-tag">USDC</div>
+                <div class="coin-value" id="asset-usdc">$0.00</div>
+                <div class="coin-meta">Reserve cash</div>
+              </div>
+              <div class="asset-card">
+                <div class="coin-tag">SOL</div>
+                <div class="coin-value" id="asset-sol">0.00</div>
+                <div class="coin-meta">Staked + active</div>
+              </div>
+              <div class="asset-card">
+                <div class="coin-tag">$SOLARIS</div>
+                <div class="coin-value" id="asset-solaris">0</div>
+                <div class="coin-meta">Community memecoin</div>
+              </div>
+            </div>
+          </div>
 
-    <div class="card">
-      <div class="card-title">📊 Weekly Volume</div>
-      <div class="chart-grid" id="chart-grid"></div>
-    </div>
+          <div class="room-view" data-room="history">
+            <div class="summary-box" style="margin-top:8px;">
+              <h4>Event Log</h4>
+              <div class="list" id="history-list">
+                <div>• Market opened with treasury baseline set.</div>
+                <div>• AI agents online and idle scanning.</div>
+                <div>• Organic flow waiting for buyers and sellers.</div>
+              </div>
+            </div>
+          </div>
 
-    <div class="warning-banner">
-      Live market ticks run every 3 seconds. Auto bot is OFF by default; enable it to let the treasury react to price swings automatically.
-    </div>
+          <div class="room-tabs" id="room-tabs">
+            <button class="room-tab active" data-room="hub">Hub</button>
+            <button class="room-tab" data-room="ai">War Room</button>
+            <button class="room-tab" data-room="market">Market</button>
+            <button class="room-tab" data-room="holdings">Holdings</button>
+            <button class="room-tab" data-room="history">History</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel side-panel">
+        <div class="panel-header">
+          <div class="panel-title">Control Panel</div>
+          <div class="panel-badge">AI</div>
+        </div>
+
+        <div class="content">
+          <div class="floating-box">
+            <h3>Treasure P&amp;L</h3>
+            <ul class="trait-list">
+              <li><span>Realized</span><strong id="realized-pnl">+$0.00</strong></li>
+              <li><span>Unrealized</span><strong id="unrealized-pnl">+$0.00</strong></li>
+              <li><span>Best Day</span><strong id="best-day">—</strong></li>
+              <li><span>Worst Day</span><strong id="worst-day">—</strong></li>
+            </ul>
+          </div>
+
+          <div class="floating-box">
+            <h3>Market Pulse</h3>
+            <ul class="trait-list">
+              <li><span>Holders</span><strong id="holders-count">0</strong></li>
+              <li><span>Whales</span><strong id="whales-count">0</strong></li>
+              <li><span>Volatility</span><strong id="volatility-level">Low</strong></li>
+              <li><span>Risk Level</span><strong id="risk-level">Balanced</strong></li>
+            </ul>
+          </div>
+
+          <div class="floating-box">
+            <h3>AI Decisions</h3>
+            <ul class="trait-list">
+              <li><span>Latest Move</span><strong id="latest-ai-move">Awaiting signal</strong></li>
+              <li><span>Burn Check</span><strong id="burn-check">Standby</strong></li>
+              <li><span>Capital Mix</span><strong id="capital-mix">60/35/5</strong></li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </main>
   </div>
 
   <script>
-    const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const PRICE_API_URL = 'https://api.coinstats.app/public/v2/coins/solana';
-
     const state = {
       cash: 5003.72,
       sol: 25.0,
+      solaris: 42000,
       price: 110.10,
-      circulatingSupply: 1_000_000_000,
-      tokensBurned: 0,
+      baselinePrice: 110.10,
+      baselineCash: 5003.72,
+      baselineSol: 25.0,
+      baselineNetWorth: 5003.72 + (25 * 110.10),
       feesCollected: 0,
       tradingVolume: 0,
-      autoBotEnabled: false,
-      marketTickInterval: null,
-      priceFeedInterval: null,
-      feed: [{ type: 'SYS', note: 'Market feed online.' }],
-      weekData: Array(7).fill(0).map(() => ({ volume: 0, buyers: 0 }))
+      marketTick: null,
+      buyers: { retail: 0, wallets: 0, whales: 0 },
+      sellers: { profit: 0, stakers: 0, dumps: 0 },
+      holders: 0,
+      whales: 0,
+      volatility: 'Low',
+      riskLevel: 'Balanced',
+      latestAIMove: 'Awaiting signal',
+      burnCheck: 'Standby',
+      capitalMix: '60/35/5',
+      history: [
+        'Market opened with treasury baseline set.',
+        'AI agents online and idle scanning.',
+        'Organic flow waiting for buyers and sellers.'
+      ]
     };
-
-    const CONFIG = {
-      DEX_FEE_RATE: 0.0025,
-      GAS_FEE: 0.002,
-      BUYER_TAX_RATE: 0.01,
-      BURN_BUDGET: 300,
-      TOKENS_PER_DOLLAR: 50_000,
-      LIVE_TICK_MS: 3000,
-      PRICE_REFRESH_MS: 15000
-    };
-
-    const WEEK_PATTERNS = [
-      { buyers: 45, volume: 3200 },
-      { buyers: 12, volume: 800 },
-      { buyers: 8, volume: 400 },
-      { buyers: 18, volume: 1100 },
-      { buyers: 25, volume: 1800 },
-      { buyers: 65, volume: 5100 },
-      { buyers: 35, volume: 2900 }
-    ];
 
     function fmtCurrency(value) {
-      if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`;
-      return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+      return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
     function getNetWorth() {
       return state.cash + (state.sol * state.price);
+    }
+
+    function getPnl() {
+      return getNetWorth() - state.baselineNetWorth;
+    }
+
+    function updateVolatility() {
+      const delta = Math.abs(state.price - state.baselinePrice) / state.baselinePrice;
+      if (delta < 0.015) state.volatility = 'Low';
+      else if (delta < 0.045) state.volatility = 'Medium';
+      else state.volatility = 'High';
+
+      if (state.volatility === 'High') state.riskLevel = 'Defensive';
+      else if (state.volatility === 'Medium') state.riskLevel = 'Balanced';
+      else state.riskLevel = 'Aggressive';
+    }
+
+    function render() {
+      const netWorth = getNetWorth();
+      const pnl = getPnl();
+
+      document.getElementById('net-worth').textContent = fmtCurrency(netWorth);
+      document.getElementById('pnl-total').textContent = `${pnl >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(pnl))}`;
+      document.getElementById('pnl-total').className = `stat-value ${pnl >= 0 ? 'green' : 'red'}`;
+      document.getElementById('cash-balance').textContent = fmtCurrency(state.cash);
+      document.getElementById('sol-balance').textContent = `${state.sol.toFixed(2)} SOL`;
+      document.getElementById('sol-price').textContent = fmtCurrency(state.price);
+      document.getElementById('trading-volume').textContent = fmtCurrency(state.tradingVolume);
+      document.getElementById('fees-collected').textContent = fmtCurrency(state.feesCollected);
+
+      document.getElementById('realized-pnl').textContent = `${pnl >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(pnl))}`;
+      document.getElementById('unrealized-pnl').textContent = `${pnl >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(pnl * 0.42))}`;
+      document.getElementById('best-day').textContent = pnl >= 0 ? 'Bull Pulse' : 'Risk Guard';
+      document.getElementById('worst-day').textContent = pnl >= 0 ? 'Whale Shock' : 'Dump Echo';
+
+      document.getElementById('buyers-retail').textContent = state.buyers.retail;
+      document.getElementById('buyers-wallets').textContent = state.buyers.wallets;
+      document.getElementById('buyers-whales').textContent = state.buyers.whales;
+      document.getElementById('sellers-profit').textContent = state.sellers.profit;
+      document.getElementById('sellers-stakers').textContent = state.sellers.stakers;
+      document.getElementById('sellers-dumps').textContent = state.sellers.dumps;
+
+      document.getElementById('holders-count').textContent = state.holders;
+      document.getElementById('whales-count').textContent = state.whales;
+      document.getElementById('volatility-level').textContent = state.volatility;
+      document.getElementById('risk-level').textContent = state.riskLevel;
+      document.getElementById('latest-ai-move').textContent = state.latestAIMove;
+      document.getElementById('burn-check').textContent = state.burnCheck;
+      document.getElementById('capital-mix').textContent = state.capitalMix;
+
+      document.getElementById('asset-usdc').textContent = fmtCurrency(state.cash);
+      document.getElementById('asset-sol').textContent = `${state.sol.toFixed(2)} SOL`;
+      document.getElementById('asset-solaris').textContent = `${state.solaris.toLocaleString()}`;
+
+      const historyEl = document.getElementById('history-list');
+      historyEl.innerHTML = state.history.slice(0, 6).map(item => `<div>• ${item}</div>`).join('');
     }
 
     function log(message) {
@@ -508,259 +731,103 @@
       term.scrollTop = term.scrollHeight;
     }
 
-    function addFeed(type, note) {
-      state.feed.unshift({ type, note });
-      state.feed = state.feed.slice(0, 6);
-      const list = document.getElementById('feed-list');
-      list.innerHTML = state.feed
-        .map(item => `<li class="feed-item"><strong>${item.type}</strong> ${item.note}</li>`)
-        .join('');
+    function addHistory(message) {
+      state.history.unshift(message);
+      state.history = state.history.slice(0, 8);
     }
 
-    function renderChart() {
-      const grid = document.getElementById('chart-grid');
-      const maxVol = Math.max(...state.weekData.map(d => d.volume), 1);
+    function randomFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
-      grid.innerHTML = DAYS.map((day, idx) => {
-        const d = state.weekData[idx];
-        const height = Math.max((d.volume / maxVol) * 100, 10);
-        return `
-          <div class="chart-day">
-            <div class="chart-bar-container">
-              <div class="chart-bar" style="height: ${height}%;"></div>
-            </div>
-            <div class="chart-label">${day}</div>
-            <div class="chart-value">${d.buyers}</div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function render() {
-      const nw = getNetWorth();
-      document.getElementById('sol-price').textContent = `$${state.price.toFixed(2)}`;
-      document.getElementById('cash-balance').textContent = fmtCurrency(state.cash);
-      document.getElementById('sol-balance').textContent = `${state.sol.toFixed(1)} SOL`;
-      document.getElementById('net-worth').textContent = `$${nw.toFixed(2)}`;
-      document.getElementById('fees-collected').textContent = `$${state.feesCollected.toFixed(2)}`;
-      document.getElementById('tokens-burned').textContent = Number(state.tokensBurned).toLocaleString();
-      document.getElementById('trading-volume').textContent = `$${state.tradingVolume.toFixed(2)}`;
-      document.getElementById('circulating-supply').textContent = `${(state.circulatingSupply / 1_000_000_000).toFixed(2)}B`;
-      renderChart();
-    }
-
-    async function fetchLiveSOLPrice() {
-      try {
-        const response = await fetch(PRICE_API_URL, { headers: { Accept: 'application/json' } });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const payload = await response.json();
-        const nextPrice = Number(payload?.coin?.price);
-
-        if (Number.isFinite(nextPrice) && nextPrice > 0) {
-          state.price = nextPrice;
-          render();
-          log(`📡 LIVE PRICE | SOL @ $${state.price.toFixed(2)}`);
-          addFeed('LIVE', `SOL price refreshed at $${state.price.toFixed(2)}`);
-          return true;
-        }
-      } catch (error) {
-        log(`⚠️ LIVE PRICE UNAVAILABLE | Keeping fallback $${state.price.toFixed(2)}`);
-      }
-
-      return false;
-    }
-
-    function startPriceFeed() {
-      if (state.priceFeedInterval) clearInterval(state.priceFeedInterval);
-      fetchLiveSOLPrice();
-      state.priceFeedInterval = setInterval(fetchLiveSOLPrice, CONFIG.PRICE_REFRESH_MS);
-    }
-
-    function buyOneSol() {
-      const fee = state.price * CONFIG.DEX_FEE_RATE;
-      const totalCost = state.price + fee + CONFIG.GAS_FEE;
-
-      if (state.cash < totalCost) return false;
-
-      state.cash -= totalCost;
-      state.sol += 1.0;
-      state.feesCollected += fee + CONFIG.GAS_FEE;
-      render();
-      log(`✅ BOT BUY 1 SOL @ $${state.price.toFixed(2)} | Total: $${totalCost.toFixed(2)}`);
-      addFeed('BUY', `1 SOL bought at $${state.price.toFixed(2)}`);
-      return true;
-    }
-
-    function sellOneSol() {
-      if (state.sol < 1.0) return false;
-
-      const fee = state.price * CONFIG.DEX_FEE_RATE;
-      const revenue = (state.price * (1 - CONFIG.DEX_FEE_RATE)) - CONFIG.GAS_FEE;
-
-      state.cash += revenue;
-      state.sol -= 1.0;
-      state.feesCollected += fee + CONFIG.GAS_FEE;
-      render();
-      log(`✅ BOT SELL 1 SOL @ $${state.price.toFixed(2)} | Net: $${revenue.toFixed(2)}`);
-      addFeed('SELL', `1 SOL sold at $${state.price.toFixed(2)}`);
-      return true;
-    }
-
-    function simulateMarketDip() {
-      state.price -= 2.5;
-      buyOneSol();
-    }
-
-    function simulateMarketRally() {
-      state.price += 2.5;
-      sellOneSol();
-    }
-
-    function simulateBuyerInflow() {
-      const inflow = 400 + Math.random() * 2800;
-      const tax = inflow * CONFIG.BUYER_TAX_RATE;
-      state.cash += tax;
-      state.feesCollected += tax;
-      state.tradingVolume += inflow;
-      render();
-      log(`💰 BUYER INFLOW +${fmtCurrency(inflow)} | Treasury fees +${fmtCurrency(tax)}`);
-      addFeed('BUY', `Market inflow +${fmtCurrency(inflow)}`);
-    }
-
-    function triggerBurn() {
-      if (state.cash < CONFIG.BURN_BUDGET) {
-        log(`❌ BURN FAILED | Need $${CONFIG.BURN_BUDGET.toFixed(2)}`);
-        return;
-      }
-
-      const totalBurn = CONFIG.BURN_BUDGET * CONFIG.TOKENS_PER_DOLLAR;
-      state.cash -= CONFIG.BURN_BUDGET;
-      state.circulatingSupply -= totalBurn;
-      state.tokensBurned += totalBurn;
-      render();
-      log(`🔥 BURN EVENT | Spent $${CONFIG.BURN_BUDGET.toFixed(2)} to burn ${totalBurn.toLocaleString()} tokens`);
-      addFeed('BURN', `${totalBurn.toLocaleString()} tokens burned`);
-    }
-
-    function generateMarketOrder() {
+    function generateOrganicMarketEvent() {
+      const actorTypes = ['retail', 'wallet', 'whale'];
+      const actor = randomFrom(actorTypes);
       const isBuy = Math.random() < 0.55;
-      const largeWhale = Math.random() < 0.12;
-      const size = largeWhale ? (Math.random() * 10 + 4) : (Math.random() * 2.5 + 0.2);
-      const impact = (Math.random() * 1.4 + 0.2) / 100;
-      const fee = size * state.price * CONFIG.BUYER_TAX_RATE;
+      const size = actor === 'whale' ? (Math.random() * 18 + 8) : (Math.random() * 4 + 0.5);
+      const impact = (Math.random() * 0.8 + 0.2) / 100;
 
       if (isBuy) {
         state.price *= 1 + impact;
-        state.cash += fee;
-        state.feesCollected += fee;
+        state.cash += size * state.price * 0.12;
         state.tradingVolume += size * state.price;
-        log(`🟢 BUY TICK | ${size.toFixed(2)} SOL @ $${state.price.toFixed(2)} | Fee +${fmtCurrency(fee)}`);
-        addFeed('BUY', `${size.toFixed(2)} SOL bought`);
+        state.buyers.retail += actor === 'retail' ? 1 : 0;
+        state.buyers.wallets += actor === 'wallet' ? 1 : 0;
+        state.buyers.whales += actor === 'whale' ? 1 : 0;
+        state.holders += actor === 'retail' ? 1 : 0;
+        state.whales += actor === 'whale' ? 1 : 0;
+        log(`🟢 ORGANIC BUY // ${actor.toUpperCase()} ${size.toFixed(1)} SOL @ $${state.price.toFixed(2)}`);
+        addHistory(`Organic buy: ${actor} size ${size.toFixed(1)} SOL`);
       } else {
         state.price *= 1 - impact;
-        if (state.sol >= size) state.sol -= size;
         state.tradingVolume += size * state.price;
-        log(`🔴 SELL TICK | ${size.toFixed(2)} SOL @ $${state.price.toFixed(2)}`);
-        addFeed('SELL', `${size.toFixed(2)} SOL sold`);
+        state.sellers.profit += actor === 'retail' ? 1 : 0;
+        state.sellers.stakers += actor === 'wallet' ? 1 : 0;
+        state.sellers.dumps += actor === 'whale' ? 1 : 0;
+        state.holders = Math.max(0, state.holders - (actor === 'whale' ? 2 : 1));
+        log(`🔴 ORGANIC SELL // ${actor.toUpperCase()} ${size.toFixed(1)} SOL @ $${state.price.toFixed(2)}`);
+        addHistory(`Organic sell: ${actor} exited ${size.toFixed(1)} SOL`);
       }
 
+      updateVolatility();
       render();
     }
 
-    function evaluateBotDecision() {
-      const move = ((Math.random() * 5) - 2.25) / 100;
-      state.price *= 1 + move;
+    function decideAI() {
+      const delta = ((state.price - state.baselinePrice) / state.baselinePrice) * 100;
 
-      if (move <= -0.01) {
-        buyOneSol();
-      } else if (move >= 0.015 && state.sol >= 1.0) {
-        sellOneSol();
-      }
-    }
-
-    function startLiveMarket() {
-      if (state.marketTickInterval) clearInterval(state.marketTickInterval);
-      state.marketTickInterval = setInterval(() => {
-        generateMarketOrder();
-        if (state.autoBotEnabled) evaluateBotDecision();
-      }, CONFIG.LIVE_TICK_MS);
-    }
-
-    function toggleAutoBot() {
-      state.autoBotEnabled = !state.autoBotEnabled;
-      const btn = document.getElementById('auto-bot-toggle');
-      const badge = document.getElementById('bot-status');
-
-      if (state.autoBotEnabled) {
-        btn.textContent = 'Bot: ON';
-        badge.textContent = 'Bot: Trading';
-        badge.classList.remove('off');
-        log('✅ AUTO BOT ENABLED');
-        if (!state.marketTickInterval) startLiveMarket();
+      if (delta <= -2.5) {
+        state.latestAIMove = 'Buy the dip';
+        state.burnCheck = 'Pause';
+        state.capitalMix = '50/40/10';
+        state.cash = Math.max(0, state.cash - (state.price * 1.05));
+        state.sol += 1.0;
+        state.feesCollected += state.price * 0.0025 + 0.002;
+        addHistory('Finance AI bought SOL on dip signal.');
+      } else if (delta >= 4.5) {
+        state.latestAIMove = 'Trim winners';
+        state.burnCheck = 'Evaluate';
+        state.capitalMix = '65/25/10';
+        if (state.sol >= 1) {
+          state.cash += (state.price * 0.98) - 0.002;
+          state.sol -= 1.0;
+          state.feesCollected += state.price * 0.0025 + 0.002;
+        }
+        addHistory('Finance AI reduced exposure during rally.');
       } else {
-        btn.textContent = 'Bot: OFF';
-        badge.textContent = 'Bot: Idle';
-        badge.classList.add('off');
-        log('⏹️ AUTO BOT DISABLED');
-      }
-    }
-
-    async function runWeekSimulation() {
-      if (state.autoBotEnabled) toggleAutoBot();
-      log('[SIM] Starting 7-day treasury cycle...');
-
-      for (let day = 0; day < 7; day++) {
-        const pattern = WEEK_PATTERNS[day];
-        state.weekData[day] = { volume: pattern.volume, buyers: pattern.buyers };
-        simulateBuyerInflow();
-
-        const dailyMove = (Math.random() * 6) - 3;
-        state.price *= 1 + (dailyMove / 100);
-        log(`📅 DAY ${day + 1} | Move ${dailyMove.toFixed(2)}% | Price $${state.price.toFixed(2)}`);
-
-        if (dailyMove <= -1.0 && state.cash >= state.price) {
-          buyOneSol();
-        } else if (dailyMove >= 1.5 && state.sol >= 1.0) {
-          sellOneSol();
-        }
-
-        if (day === 3 && state.cash > CONFIG.BURN_BUDGET) {
-          triggerBurn();
-        }
-
-        render();
-        await new Promise(resolve => setTimeout(resolve, 800));
+        state.latestAIMove = 'Hedge and hold';
+        state.burnCheck = 'Standby';
+        state.capitalMix = '60/35/5';
+        addHistory('AI held capital and preserved treasury balance.');
       }
 
-      log('✨ 7-day simulation complete');
-    }
-
-    function resetSimulation() {
-      if (state.autoBotEnabled) toggleAutoBot();
-      if (state.marketTickInterval) clearInterval(state.marketTickInterval);
-
-      state.cash = 5003.72;
-      state.sol = 25.0;
-      state.price = 110.10;
-      state.circulatingSupply = 1_000_000_000;
-      state.tokensBurned = 0;
-      state.feesCollected = 0;
-      state.tradingVolume = 0;
-      state.feed = [{ type: 'SYS', note: 'Market feed online.' }];
-      state.weekData = Array(7).fill(0).map(() => ({ volume: 0, buyers: 0 }));
-
-      document.getElementById('terminal-log').innerHTML = '[00:01] Treasury online<br>[00:02] Fee engine active<br>[00:03] Waiting for market data...';
       render();
-      log('🔄 RESET COMPLETE');
-      startLiveMarket();
+      log(`🤖 AI SIGNAL // ${state.latestAIMove} | ${state.capitalMix}`);
+    }
+
+    function startSimulation() {
+      if (state.marketTick) clearInterval(state.marketTick);
+      state.marketTick = setInterval(() => {
+        generateOrganicMarketEvent();
+        if (Math.random() < 0.55) decideAI();
+      }, 3000);
+    }
+
+    function initTabs() {
+      const tabs = document.querySelectorAll('.room-tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.toggle('active', t === tab));
+          const room = tab.dataset.room;
+          document.querySelectorAll('.room-view').forEach(view => {
+            view.classList.toggle('active', view.dataset.room === room);
+          });
+        });
+      });
     }
 
     function init() {
+      initTabs();
       render();
-      renderChart();
-      startPriceFeed();
-      startLiveMarket();
+      startSimulation();
     }
 
     init();
