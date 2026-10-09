@@ -3,162 +3,197 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SOLARIS // Control Room</title>
+  <title>SOLARIS // Autonomous Treasury Control Room</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #050811; --panel: #0d1527; --line: #1e3a5f; --cyan: #38bdf8;
-      --green: #22c55e; --red: #ef4444; --gold: #f59e0b; --text: #f8fafc; --muted: #94a3b8;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 12px; }
-    .app { max-width: 900px; margin: 0 auto; }
-    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 2px solid var(--cyan); background: var(--panel); margin-bottom: 12px; }
-    .brand { font-family: 'Press Start 2P', monospace; font-size: 10px; color: var(--cyan); }
-    .btn { background: rgba(56,189,248,0.1); border: 1px solid var(--cyan); color: var(--cyan); padding: 8px; font-family: 'Press Start 2P', monospace; font-size: 6px; cursor: pointer; }
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
-    .box { border: 1px solid var(--line); background: var(--panel); padding: 10px; }
-    .label { font-family: 'Press Start 2P', monospace; font-size: 6px; color: var(--muted); margin-bottom: 6px; }
-    .val { font-size: 1.2rem; font-weight: 800; }
-    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
-    .tab { background: var(--panel); border: 1px solid var(--line); color: var(--text); padding: 10px; font-family: 'Press Start 2P', monospace; font-size: 6px; cursor: pointer; text-align: center; }
-    .tab.active { border-color: var(--cyan); color: var(--cyan); background: rgba(56,189,248,0.1); }
-    .view { display: none; }
-    .view.active { display: block; }
-    .chat-box { border: 1px solid var(--line); background: #04070d; height: 320px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-    .bubble { background: rgba(13,21,39,0.9); border-left: 3px solid var(--cyan); padding: 8px; font-size: 0.8rem; }
-    .sender { font-family: 'Press Start 2P', monospace; font-size: 6px; color: var(--cyan); margin-bottom: 4px; }
-    .modal { position: fixed; inset: 0; background: rgba(5,8,17,0.9); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
-    .modal.open { display: flex; }
-    .modal-content { background: var(--panel); border: 2px solid var(--cyan); padding: 16px; width: 100%; max-width: 400px; }
-    input { width: 100%; background: #04070d; border: 1px solid var(--line); color: #fff; padding: 8px; margin: 10px 0; font-family: monospace; }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="app">
     <header class="topbar">
       <div class="brand">SOLARIS // HQ</div>
-      <div>
-        <span id="api-status" style="font-family:'Press Start 2P',monospace; font-size:6px; color:var(--gold); margin-right:8px;">LOCAL</span>
-        <button class="btn" onclick="openKeyModal()">⚙️ KEY</button>
+      <div class="status-row">
+        <div class="pixel-pill warn" id="ai-status-pill">AI: Local</div>
+        <button class="action-btn" onclick="openApiKeyModal()">⚙️ Key</button>
+        <button class="reset-btn" onclick="resetTreasury()">Reset</button>
       </div>
     </header>
 
-    <div class="grid">
-      <div class="box">
-        <div class="label">Net Worth</div>
-        <div class="val" id="net-worth" style="color:var(--cyan);">$10,000.00</div>
-      </div>
-      <div class="box">
-        <div class="label">Cash Reserve</div>
-        <div class="val" id="cash-balance" style="color:var(--gold);">$10,000.00</div>
-      </div>
-    </div>
-
-    <div class="tabs">
-      <div class="tab active" onclick="switchTab('hub', this)">Hub</div>
-      <div class="tab" onclick="switchTab('council', this)">Council Table</div>
-      <div class="tab" onclick="switchTab('agents', this)">Agents</div>
-    </div>
-
-    <div class="view active" id="view-hub">
-      <div class="box" style="margin-bottom:10px;">
-        <div class="label">Market Status</div>
-        <div>SOL: <span id="sol-price">$145.20</span> | Sentiment: Bullish</div>
-      </div>
-      <div class="box" id="terminal" style="font-family:'Press Start 2P',monospace; font-size:6px; height:180px; overflow-y:auto; color:var(--green);">
-        [00:01] Solaris neural net initialized.<br>
+    <!-- Modal for Gemini API Key -->
+    <div class="modal-overlay" id="api-modal">
+      <div class="modal-box">
+        <h3>Gemini API Link</h3>
+        <p>Enter your Gemini API key to power your bots with live AI table debates and self-optimizing strategies.</p>
+        <input type="password" id="api-key-input" placeholder="AIzaSy..." />
+        <div class="modal-buttons">
+          <button class="action-btn" onclick="closeApiKeyModal()">Cancel</button>
+          <button class="action-btn" style="border-color:var(--green); color:var(--green);" onclick="saveApiKey()">Save Key</button>
+        </div>
       </div>
     </div>
 
-    <div class="view" id="view-council">
-      <div class="label" style="margin-bottom:6px;">// TABLE DEBATE FEED</div>
-      <div class="chat-box" id="council-feed">
-        <div class="bubble"><div class="sender">SYSTEM</div>Agents seated at the table. Ready for live session.</div>
-      </div>
+    <!-- Modal for Agent Diagnostics -->
+    <div class="modal-overlay" id="agent-modal">
+      <div class="modal-box" id="agent-modal-content"></div>
     </div>
 
-    <div class="view" id="view-agents">
-      <div id="agent-list" style="display:grid; gap:8px;"></div>
-    </div>
+    <main class="scene">
+      <section class="panel main-panel">
+        <div class="panel-header">
+          <div class="panel-title">Main Hub</div>
+          <div class="panel-badge">Live Feed</div>
+        </div>
+
+        <div class="content">
+          <div class="room-view active" data-room="hub">
+            <div class="hub-grid">
+              <div class="stat-box">
+                <div class="stat-label">Net Worth</div>
+                <div class="stat-value cyan" id="net-worth">$10,000.00</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">P&amp;L vs Base</div>
+                <div class="stat-value green" id="pnl-total">+$0.00</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Cash Reserve</div>
+                <div class="stat-value gold" id="cash-balance">$10,000.00</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Positions</div>
+                <div class="stat-value" id="position-count">0</div>
+              </div>
+            </div>
+
+            <div class="market-strip">
+              <div class="mini-box">
+                <div class="mini-label">SOL Price</div>
+                <div class="mini-value" id="sol-price">$145.20</div>
+              </div>
+              <div class="mini-box">
+                <div class="mini-label">Top Coin</div>
+                <div class="mini-value" id="leading-coin">SOL</div>
+              </div>
+              <div class="mini-box">
+                <div class="mini-label">Sentiment</div>
+                <div class="mini-value" id="sentiment-level">Neutral</div>
+              </div>
+            </div>
+
+            <div class="terminal" id="terminal-log">
+              [00:01] Neural network initialized.<br>
+              [00:02] Modular architecture active.<br>
+            </div>
+          </div>
+
+          <div class="room-view" data-room="council">
+            <div style="font-family:'Press Start 2P',monospace; font-size:7px; color:var(--cyan); margin-bottom:8px;">// THE TABLE // LIVE AGENT DEBATE CHAT</div>
+            <div class="council-feed-box" id="council-feed-box">
+              <div class="chat-bubble">
+                <div class="chat-header-row">
+                  <span class="chat-sender" style="color:var(--cyan);">SYSTEM</span>
+                  <span class="chat-time">00:00</span>
+                </div>
+                <div class="chat-msg">Table session active. Agents are seated and discussing strategy...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="room-view" data-room="ai">
+            <div class="ai-grid" id="war-room-grid"></div>
+          </div>
+
+          <div class="room-view" data-room="market">
+            <div class="summary-grid">
+              <div class="summary-box">
+                <h4>Position Leaders</h4>
+                <div class="list" id="coin-leaders"><div>Loading market...</div></div>
+              </div>
+              <div class="summary-box">
+                <h4>Market Narrative</h4>
+                <div class="list" id="market-narrative"><div>Neutral market structure.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="room-view" data-room="holdings">
+            <div class="holding-grid">
+              <div class="asset-card">
+                <div class="coin-tag">CASH</div>
+                <div class="coin-value" id="asset-cash">$10,000.00</div>
+                <div class="coin-meta">Reserve treasury</div>
+              </div>
+              <div class="asset-card">
+                <div class="coin-tag">SOL</div>
+                <div class="coin-value" id="asset-sol">0.00 SOL</div>
+                <div class="coin-meta">Primary holding</div>
+              </div>
+              <div class="asset-card">
+                <div class="coin-tag">ALTS</div>
+                <div class="coin-value" id="asset-alt">0</div>
+                <div class="coin-meta">Active tokens</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="room-tabs" id="room-tabs">
+            <button class="room-tab active" data-room="hub">Hub</button>
+            <button class="room-tab" data-room="council">Council</button>
+            <button class="room-tab" data-room="ai">War Room</button>
+            <button class="room-tab" data-room="market">Market</button>
+            <button class="room-tab" data-room="holdings">Holdings</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel side-panel">
+        <div class="panel-header">
+          <div class="panel-title">Control Panel</div>
+          <div class="panel-badge">AI</div>
+        </div>
+
+        <div class="content">
+          <div class="floating-box">
+            <h3>Treasury P&amp;L</h3>
+            <ul class="trait-list">
+              <li><span>Realized</span><strong id="realized-pnl">+$0.00</strong></li>
+              <li><span>Unrealized</span><strong id="unrealized-pnl">+$0.00</strong></li>
+              <li><span>Best Trade</span><strong id="best-day">—</strong></li>
+              <li><span>Worst Trade</span><strong id="worst-day">—</strong></li>
+            </ul>
+          </div>
+
+          <div class="floating-box">
+            <h3>Market Pulse</h3>
+            <ul class="trait-list">
+              <li><span>Cash Balance</span><strong id="holders-count">$10,000.00</strong></li>
+              <li><span>Active Assets</span><strong id="whales-count">5 tokens</strong></li>
+              <li><span>Volatility</span><strong id="volatility-level">Low</strong></li>
+              <li><span>Risk Level</span><strong id="risk-level">Balanced</strong></li>
+            </ul>
+          </div>
+
+          <div class="floating-box">
+            <h3>AI Decisions</h3>
+            <ul class="trait-list">
+              <li><span>Consensus</span><strong id="latest-ai-move">Awaiting signal</strong></li>
+              <li><span>Catalyst</span><strong id="burn-check">Standby</strong></li>
+              <li><span>Capital Mix</span><strong id="capital-mix">100/0/0</strong></li>
+            </ul>
+          </div>
+
+          <div class="floating-box">
+            <h3>News Feed</h3>
+            <div class="news-feed" id="news-feed"></div>
+          </div>
+        </div>
+      </aside>
+    </main>
   </div>
 
-  <div class="modal" id="key-modal">
-    <div class="modal-content">
-      <div class="label">Gemini API Key</div>
-      <input type="password" id="api-input" placeholder="AIzaSy..." />
-      <div style="display:flex; justify-content:flex-end; gap:6px;">
-        <button class="btn" onclick="closeKeyModal()">Cancel</button>
-        <button class="btn" style="border-color:var(--green); color:var(--green);" onclick="saveKey()">Save</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let agents = [
-      { name: 'FIN_BOT', role: 'Portfolio Manager', pnl: 0, wins: 0, losses: 0, color: '#38bdf8' },
-      { name: 'RISK_CORE', role: 'Risk Control', pnl: 0, wins: 0, losses: 0, color: '#f59e0b' },
-      { name: 'ALPHA_X', role: 'Execution Matrix', pnl: 0, wins: 0, losses: 0, color: '#ef4444' }
-    ];
-    let state = { cash: 10000, solPrice: 145.20, feed: [] };
-
-    function switchTab(name, el) {
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.getElementById('view-' + name).classList.add('active');
-      el.classList.add('active');
-    }
-
-    function openKeyModal() { document.getElementById('key-modal').classList.add('open'); document.getElementById('api-input').value = localStorage.getItem('gemini_key') || ''; }
-    function closeKeyModal() { document.getElementById('key-modal').classList.remove('open'); }
-    function saveKey() {
-      const k = document.getElementById('api-input').value.trim();
-      if(k) localStorage.setItem('gemini_key', k); else localStorage.removeItem('gemini_key');
-      checkKey(); closeKeyModal();
-    }
-    function checkKey() {
-      const has = !!localStorage.getItem('gemini_key');
-      const st = document.getElementById('api-status');
-      st.textContent = has ? 'AI LIVE' : 'LOCAL';
-      st.style.color = has ? 'var(--green)' : 'var(--gold)';
-    }
-
-    function renderAgents() {
-      document.getElementById('agent-list').innerHTML = agents.map(a => `
-        <div class="box" style="border-left: 3px solid ${a.color};">
-          <div class="sender" style="color:${a.color};">${a.name} // ${a.role}</div>
-          <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Wins: ${a.wins} | Losses: ${a.losses} | P&amp;L: $${a.pnl.toFixed(2)}</div>
-        </div>
-      `).join('');
-    }
-
-    async function runLoop() {
-      state.solPrice *= (1 + (Math.random() - 0.48) * 0.02);
-      document.getElementById('sol-price').textContent = `$${state.solPrice.toFixed(2)}`;
-
-      const agent = agents[Math.floor(Math.random() * agents.length)];
-      const text = `Let's discuss our exposure on SOL at $${state.solPrice.toFixed(2)}. Market vectors look unstable.`;
-      
-      state.feed.unshift({ sender: agent.name, text: text, color: agent.color });
-      if(state.feed.length > 15) state.feed.pop();
-
-      document.getElementById('council-feed').innerHTML = state.feed.map(f => `
-        <div class="bubble" style="border-left-color:${f.color};">
-          <div class="sender" style="color:${f.color};">${f.sender}</div>
-          <div>"${f.text}"</div>
-        </div>
-      `).join('');
-
-      renderAgents();
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      checkKey();
-      renderAgents();
-      setInterval(runLoop, 6000);
-    });
-  </script>
+  <!-- Load Modular Scripts -->
+  <script src="ui.js"></script>
+  <script src="ai.js"></script>
 </body>
 </html>
