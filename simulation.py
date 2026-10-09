@@ -4,7 +4,10 @@ import requests
 
 # --- INITIAL TREASURY STATE ---
 DEFAULT_SOL_PRICE = 109.10
-PRICE_API_URL = "https://api.coinstats.app/public/v2/coins/solana"
+# Updated to the current CoinStats OpenAPI endpoint path
+PRICE_API_URL = "https://openapiv1.coinstats.app/coins/solana"
+# Replace with a valid CoinStats API key if available; leaving a placeholder or public header setup
+API_HEADERS = {"accept": "application/json", "X-API-KEY": "YOUR_COINSTATS_API_KEY"}
 
 treasury_cash_usd = 5000.0  # Stablecoins
 treasury_sol = 25.0  # Staked SOL reserve
@@ -13,20 +16,22 @@ sol_price = DEFAULT_SOL_PRICE  # Baseline SOL price fallback
 
 
 def fetch_live_sol_price():
-  """Fetch current SOL/USD price from CoinStats with safe fallback."""
+  """Fetch current SOL/USD price from CoinStats OpenAPI with authentication header and safe fallback."""
   global sol_price
 
   try:
-    response = requests.get(PRICE_API_URL, timeout=10)
+    response = requests.get(PRICE_API_URL, headers=API_HEADERS, timeout=10)
     response.raise_for_status()
     payload = response.json()
-    live_price = float(payload.get("coin", {}).get("price", DEFAULT_SOL_PRICE))
+    
+    # CoinStats OpenAPI typically returns the price directly in the root object or under a specific key
+    live_price = float(payload.get("price", DEFAULT_SOL_PRICE))
 
     if live_price > 0:
       sol_price = live_price
       return sol_price
   except Exception as exc:
-    print(f"⚠️ Live market feed unavailable. Using fallback price ${DEFAULT_SOL_PRICE:.2f}. Error: {exc}")
+    print(f"⚠️ Live market feed unavailable or requires valid API key. Using fallback price ${DEFAULT_SOL_PRICE:.2f}. Error: {exc}")
 
   sol_price = DEFAULT_SOL_PRICE
   return sol_price
