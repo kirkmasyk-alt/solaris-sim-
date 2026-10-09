@@ -3,1341 +3,161 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SOLARIS // Autonomous Treasury Control Room</title>
+  <title>SOLARIS // Control Room</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-1: #050811;
-      --bg-2: #0b1120;
-      --bg-3: #111a2e;
-      --panel: #0d1527;
-      --line: #1e3a5f;
-      --line-bright: #38bdf8;
-      --cyan: #38bdf8;
-      --blue: #3b82f6;
-      --green: #22c55e;
-      --green-glow: rgba(34, 197, 94, 0.4);
-      --red: #ef4444;
-      --red-glow: rgba(239, 68, 68, 0.4);
-      --gold: #f59e0b;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --shadow: rgba(0, 0, 0, 0.6);
+      --bg: #050811; --panel: #0d1527; --line: #1e3a5f; --cyan: #38bdf8;
+      --green: #22c55e; --red: #ef4444; --gold: #f59e0b; --text: #f8fafc; --muted: #94a3b8;
     }
-
     * { box-sizing: border-box; }
-
-    html, body {
-      margin: 0;
-      min-height: 100vh;
-      background: radial-gradient(circle at top, rgba(56,189,248,0.15), transparent 40%), linear-gradient(180deg, var(--bg-1), var(--bg-2) 50%, var(--bg-3));
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
-      z-index: 999;
-      opacity: 0.3;
-    }
-
-    .app {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 18px 16px 90px;
-      position: relative;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 18px;
-      padding: 14px 18px;
-      border: 2px solid var(--cyan);
-      background: linear-gradient(180deg, rgba(13,21,39,0.95), rgba(7,13,23,0.95));
-      box-shadow: 0 0 15px rgba(56,189,248,0.2), inset 0 0 10px rgba(56,189,248,0.1);
-    }
-
-    .brand {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-      color: var(--cyan);
-      text-shadow: 0 0 8px rgba(56,189,248,0.6);
-    }
-
-    .status-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .pixel-pill {
-      border: 1px solid var(--cyan);
-      background: rgba(13,21,39,0.9);
-      padding: 8px 10px;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--text);
-      box-shadow: inset 0 0 5px rgba(56,189,248,0.2);
-    }
-
-    .pixel-pill.good { color: var(--green); border-color: var(--green); }
-    .pixel-pill.warn { color: var(--gold); border-color: var(--gold); }
-    
-    .action-btn {
-      appearance: none;
-      border: 1px solid var(--cyan);
-      background: rgba(56, 189, 248, 0.1);
-      color: var(--cyan);
-      font-family: 'Press Start 2P', monospace;
-      font-size: 6px;
-      padding: 8px 10px;
-      text-transform: uppercase;
-      cursor: pointer;
-    }
-    .action-btn:hover { background: rgba(56, 189, 248, 0.3); }
-
-    .reset-btn {
-      appearance: none;
-      border: 1px solid var(--red);
-      background: rgba(239, 68, 68, 0.1);
-      color: var(--red);
-      font-family: 'Press Start 2P', monospace;
-      font-size: 6px;
-      padding: 8px 10px;
-      text-transform: uppercase;
-      cursor: pointer;
-    }
-    .reset-btn:hover { background: rgba(239, 68, 68, 0.3); }
-
-    /* Modals */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(5, 8, 17, 0.85);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 16px;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-box {
-      border: 2px solid var(--cyan);
-      background: var(--panel);
-      padding: 20px;
-      max-width: 520px;
-      width: 100%;
-      box-shadow: 0 0 25px rgba(56,189,248,0.4);
-      max-height: 85vh;
-      overflow-y: auto;
-    }
-    .modal-box h3 {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 8px;
-      color: var(--cyan);
-      margin-top: 0;
-      text-transform: uppercase;
-    }
-    .modal-box p {
-      font-size: 0.8rem;
-      color: var(--muted);
-      line-height: 1.4;
-    }
-    .modal-box input {
-      width: 100%;
-      background: #04070d;
-      border: 1px solid var(--line);
-      color: var(--text);
-      padding: 10px;
-      font-family: monospace;
-      margin: 12px 0;
-      border-radius: 4px;
-    }
-    .modal-buttons {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .scene {
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 18px;
-      min-height: 620px;
-    }
-
-    .panel {
-      border: 2px solid var(--line);
-      background: linear-gradient(180deg, rgba(13,21,39,0.95), rgba(9,15,27,0.95));
-      box-shadow: 0 10px 30px var(--shadow);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
-      border-bottom: 2px solid var(--line);
-      background: rgba(7,13,23,0.95);
-    }
-
-    .panel-title {
-      font-family: 'Press Start 2P', monospace;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      font-size: 8px;
-      color: var(--cyan);
-    }
-
-    .panel-badge {
-      border: 1px solid var(--cyan);
-      background: rgba(56,189,248,0.1);
-      color: var(--cyan);
-      font-family: 'Press Start 2P', monospace;
-      font-size: 6px;
-      padding: 6px 8px;
-      text-transform: uppercase;
-    }
-
-    .content { padding: 14px; }
-
-    .hub-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .stat-box {
-      border: 2px solid var(--line);
-      background: linear-gradient(180deg, rgba(15,25,45,0.9), rgba(10,17,31,0.95));
-      padding: 12px 10px;
-      min-height: 110px;
-    }
-
-    .stat-label {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 6px;
-      color: var(--muted);
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-
-    .stat-value {
-      font-size: clamp(1.1rem, 2.4vw, 1.8rem);
-      font-weight: 900;
-      line-height: 1.1;
-      color: var(--text);
-    }
-
-    .stat-value.green { color: var(--green); text-shadow: 0 0 10px var(--green-glow); }
-    .stat-value.cyan { color: var(--cyan); text-shadow: 0 0 10px rgba(56,189,248,0.4); }
-    .stat-value.gold { color: var(--gold); }
-    .stat-value.red { color: var(--red); }
-
-    .market-strip {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 10px;
-      margin-top: 12px;
-      margin-bottom: 14px;
-    }
-
-    .mini-box {
-      border: 1px solid var(--line);
-      background: rgba(11,18,32,0.9);
-      padding: 10px;
-    }
-
-    .mini-label {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 6px;
-      color: var(--muted);
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-
-    .mini-value {
-      font-weight: 800;
-      font-size: 0.95rem;
-    }
-
-    .terminal {
-      border: 2px solid var(--line);
-      background: #04070d;
-      height: 220px;
-      overflow-y: auto;
-      padding: 12px;
-      color: var(--green);
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      line-height: 1.8;
-      text-shadow: 0 0 6px var(--green-glow);
-    }
-
-    /* Council Feed View */
-    .council-feed-box {
-      border: 2px solid var(--line);
-      background: #04070d;
-      height: 380px;
-      overflow-y: auto;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .chat-bubble {
-      background: rgba(13,21,39,0.85);
-      border-left: 3px solid var(--cyan);
-      padding: 10px 12px;
-      border-radius: 4px;
-    }
-
-    .chat-sender {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 6px;
-      color: var(--cyan);
-      margin-bottom: 4px;
-      text-transform: uppercase;
-    }
-
-    .chat-msg {
-      font-size: 0.82rem;
-      color: var(--text);
-      line-height: 1.4;
-    }
-
-    .room-tabs {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0,1fr));
-      gap: 6px;
-      margin-top: 16px;
-    }
-
-    .room-tab {
-      appearance: none;
-      border: 2px solid var(--line);
-      background: linear-gradient(180deg, rgba(17,27,46,0.9), rgba(9,15,27,0.9));
-      color: var(--text);
-      font-family: 'Press Start 2P', monospace;
-      font-size: 6px;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      padding: 12px 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .room-tab.active {
-      border-color: var(--cyan);
-      color: var(--cyan);
-      background: rgba(56,189,248,0.1);
-      box-shadow: 0 0 10px rgba(56,189,248,0.3);
-    }
-
-    .ai-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
-    }
-
-    .ai-agent-card {
-      border: 2px solid var(--line);
-      background: linear-gradient(180deg, rgba(13,21,39,0.95), rgba(7,12,22,0.98));
-      padding: 12px;
-      position: relative;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .ai-agent-card:hover { border-color: var(--cyan); transform: translateY(-1px); }
-
-    @keyframes pulseGlowGreen {
-      0% { border-color: var(--green); box-shadow: 0 0 10px var(--green-glow); }
-      50% { border-color: #4ade80; box-shadow: 0 0 25px rgba(74, 222, 128, 0.7); }
-      100% { border-color: var(--green); box-shadow: 0 0 10px var(--green-glow); }
-    }
-
-    @keyframes pulseGlowRed {
-      0% { border-color: var(--red); box-shadow: 0 0 10px var(--red-glow); }
-      50% { border-color: #f87171; box-shadow: 0 0 25px rgba(248, 113, 113, 0.7); }
-      100% { border-color: var(--red); box-shadow: 0 0 10px var(--red-glow); }
-    }
-
-    .ai-agent-card.status-buy { animation: pulseGlowGreen 2s infinite; }
-    .ai-agent-card.status-sell { animation: pulseGlowRed 2s infinite; }
-
-    .ai-header-flex {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .ai-portrait {
-      position: relative;
-      width: 76px;
-      height: 88px;
-      border: 2px solid var(--cyan);
-      background: radial-gradient(circle, rgba(56,189,248,0.2) 0%, rgba(5,10,20,0.9) 80%);
-      border-radius: 6px;
-      overflow: hidden;
-      flex-shrink: 0;
-      box-shadow: inset 0 0 12px rgba(56,189,248,0.4);
-    }
-
-    @keyframes scanlineBeam {
-      0% { transform: translateY(-100%); }
-      100% { transform: translateY(300%); }
-    }
-
-    .ai-portrait::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: var(--cyan);
-      box-shadow: 0 0 8px var(--cyan);
-      animation: scanlineBeam 3s linear infinite;
-      z-index: 5;
-    }
-
-    .robot-avatar-svg {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    @keyframes visorBlink {
-      0%, 90%, 100% { opacity: 1; transform: scaleY(1); }
-      95% { opacity: 0.3; transform: scaleY(0.2); }
-    }
-
-    .vis-glow { animation: visorBlink 4s infinite; }
-
-    .ai-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .ai-name-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-    }
-
-    .ai-agent-name {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      color: var(--text);
-      text-transform: uppercase;
-    }
-
-    .ai-live-badge {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 6px;
-      padding: 3px 6px;
-      border: 1px solid var(--line);
-      background: rgba(0,0,0,0.6);
-      text-transform: uppercase;
-    }
-
-    .ai-metrics-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-      margin-top: 8px;
-    }
-
-    .mini-metric {
-      background: rgba(4,7,13,0.9);
-      border: 1px solid var(--line);
-      padding: 5px;
-      text-align: center;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 5px;
-      color: var(--muted);
-    }
-
-    .mini-metric span {
-      display: block;
-      font-size: 7px;
-      color: var(--text);
-      margin-top: 2px;
-    }
-
-    .game-speech-box {
-      margin-top: 10px;
-      background: rgba(5, 10, 18, 0.95);
-      border: 1px solid var(--line);
-      border-left: 3px solid var(--cyan);
-      border-radius: 4px;
-      padding: 10px;
-    }
-
-    .speech-speaker {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 5px;
-      color: var(--cyan);
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .speech-text {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 6.5px;
-      color: var(--text);
-      line-height: 1.5;
-    }
-
-    .floating-box {
-      border: 2px solid var(--line);
-      background: rgba(11,18,32,0.95);
-      padding: 10px;
-      margin-top: 12px;
-    }
-
-    .floating-box h3 {
-      margin: 0 0 10px;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      text-transform: uppercase;
-      color: var(--gold);
-    }
-
-    .trait-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      gap: 8px;
-    }
-
-    .trait-list li {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      font-size: .78rem;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      padding-bottom: 6px;
-      color: var(--muted);
-    }
-
-    .trait-list strong { color: var(--text); }
-
-    .room-view { display: none; }
-    .room-view.active { display: block; }
-
-    .holding-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 12px;
-      margin-top: 8px;
-    }
-
-    .asset-card {
-      border: 2px solid var(--line);
-      background: rgba(13,21,39,0.9);
-      padding: 12px 10px;
-      min-height: 140px;
-    }
-
-    .coin-tag {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      text-transform: uppercase;
-      color: var(--cyan);
-      margin-bottom: 10px;
-    }
-
-    .coin-value {
-      font-size: clamp(1.1rem, 2.5vw, 1.6rem);
-      font-weight: 900;
-      margin-bottom: 6px;
-    }
-
-    .coin-meta {
-      font-size: .8rem;
-      color: var(--muted);
-    }
-
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .summary-box {
-      border: 2px solid var(--line);
-      background: rgba(13,21,39,0.9);
-      padding: 12px 10px;
-    }
-
-    .summary-box h4 {
-      margin: 0 0 10px;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      color: var(--gold);
-      text-transform: uppercase;
-    }
-
-    .list {
-      display: grid;
-      gap: 8px;
-      font-size: .8rem;
-      color: var(--muted);
-    }
-
-    .news-feed {
-      display: grid;
-      gap: 8px;
-      max-height: 180px;
-      overflow: auto;
-    }
-
-    .news-item {
-      border: 1px solid var(--line);
-      background: rgba(7,13,23,0.8);
-      padding: 8px;
-      font-size: 0.74rem;
-      color: var(--text);
-    }
-
-    .news-item strong { color: var(--gold); }
-
-    @media (max-width: 920px) {
-      .scene { grid-template-columns: 1fr; }
-      .room-tabs { grid-template-columns: repeat(3, minmax(0,1fr)); }
-      .holding-grid { grid-template-columns: 1fr; }
-    }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 12px; }
+    .app { max-width: 900px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 2px solid var(--cyan); background: var(--panel); margin-bottom: 12px; }
+    .brand { font-family: 'Press Start 2P', monospace; font-size: 10px; color: var(--cyan); }
+    .btn { background: rgba(56,189,248,0.1); border: 1px solid var(--cyan); color: var(--cyan); padding: 8px; font-family: 'Press Start 2P', monospace; font-size: 6px; cursor: pointer; }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+    .box { border: 1px solid var(--line); background: var(--panel); padding: 10px; }
+    .label { font-family: 'Press Start 2P', monospace; font-size: 6px; color: var(--muted); margin-bottom: 6px; }
+    .val { font-size: 1.2rem; font-weight: 800; }
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+    .tab { background: var(--panel); border: 1px solid var(--line); color: var(--text); padding: 10px; font-family: 'Press Start 2P', monospace; font-size: 6px; cursor: pointer; text-align: center; }
+    .tab.active { border-color: var(--cyan); color: var(--cyan); background: rgba(56,189,248,0.1); }
+    .view { display: none; }
+    .view.active { display: block; }
+    .chat-box { border: 1px solid var(--line); background: #04070d; height: 320px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .bubble { background: rgba(13,21,39,0.9); border-left: 3px solid var(--cyan); padding: 8px; font-size: 0.8rem; }
+    .sender { font-family: 'Press Start 2P', monospace; font-size: 6px; color: var(--cyan); margin-bottom: 4px; }
+    .modal { position: fixed; inset: 0; background: rgba(5,8,17,0.9); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
+    .modal.open { display: flex; }
+    .modal-content { background: var(--panel); border: 2px solid var(--cyan); padding: 16px; width: 100%; max-width: 400px; }
+    input { width: 100%; background: #04070d; border: 1px solid var(--line); color: #fff; padding: 8px; margin: 10px 0; font-family: monospace; }
   </style>
 </head>
 <body>
   <div class="app">
     <header class="topbar">
       <div class="brand">SOLARIS // HQ</div>
-      <div class="status-row">
-        <div class="pixel-pill warn" id="ai-status-pill">AI: Local</div>
-        <button class="action-btn" onclick="openApiKeyModal()">⚙️ Key</button>
-        <button class="reset-btn" onclick="resetTreasury()">Reset</button>
+      <div>
+        <span id="api-status" style="font-family:'Press Start 2P',monospace; font-size:6px; color:var(--gold); margin-right:8px;">LOCAL</span>
+        <button class="btn" onclick="openKeyModal()">⚙️ KEY</button>
       </div>
     </header>
 
-    <!-- Modal for Gemini API Key -->
-    <div class="modal-overlay" id="api-modal">
-      <div class="modal-box">
-        <h3>Gemini API Link</h3>
-        <p>Enter your Gemini API key to power your bots with real AI intelligence and self-optimizing strategies. Stored securely in your browser storage.</p>
-        <input type="password" id="api-key-input" placeholder="AIzaSy..." />
-        <div class="modal-buttons">
-          <button class="action-btn" onclick="closeApiKeyModal()">Cancel</button>
-          <button class="action-btn" style="border-color:var(--green); color:var(--green);" onclick="saveApiKey()">Save Key</button>
-        </div>
+    <div class="grid">
+      <div class="box">
+        <div class="label">Net Worth</div>
+        <div class="val" id="net-worth" style="color:var(--cyan);">$10,000.00</div>
+      </div>
+      <div class="box">
+        <div class="label">Cash Reserve</div>
+        <div class="val" id="cash-balance" style="color:var(--gold);">$10,000.00</div>
       </div>
     </div>
 
-    <!-- Modal for Detailed Agent Inspection Menu -->
-    <div class="modal-overlay" id="agent-modal">
-      <div class="modal-box" id="agent-modal-content"></div>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('hub', this)">Hub</div>
+      <div class="tab" onclick="switchTab('council', this)">Council Table</div>
+      <div class="tab" onclick="switchTab('agents', this)">Agents</div>
     </div>
 
-    <main class="scene">
-      <section class="panel main-panel">
-        <div class="panel-header">
-          <div class="panel-title">Main Hub</div>
-          <div class="panel-badge">Live Feed</div>
-        </div>
+    <div class="view active" id="view-hub">
+      <div class="box" style="margin-bottom:10px;">
+        <div class="label">Market Status</div>
+        <div>SOL: <span id="sol-price">$145.20</span> | Sentiment: Bullish</div>
+      </div>
+      <div class="box" id="terminal" style="font-family:'Press Start 2P',monospace; font-size:6px; height:180px; overflow-y:auto; color:var(--green);">
+        [00:01] Solaris neural net initialized.<br>
+      </div>
+    </div>
 
-        <div class="content">
-          <div class="room-view active" data-room="hub">
-            <div class="hub-grid">
-              <div class="stat-box">
-                <div class="stat-label">Net Worth</div>
-                <div class="stat-value cyan" id="net-worth">$10,000.00</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-label">P&amp;L vs Base</div>
-                <div class="stat-value green" id="pnl-total">+$0.00</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-label">Cash Reserve</div>
-                <div class="stat-value gold" id="cash-balance">$10,000.00</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-label">Positions</div>
-                <div class="stat-value" id="position-count">0</div>
-              </div>
-            </div>
+    <div class="view" id="view-council">
+      <div class="label" style="margin-bottom:6px;">// TABLE DEBATE FEED</div>
+      <div class="chat-box" id="council-feed">
+        <div class="bubble"><div class="sender">SYSTEM</div>Agents seated at the table. Ready for live session.</div>
+      </div>
+    </div>
 
-            <div class="market-strip">
-              <div class="mini-box">
-                <div class="mini-label">SOL Price</div>
-                <div class="mini-value" id="sol-price">$145.20</div>
-              </div>
-              <div class="mini-box">
-                <div class="mini-label">Top Coin</div>
-                <div class="mini-value" id="leading-coin">SOL</div>
-              </div>
-              <div class="mini-box">
-                <div class="mini-label">Sentiment</div>
-                <div class="mini-value" id="sentiment-level">Neutral</div>
-              </div>
-            </div>
+    <div class="view" id="view-agents">
+      <div id="agent-list" style="display:grid; gap:8px;"></div>
+    </div>
+  </div>
 
-            <div class="terminal" id="terminal-log">
-              [00:01] Neural network initialized.<br>
-              [00:02] Tap agent cards in War Room for self-optimizing strategies.<br>
-            </div>
-          </div>
-
-          <div class="room-view" data-room="council">
-            <div style="font-family:'Press Start 2P',monospace; font-size:7px; color:var(--cyan); margin-bottom:8px;">// COUNCIL UPLINK // LIVE MULTI-AGENT DEBATE</div>
-            <div class="council-feed-box" id="council-feed-box">
-              <div class="chat-bubble">
-                <div class="chat-sender">SYSTEM</div>
-                <div class="chat-msg">Council uplink online. Agents are analyzing live treasury feeds and market news.</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="room-view" data-room="ai">
-            <div class="ai-grid" id="war-room-grid"></div>
-          </div>
-
-          <div class="room-view" data-room="market">
-            <div class="summary-grid">
-              <div class="summary-box">
-                <h4>Position Leaders</h4>
-                <div class="list" id="coin-leaders"><div>Loading market...</div></div>
-              </div>
-              <div class="summary-box">
-                <h4>Market Narrative</h4>
-                <div class="list" id="market-narrative"><div>Neutral market structure.</div></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="room-view" data-room="holdings">
-            <div class="holding-grid">
-              <div class="asset-card">
-                <div class="coin-tag">CASH</div>
-                <div class="coin-value" id="asset-cash">$10,000.00</div>
-                <div class="coin-meta">Reserve treasury</div>
-              </div>
-              <div class="asset-card">
-                <div class="coin-tag">SOL</div>
-                <div class="coin-value" id="asset-sol">0.00 SOL</div>
-                <div class="coin-meta">Primary holding</div>
-              </div>
-              <div class="asset-card">
-                <div class="coin-tag">ALTS</div>
-                <div class="coin-value" id="asset-alt">0</div>
-                <div class="coin-meta">Active tokens</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="room-view" data-room="history">
-            <div class="summary-box" style="margin-top:8px;">
-              <h4>Event Log</h4>
-              <div class="list" id="history-list">
-                <div>• Fresh session initialized with $10,000 baseline.</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="room-tabs" id="room-tabs">
-            <button class="room-tab active" data-room="hub">Hub</button>
-            <button class="room-tab" data-room="council">Council</button>
-            <button class="room-tab" data-room="ai">War Room</button>
-            <button class="room-tab" data-room="market">Market</button>
-            <button class="room-tab" data-room="holdings">Holdings</button>
-          </div>
-        </div>
-      </section>
-
-      <aside class="panel side-panel">
-        <div class="panel-header">
-          <div class="panel-title">Control Panel</div>
-          <div class="panel-badge">AI</div>
-        </div>
-
-        <div class="content">
-          <div class="floating-box">
-            <h3>Treasury P&amp;L</h3>
-            <ul class="trait-list">
-              <li><span>Realized</span><strong id="realized-pnl">+$0.00</strong></li>
-              <li><span>Unrealized</span><strong id="unrealized-pnl">+$0.00</strong></li>
-              <li><span>Best Trade</span><strong id="best-day">—</strong></li>
-              <li><span>Worst Trade</span><strong id="worst-day">—</strong></li>
-            </ul>
-          </div>
-
-          <div class="floating-box">
-            <h3>Market Pulse</h3>
-            <ul class="trait-list">
-              <li><span>Cash Balance</span><strong id="holders-count">$10,000.00</strong></li>
-              <li><span>Active Assets</span><strong id="whales-count">5 tokens</strong></li>
-              <li><span>Volatility</span><strong id="volatility-level">Low</strong></li>
-              <li><span>Risk Level</span><strong id="risk-level">Balanced</strong></li>
-            </ul>
-          </div>
-
-          <div class="floating-box">
-            <h3>AI Decisions</h3>
-            <ul class="trait-list">
-              <li><span>Consensus</span><strong id="latest-ai-move">Awaiting signal</strong></li>
-              <li><span>Catalyst</span><strong id="burn-check">Standby</strong></li>
-              <li><span>Capital Mix</span><strong id="capital-mix">100/0/0</strong></li>
-            </ul>
-          </div>
-
-          <div class="floating-box">
-            <h3>News Feed</h3>
-            <div class="news-feed" id="news-feed"></div>
-          </div>
-        </div>
-      </aside>
-    </main>
+  <div class="modal" id="key-modal">
+    <div class="modal-content">
+      <div class="label">Gemini API Key</div>
+      <input type="password" id="api-input" placeholder="AIzaSy..." />
+      <div style="display:flex; justify-content:flex-end; gap:6px;">
+        <button class="btn" onclick="closeKeyModal()">Cancel</button>
+        <button class="btn" style="border-color:var(--green); color:var(--green);" onclick="saveKey()">Save</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    let marketCoins = [
-      { symbol: 'SOL', price: 145.20, basePrice: 145.20, sentiment: 0.12, volume: 12000 },
-      { symbol: 'BONK', price: 0.000025, basePrice: 0.000025, sentiment: 0.18, volume: 9000 },
-      { symbol: 'JTO', price: 1.84, basePrice: 1.84, sentiment: 0.14, volume: 7800 },
-      { symbol: 'RAY', price: 3.46, basePrice: 3.46, sentiment: 0.1, volume: 7000 },
-      { symbol: 'WIF', price: 1.32, basePrice: 1.32, sentiment: 0.09, volume: 6600 }
+    let agents = [
+      { name: 'FIN_BOT', role: 'Portfolio Manager', pnl: 0, wins: 0, losses: 0, color: '#38bdf8' },
+      { name: 'RISK_CORE', role: 'Risk Control', pnl: 0, wins: 0, losses: 0, color: '#f59e0b' },
+      { name: 'ALPHA_X', role: 'Execution Matrix', pnl: 0, wins: 0, losses: 0, color: '#ef4444' }
     ];
+    let state = { cash: 10000, solPrice: 145.20, feed: [] };
 
-    let agentDefs = [
-      { id: 'finance', name: 'FIN_BOT v2', role: 'Portfolio Manager', risk: 'Low', color: '#38bdf8', wins: 0, losses: 0, pnl: 0, history: [], strategyDirective: 'Focus on stable capital preservation and liquidity allocation.' },
-      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', risk: 'Med', color: '#f59e0b', wins: 0, losses: 0, pnl: 0, history: [], strategyDirective: 'Monitor volatility spikes and enforce strict drawdown limits.' },
-      { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', risk: 'High', color: '#ef4444', wins: 0, losses: 0, pnl: 0, history: [], strategyDirective: 'Hunt high-momentum entries and aggressive upside breakouts.' },
-      { id: 'advisor', name: 'MACRO_9', role: 'Strategy Planner', risk: 'Low', color: '#a855f7', wins: 0, losses: 0, pnl: 0, history: [], strategyDirective: 'Analyze macro news events and overall token sentiment flows.' },
-      { id: 'cfo', name: 'CFO_UNIT', role: 'Capital Authority', risk: 'Low', color: '#22c55e', wins: 0, losses: 0, pnl: 0, history: [], strategyDirective: 'Maximize long-term treasury compounding and risk-adjusted yield.' }
-    ];
-
-    let state = {
-      cash: 10000,
-      positions: { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
-      avgBuyPrice: { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
-      baseline: 10000,
-      realizedPnl: 0,
-      history: ['Fresh session initialized with $10,000 baseline.'],
-      councilFeed: [],
-      latestConsensus: 'Awaiting signal',
-      latestNews: 'Standby',
-      newsFeed: [{ title: 'System Online', detail: 'Stable price matrix active.', tone: 'positive' }],
-      agentState: {},
-      lastTimestamp: Date.now()
-    };
-
-    function loadFromStorage() {
-      const saved = localStorage.getItem('solaris_sim_state_v13');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          state.cash = parsed.cash ?? state.cash;
-          state.positions = parsed.positions ?? state.positions;
-          state.avgBuyPrice = parsed.avgBuyPrice ?? state.avgBuyPrice;
-          state.baseline = parsed.baseline ?? state.baseline;
-          state.realizedPnl = parsed.realizedPnl ?? state.realizedPnl;
-          state.history = parsed.history ?? state.history;
-          state.councilFeed = parsed.councilFeed ?? state.councilFeed;
-          state.newsFeed = parsed.newsFeed ?? state.newsFeed;
-          if (parsed.marketCoins) {
-            parsed.marketCoins.forEach(savedCoin => {
-              const target = marketCoins.find(c => c.symbol === savedCoin.symbol);
-              if (target) target.price = savedCoin.price;
-            });
-          }
-          if (parsed.agentDefs) {
-            parsed.agentDefs.forEach(savedAgent => {
-              const target = agentDefs.find(a => a.id === savedAgent.id);
-              if (target) {
-                target.wins = savedAgent.wins || 0;
-                target.losses = savedAgent.losses || 0;
-                target.pnl = savedAgent.pnl || 0;
-                target.history = savedAgent.history || [];
-                target.strategyDirective = savedAgent.strategyDirective || target.strategyDirective;
-              }
-            });
-          }
-        } catch (e) {
-          console.error("Error loading saved state", e);
-        }
-      }
-      checkApiKeyStatus();
-      renderCouncilFeed();
+    function switchTab(name, el) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('view-' + name).classList.add('active');
+      el.classList.add('active');
     }
 
-    function saveToStorage() {
-      state.lastTimestamp = Date.now();
-      const payload = {
-        cash: state.cash,
-        positions: state.positions,
-        avgBuyPrice: state.avgBuyPrice,
-        baseline: state.baseline,
-        realizedPnl: state.realizedPnl,
-        history: state.history,
-        councilFeed: state.councilFeed,
-        newsFeed: state.newsFeed,
-        marketCoins: marketCoins.map(c => ({ symbol: c.symbol, price: c.price })),
-        agentDefs: agentDefs.map(a => ({ id: a.id, wins: a.wins, losses: a.losses, pnl: a.pnl, history: a.history, strategyDirective: a.strategyDirective })),
-        lastTimestamp: state.lastTimestamp
-      };
-      localStorage.setItem('solaris_sim_state_v13', JSON.stringify(payload));
+    function openKeyModal() { document.getElementById('key-modal').classList.add('open'); document.getElementById('api-input').value = localStorage.getItem('gemini_key') || ''; }
+    function closeKeyModal() { document.getElementById('key-modal').classList.remove('open'); }
+    function saveKey() {
+      const k = document.getElementById('api-input').value.trim();
+      if(k) localStorage.setItem('gemini_key', k); else localStorage.removeItem('gemini_key');
+      checkKey(); closeKeyModal();
+    }
+    function checkKey() {
+      const has = !!localStorage.getItem('gemini_key');
+      const st = document.getElementById('api-status');
+      st.textContent = has ? 'AI LIVE' : 'LOCAL';
+      st.style.color = has ? 'var(--green)' : 'var(--gold)';
     }
 
-    function resetTreasury() {
-      if (confirm("Reset treasury back to $10,000 fresh slate?")) {
-        localStorage.removeItem('solaris_sim_state_v13');
-        location.reload();
-      }
-    }
-
-    function openApiKeyModal() {
-      document.getElementById('api-modal').classList.add('open');
-      const savedKey = localStorage.getItem('gemini_api_key') || '';
-      document.getElementById('api-key-input').value = savedKey;
-    }
-
-    function closeApiKeyModal() {
-      document.getElementById('api-modal').classList.remove('open');
-    }
-
-    function saveApiKey() {
-      const key = document.getElementById('api-key-input').value.trim();
-      if (key) {
-        localStorage.setItem('gemini_api_key', key);
-        alert("Gemini API key saved securely!");
-      } else {
-        localStorage.removeItem('gemini_api_key');
-        alert("API key removed. Reverting to local telemetry mode.");
-      }
-      closeApiKeyModal();
-      checkApiKeyStatus();
-    }
-
-    function checkApiKeyStatus() {
-      const key = localStorage.getItem('gemini_api_key');
-      const pill = document.getElementById('ai-status-pill');
-      if (key) {
-        pill.textContent = "AI: GEMINI LIVE";
-        pill.className = "pixel-pill good";
-      } else {
-        pill.textContent = "AI: Local";
-        pill.className = "pixel-pill warn";
-      }
-    }
-
-    function openAgentModal(agentId) {
-      const agent = agentDefs.find(a => a.id === agentId);
-      if (!agent) return;
-
-      const modalContent = document.getElementById('agent-modal-content');
-      const totalTrades = agent.wins + agent.losses;
-      const winRate = totalTrades > 0 ? ((agent.wins / totalTrades) * 100).toFixed(0) + '%' : '0%';
-      
-      const historyHtml = agent.history.length > 0 
-        ? agent.history.map(h => `<div style="padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.75rem;">• ${h}</div>`).join('')
-        : '<div style="font-size:0.75rem; color:var(--muted);">No trades executed yet in this session.</div>';
-
-      modalContent.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3>${agent.name} // Diagnostics</h3>
-          <span class="pixel-pill" style="color:${agent.color}; border-color:${agent.color};">${agent.risk} Risk</span>
-        </div>
-        <p><strong>Role:</strong> ${agent.role}</p>
-        <p><strong>Self-Optimized Strategy Directive:</strong><br><span style="color:var(--cyan); font-style:italic;">"${agent.strategyDirective}"</span></p>
-        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin: 12px 0;">
-          <div class="mini-metric">Wins <span>${agent.wins}</span></div>
-          <div class="mini-metric">Losses <span>${agent.losses}</span></div>
-          <div class="mini-metric">Win Rate <span>${winRate}</span></div>
-        </div>
-        <p><strong>Net Agent P&L:</strong> <span style="color:${agent.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${agent.pnl >= 0 ? '+' : ''}${fmtCurrency(agent.pnl)}</span></p>
-        <h4 style="font-family:'Press Start 2P',monospace; font-size:7px; color:var(--gold); margin: 14px 0 6px; text-transform:uppercase;">Agent Activity Ledger</h4>
-        <div style="max-height: 150px; overflow-y: auto; background:#04070d; border:1px solid var(--line); padding:8px;">
-          ${historyHtml}
-        </div>
-        <div class="modal-buttons">
-          <button class="action-btn" onclick="closeAgentModal()">Close Menu</button>
-        </div>
-      `;
-
-      document.getElementById('agent-modal').classList.add('open');
-    }
-
-    function closeAgentModal() {
-      document.getElementById('agent-modal').classList.remove('open');
-    }
-
-    function fmtCurrency(value) {
-      if (value < 0.001 && value > 0) return `$${value.toFixed(6)}`;
-      return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    }
-
-    function randomFrom(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
-
-    function getNetWorth() {
-      let total = state.cash;
-      marketCoins.forEach(coin => {
-        total += (state.positions[coin.symbol] || 0) * coin.price;
-      });
-      return total;
-    }
-
-    function getUnrealizedPnl() {
-      let unrealized = 0;
-      marketCoins.forEach(coin => {
-        const qty = state.positions[coin.symbol] || 0;
-        if (qty > 0) {
-          unrealized += qty * (coin.price - state.avgBuyPrice[coin.symbol]);
-        }
-      });
-      return unrealized;
-    }
-
-    function addHistory(message) {
-      state.history.unshift(message);
-      state.history = state.history.slice(0, 10);
-      const historyList = document.getElementById('history-list');
-      if (historyList) historyList.innerHTML = state.history.map(item => `<div>• ${item}</div>`).join('');
-    }
-
-    function addCouncilMessage(senderName, text) {
-      state.councilFeed.unshift({ sender: senderName, text: text, time: new Date().toLocaleTimeString() });
-      state.councilFeed = state.councilFeed.slice(0, 25);
-      renderCouncilFeed();
-    }
-
-    function renderCouncilFeed() {
-      const box = document.getElementById('council-feed-box');
-      if (!box) return;
-      box.innerHTML = state.councilFeed.map(item => `
-        <div class="chat-bubble">
-          <div class="chat-sender">[${item.time}] ${item.sender}</div>
-          <div class="chat-msg">"${item.text}"</div>
+    function renderAgents() {
+      document.getElementById('agent-list').innerHTML = agents.map(a => `
+        <div class="box" style="border-left: 3px solid ${a.color};">
+          <div class="sender" style="color:${a.color};">${a.name} // ${a.role}</div>
+          <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Wins: ${a.wins} | Losses: ${a.losses} | P&amp;L: $${a.pnl.toFixed(2)}</div>
         </div>
       `).join('');
     }
 
-    function log(message) {
-      const term = document.getElementById('terminal-log');
-      if (term) {
-        term.innerHTML += `<br>[${new Date().toLocaleTimeString()}] ${message}`;
-        term.scrollTop = term.scrollHeight;
-      }
-    }
+    async function runLoop() {
+      state.solPrice *= (1 + (Math.random() - 0.48) * 0.02);
+      document.getElementById('sol-price').textContent = `$${state.solPrice.toFixed(2)}`;
 
-    function renderNews() {
-      const feed = document.getElementById('news-feed');
-      if (!feed) return;
-      feed.innerHTML = state.newsFeed.slice(0, 5).map(item => {
-        const tone = item.tone === 'positive' ? 'green' : item.tone === 'caution' ? 'gold' : 'cyan';
-        return `<div class="news-item"><strong style="color:var(--${tone});">${item.title}</strong><br>${item.detail}</div>`;
-      }).join('');
-    }
-
-    function buildMarketNarrative() {
-      const best = [...marketCoins].sort((a, b) => (b.price - b.basePrice) - (a.price - a.basePrice))[0];
-      const worst = [...marketCoins].sort((a, b) => (a.price - a.basePrice) - (b.price - b.basePrice))[0];
-      const leaders = [...marketCoins].sort((a, b) => b.volume - a.volume).slice(0, 3);
+      const agent = agents[Math.floor(Math.random() * agents.length)];
+      const text = `Let's discuss our exposure on SOL at $${state.solPrice.toFixed(2)}. Market vectors look unstable.`;
       
-      const coinLeadersEl = document.getElementById('coin-leaders');
-      const marketNarrativeEl = document.getElementById('market-narrative');
-      if (coinLeadersEl) coinLeadersEl.innerHTML = leaders.map(coin => `<div>${coin.symbol}: <strong>${fmtCurrency(coin.price)}</strong></div>`).join('');
-      if (marketNarrativeEl) marketNarrativeEl.innerHTML = `<div>Top Gainer: <strong>${best.symbol}</strong></div><div>Lagging: <strong>${worst.symbol}</strong></div><div>Active Volume: High</div>`;
-    }
+      state.feed.unshift({ sender: agent.name, text: text, color: agent.color });
+      if(state.feed.length > 15) state.feed.pop();
 
-    function updateMarketStats() {
-      const sol = marketCoins.find(c => c.symbol === 'SOL');
-      document.getElementById('sol-price').textContent = fmtCurrency(sol.price);
-      
-      const top = [...marketCoins].sort((a, b) => b.sentiment - a.sentiment)[0];
-      document.getElementById('leading-coin').textContent = top.symbol;
-      document.getElementById('sentiment-level').textContent = top.sentiment > 0.15 ? 'Bullish' : 'Neutral';
-      
-      const totalPositions = Object.values(state.positions).filter(v => v > 0).length;
-      const netWorth = getNetWorth();
-      const totalPnl = netWorth - state.baseline;
-      const unrealized = getUnrealizedPnl();
+      document.getElementById('council-feed').innerHTML = state.feed.map(f => `
+        <div class="bubble" style="border-left-color:${f.color};">
+          <div class="sender" style="color:${f.color};">${f.sender}</div>
+          <div>"${f.text}"</div>
+        </div>
+      `).join('');
 
-      document.getElementById('position-count').textContent = totalPositions;
-      document.getElementById('asset-cash').textContent = fmtCurrency(state.cash);
-      document.getElementById('asset-sol').textContent = `${(state.positions.SOL || 0).toFixed(2)} SOL`;
-      document.getElementById('asset-alt').textContent = String(totalPositions);
-      document.getElementById('holders-count').textContent = fmtCurrency(state.cash);
-      document.getElementById('whales-count').textContent = `${marketCoins.length} tokens`;
-      
-      document.getElementById('realized-pnl').textContent = `${state.realizedPnl >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(state.realizedPnl))}`;
-      document.getElementById('unrealized-pnl').textContent = `${unrealized >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(unrealized))}`;
-      document.getElementById('net-worth').textContent = fmtCurrency(netWorth);
-      
-      const pnlTotalEl = document.getElementById('pnl-total');
-      pnlTotalEl.textContent = `${totalPnl >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(totalPnl))}`;
-      pnlTotalEl.className = `stat-value ${totalPnl >= 0 ? 'green' : 'red'}`;
-      
-      document.getElementById('cash-balance').textContent = fmtCurrency(state.cash);
-      buildMarketNarrative();
-      renderNews();
-    }
-
-    function generateNewsEvent() {
-      const events = [
-        { title: 'Network Surge', detail: 'Transaction throughput spikes across validator nodes.', tone: 'positive' },
-        { title: 'Liquidity Inflow', detail: 'Institutional capital routing into decentralized pools.', tone: 'positive' },
-        { title: 'Minor Correction', detail: 'Short-term leveraged positions liquidated in order books.', tone: 'caution' }
-      ];
-      const ev = randomFrom(events);
-      state.newsFeed.unshift({ title: ev.title, detail: ev.detail, tone: ev.tone });
-      state.newsFeed = state.newsFeed.slice(0, 5);
-      state.latestNews = ev.title;
-    }
-
-    function applyAgentDecision(agent, action, targetCoinSymbol, speechText, newStrategyDirective) {
-      const coin = marketCoins.find(c => c.symbol === targetCoinSymbol) || marketCoins[0];
-      
-      // Update self-optimized directive if provided by Gemini
-      if (newStrategyDirective && newStrategyDirective.length > 10) {
-        agent.strategyDirective = newStrategyDirective;
-      }
-
-      if (action === 'buy') {
-        const cost = coin.price * 2;
-        if (state.cash >= cost) {
-          state.cash -= cost;
-          const currentQty = state.positions[coin.symbol] || 0;
-          const currentAvg = state.avgBuyPrice[coin.symbol] || coin.price;
-          state.avgBuyPrice[coin.symbol] = ((currentQty * currentAvg) + cost) / (currentQty + 2);
-          state.positions[coin.symbol] = currentQty + 2;
-          
-          state.agentState[agent.id] = { action: 'buy', coin: coin.symbol, speech: speechText };
-          const logMsg = `BOUGHT 2 ${coin.symbol} at ${fmtCurrency(coin.price)}`;
-          agent.history.unshift(logMsg);
-          addHistory(`[${agent.name}] ${logMsg}`);
-          log(`[${agent.name}] BUY ${coin.symbol}`);
-        } else {
-          state.agentState[agent.id] = { action: 'hold', coin: coin.symbol, speech: `HOLD // Insufficient cash liquidity for ${coin.symbol}.` };
-        }
-      } else if (action === 'sell') {
-        const qty = state.positions[coin.symbol] || 0;
-        if (qty > 0) {
-          const sellQty = Math.min(2, qty);
-          const revenue = sellQty * coin.price;
-          const costBasis = sellQty * state.avgBuyPrice[coin.symbol];
-          const pnl = revenue - costBasis;
-          
-          state.cash += revenue;
-          state.positions[coin.symbol] -= sellQty;
-          state.realizedPnl += pnl;
-          agent.pnl += pnl;
-
-          if (pnl >= 0) agent.wins++;
-          else agent.losses++;
-
-          state.agentState[agent.id] = { action: 'sell', coin: coin.symbol, speech: speechText };
-          const logMsg = `SOLD ${sellQty} ${coin.symbol} [P&L: ${fmtCurrency(pnl)}]`;
-          agent.history.unshift(logMsg);
-          addHistory(`[${agent.name}] ${logMsg}`);
-          log(`[${agent.name}] SELL ${coin.symbol} [P&L: ${fmtCurrency(pnl)}]`);
-        } else {
-          state.agentState[agent.id] = { action: 'hold', coin: coin.symbol, speech: `HOLD // No inventory available on ${coin.symbol}.` };
-        }
-      } else {
-        state.agentState[agent.id] = { action: 'hold', coin: coin.symbol, speech: speechText };
-      }
-
-      state.latestConsensus = `${agent.name} -> ${action.toUpperCase()} ${coin.symbol}`;
-      addCouncilMessage(agent.name, speechText);
-    }
-
-    async function fetchGeminiDecision(agent) {
-      const apiKey = localStorage.getItem('gemini_api_key');
-      if (!apiKey) return false;
-
-      try {
-        const marketSnapshot = {
-          cash: state.cash,
-          netWorth: getNetWorth(),
-          coins: marketCoins.map(c => ({ symbol: c.symbol, price: c.price, sentiment: c.sentiment })),
-          positions: state.positions,
-          latestNews: state.latestNews
-        };
-
-        const recentChatHistory = state.councilFeed.slice(0, 3).map(m => `[${m.sender}]: ${m.text}`).join('\n');
-
-        const prompt = `You are ${agent.name}, a ${agent.role} with a ${agent.risk} risk profile inside an autonomous crypto treasury control room.
-        Your current self-optimized strategy directive: "${agent.strategyDirective}"
-        Your current score / P&L: Wins: ${agent.wins}, Losses: ${agent.losses}, Net P&L: $${agent.pnl.toFixed(2)}.
-        
-        Recent Council Debate Context:
-        ${recentChatHistory}
-
-        Current Market Snapshot & News: ${JSON.stringify(marketSnapshot)}.
-
-        Task:
-        1. Decide whether to execute a 'buy', 'sell', or 'hold'. Pick a coin symbol from: [SOL, BONK, JTO, RAY, WIF].
-        2. Write a detailed, in-character explanation and debate response referencing what other bots said or reacting to the live news.
-        3. Optimize/evolve your strategy directive slightly based on your wins and losses so far.
-        
-        Return ONLY valid JSON format:
-        {
-          "action": "buy" or "sell" or "hold",
-          "coin": "SYMBOL",
-          "speech": "Your detailed debate speech in character",
-          "newStrategyDirective": "Your updated strategy focus based on performance"
-        }`;
-
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json" }
-          })
-        });
-
-        const data = await response.json();
-        const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (resultText) {
-          const parsed = JSON.parse(resultText);
-          applyAgentDecision(agent, parsed.action, parsed.coin, parsed.speech, parsed.newStrategyDirective);
-          return true;
-        }
-      } catch (err) {
-        console.error("Gemini API call error, falling back to local simulation:", err);
-      }
-      return false;
-    }
-
-    async function processMarketLoop() {
-      marketCoins.forEach(coin => {
-        const fluctuation = (Math.random() - 0.49) * 0.015;
-        coin.price = Math.max(0.000001, coin.price * (1 + fluctuation));
-        coin.sentiment = Math.min(0.8, Math.max(-0.8, coin.sentiment + (Math.random() - 0.5) * 0.1));
-      });
-
-      const activeAgent = randomFrom(agentDefs);
-      const aiSuccess = await fetchGeminiDecision(activeAgent);
-
-      if (!aiSuccess) {
-        const coin = randomFrom(marketCoins);
-        const action = randomFrom(['buy', 'sell', 'hold']);
-        let fallbackSpeech = `Analyzing orderbook vectors on ${coin.symbol}. Maintaining disciplined risk parameters.`;
-        if (action === 'buy') fallbackSpeech = `EXECUTE BUY // Accumulating ${coin.symbol} at ${fmtCurrency(coin.price)} based on local sentiment.`;
-        else if (action === 'sell') fallbackSpeech = `EXECUTE SELL // Trimming position on ${coin.symbol} to secure liquidity.`;
-        
-        applyAgentDecision(activeAgent, action, coin.symbol, fallbackSpeech);
-      }
-
-      if (Math.random() > 0.6) {
-        generateNewsEvent();
-      }
-
-      updateMarketStats();
-      renderWarRoom();
-      saveToStorage();
-    }
-
-    function renderWarRoom() {
-      const container = document.getElementById('war-room-grid');
-      if (!container) return;
-
-      container.innerHTML = agentDefs.map(agent => {
-        const current = state.agentState[agent.id] || { action: 'hold', coin: 'SOL', speech: 'System standby.' };
-        const statusClass = current.action === 'buy' ? 'status-buy' : current.action === 'sell' ? 'status-sell' : '';
-        const visorColor = current.action === 'buy' ? '#22c55e' : current.action === 'sell' ? '#ef4444' : agent.color;
-        const totalTrades = agent.wins + agent.losses;
-        const winRate = totalTrades > 0 ? ((agent.wins / totalTrades) * 100).toFixed(0) + '%' : '0%';
-        const pnlColor = agent.pnl >= 0 ? 'var(--green)' : 'var(--red)';
-
-        return `
-          <div class="ai-agent-card ${statusClass}" onclick="openAgentModal('${agent.id}')">
-            <div class="ai-header-flex">
-              <div class="ai-portrait">
-                <div class="robot-avatar-svg">
-                  <svg viewBox="0 0 64 64" width="52" height="52">
-                    <rect x="16" y="22" width="32" height="26" rx="4" fill="#0f172a" stroke="${agent.color}" stroke-width="2"/>
-                    <rect x="20" y="27" width="24" height="8" rx="2" fill="${visorColor}" class="vis-glow"/>
-                    <circle cx="26" cy="43" r="2" fill="${agent.color}"/>
-                    <circle cx="38" cy="43" r="2" fill="${agent.color}"/>
-                    <path d="M28 14 L36 14 L36 22 L28 22 Z" fill="#1e293b" stroke="${agent.color}" stroke-width="1.5"/>
-                    <line x1="32" y1="8" x2="32" y2="14" stroke="${agent.color}" stroke-width="2"/>
-                    <circle cx="32" cy="6" r="2" fill="${visorColor}" />
-                  </svg>
-                </div>
-              </div>
-              <div class="ai-info">
-                <div class="ai-name-row">
-                  <span class="ai-agent-name">${agent.name}</span>
-                  <span class="ai-live-badge" style="color: ${current.action === 'buy' ? 'var(--green)' : current.action === 'sell' ? 'var(--red)' : 'var(--gold)'};">${current.action.toUpperCase()}</span>
-                </div>
-                <p style="font-size:0.65rem; color:var(--muted); margin:0; text-transform:uppercase;">${agent.role} (Tap for Strategy)</p>
-                <div class="ai-metrics-row">
-                  <div class="mini-metric">Win <span>${winRate}</span></div>
-                  <div class="mini-metric">P&amp;L <span style="color: ${pnlColor}">${agent.pnl >= 0 ? '+' : ''}${fmtCurrency(agent.pnl)}</span></div>
-                  <div class="mini-metric">Risk <span>${agent.risk}</span></div>
-                </div>
-              </div>
-            </div>
-            <div class="game-speech-box">
-              <div class="speech-speaker">// COMMS // ${agent.name}</div>
-              <div class="speech-text">"${current.speech}"</div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function initTabs() {
-      const tabs = document.querySelectorAll('.room-tab');
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          const roomName = tab.dataset.room;
-          tabs.forEach(t => t.classList.remove('active'));
-          document.querySelectorAll('.room-view').forEach(v => v.classList.remove('active'));
-          
-          tab.classList.add('active');
-          const targetView = document.querySelector(`.room-view[data-room="${roomName}"]`);
-          if (targetView) {
-            targetView.classList.add('active');
-          }
-        });
-      });
+      renderAgents();
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      loadFromStorage();
-      updateMarketStats();
-      renderWarRoom();
-      initTabs();
-      setInterval(processMarketLoop, 7000);
+      checkKey();
+      renderAgents();
+      setInterval(runLoop, 6000);
     });
   </script>
 </body>
