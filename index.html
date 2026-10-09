@@ -242,8 +242,8 @@
 
     <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 11px;">
       <span>SOL: <strong id="sol-price" style="color: var(--cyan);">FETCHING...</strong></span>
-      <span>NEWS: <strong style="color: var(--green);">LIVE WIRE</strong></span>
-      <span>MODE: <strong style="color: var(--amber);">AGGRESSIVE</strong></span>
+      <span>FEED: <strong style="color: var(--green);">COINGECKO API</strong></span>
+      <span>MODE: <strong style="color: var(--green);">LIVE (USD)</strong></span>
     </div>
 
     <div class="nav-tabs">
@@ -258,7 +258,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] 5-Agent Swarm initialized. Linking CoinGecko live feed...</div>
+        <div style="color: var(--green);">[00:01] 5-Agent Swarm initialized. Linking CoinGecko live feed (USD)...</div>
       </div>
     </div>
 
@@ -294,7 +294,7 @@
       cash: parseFloat(localStorage.getItem('solaris_cash')) || 10000,
       positions: { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
-      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online and synced with live market.', color: '#38bdf8', time: '00:00' }],
+      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online and locked to USD live market.', color: '#38bdf8', time: '00:00' }],
       soundEnabled: false
     };
 
@@ -354,8 +354,9 @@
       }
     }
 
+    // Explicitly forced to en-US currency formatting to prevent local currency shifting
     function fmtCurrency(val) {
-      return '$' + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function switchTab(tabId, btnElement) {
@@ -432,7 +433,7 @@
           document.getElementById('sol-price').textContent = fmtCurrency(solObj.price);
         }
 
-        addSystemLog(`[API] Live market prices synced.`);
+        addSystemLog(`[API] Live USD market prices synced.`);
         runTradingLoop();
       } catch (err) {
         console.error("API fetch error caught safely:", err);
@@ -505,7 +506,6 @@
         posEl.textContent = Object.values(state.positions).filter(v => v > 0.0001).length;
       }
 
-      // RESTORED: War Room Agent Cards Rendering
       const warContainer = document.getElementById('war-room-container');
       if (warContainer) {
         warContainer.innerHTML = agentDefs.map(a => `
