@@ -189,24 +189,25 @@
       gap: 8px;
     }
     .robot-head {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border: 1px solid;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 16px;
       background: #020617;
     }
     .metrics-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-      margin-top: 8px;
-      font-size: 9px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      margin-top: 6px;
+      font-size: 8px;
       background: #020617;
-      padding: 6px;
+      padding: 4px;
       border: 1px solid rgba(255,255,255,0.05);
+      text-align: center;
     }
   </style>
 </head>
@@ -268,7 +269,7 @@
       </div>
       <div class="terminal-box" id="system-log">
         <div style="color: var(--green);">[00:01] High-stakes treasury matrix initialized.</div>
-        <div style="color: var(--cyan);">[00:02] Multi-agent neural trading & news simulator active.</div>
+        <div style="color: var(--cyan);">[00:02] Multi-agent neural trading & telemetry active.</div>
       </div>
     </div>
 
@@ -299,11 +300,11 @@
     ];
 
     let agentDefs = [
-      { id: 'finance', name: 'FIN_BOT v2', role: 'Portfolio Manager', risk: 'Low', color: '#38bdf8', icon: '🤖', totalSpent: 0, totalSold: 0, pnl: 0, perMinPnl: 0, perHourPnl: 0 },
-      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', risk: 'Med', color: '#f59e0b', icon: '🛡️', totalSpent: 0, totalSold: 0, pnl: 0, perMinPnl: 0, perHourPnl: 0 },
-      { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', risk: 'High', color: '#ef4444', icon: '⚡', totalSpent: 0, totalSold: 0, pnl: 0, perMinPnl: 0, perHourPnl: 0 },
-      { id: 'advisor', name: 'MACRO_9', role: 'Strategy Planner', risk: 'Low', color: '#a855f7', icon: '🌐', totalSpent: 0, totalSold: 0, pnl: 0, perMinPnl: 0, perHourPnl: 0 },
-      { id: 'cfo', name: 'CFO_UNIT', role: 'Capital Authority', risk: 'Low', color: '#22c55e', icon: '🏛️', totalSpent: 0, totalSold: 0, pnl: 0, perMinPnl: 0, perHourPnl: 0 }
+      { id: 'finance', name: 'FIN_BOT v2', role: 'Portfolio Manager', risk: 'Low', color: '#38bdf8', icon: '🤖', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
+      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', risk: 'Med', color: '#f59e0b', icon: '🛡️', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
+      { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', risk: 'High', color: '#ef4444', icon: '⚡', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
+      { id: 'advisor', name: 'MACRO_9', role: 'Strategy Planner', risk: 'Low', color: '#a855f7', icon: '🌐', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
+      { id: 'cfo', name: 'CFO_UNIT', role: 'Capital Authority', risk: 'Low', color: '#22c55e', icon: '🏛️', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 }
     ];
 
     let state = {
@@ -345,7 +346,7 @@
     }
 
     function loadFromStorage() {
-      const saved = localStorage.getItem('solaris_sim_state_v23');
+      const saved = localStorage.getItem('solaris_sim_state_v25');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -362,6 +363,10 @@
                 agentDefs[idx].totalSpent = savedAgent.totalSpent || 0;
                 agentDefs[idx].totalSold = savedAgent.totalSold || 0;
                 agentDefs[idx].pnl = savedAgent.pnl || 0;
+                agentDefs[idx].minPnl = savedAgent.minPnl || 0;
+                agentDefs[idx].hrPnl = savedAgent.hrPnl || 0;
+                agentDefs[idx].dayPnl = savedAgent.dayPnl || 0;
+                agentDefs[idx].wkPnl = savedAgent.wkPnl || 0;
               }
             });
           }
@@ -376,14 +381,22 @@
     function saveToStorage() {
       const payload = {
         ...state,
-        agents: agentDefs.map(a => ({ totalSpent: a.totalSpent, totalSold: a.totalSold, pnl: a.pnl }))
+        agents: agentDefs.map(a => ({
+          totalSpent: a.totalSpent,
+          totalSold: a.totalSold,
+          pnl: a.pnl,
+          minPnl: a.minPnl,
+          hrPnl: a.hrPnl,
+          dayPnl: a.dayPnl,
+          wkPnl: a.wkPnl
+        }))
       };
-      localStorage.setItem('solaris_sim_state_v23', JSON.stringify(payload));
+      localStorage.setItem('solaris_sim_state_v25', JSON.stringify(payload));
     }
 
     function resetTreasury() {
       if (confirm("Reset treasury back to $10,000 fresh slate?")) {
-        localStorage.removeItem('solaris_sim_state_v23');
+        localStorage.removeItem('solaris_sim_state_v25');
         location.reload();
       }
     }
@@ -432,7 +445,7 @@
     function inspectAgent(agentId) {
       const agent = agentDefs.find(a => a.id === agentId);
       if (!agent) return;
-      alert(`AGENT INTEL: ${agent.name} (${agent.role})\n- Lifetime P&L: ${fmtCurrency(agent.pnl)}\n- Total Capital Deployed: ${fmtCurrency(agent.totalSpent)}\n- Total Revenue Harvested: ${fmtCurrency(agent.totalSold)}\n- Risk Profile: ${agent.risk}`);
+      alert(`AGENT INTEL: ${agent.name} (${agent.role})\n- Lifetime P&L: ${fmtCurrency(agent.pnl)}\n- Total Deployed: ${fmtCurrency(agent.totalSpent)}\n- Total Harvested: ${fmtCurrency(agent.totalSold)}\n- Per Min P&L: ${fmtCurrency(agent.minPnl)}\n- Per Hour P&L: ${fmtCurrency(agent.hrPnl)}\n- Per Day P&L: ${fmtCurrency(agent.dayPnl)}\n- Per Week P&L: ${fmtCurrency(agent.wkPnl)}`);
     }
 
     function renderCouncilFeed() {
@@ -467,9 +480,10 @@
             </div>
             <div style="margin-top: 4px; font-size: 10px; font-style: italic; color: #cbd5e1;">"${lastAction.speech}"</div>
             <div class="metrics-grid">
-              <div>P&L: <span style="color: ${agent.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtCurrency(agent.pnl)}</span></div>
-              <div>Spent: <span style="color: var(--amber)">${fmtCurrency(agent.totalSpent)}</span></div>
-              <div>Sold: <span style="color: var(--cyan)">${fmtCurrency(agent.totalSold)}</span></div>
+              <div>MIN: <span style="color: ${agent.minPnl >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtCurrency(agent.minPnl)}</span></div>
+              <div>HR: <span style="color: ${agent.hrPnl >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtCurrency(agent.hrPnl)}</span></div>
+              <div>DAY: <span style="color: ${agent.dayPnl >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtCurrency(agent.dayPnl)}</span></div>
+              <div>WK: <span style="color: ${agent.wkPnl >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtCurrency(agent.wkPnl)}</span></div>
             </div>
           </div>
         `;
@@ -477,13 +491,11 @@
     }
 
     function processMarketLoop() {
-      // Fluctuations & News Injection
       marketCoins.forEach(coin => {
         const fluctuation = (Math.random() - 0.48) * 0.05;
         coin.price = Math.max(0.000001, coin.price * (1 + fluctuation));
       });
 
-      // 20% chance to drop a live news bulletin into the feed
       if (Math.random() < 0.2) {
         const news = cryptoNewsHeadlines[Math.floor(Math.random() * cryptoNewsHeadlines.length)];
         state.councilFeed.unshift({
@@ -522,7 +534,14 @@
           state.cash += revenue;
           state.positions[coin.symbol] -= sellQty;
           state.realizedPnl += tradePnl;
+          
+          // Update agent telemetry breakdown across time windows
           agent.pnl += tradePnl;
+          agent.minPnl += tradePnl;
+          agent.hrPnl += tradePnl;
+          agent.dayPnl += tradePnl;
+          agent.wkPnl += tradePnl;
+
           addSystemLog(`[TRADE] ${agent.name} SOLD ${coin.symbol} [P&L: ${fmtCurrency(tradePnl)}]`);
         }
       }
@@ -545,9 +564,9 @@
 
     function updateMarketStats() {
       const sol = marketCoins.find(c => c.symbol === 'SOL');
-      if (document.getElementById('sol-price')) document.getElementById('sol-price').textContent = fmtCurrency(sol.price);
-      if (document.getElementById('net-worth')) document.getElementById('net-worth').textContent = fmtCurrency(getNetWorth());
-      if (document.getElementById('cash-balance')) document.getElementById('cash-balance').textContent = fmtCurrency(state.cash);
+      if (document.getElementById('sol-price')) document.getElementById('sol-price'].textContent = fmtCurrency(sol.price);
+      if (document.getElementById('net-worth')) document.getElementById('net-worth'].textContent = fmtCurrency(getNetWorth());
+      if (document.getElementById('cash-balance')) document.getElementById('cash-balance'].textContent = fmtCurrency(state.cash);
       
       const pnlEl = document.getElementById('realized-pnl');
       if (pnlEl) {
