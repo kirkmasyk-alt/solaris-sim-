@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.9</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.0</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -313,7 +313,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] WHALE_EYE announcer online. Scanning DEX Screener feeds.</div>
+        <div style="color: var(--green);">[00:01] Patient risk management matrix active. Dip buffers enabled.</div>
       </div>
     </div>
 
@@ -382,7 +382,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'WHALE_EYE', text: 'DEX Screener telemetry connected. Scanning Solana pools for momentum shifts.', color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'WHALE_EYE', text: 'DEX Screener link stable. Monitoring dip recovery buffers.', color: '#38bdf8', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -442,10 +442,9 @@
             }
           });
 
-          // WHALE_EYE ANNOUNCER BROADCAST
           const announcer = agentDefs.find(a => a.id === 'announcer');
           const randomCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-          const broadcastMsg = `Pool pulse on ${randomCoin.symbol}: Price at ${fmtPrice(randomCoin.price)} (24h: ${randomCoin.change24h > 0 ? '+' : ''}${randomCoin.change24h}%). Liquidity depth verified at $${Math.round(randomCoin.liquidity).toLocaleString()}.`;
+          const broadcastMsg = `DEX feed: ${randomCoin.symbol} holding at ${fmtPrice(randomCoin.price)} (24h: ${randomCoin.change24h > 0 ? '+' : ''}${randomCoin.change24h}%). Liquidity stable.`;
           
           state.councilFeed.unshift({ 
             sender: announcer.name, 
@@ -599,16 +598,22 @@
         }
 
         const boss = agentDefs.find(a => a.id === 'boss');
-        let hasOpenDrawdown = false;
+        
+        // PATIENT RISK MANAGEMENT: Only intervene if a position dips past -4% or cumulative realized loss is severe. 
+        // This stops the Boss Bot from panic-selling normal dip entries before they can recover upwards.
+        let severeDrawdown = false;
         marketCoins.forEach(c => {
           let qty = state.positions[c.symbol] || 0;
           let cost = state.costBasis[c.symbol] || c.price;
-          if (qty > 0.00001 && (qty * c.price) < (qty * cost)) {
-            hasOpenDrawdown = true;
+          if (qty > 0.00001 && cost > 0) {
+            let dropPct = ((c.price - cost) / cost) * 100;
+            if (dropPct <= -4.0) {
+              severeDrawdown = true;
+            }
           }
         });
 
-        if (hasOpenDrawdown || state.realizedPnl < 0) {
+        if (severeDrawdown) {
           boss.status = 'INTERVENING';
           marketCoins.forEach(c => {
             let qty = state.positions[c.symbol] || 0;
@@ -624,9 +629,9 @@
             }
           });
 
-          const alertMsg = `EMERGENCY OVERRIDE: Open drawdown detected. Chief Risk Officer force-liquidated all holdings to protect capital.`;
+          const alertMsg = `CIRCUIT BREAKER: Severe stop-loss triggered (-4% threshold breached). Positions cut to protect capital.`;
           state.councilFeed.unshift({ sender: boss.name, text: alertMsg, color: boss.color, time: new Date().toLocaleTimeString() });
-          addSystemLog(`[BOSS BOT] Emergency intervention executed: All positions flattened.`);
+          addSystemLog(`[BOSS BOT] Stop-loss executed: Cut bleeding positions.`);
           saveState();
           renderAll();
           return;
@@ -669,7 +674,8 @@
         let originalCostBasisValue = curHold * avgCost;
         let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPositionValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
 
-        if (curHold > 0.00001 && (unrealizedGainPct >= 2.0 || Math.random() > 0.8)) {
+        // Hold positions until they secure at least a +2% profit target
+        if (curHold > 0.00001 && (unrealizedGainPct >= 2.0 || Math.random() > 0.85)) {
           let sellTokens = curHold;
           let gross = sellTokens * coin.price;
           fee = gross * 0.003;
@@ -723,7 +729,7 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `Smart-entry filter passed for ${coin.symbol}. Allocating 20% block.` :
+          `Smart-entry dip buy executed for ${coin.symbol}. Allowing room to recover.` :
           `Profit target hit on ${coin.symbol}. Position closed with P&L: ${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ 
