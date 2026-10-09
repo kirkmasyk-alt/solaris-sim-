@@ -78,6 +78,26 @@
     .cyber-btn.accent { border-color: var(--amber); color: var(--amber); }
     .cyber-btn.purple { border-color: var(--purple); color: var(--purple); }
 
+    .net-worth-banner {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--cyan);
+      padding: 12px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+    }
+    .net-worth-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .net-worth-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--cyan);
+      margin-top: 4px;
+    }
+
     .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -98,7 +118,7 @@
     }
 
     .stat-value {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: bold;
       color: var(--cyan);
       margin-top: 4px;
@@ -236,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V6.1</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.0</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -246,11 +266,12 @@
       </div>
     </div>
 
+    <div class="net-worth-banner">
+      <div class="net-worth-label">Total Treasury Net Worth</div>
+      <div class="net-worth-value" id="net-worth">$100.00</div>
+    </div>
+
     <div class="stats-grid">
-      <div class="stat-box">
-        <div class="stat-label">Net Worth</div>
-        <div class="stat-value" id="net-worth">$100.00</div>
-      </div>
       <div class="stat-box">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div class="stat-label">Realized P&L</div>
@@ -259,11 +280,15 @@
         <div class="stat-value green" id="realized-pnl">+$0.00</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Bot Bankroll</div>
+        <div class="stat-label">Total Fees Paid</div>
+        <div class="stat-value amber" id="total-fees">$0.00</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Bot Bankroll (Active)</div>
         <div class="stat-value amber" id="cash-balance">$100.00</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Main Vault</div>
+        <div class="stat-label">Main Vault (Cold)</div>
         <div class="stat-value purple" id="vault-balance">$0.00</div>
       </div>
     </div>
@@ -283,11 +308,11 @@
 
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 11px; color: var(--cyan);">// SYSTEM DIAGNOSTIC LOG</div>
+        <div style="font-size: 11px; color: var(--cyan);">// REAL-TIME AUDIT & EXECUTION STREAM</div>
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Precision cost-basis accounting ledger active.</div>
+        <div style="color: var(--green);">[00:01] Autonomous audit stream initialized.</div>
       </div>
     </div>
 
@@ -314,7 +339,7 @@
       <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">COINGECKO API v3</strong></div>
       <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>PROFIT SWEEP RATE:</span> <strong style="color: var(--cyan);" id="status-sweep">20% PER WIN</strong></div>
+      <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
       <div class="status-row"><span>TOTAL TRANSACTIONS:</span> <strong style="color: var(--cyan);" id="status-tx-count">0 EXECUTED</strong></div>
       <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 6/6 UNITS OPERATIONAL</strong></div>
       <div class="status-row"><span>LOCAL STORAGE:</span> <strong style="color: var(--cyan);">● ISOLATED SANDBOX</strong></div>
@@ -353,7 +378,7 @@
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
-      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'Main Vault & Bot Bankroll link established.', color: '#a855f7', time: '00:00' }]
+      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'Telemetry stream online. Monitoring live order books.', color: '#a855f7', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -426,7 +451,7 @@
       state.costBasis = { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 };
       agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = a.id === 'boss' ? 'STANDBY' : 'ACTIVE'; });
       saveState();
-      addSystemLog(`[CONFIG] Treasury reset to clean $100 Bankroll & $0 Vault baseline.`);
+      addSystemLog(`[CONFIG] Treasury reset to clean baseline.`);
       renderAll();
     }
 
@@ -482,7 +507,7 @@
       let portfolioVal = 0;
       marketCoins.forEach(c => { portfolioVal += (state.positions[c.symbol] || 0) * c.price; });
       let net = state.cash + state.vault + portfolioVal;
-      const brief = `BRIEF: Net Worth ${fmtCurrency(net)} (Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)} | Holdings: ${fmtCurrency(portfolioVal)}).`;
+      const brief = `TELEMETRY REPORT: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)} | Realized P&L: ${fmtCurrency(state.realizedPnl)}.`;
       state.councilFeed.unshift({ sender: 'ORCHESTRATOR-1', text: brief, color: '#a855f7', time: new Date().toLocaleTimeString() });
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
       renderAll();
@@ -490,7 +515,7 @@
 
     function inspectAgent(id) {
       const a = agentDefs.find(x => x.id === id);
-      if (a) alert(`${a.name} (${a.role})\nStatus: ${a.status}\nP&L: ${fmtCurrency(a.pnl)}`);
+      if (a) alert(`${a.name} (${a.role})\nStatus: ${a.status}\nP&L: ${fmtCurrency(a.pnl)}\nHourly P&L: ${fmtCurrency(a.hrPnl)}`);
     }
 
     function runTradingLoop() {
@@ -504,8 +529,9 @@
           state.vault -= tranche;
           state.cash += tranche;
           boss.status = 'INTERVENING';
-          state.councilFeed.unshift({ sender: boss.name, text: `LIQUIDITY TRANCHE RELEASED: Bot Bankroll depleted. Transferred ${fmtCurrency(tranche)} from Main Vault to active trading pool.`, color: boss.color, time: new Date().toLocaleTimeString() });
-          addSystemLog(`[BOSS BOT] Released ${fmtCurrency(tranche)} Main Vault tranche to bot bankroll.`);
+          const msg = `Liquidity tranche authorized: Released ${fmtCurrency(tranche)} from Main Vault to shore up Bot Bankroll.`;
+          state.councilFeed.unshift({ sender: boss.name, text: msg, color: boss.color, time: new Date().toLocaleTimeString() });
+          addSystemLog(`[BOSS BOT] Tranche released: ${fmtCurrency(tranche)} transferred to active pool.`);
           saveState();
           renderAll();
           return;
@@ -515,14 +541,16 @@
           const culprit = troubled[0];
           culprit.status = 'SUSPENDED';
           boss.status = 'INTERVENING';
-          state.councilFeed.unshift({ sender: boss.name, text: `Circuit breaker engaged: ${culprit.name} suspended due to drawdown (${fmtCurrency(culprit.pnl)}).`, color: boss.color, time: new Date().toLocaleTimeString() });
+          const msg = `Circuit breaker tripped: Suspended ${culprit.name} due to drawdown of ${fmtCurrency(culprit.pnl)}.`;
+          state.councilFeed.unshift({ sender: boss.name, text: msg, color: boss.color, time: new Date().toLocaleTimeString() });
+          addSystemLog(`[RISK CONTROL] Suspended ${culprit.name}. P&L: ${fmtCurrency(culprit.pnl)}`);
           saveState();
           renderAll();
           return;
         } else if (activeAgents.length === 0) {
           agentDefs.forEach(a => { if (a.id !== 'boss') a.status = 'ACTIVE'; });
           boss.status = 'ACTIVE';
-          state.councilFeed.unshift({ sender: boss.name, text: `Risk reset complete. All agents restored to active pool.`, color: boss.color, time: new Date().toLocaleTimeString() });
+          state.councilFeed.unshift({ sender: boss.name, text: `Risk parameters cleared. All trading units restored to active pool.`, color: boss.color, time: new Date().toLocaleTimeString() });
           saveState();
           renderAll();
           return;
@@ -552,7 +580,7 @@
 
           state.totalFeesPaid += fee;
           state.txCount += 1;
-          addSystemLog(`[TRADE] ${agent.name} bought ${tokens > 1000 ? tokens.toLocaleString('en-US', {maximumFractionDigits: 0}) : tokens.toFixed(2)} ${coin.symbol} for $${spend.toFixed(2)} (Fee: ${fmtCurrency(fee)})`);
+          addSystemLog(`[EXEC] ${agent.name} BUY ${tokens > 1000 ? tokens.toLocaleString('en-US', {maximumFractionDigits: 0}) : tokens.toFixed(2)} ${coin.symbol} | Cost: $${spend.toFixed(2)} | Fee: ${fmtCurrency(fee)}`);
           action = 'buy';
         } else if (curHold > 0.00001 && Math.random() > 0.5) {
           let sellTokens = curHold * 0.5;
@@ -568,7 +596,7 @@
             let userBankrollReturn = netReturn - sweepAmount;
             state.cash += userBankrollReturn;
             state.vault += sweepAmount;
-            addSystemLog(`[VAULT SWEEP] Profit recorded! Swept ${fmtCurrency(sweepAmount)} (${state.sweepPct}%) directly into Main Vault.`);
+            addSystemLog(`[SWEEP] Net profit captured on ${coin.symbol}. Swept ${fmtCurrency(sweepAmount)} (${state.sweepPct}%) into Main Vault.`);
           } else {
             state.cash += netReturn;
           }
@@ -583,16 +611,20 @@
           agent.dayPnl += pnlDelta;
           agent.wkPnl += pnlDelta;
 
-          addSystemLog(`[TRADE] ${agent.name} sold ${coin.symbol} [P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}] (Fee: ${fmtCurrency(fee)})`);
+          addSystemLog(`[EXEC] ${agent.name} SELL ${coin.symbol} | P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)} | Fee: ${fmtCurrency(fee)}`);
           action = 'sell';
         } else {
           return;
         }
 
         saveState();
+        let councilText = action === 'buy' ? 
+          `Executing 10% capital allocation into ${coin.symbol} at ${fmtPrice(coin.price)}. Fee incurred: ${fmtCurrency(fee)}.` :
+          `Liquidated 50% position on ${coin.symbol}. Realized P&L: ${fmtCurrency(pnlDelta)}.`;
+
         state.councilFeed.unshift({ 
           sender: agent.name, 
-          text: action === 'buy' ? `Allocating 10% into ${coin.symbol}. Fee: ${fmtCurrency(fee)}.` : `Position closed on ${coin.symbol}. P&L: ${fmtCurrency(pnlDelta)}.`, 
+          text: councilText, 
           color: agent.color, 
           time: new Date().toLocaleTimeString() 
         });
@@ -618,14 +650,17 @@
         const vb = document.getElementById('vault-balance');
         if (vb) vb.textContent = fmtCurrency(state.vault);
 
+        const tf = document.getElementById('total-fees');
+        if (tf) tf.textContent = fmtCurrency(state.totalFeesPaid);
+
+        const sf = document.getElementById('status-fees');
+        if (sf) sf.textContent = `${fmtCurrency(state.totalFeesPaid)} CUMULATIVE`;
+
         const sv = document.getElementById('status-vault');
         if (sv) sv.textContent = `${fmtCurrency(state.vault)} LOCKED`;
 
         const sd = document.getElementById('sweep-display');
         if (sd) sd.textContent = `${state.sweepPct}% TO VAULT`;
-
-        const ssw = document.getElementById('status-sweep');
-        if (ssw) ssw.textContent = `${state.sweepPct}% PER WIN`;
 
         const tx = document.getElementById('status-tx-count');
         if (tx) tx.textContent = `${state.txCount} EXECUTED`;
