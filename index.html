@@ -76,7 +76,6 @@
     }
     .cyber-btn.danger { border-color: var(--red); color: var(--red); }
     .cyber-btn.accent { border-color: var(--amber); color: var(--amber); }
-    .cyber-btn.active-sound { border-color: var(--green); color: var(--green); }
 
     .stats-grid {
       display: grid;
@@ -109,16 +108,16 @@
 
     .nav-tabs {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 3px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 2px;
     }
 
     .tab-btn {
       background: #020617;
       border: 1px solid var(--border-color);
       color: var(--text-dim);
-      font-size: 9px;
-      padding: 8px 2px;
+      font-size: 8px;
+      padding: 8px 1px;
       text-align: center;
       cursor: pointer;
       text-transform: uppercase;
@@ -210,6 +209,23 @@
       border: 1px solid rgba(255,255,255,0.05);
       text-align: center;
     }
+
+    .position-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr 1.2fr;
+      font-size: 9px;
+      padding: 6px;
+      background: rgba(0, 0, 0, 0.4);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      align-items: center;
+      text-align: center;
+    }
+    .position-header {
+      font-weight: bold;
+      color: var(--cyan);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 4px;
+    }
   </style>
 </head>
 <body>
@@ -218,14 +234,13 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">AUTONOMOUS SWARM V4.3</div>
+        <div style="font-size: 8px; color: var(--text-dim);">AUTONOMOUS SWARM V5.0</div>
       </div>
       <div class="header-btns">
-        <button class="cyber-btn" id="audio-toggle-btn" onclick="toggleAudio()">AUDIO: OFF</button>
         <button class="cyber-btn accent" onclick="adjustFunds()">FUND</button>
         <button class="cyber-btn" onclick="requestBriefing()">BRIEF</button>
         <button class="cyber-btn" onclick="promptApiKey()">KEY</button>
-        <button class="cyber-btn danger" onclick="resetTreasuryAndBots()">RESET</button>
+        <button class="cyber-btn danger" onclick="masterReset()">RESET</button>
       </div>
     </div>
 
@@ -259,6 +274,7 @@
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('hub', this)">Hub</button>
       <button class="tab-btn" onclick="switchTab('council', this)">Council</button>
+      <button class="tab-btn" onclick="switchTab('positions', this)">Positions</button>
       <button class="tab-btn" onclick="switchTab('status', this)">Status</button>
       <button class="tab-btn" onclick="switchTab('warroom', this)">War Room</button>
     </div>
@@ -269,13 +285,26 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Accounting ledger recalibrated.</div>
+        <div style="color: var(--green);">[00:01] Master reset and position ledger active.</div>
       </div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// LIVE TELEMETRY & AGENT SWARM DEBATE</div>
       <div class="terminal-box" style="height: 240px;" id="council-feed-container"></div>
+    </div>
+
+    <div id="tab-positions" class="tab-pane panel">
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// OPEN HOLDINGS & LEDGER AUDIT</div>
+      <div class="terminal-box" style="height: 240px; padding: 4px;" id="positions-container">
+        <div class="position-row position-header">
+          <div>ASSET</div>
+          <div>HOLDING</div>
+          <div>AVG COST</div>
+          <div>MKT VALUE</div>
+        </div>
+        <div id="positions-list"></div>
+      </div>
     </div>
 
     <div id="tab-status" class="tab-pane panel">
@@ -321,7 +350,7 @@
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
-      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'Ledger synchronization complete.', color: '#a855f7', time: '00:00' }]
+      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'Master reset and positions ledger ready.', color: '#a855f7', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -371,8 +400,8 @@
       localStorage.setItem('solaris_agent_stats', JSON.stringify(statsMap));
     }
 
-    function resetTreasuryAndBots() {
-      if (confirm("Reset treasury cash, positions, and bot metrics?")) {
+    function masterReset() {
+      if (confirm("Perform a complete master reset on all cash, vaults, positions, fees, and bot metrics?")) {
         localStorage.clear();
         location.reload();
       }
@@ -384,9 +413,10 @@
       state.txCount = 0;
       state.cash = 100;
       state.positions = { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 };
+      state.costBasis = { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 };
       agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = a.id === 'boss' ? 'STANDBY' : 'ACTIVE'; });
       saveState();
-      addSystemLog(`[CONFIG] Treasury completely zeroed out to clean $100 baseline.`);
+      addSystemLog(`[CONFIG] Treasury zeroed out to clean $100 baseline.`);
       renderAll();
     }
 
@@ -474,7 +504,7 @@
 
           state.totalFeesPaid += fee;
           state.txCount += 1;
-          addSystemLog(`[TRADE] ${agent.name} bought ${tokens.toFixed(2)} ${coin.symbol} for $${spend.toFixed(2)} (Fee: ${fmtCurrency(fee)})`);
+          addSystemLog(`[TRADE] ${agent.name} bought ${tokens > 10 ? tokens.toFixed(0) : tokens.toFixed(2)} ${coin.symbol} for $${spend.toFixed(2)} (Fee: ${fmtCurrency(fee)})`);
           action = 'buy';
         } else if (curHold > 0.00001 && Math.random() > 0.5) {
           let sellTokens = curHold * 0.5;
@@ -546,6 +576,29 @@
         const solPriceEl = document.getElementById('sol-price');
         const solObj = marketCoins.find(c => c.symbol === 'SOL');
         if (solPriceEl && solObj) solPriceEl.textContent = fmtCurrency(solObj.price);
+
+        // Render Positions List
+        const posList = document.getElementById('positions-list');
+        if (posList) {
+          let activePositions = marketCoins.filter(c => (state.positions[c.symbol] || 0) > 0.00001);
+          if (activePositions.length === 0) {
+            posList.innerHTML = `<div style="text-align: center; color: var(--text-dim); padding: 20px; font-size: 10px;">NO ACTIVE POSITIONS HELD</div>`;
+          } else {
+            posList.innerHTML = activePositions.map(c => {
+              let qty = state.positions[c.symbol];
+              let cost = state.costBasis[c.symbol] || c.price;
+              let mktVal = qty * c.price;
+              return `
+                <div class="position-row">
+                  <strong style="color: var(--cyan);">${c.symbol}</strong>
+                  <span>${qty > 100 ? qty.toLocaleString('en-US', {maximumFractionDigits: 0}) : qty.toFixed(2)}</span>
+                  <span>$${cost.toFixed(2)}</span>
+                  <span style="color: var(--green);">${fmtCurrency(mktVal)}</span>
+                </div>
+              `;
+            }).join('');
+          }
+        }
 
         const warContainer = document.getElementById('war-room-container');
         if (warContainer) {
