@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.2</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.4</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -420,11 +420,11 @@
     }
 
     function promptApiKey() {
-      const key = prompt("Enter Gemini API key:", localStorage.getItem('gemini_api_key') || '');
+      const key = prompt("Enter your Gemini API key:", localStorage.getItem('gemini_api_key') || '');
       if (key !== null) {
         localStorage.setItem('gemini_api_key', key.trim());
         updateKeyStatus();
-        addSystemLog(`[CONFIG] Gemini API Key updated.`);
+        addSystemLog(`[CONFIG] Gemini API Key successfully configured.`);
       }
     }
 
