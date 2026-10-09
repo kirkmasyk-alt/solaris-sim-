@@ -37,6 +37,7 @@
       font-family: 'Inter', sans-serif;
     }
 
+    /* CRT Scanline Overlay */
     body::before {
       content: "";
       position: fixed;
@@ -578,7 +579,7 @@
 
             <div class="terminal" id="terminal-log">
               [00:01] Neural network initialized.<br>
-              [00:02] Clean session slate loaded (0% win rate, $0.00 P&L).<br>
+              [00:02] Stable execution matrix active.<br>
             </div>
           </div>
 
@@ -711,13 +712,13 @@
       latestNews: 'Standby',
       marketVolatility: 'Low',
       marketRisk: 'Balanced',
-      newsFeed: [{ title: 'System Online', detail: 'Clean slate active. Bots starting at 0% win rate.', tone: 'positive' }],
+      newsFeed: [{ title: 'System Online', detail: 'Stable price matrix active.', tone: 'positive' }],
       agentState: {},
       lastTimestamp: Date.now()
     };
 
     function loadFromStorage() {
-      const saved = localStorage.getItem('solaris_sim_state_v2');
+      const saved = localStorage.getItem('solaris_sim_state_v4');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -728,6 +729,12 @@
           state.realizedPnl = parsed.realizedPnl ?? state.realizedPnl;
           state.history = parsed.history ?? state.history;
           state.newsFeed = parsed.newsFeed ?? state.newsFeed;
+          if (parsed.marketCoins) {
+            parsed.marketCoins.forEach(savedCoin => {
+              const target = marketCoins.find(c => c.symbol === savedCoin.symbol);
+              if (target) target.price = savedCoin.price;
+            });
+          }
           if (parsed.agentDefs) {
             parsed.agentDefs.forEach(savedAgent => {
               const target = agentDefs.find(a => a.id === savedAgent.id);
@@ -737,15 +744,6 @@
                 target.pnl = savedAgent.pnl || 0;
               }
             });
-          }
-          
-          const elapsedSec = Math.floor((Date.now() - (parsed.lastTimestamp || Date.now())) / 1000);
-          if (elapsedSec > 10) {
-            const simulatedCycles = Math.min(Math.floor(elapsedSec / 5), 100);
-            for (let i = 0; i < simulatedCycles; i++) {
-              runOfflineCycle();
-            }
-            state.history.unshift(`• Catch-up: Simulated ${simulatedCycles} trading cycles while away.`);
           }
         } catch (e) {
           console.error("Error loading saved state", e);
@@ -763,10 +761,11 @@
         realizedPnl: state.realizedPnl,
         history: state.history,
         newsFeed: state.newsFeed,
+        marketCoins: marketCoins.map(c => ({ symbol: c.symbol, price: c.price })),
         agentDefs: agentDefs.map(a => ({ id: a.id, wins: a.wins, losses: a.losses, pnl: a.pnl })),
         lastTimestamp: state.lastTimestamp
       };
-      localStorage.setItem('solaris_sim_state_v2', JSON.stringify(payload));
+      localStorage.setItem('solaris_sim_state_v4', JSON.stringify(payload));
     }
 
     function fmtCurrency(value) {
@@ -797,52 +796,14 @@
       return unrealized;
     }
 
-    function addHistory(message) {
-      state.history.unshift(message);
-      state.history = state.history.slice(0, 10);
-      const historyList = document.getElementById('history-list');
-      if (historyList) historyList.innerHTML = state.history.map(item => `<div>• ${item}</div>`).join('');
-    }
-
-    function log(message) {
-      const term = document.getElementById('terminal-log');
-      if (term) {
-        term.innerHTML += `<br>[${new Date().toLocaleTimeString()}] ${message}`;
-        term.scrollTop = term.scrollHeight;
-      }
-    }
-
-    function renderNews() {
-      const feed = document.getElementById('news-feed');
-      if (!feed) return;
-      feed.innerHTML = state.newsFeed.slice(0, 5).map(item => {
-        const tone = item.tone === 'positive' ? 'green' : item.tone === 'caution' ? 'gold' : 'cyan';
-        return `<div class="news-item"><strong style="color:var(--${tone});">${item.title}</strong><br>${item.detail}</div>`;
-      }).join('');
-    }
-
-    function updateMarketPulse() {
-      const top = [...marketCoins].sort((a, b) => b.sentiment - a.sentiment)[0];
-      const sentiment = top.sentiment > 0.15 ? 'Bullish' : top.sentiment > 0.05 ? 'Neutral' : 'Risk-Off';
-      document.getElementById('leading-coin').textContent = top.symbol;
-      document.getElementById('sentiment-level').textContent = sentiment;
-      document.getElementById('volatility-level').textContent = state.marketVolatility;
-      document.getElementById('volatility-pill').textContent = `Vol: ${state.marketVolatility}`;
-      document.getElementById('risk-level').textContent = state.marketRisk;
-      document.getElementById('latest-ai-move').textContent = state.latestConsensus;
-      document.getElementById('burn-check').textContent = state.latestNews;
-    }
-
-    function buildMarketNarrative() {
-      const best = [...marketCoins].sort((a, b) => (b.price - b.basePrice) - (a.price - a.basePrice))[0];
-      const worst = [...marketCoins].sort((a, b) => (a.price - a.basePrice) - (b.price - b.basePrice))[0];
-      const leaders = [...marketCoins].sort((a, b) => b.volume - a.volume).slice(0, 3);
+    function updateMarketStats() {
+      const sol = marketCoins.find(c => c.symbol === 'SOL');
+      document.getElementById('sol-price').textContent = fmtCurrency(sol.price);
       
-      document.getElementById('coin-leaders').innerHTML = leaders.map(coin => `<div>${coin.symbol}: <strong>${fmtCurrency(coin.price)}</strong></div>`).join('');
-      document.getElementById('market-narrative').innerHTML = `<div>Top Gainer: <strong>${best.symbol}</strong></div><div>Lagging: <strong>${worst.symbol}</strong></div><div>Active Volume: High</div>`;
-    }
-
-    function renderPortfolio() {
+      const top = [...marketCoins].sort((a, b) => b.sentiment - a.sentiment)[0];
+      document.getElementById('leading-coin').textContent = top.symbol;
+      document.getElementById('sentiment-level').textContent = top.sentiment > 0.15 ? 'Bullish' : 'Neutral';
+      
       const totalPositions = Object.values(state.positions).filter(v => v > 0).length;
       const netWorth = getNetWorth();
       const totalPnl = netWorth - state.baseline;
@@ -866,34 +827,16 @@
       document.getElementById('cash-balance').textContent = fmtCurrency(state.cash);
     }
 
-    function updateMarketStats() {
-      const sol = marketCoins.find(c => c.symbol === 'SOL');
-      document.getElementById('sol-price').textContent = fmtCurrency(sol.price);
-      updateMarketPulse();
-      renderPortfolio();
-      buildMarketNarrative();
-    }
+    function processMarketLoop() {
+      marketCoins.forEach(coin => {
+        const fluctuation = (Math.random() - 0.49) * 0.015;
+        coin.price = Math.max(0.000001, coin.price * (1 + fluctuation));
+      });
 
-    function generateNewsEvent() {
-      const events = [
-        { title: 'Network Surge', detail: 'Transaction throughput spikes across validator nodes.', tone: 'positive' },
-        { title: 'Liquidity Inflow', detail: 'Institutional capital routing into decentralized pools.', tone: 'positive' },
-        { title: 'Minor Correction', detail: 'Short-term leveraged positions liquidated in order books.', tone: 'caution' }
-      ];
-      const ev = randomFrom(events);
-      state.newsFeed.unshift({ title: ev.title, detail: ev.detail, tone: ev.tone });
-      state.newsFeed = state.newsFeed.slice(0, 5);
-      state.latestNews = ev.title;
-      renderNews();
-    }
-
-    function runAgentDecision(agent) {
+      const activeAgent = randomFrom(agentDefs);
       const coin = randomFrom(marketCoins);
       const action = randomFrom(['buy', 'sell', 'hold']);
-      const confidence = Number((0.65 + Math.random() * 0.3).toFixed(2));
-      let speech = `Scanning telemetry vectors on ${coin.symbol}.`;
-      let tradeResultPnl = 0;
-
+      
       if (action === 'buy') {
         const cost = coin.price * 2;
         if (state.cash >= cost) {
@@ -902,9 +845,7 @@
           const currentAvg = state.avgBuyPrice[coin.symbol] || coin.price;
           state.avgBuyPrice[coin.symbol] = ((currentQty * currentAvg) + cost) / (currentQty + 2);
           state.positions[coin.symbol] = currentQty + 2;
-          speech = `EXECUTE BUY // Accumulated 2 ${coin.symbol} at ${fmtCurrency(coin.price)}`;
-        } else {
-          speech = `HOLD // Insufficient liquid reserves for ${coin.symbol}`;
+          state.agentState[activeAgent.id] = { action: 'buy', coin: coin.symbol, speech: `EXECUTE BUY // 2 ${coin.symbol} at ${fmtCurrency(coin.price)}` };
         }
       } else if (action === 'sell') {
         const qty = state.positions[coin.symbol] || 0;
@@ -912,35 +853,25 @@
           const sellQty = Math.min(2, qty);
           const revenue = sellQty * coin.price;
           const costBasis = sellQty * state.avgBuyPrice[coin.symbol];
-          tradeResultPnl = revenue - costBasis;
+          const pnl = revenue - costBasis;
           
           state.cash += revenue;
           state.positions[coin.symbol] -= sellQty;
-          state.realizedPnl += tradeResultPnl;
-          agent.pnl += tradeResultPnl;
+          state.realizedPnl += pnl;
+          activeAgent.pnl += pnl;
 
-          if (tradeResultPnl >= 0) agent.wins++;
-          else agent.losses++;
+          if (pnl >= 0) activeAgent.wins++;
+          else activeAgent.losses++;
 
-          speech = `EXECUTE SELL // Trimmed ${sellQty} ${coin.symbol} [P&L: ${fmtCurrency(tradeResultPnl)}]`;
-        } else {
-          speech = `SCAN // No inventory available for ${coin.symbol}`;
+          state.agentState[activeAgent.id] = { action: 'sell', coin: coin.symbol, speech: `EXECUTE SELL // Trimmed ${sellQty} ${coin.symbol} [P&L: ${fmtCurrency(pnl)}]` };
         }
       } else {
-        speech = `HOLD // Monitoring orderbook depth for ${coin.symbol}`;
+        state.agentState[activeAgent.id] = { action: 'hold', coin: coin.symbol, speech: `HOLD // Analyzing volatility on ${coin.symbol}` };
       }
 
-      state.latestConsensus = `${agent.name} -> ${action.toUpperCase()} ${coin.symbol}`;
-      state.agentState[agent.id] = { action, coin: coin.symbol, confidence, speech };
-    }
-
-    function runOfflineCycle() {
-      marketCoins.forEach(coin => {
-        const fluctuation = (Math.random() - 0.48) * 0.03;
-        coin.price = Math.max(0.000001, coin.price * (1 + fluctuation));
-      });
-      const activeAgent = randomFrom(agentDefs);
-      runAgentDecision(activeAgent);
+      updateMarketStats();
+      renderWarRoom();
+      saveToStorage();
     }
 
     function renderWarRoom() {
@@ -948,14 +879,14 @@
       if (!container) return;
 
       container.innerHTML = agentDefs.map(agent => {
-        const current = state.agentState[agent.id] || { action: 'hold', coin: 'SOL', confidence: 0.5, speech: 'Initializing subsystem.' };
+        const current = state.agentState[agent.id] || { action: 'hold', coin: 'SOL', speech: 'System standby.' };
         const statusClass = current.action === 'buy' ? 'status-buy' : current.action === 'sell' ? 'status-sell' : '';
         const visorColor = current.action === 'buy' ? '#22c55e' : current.action === 'sell' ? '#ef4444' : agent.color;
         const totalTrades = agent.wins + agent.losses;
         const winRate = totalTrades > 0 ? ((agent.wins / totalTrades) * 100).toFixed(0) + '%' : '0%';
 
         return `
-          <div class="ai-agent-card ${statusClass}" data-agent="${agent.id}">
+          <div class="ai-agent-card ${statusClass}">
             <div class="ai-header-flex">
               <div class="ai-portrait">
                 <div class="robot-avatar-svg">
@@ -978,7 +909,7 @@
                 <p style="font-size:0.65rem; color:var(--muted); margin:0; text-transform:uppercase;">${agent.role}</p>
                 <div class="ai-metrics-row">
                   <div class="mini-metric">Win <span>${winRate}</span></div>
-                  <div class="mini-metric">P&amp;L <span style="color:${agent.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${agent.pnl >= 0 ? '+' : ''}${fmtCurrency(agent.pnl)}</span></div>
+                  <div class="mini-metric">P&amp;L <span style="color:${agent.pnl >= 0 ? 'var(--green)' : 'var(--red)}">${agent.pnl >= 0 ? '+' : ''}${fmtCurrency(agent.pnl)}</span></div>
                   <div class="mini-metric">Risk <span>${agent.risk}</span></div>
                 </div>
               </div>
@@ -990,25 +921,6 @@
           </div>
         `;
       }).join('');
-    }
-
-    function processMarketLoop() {
-      marketCoins.forEach(coin => {
-        const fluctuation = (Math.random() - 0.48) * 0.03;
-        coin.price = Math.max(0.000001, coin.price * (1 + fluctuation));
-        coin.sentiment = Math.min(0.8, Math.max(-0.8, coin.sentiment + (Math.random() - 0.5) * 0.1));
-      });
-
-      const activeAgent = randomFrom(agentDefs);
-      runAgentDecision(activeAgent);
-
-      if (Math.random() > 0.6) {
-        generateNewsEvent();
-      }
-
-      updateMarketStats();
-      renderWarRoom();
-      saveToStorage();
     }
 
     document.querySelectorAll('.room-tab').forEach(tab => {
@@ -1024,12 +936,8 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       loadFromStorage();
-      agentDefs.forEach(agent => {
-        if (!state.agentState[agent.id]) runAgentDecision(agent);
-      });
       updateMarketStats();
       renderWarRoom();
-      renderNews();
       setInterval(processMarketLoop, 5000);
     });
   </script>
