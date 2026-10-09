@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.8</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.9</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -313,7 +313,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Aggressive Chief Risk Officer matrix active.</div>
+        <div style="color: var(--green);">[00:01] WHALE_EYE announcer online. Scanning DEX Screener feeds.</div>
       </div>
     </div>
 
@@ -342,7 +342,7 @@
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
       <div class="status-row"><span>TOTAL TRANSACTIONS:</span> <strong style="color: var(--cyan);" id="status-tx-count">0 EXECUTED</strong></div>
-      <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 6/6 UNITS OPERATIONAL</strong></div>
+      <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 7/7 UNITS OPERATIONAL</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
       <div class="status-row"><span>LOCAL STORAGE:</span> <strong style="color: var(--cyan);">● ISOLATED SANDBOX</strong></div>
     </div>
@@ -355,15 +355,16 @@
 
   <script>
     const marketCoins = [
-      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 2.5 },
-      { symbol: 'BONK', address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', price: 0.000025, change24h: 1.2 },
-      { symbol: 'JTO', address: 'jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL', price: 2.50, change24h: -0.5 },
-      { symbol: 'RAY', address: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R', price: 2.10, change24h: 3.1 },
-      { symbol: 'WIF', address: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm', price: 1.80, change24h: 0.8 }
+      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 2.5, liquidity: 1450000 },
+      { symbol: 'BONK', address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', price: 0.000025, change24h: 1.2, liquidity: 850000 },
+      { symbol: 'JTO', address: 'jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL', price: 2.50, change24h: -0.5, liquidity: 620000 },
+      { symbol: 'RAY', address: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R', price: 2.10, change24h: 3.1, liquidity: 910000 },
+      { symbol: 'WIF', address: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm', price: 1.80, change24h: 0.8, liquidity: 1100000 }
     ];
 
     const agentDefs = [
       { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Chief Risk Officer', color: '#a855f7', icon: '👁️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'STANDBY' },
+      { id: 'announcer', name: 'WHALE_EYE', role: 'DEX Screener Announcer', color: '#38bdf8', icon: '📡', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Portfolio Manager', color: '#38bdf8', icon: '🤖', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', color: '#f59e0b', icon: '🛡️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', color: '#ef4444', icon: '⚡', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
@@ -381,7 +382,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'Active drawdown monitor online. Chief Risk Officer watching.', color: '#a855f7', time: '00:00' }]
+      councilFeed: [{ sender: 'WHALE_EYE', text: 'DEX Screener telemetry connected. Scanning Solana pools for momentum shifts.', color: '#38bdf8', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -435,8 +436,25 @@
               if (matchingPair.priceChange && matchingPair.priceChange.h24 !== undefined) {
                 coin.change24h = parseFloat(matchingPair.priceChange.h24);
               }
+              if (matchingPair.liquidity && matchingPair.liquidity.usd !== undefined) {
+                coin.liquidity = parseFloat(matchingPair.liquidity.usd);
+              }
             }
           });
+
+          // WHALE_EYE ANNOUNCER BROADCAST
+          const announcer = agentDefs.find(a => a.id === 'announcer');
+          const randomCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
+          const broadcastMsg = `Pool pulse on ${randomCoin.symbol}: Price at ${fmtPrice(randomCoin.price)} (24h: ${randomCoin.change24h > 0 ? '+' : ''}${randomCoin.change24h}%). Liquidity depth verified at $${Math.round(randomCoin.liquidity).toLocaleString()}.`;
+          
+          state.councilFeed.unshift({ 
+            sender: announcer.name, 
+            text: broadcastMsg, 
+            color: announcer.color, 
+            time: new Date().toLocaleTimeString() 
+          });
+          state.councilFeed = state.councilFeed.slice(0, 30);
+
           renderAll();
         }
       } catch (err) {
@@ -504,7 +522,7 @@
       state.vault = 0;
       state.positions = { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 };
       state.costBasis = { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 };
-      agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = a.id === 'boss' ? 'STANDBY' : 'ACTIVE'; });
+      agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = (a.id === 'boss' ? 'STANDBY' : 'ACTIVE'); });
       saveState();
       addSystemLog(`[CONFIG] Treasury reset to clean baseline.`);
       renderAll();
@@ -581,8 +599,6 @@
         }
 
         const boss = agentDefs.find(a => a.id === 'boss');
-        
-        // AGGRESSIVE BOSS BOT INTERVENTION: Scan open positions for any negative unrealized movement or negative P&L
         let hasOpenDrawdown = false;
         marketCoins.forEach(c => {
           let qty = state.positions[c.symbol] || 0;
@@ -594,8 +610,6 @@
 
         if (hasOpenDrawdown || state.realizedPnl < 0) {
           boss.status = 'INTERVENING';
-          
-          // Emergency force-liquidation of all open positions back to cash
           marketCoins.forEach(c => {
             let qty = state.positions[c.symbol] || 0;
             if (qty > 0.00001) {
@@ -632,9 +646,9 @@
           return;
         }
 
-        const activeAgents = agentDefs.filter(a => a.id !== 'boss' && a.status === 'ACTIVE');
+        const activeAgents = agentDefs.filter(a => a.id !== 'boss' && a.id !== 'announcer' && a.status === 'ACTIVE');
         if (activeAgents.length === 0) {
-          agentDefs.forEach(a => { if (a.id !== 'boss') a.status = 'ACTIVE'; });
+          agentDefs.forEach(a => { if (a.id !== 'boss' && a.id !== 'announcer') a.status = 'ACTIVE'; });
           saveState();
           renderAll();
           return;
