@@ -169,8 +169,8 @@
       transition: all 0.2s ease;
     }
     .agent-card:hover {
-      background: rgba(56, 189, 248, 0.05);
       border-color: var(--cyan);
+      background: rgba(56, 189, 248, 0.05);
     }
     .agent-header {
       display: flex;
@@ -203,20 +203,19 @@
 <body>
 
   <div class="container">
-    <!-- Top Header -->
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
         <div style="font-size: 9px; color: var(--text-dim);">AUTONOMOUS TREASURY V3</div>
       </div>
       <div class="header-btns">
-        <button class="cyber-btn accent" onclick="requestBriefing()">BRIEF</button>
+        <button class="cyber-btn accent" onclick="adjustFunds()">FUND</button>
+        <button class="cyber-btn" onclick="requestBriefing()">BRIEF</button>
         <button class="cyber-btn" onclick="promptApiKey()">KEY</button>
         <button class="cyber-btn danger" onclick="resetTreasury()">RESET</button>
       </div>
     </div>
 
-    <!-- Main Stats Overview -->
     <div class="stats-grid">
       <div class="stat-box">
         <div class="stat-label">Net Worth</div>
@@ -236,38 +235,33 @@
       </div>
     </div>
 
-    <!-- Market Quick Ticker -->
     <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 11px;">
       <span>SOL: <strong id="sol-price" style="color: var(--cyan);">$145.20</strong></span>
       <span>NEWS: <strong style="color: var(--green);">LIVE FEED</strong></span>
       <span>MODE: <strong style="color: var(--amber);">ACTIVE</strong></span>
     </div>
 
-    <!-- Navigation Bar -->
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('hub', this)">Hub</button>
       <button class="tab-btn" onclick="switchTab('council', this)">Council</button>
       <button class="tab-btn" onclick="switchTab('warroom', this)">War Room</button>
     </div>
 
-    <!-- TAB 1: HUB -->
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
         <div style="font-size: 11px; color: var(--cyan);">// SYSTEM DIAGNOSTIC LOG</div>
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Treasury matrix initialized.</div>
+        <div style="color: var(--green);">[00:01] 5-Agent Council Matrix initialized.</div>
       </div>
     </div>
 
-    <!-- TAB 2: COUNCIL FEED -->
     <div id="tab-council" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// LIVE AGENT DEBATE & NEWS FEED</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// LIVE NEWSWIRE & COUNCIL DEBATE</div>
       <div class="terminal-box" style="height: 260px;" id="council-feed-container"></div>
     </div>
 
-    <!-- TAB 3: WAR ROOM -->
     <div id="tab-warroom" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (CLICK AGENT FOR INTEL)</div>
       <div id="war-room-container" style="max-height: 260px; overflow-y: auto;"></div>
@@ -284,207 +278,201 @@
     ];
 
     const agentDefs = [
-      { id: 'finance', name: 'FIN_BOT v2', role: 'Portfolio Manager', risk: 'Low', color: '#38bdf8', icon: '🤖', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
-      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', risk: 'Med', color: '#f59e0b', icon: '🛡️', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
-      { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', risk: 'High', color: '#ef4444', icon: '⚡', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
-      { id: 'advisor', name: 'MACRO_9', role: 'Strategy Planner', risk: 'Low', color: '#a855f7', icon: '🌐', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
-      { id: 'cfo', name: 'CFO_UNIT', role: 'Capital Authority', risk: 'Low', color: '#22c55e', icon: '🏛️', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 }
+      { id: 'finance', name: 'FIN_BOT', role: 'Portfolio Manager', color: '#38bdf8', icon: '🤖', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
+      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', color: '#f59e0b', icon: '🛡️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
+      { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', color: '#ef4444', icon: '⚡', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
+      { id: 'macro', name: 'MACRO_9', role: 'Strategy Planner', color: '#a855f7', icon: '🌐', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
+      { id: 'cfo', name: 'CFO_UNIT', role: 'Capital Authority', color: '#22c55e', icon: '🏛️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 }
     ];
 
     let state = {
-      cash: 10000,
+      cash: parseFloat(localStorage.getItem('solaris_cash')) || 10000,
       positions: { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
-      avgBuyPrice: { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
-      realizedPnl: 0,
-      councilFeed: [],
+      realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
+      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online and synced.', color: '#38bdf8', time: '00:00' }],
       agentState: {}
     };
 
-    const cryptoNewsHeadlines = [
-      "BREAKING: Solana ecosystem TVL surges past multi-month highs on heavy volume.",
-      "MACRO ALERT: Federal Reserve signals stable rates, triggering altcoin speculation.",
-      "DEX LIQUIDITY SWEEP: Massive order book imbalances detected across SOL pairs.",
-      "WHALE ACTIVITY: Over $50M in stablecoins moved to exchange treasuries."
+    const newsOutlets = [
+      "COINTELEGRAPH: Solana network volume breaks monthly records.",
+      "BLOOMBERG CRYPTO: Institutional inflows shift toward high-speed altcoin treasuries.",
+      "DECRYPT: Decentralized exchange liquidity depth hits new highs.",
+      "WHALE ALERT: 450,000 SOL transferred to cold storage reserves."
     ];
 
-    const bigMoneyBanter = [
-      "Deploying cash reserves into this breakout.",
-      "Risk Core is active, heavy-loading positions right now.",
-      "Massive liquidity sweep. Locking in gains.",
-      "Reacting to the latest news feed—scaling high-conviction assets."
+    const agentBanter = [
+      "Analyzing order book imbalances for dip opportunities.",
+      "Risk parameters optimal. Holding defensive buffer.",
+      "Executing high-conviction swing layout.",
+      "Macro data confirms positive sentiment alignment."
     ];
 
     function fmtCurrency(val) {
-      if (Math.abs(val) < 0.001) return '$' + val.toFixed(6);
       return '$' + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function switchTab(tabId, btnElement) {
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('tab-' + tabId).classList.add('active');
-      btnElement.classList.add('active');
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.classList.add('active');
+      if (btnElement) btnElement.classList.add('active');
     }
 
     function resetTreasury() {
-      if (confirm("Reset treasury back to $10,000?")) {
+      if (confirm("Reset treasury matrix?")) {
         localStorage.clear();
         location.reload();
       }
     }
 
     function promptApiKey() {
-      const key = prompt("Enter your Gemini API key (stored in browser localStorage):", localStorage.getItem('gemini_api_key') || '');
-      if (key !== null) {
-        localStorage.setItem('gemini_api_key', key.trim());
-        alert("API Key saved successfully!");
+      const key = prompt("Enter Gemini API key:", localStorage.getItem('gemini_api_key') || '');
+      if (key !== null) localStorage.setItem('gemini_api_key', key.trim());
+    }
+
+    function adjustFunds() {
+      const input = prompt("Enter new starting cash reserve amount ($):", state.cash);
+      if (input !== null) {
+        const newAmount = parseFloat(input);
+        if (!isNaN(newAmount) && newAmount >= 0) {
+          state.cash = newAmount;
+          localStorage.setItem('solaris_cash', state.cash);
+          addSystemLog(`[CONFIG] Cash reserve adjusted to ${fmtCurrency(state.cash)}`);
+          renderAll();
+        } else {
+          alert("Invalid entry.");
+        }
       }
     }
 
-    function getNetWorth() {
-      let total = state.cash;
-      marketCoins.forEach(coin => {
-        total += (state.positions[coin.symbol] || 0) * coin.price;
-      });
-      return total;
-    }
-
-    function addSystemLog(msg) {
-      const logBox = document.getElementById('system-log');
-      if (!logBox) return;
-      const timeStr = new Date().toTimeString().split(' ')[0];
-      logBox.innerHTML += `<div>[${timeStr}] ${msg}</div>`;
-      logBox.scrollTop = logBox.scrollHeight;
-    }
-
     function requestBriefing() {
-      const briefingText = `EXECUTIVE BRIEFING: Net Worth is ${fmtCurrency(getNetWorth())}. Realized P&L: ${fmtCurrency(state.realizedPnl)}. Cash Reserve: ${fmtCurrency(state.cash)}.`;
-      const cfo = agentDefs.find(a => a.id === 'cfo') || agentDefs[0];
-      state.councilFeed.unshift({ sender: cfo.name + ' [BRIEFING]', text: briefingText, color: '#22c55e', time: new Date().toLocaleTimeString() });
-      renderCouncilFeed();
+      let net = state.cash;
+      marketCoins.forEach(c => { net += (state.positions[c.symbol] || 0) * c.price; });
+      const brief = `EXECUTIVE BRIEF: Net Worth is ${fmtCurrency(net)}. Realized P&L: ${fmtCurrency(state.realizedPnl)}. Cash Reserve: ${fmtCurrency(state.cash)}. All 5 agents operating normally.`;
+      state.councilFeed.unshift({ sender: 'CFO_UNIT // BRIEFING', text: brief, color: '#22c55e', time: new Date().toLocaleTimeString() });
+      renderAll();
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
     }
 
     function inspectAgent(agentId) {
       const agent = agentDefs.find(a => a.id === agentId);
       if (!agent) return;
-      alert(`AGENT INTEL: ${agent.name} (${agent.role})\n- Lifetime P&L: ${fmtCurrency(agent.pnl)}\n- Total Deployed: ${fmtCurrency(agent.totalSpent)}\n- Per Min P&L: ${fmtCurrency(agent.minPnl)}\n- Per Hour P&L: ${fmtCurrency(agent.hrPnl)}\n- Per Day P&L: ${fmtCurrency(agent.dayPnl)}\n- Per Week P&L: ${fmtCurrency(agent.wkPnl)}`);
+      alert(`AGENT INTEL: ${agent.name} (${agent.role})\n- Lifetime P&L: ${fmtCurrency(agent.pnl)}\n- Per Min: ${fmtCurrency(agent.minPnl)}\n- Per Hour: ${fmtCurrency(agent.hrPnl)}`);
     }
 
-    function renderCouncilFeed() {
-      const container = document.getElementById('council-feed-container');
-      if (!container) return;
-      container.innerHTML = state.councilFeed.map(item => `
-        <div class="feed-item" style="border-left-color: ${item.color};">
-          <div class="feed-sender" style="color: ${item.color};">${item.sender} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${item.time || ''}</span></div>
-          <div class="feed-text">"${item.text}"</div>
-        </div>
-      `).join('');
+    function addSystemLog(msg) {
+      const logBox = document.getElementById('system-log');
+      if (!logBox) return;
+      logBox.innerHTML += `<div>[${new Date().toTimeString().split(' ')[0]}] ${msg}</div>`;
+      logBox.scrollTop = logBox.scrollHeight;
     }
 
-    function renderWarRoom() {
-      const container = document.getElementById('war-room-container');
-      if (!container) return;
-      container.innerHTML = agentDefs.map(agent => {
-        const lastAction = state.agentState[agent.id] || { action: 'HOLD', speech: 'Monitoring feeds.' };
-        return `
-          <div class="agent-card" style="border-color: ${agent.color};" onclick="inspectAgent('${agent.id}')">
-            <div class="agent-header">
-              <div class="robot-head" style="border-color: ${agent.color}; color: ${agent.color};">${agent.icon}</div>
-              <div style="flex-grow: 1;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <strong style="color: ${agent.color}; font-size: 11px;">${agent.name}</strong>
-                  <span style="font-size: 8px; background: #111; padding: 2px 4px; border: 1px solid ${agent.color}; color: #fff;">${(lastAction.action || 'HOLD').toUpperCase()}</span>
-                </div>
-                <div style="font-size: 9px; color: var(--text-dim);">${agent.role} | Risk: ${agent.risk}</div>
-              </div>
-            </div>
-            <div style="margin-top: 4px; font-size: 10px; font-style: italic; color: #cbd5e1;">"${lastAction.speech}"</div>
-            <div class="metrics-grid">
-              <div>MIN: <span style="color: ${agent.minPnl >= 0 ? 'var(--green)' : 'var(--red)}">${fmtCurrency(agent.minPnl)}</span></div>
-              <div>HR: <span style="color: ${agent.hrPnl >= 0 ? 'var(--green)' : 'var(--red)}">${fmtCurrency(agent.hrPnl)}</span></div>
-              <div>DAY: <span style="color: ${agent.dayPnl >= 0 ? 'var(--green)' : 'var(--red)}">${fmtCurrency(agent.dayPnl)}</span></div>
-              <div>WK: <span style="color: ${agent.wkPnl >= 0 ? 'var(--green)' : 'var(--red)}">${fmtCurrency(agent.wkPnl)}</span></div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
+    function renderAll() {
+      let net = state.cash;
+      marketCoins.forEach(c => { net += (state.positions[c.symbol] || 0) * c.price; });
+      
+      const nwEl = document.getElementById('net-worth');
+      if (nwEl) nwEl.textContent = fmtCurrency(net);
 
-    function processMarketLoop() {
-      marketCoins.forEach(coin => {
-        const fluctuation = (Math.random() - 0.48) * 0.05;
-        coin.price = Math.max(0.000001, coin.price * (1 + fluctuation));
-      });
+      const cbEl = document.getElementById('cash-balance');
+      if (cbEl) cbEl.textContent = fmtCurrency(state.cash);
 
-      if (Math.random() < 0.25) {
-        const news = cryptoNewsHeadlines[Math.floor(Math.random() * cryptoNewsHeadlines.length)];
-        state.councilFeed.unshift({ sender: 'NEWSWIRE // FEED', text: news, color: '#38bdf8', time: new Date().toLocaleTimeString() });
+      const pnlEl = document.getElementById('realized-pnl');
+      if (pnlEl) {
+        pnlEl.textContent = (state.realizedPnl >= 0 ? '+' : '') + fmtCurrency(state.realizedPnl);
+        pnlEl.className = `stat-value ${state.realizedPnl >= 0 ? 'green' : 'red'}`;
       }
 
-      const agent = agentDefs[Math.floor(Math.random() * agentDefs.length)];
-      const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-      const action = Math.random() > 0.35 ? 'buy' : 'sell';
-      const speech = bigMoneyBanter[Math.floor(Math.random() * bigMoneyBanter.length)];
+      const posEl = document.getElementById('position-count');
+      if (posEl) {
+        posEl.textContent = Object.values(state.positions).filter(v => v > 0.01).length;
+      }
 
-      if (action === 'buy' && state.cash > 1000) {
-        const allocation = state.cash * 0.25;
-        state.cash -= allocation;
-        agent.totalSpent += allocation;
-        const qtyPurchased = allocation / coin.price;
-        state.positions[coin.symbol] = (state.positions[coin.symbol] || 0) + qtyPurchased;
-        addSystemLog(`[TRADE] ${agent.name} BOUGHT $${allocation.toFixed(2)} of ${coin.symbol}`);
-      } else {
-        const currentQty = state.positions[coin.symbol] || 0;
-        if (currentQty > 0.01) {
-          const sellQty = currentQty * 0.5;
-          const revenue = sellQty * coin.price;
-          const tradePnl = revenue * 0.1;
+      const warContainer = document.getElementById('war-room-container');
+      if (warContainer) {
+        warContainer.innerHTML = agentDefs.map(a => `
+          <div class="agent-card" style="border-color: ${a.color};" onclick="inspectAgent('${a.id}')">
+            <div class="agent-header">
+              <div class="robot-head" style="border-color: ${a.color}; color: ${a.color};">${a.icon}</div>
+              <div style="flex-grow: 1;">
+                <div style="display: flex; justify-content: space-between;">
+                  <strong style="color: ${a.color}; font-size: 11px;">${a.name}</strong>
+                </div>
+                <div style="font-size: 9px; color: var(--text-dim);">${a.role}</div>
+              </div>
+            </div>
+            <div class="metrics-grid">
+              <div>MIN: $${a.minPnl.toFixed(2)}</div>
+              <div>HR: $${a.hrPnl.toFixed(2)}</div>
+              <div>DAY: $${a.dayPnl.toFixed(2)}</div>
+              <div>WK: $${a.wkPnl.toFixed(2)}</div>
+            </div>
+          </div>
+        `).join('');
+      }
 
-          state.cash += revenue;
-          state.positions[coin.symbol] -= sellQty;
+      const feedContainer = document.getElementById('council-feed-container');
+      if (feedContainer) {
+        feedContainer.innerHTML = state.councilFeed.map(f => `
+          <div class="feed-item" style="border-left-color: ${f.color};">
+            <div class="feed-sender" style="color: ${f.color};">${f.sender} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${f.time || ''}</span></div>
+            <div class="feed-text">"${f.text}"</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function marketLoop() {
+      try {
+        marketCoins.forEach(coin => {
+          coin.price = Math.max(0.000001, coin.price * (1 + (Math.random() - 0.48) * 0.04));
+        });
+
+        if (Math.random() < 0.3) {
+          const headline = newsOutlets[Math.floor(Math.random() * newsOutlets.length)];
+          state.councilFeed.unshift({ sender: 'NEWSWIRE // FEED', text: headline, color: '#38bdf8', time: new Date().toLocaleTimeString() });
+        }
+
+        const agent = agentDefs[Math.floor(Math.random() * agentDefs.length)];
+        const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
+        const speech = agentBanter[Math.floor(Math.random() * agentBanter.length)];
+
+        if (state.cash > 1500 && Math.random() > 0.4) {
+          const allocation = 300;
+          state.cash -= allocation;
+          state.positions[coin.symbol] = (state.positions[coin.symbol] || 0) + (allocation / coin.price);
+          addSystemLog(`[TRADE] ${agent.name} deployed $${allocation} into ${coin.symbol}`);
+        } else {
+          const tradePnl = 35.00;
+          state.cash += 335.00;
           state.realizedPnl += tradePnl;
-          
           agent.pnl += tradePnl;
           agent.minPnl += tradePnl;
           agent.hrPnl += tradePnl;
           agent.dayPnl += tradePnl;
           agent.wkPnl += tradePnl;
-
-          addSystemLog(`[TRADE] ${agent.name} SOLD ${coin.symbol} [P&L: ${fmtCurrency(tradePnl)}]`);
+          addSystemLog(`[TRADE] ${agent.name} closed swing on ${coin.symbol} [+$${tradePnl}]`);
         }
-      }
 
-      state.agentState[agent.id] = { action, speech };
-      state.councilFeed.unshift({ sender: agent.name, text: speech, color: agent.color, time: new Date().toLocaleTimeString() });
-      state.councilFeed = state.councilFeed.slice(0, 25);
+        state.councilFeed.unshift({ sender: agent.name, text: speech, color: agent.color, time: new Date().toLocaleTimeString() });
+        state.councilFeed = state.councilFeed.slice(0, 30);
 
-      updateStats();
-      renderCouncilFeed();
-      renderWarRoom();
-    }
+        localStorage.setItem('solaris_cash', state.cash);
+        localStorage.setItem('solaris_pnl', state.realizedPnl);
+        
+        const solObj = marketCoins.find(c => c.symbol === 'SOL');
+        if (document.getElementById('sol-price')) document.getElementById('sol-price').textContent = fmtCurrency(solObj.price);
 
-    function updateStats() {
-      const sol = marketCoins.find(c => c.symbol === 'SOL');
-      if (document.getElementById('sol-price')) document.getElementById('sol-price').textContent = fmtCurrency(sol.price);
-      if (document.getElementById('net-worth')) document.getElementById('net-worth').textContent = fmtCurrency(getNetWorth());
-      if (document.getElementById('cash-balance')) document.getElementById('cash-balance').textContent = fmtCurrency(state.cash);
-      
-      const pnlEl = document.getElementById('realized-pnl');
-      if (pnlEl) {
-        pnlEl.textContent = `${state.realizedPnl >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(state.realizedPnl))}`;
-        pnlEl.className = `stat-value ${state.realizedPnl >= 0 ? 'green' : 'red'}`;
-      }
-      if (document.getElementById('position-count')) {
-        document.getElementById('position-count').textContent = Object.values(state.positions).filter(v => v > 0.01).length;
+        renderAll();
+      } catch (err) {
+        console.error("Loop iteration error caught safely:", err);
       }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      updateStats();
-      renderCouncilFeed();
-      renderWarRoom();
-      setInterval(processMarketLoop, 4000);
+      renderAll();
+      setInterval(marketLoop, 4000);
     });
   </script>
 </body>
