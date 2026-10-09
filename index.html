@@ -274,7 +274,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Fee-optimized profit-reward loop online.</div>
+        <div style="color: var(--green);">[00:01] Precision weighted-average cost basis engine online.</div>
       </div>
     </div>
 
@@ -288,7 +288,7 @@
       <div class="status-row"><span>COINGECKO API:</span> <strong id="status-gecko" style="color: var(--green);">● CONNECTED (LIVE)</strong></div>
       <div class="status-row"><span>DEX ROUTING & FEES:</span> <strong style="color: var(--green);">● ACTIVE (0.3% DEDUCTION)</strong></div>
       <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 5/5 UNITS OPERATIONAL</strong></div>
-      <div class="status-row"><span>COST-BASIS LEDGER:</span> <strong style="color: var(--green);">● REAL-TIME TRACKING</strong></div>
+      <div class="status-row"><span>COST-BASIS LEDGER:</span> <strong style="color: var(--green);">● WEIGHTED AVERAGE ACTIVE</strong></div>
       <div class="status-row"><span>LOCAL STORAGE:</span> <strong style="color: var(--cyan);">● ISOLATED SANDBOX</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
@@ -321,7 +321,7 @@
       positions: JSON.parse(localStorage.getItem('solaris_positions')) || { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
       costBasis: JSON.parse(localStorage.getItem('solaris_cost_basis')) || { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
-      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online. Status checks green.', color: '#38bdf8', time: '00:00' }],
+      councilFeed: [{ sender: 'SYSTEM', text: 'All 5 autonomous agents online. Precision ledger active.', color: '#38bdf8', time: '00:00' }],
       soundEnabled: false
     };
 
@@ -539,7 +539,6 @@
         const avgCost = state.costBasis[coin.symbol] || coin.price;
         const priceChangePct = avgCost > 0 ? (coin.price - avgCost) / avgCost : 0;
         
-        // Fee-aware trading logic: Only sell if price has risen enough to beat the 0.3% entry + 0.3% exit fees (0.6% total hurdle)
         if (state.cash > 50 && (Math.random() > 0.5 || currentHolding === 0)) {
           const spendAmount = state.cash * 0.15;
           const fee = spendAmount * feeRate;
@@ -558,7 +557,6 @@
           addSystemLog(`[TRADE] ${agent.name} bought ${tokensBought > 100 ? tokensBought.toLocaleString('en-US', {maximumFractionDigits: 0}) : tokensBought.toFixed(2)} ${coin.symbol} at ${fmtPrice(coin.price)}`);
           actionType = 'buy';
         } else if (currentHolding > 0.00001 && (priceChangePct > 0.008 || Math.random() > 0.7)) {
-          // Only execute sell if net reward is positive or risk parameters trigger profit-taking
           const tokensToSell = currentHolding * 0.5;
           const grossReturn = tokensToSell * coin.price;
           const fee = grossReturn * feeRate;
@@ -583,7 +581,7 @@
           addSystemLog(`[TRADE] ${agent.name} sold ${coin.symbol} [Net P&L: ${signStr}${fmtCurrency(pnlDelta)}]`);
           actionType = 'sell';
         } else {
-          return; // Skip cycle if fee hurdle not cleared
+          return;
         }
 
         const conversationalSpeech = generateAgentDialogue(agent, coin, actionType, pnlDelta);
