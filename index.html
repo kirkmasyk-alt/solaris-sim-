@@ -17,18 +17,19 @@
       --muted: #8da3be;
       --border: #24364d;
       --shadow: rgba(0,0,0,0.3);
-      --risk: #f97316;
       --success: #10b981;
+      --risk: #f97316;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      padding: 18px;
+      padding: 20px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: linear-gradient(180deg, #07111f 0%, #0b1728 100%);
       color: var(--text);
+      line-height: 1.6;
     }
 
     .container {
@@ -36,139 +37,199 @@
       margin: 0 auto;
     }
 
-    h1 {
+    header {
       text-align: center;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 18px;
+    }
+
+    h1 {
       margin: 0 0 6px;
       color: var(--accent);
-      font-size: clamp(1.7rem, 3vw, 2.4rem);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      letter-spacing: -0.02em;
     }
 
     .subtitle {
-      text-align: center;
       color: var(--muted);
-      margin-bottom: 20px;
-      font-size: 0.9rem;
-      letter-spacing: 0.04em;
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
     }
 
-    .dashboard {
+    .top-metrics {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0,1fr));
-      gap: 14px;
-      margin-bottom: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
     }
 
-    .card {
-      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+    .metric-card {
+      background: linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-      box-shadow: 0 10px 28px var(--shadow);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 8px 24px var(--shadow);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
     }
 
     .metric-label {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       color: var(--muted);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+      font-weight: 600;
     }
 
     .metric-value {
-      font-size: clamp(1.1rem, 2vw, 1.7rem);
+      font-size: clamp(1.3rem, 2.5vw, 2rem);
       font-weight: 700;
-      line-height: 1.2;
+      line-height: 1.1;
+      color: var(--text);
     }
 
-    .layout {
+    .main-grid {
       display: grid;
-      grid-template-columns: 1.3fr 0.7fr;
-      gap: 18px;
-      margin-bottom: 18px;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 24px var(--shadow);
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 16px;
+      font-weight: 600;
     }
 
     .terminal {
       background: #01080d;
       border: 1px solid var(--border);
-      border-radius: 12px;
-      min-height: 230px;
-      max-height: 300px;
+      border-radius: 8px;
+      min-height: 250px;
+      max-height: 315px;
       overflow-y: auto;
-      padding: 12px;
+      padding: 14px;
       color: var(--accent);
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.82rem;
-      line-height: 1.6;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      margin-bottom: 16px;
     }
 
-    .button-grid {
+    .button-group {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 10px;
-      margin-top: 12px;
+      margin-bottom: 12px;
     }
 
-    .button-grid.three {
-      grid-template-columns: repeat(3, minmax(0,1fr));
-    }
-
-    .button-grid.four {
-      grid-template-columns: repeat(4, minmax(0,1fr));
+    .button-group.full {
+      grid-template-columns: 1fr;
     }
 
     button {
       appearance: none;
-      border: 0;
-      border-radius: 10px;
-      padding: 11px 12px;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 14px;
       cursor: pointer;
       font-weight: 700;
-      color: #061218;
-      background: var(--accent);
-      transition: transform 0.15s ease, opacity 0.15s ease;
       font-size: 0.9rem;
+      transition: all 0.15s ease;
+      background: var(--accent);
+      color: #061218;
     }
 
-    button:hover { transform: translateY(-1px); }
-    button:active { transform: translateY(0); }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+    }
 
-    .button-alt { background: var(--accent-2); }
-    .button-warning { background: var(--warning); }
-    .button-danger { background: var(--danger); color: #fff; }
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
 
-    .status-badge {
-      display: inline-block;
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary { background: var(--accent-2); }
+    .btn-warning { background: var(--warning); }
+    .btn-danger { background: var(--danger); color: #fff; }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       margin-top: 12px;
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 0.74rem;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
       font-weight: 700;
-      background: rgba(34, 197, 94, 0.14);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      color: var(--accent);
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      color: var(--success);
     }
 
-    .status-badge.inactive {
+    .status-pill.off {
       background: rgba(143, 163, 184, 0.12);
       border-color: rgba(143, 163, 184, 0.2);
       color: var(--muted);
     }
 
-    .status-badge.day-marker {
-      background: rgba(96, 165, 250, 0.14);
-      border-color: rgba(96, 165, 250, 0.3);
-      color: var(--accent-2);
+    .status-pill.warning {
+      background: rgba(249, 115, 22, 0.12);
+      border-color: rgba(249, 115, 22, 0.2);
+      color: var(--risk);
     }
 
-    .mini-grid {
+    .overview-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
-      margin-top: 12px;
+      margin-bottom: 16px;
     }
 
-    .trade-list {
+    .overview-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .overview-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .overview-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .activity-list, .feed-list {
       list-style: none;
       margin: 0;
       padding: 0;
@@ -177,227 +238,178 @@
       gap: 8px;
     }
 
-    .trade-item {
-      border: 1px solid var(--border);
+    .activity-item, .feed-item {
       background: rgba(15, 23, 42, 0.5);
-      border-radius: 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
       padding: 8px 10px;
       font-size: 0.8rem;
       color: var(--muted);
     }
 
-    .trade-item strong { color: var(--text); }
-    .small-note { font-size: 0.75rem; color: var(--muted); margin-top: 8px; }
+    .activity-item strong, .feed-item strong {
+      color: var(--accent);
+    }
 
-    .week-sim {
+    .chart-grid {
       display: grid;
-      grid-template-columns: repeat(7, minmax(0,1fr));
-      gap: 10px;
-      margin-top: 12px;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
     }
 
-    .day-box {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px;
+    .chart-day {
       text-align: center;
-      font-size: 0.8rem;
     }
 
-    .day-box .day-label {
-      color: var(--muted);
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .day-box .day-value {
-      color: var(--text);
-      font-weight: 700;
-      font-size: 1rem;
-    }
-
-    .day-box.active {
-      border-color: var(--accent);
-      background: rgba(34, 197, 94, 0.1);
-    }
-
-    .chart-container {
-      background: rgba(15, 23, 42, 0.3);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      margin-top: 14px;
-      min-height: 180px;
+    .chart-bar-container {
+      height: 120px;
+      background: rgba(15, 23, 42, 0.4);
+      border-radius: 6px;
       display: flex;
       align-items: flex-end;
-      justify-content: space-around;
+      justify-content: center;
+      margin-bottom: 8px;
+      min-height: 40px;
     }
 
     .chart-bar {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      flex: 1;
-    }
-
-    .bar {
+      width: 60%;
       background: linear-gradient(180deg, var(--accent-2), var(--accent));
       border-radius: 4px 4px 0 0;
-      width: 100%;
-      max-width: 30px;
-      min-height: 10px;
-      transition: background 0.3s ease;
+      min-height: 8px;
+      transition: all 0.3s ease;
     }
 
-    .bar:hover {
+    .chart-bar:hover {
       background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      opacity: 1;
     }
 
-    .bar-label {
+    .chart-label {
       font-size: 0.7rem;
       color: var(--muted);
-      margin-top: 6px;
+      text-transform: uppercase;
+      font-weight: 600;
     }
 
-    .summary-row {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 12px;
-      margin-top: 14px;
+    .chart-value {
+      font-size: 0.75rem;
+      color: var(--text);
+      margin-top: 4px;
+      font-weight: 600;
     }
 
-    .summary-box {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: rgba(15, 23, 42, 0.5);
+    .section-space {
+      margin-top: 18px;
+    }
+
+    .warning-banner {
+      background: rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      border-radius: 8px;
       padding: 12px;
-    }
-
-    .health-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 0.74rem;
-      font-weight: 700;
-      margin-top: 8px;
-    }
-
-    .health-pill.good {
-      background: rgba(34, 197, 94, 0.12);
-      color: var(--success);
-      border: 1px solid rgba(34, 197, 94, 0.26);
-    }
-
-    .health-pill.warn {
-      background: rgba(249, 115, 22, 0.12);
-      color: var(--risk);
-      border: 1px solid rgba(249, 115, 22, 0.26);
+      margin-top: 16px;
+      color: #f97316;
+      font-size: 0.85rem;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🪙 $SOLARIS</h1>
-    <div class="subtitle">Autonomous Treasury & Paper Trading Sandbox</div>
+    <header>
+      <h1>🪙 $SOLARIS</h1>
+      <div class="subtitle">Autonomous Treasury & Market Simulation</div>
+    </header>
 
-    <div class="dashboard">
-      <div class="card">
-        <div class="metric-label">SOL Price</div>
+    <div class="top-metrics">
+      <div class="metric-card">
+        <div class="metric-label">Current SOL Price</div>
         <div class="metric-value" id="sol-price">$110.10</div>
       </div>
-      <div class="card">
+      <div class="metric-card">
         <div class="metric-label">Treasury Net Worth</div>
         <div class="metric-value" id="net-worth">$7,756.22</div>
       </div>
-      <div class="card">
-        <div class="metric-label">Stablecoin Cash</div>
+      <div class="metric-card">
+        <div class="metric-label">Treasury Cash</div>
         <div class="metric-value" id="cash-balance">$5,003.72</div>
       </div>
-      <div class="card">
-        <div class="metric-label">Staked SOL</div>
+      <div class="metric-card">
+        <div class="metric-label">Staked SOL Holdings</div>
         <div class="metric-value" id="sol-balance">25.0 SOL</div>
       </div>
     </div>
 
-    <div class="layout">
+    <div class="main-grid">
       <div class="card">
-        <div class="metric-label" style="margin-bottom: 10px;">🤖 Autonomous Treasury Bot</div>
+        <div class="card-title">🤖 Bot Command Center</div>
         <div class="terminal" id="terminal-log">
-          [00:01] Treasury boot sequence online.<br>
-          [00:02] Fee collection engine primed.<br>
-          [00:03] Bot standing by for market conditions...<br>
+[00:01] Treasury initialization complete.<br>
+[00:02] Fee collection engine: ACTIVE<br>
+[00:03] Waiting for market conditions...<br>
         </div>
 
-        <div class="button-grid three">
+        <div class="button-group">
           <button onclick="simulateMarketDip()">📉 Force Dip</button>
-          <button class="button-alt" onclick="simulateMarketRally()">📈 Force Rally</button>
-          <button class="button-warning" id="auto-bot-toggle" onclick="toggleAutoBot()">🔄 Auto Bot: OFF</button>
+          <button class="btn-secondary" onclick="simulateMarketRally()">📈 Force Rally</button>
         </div>
 
-        <div class="button-grid four">
-          <button class="button-alt" onclick="simulateBuyerInflow()">💰 Manual Inflow</button>
-          <button class="button-danger" onclick="triggerBurn()">🔥 Buyback & Burn</button>
-          <button class="button-alt" onclick="runWeekSimulation()">⏩ Run Week</button>
-          <button onclick="resetSimulation()">🔄 Reset</button>
+        <div class="button-group">
+          <button class="btn-secondary" id="auto-bot-toggle" onclick="toggleAutoBot()">🔄 Auto Bot: OFF</button>
+          <button class="btn-warning" onclick="simulateBuyerInflow()">💰 Market Inflow</button>
         </div>
 
-        <div id="bot-status" class="status-badge inactive">Auto Bot: Idle</div>
-        <div id="day-marker" class="status-badge day-marker" style="display:none;">Day 1 of 7</div>
+        <div class="button-group">
+          <button class="btn-danger" onclick="triggerBurn()">🔥 Buyback & Burn</button>
+          <button class="btn-secondary" onclick="runWeekSimulation()">⏩ Run 7-Day Sim</button>
+        </div>
+
+        <button class="button-group full" onclick="resetSimulation()">🔄 Reset All</button>
+
+        <div id="bot-status" class="status-pill off">Bot Status: Idle</div>
       </div>
 
       <div class="card">
-        <div class="metric-label">Treasury Overview</div>
-        <div class="mini-grid">
-          <div>
-            <div class="metric-label">Fees Collected</div>
-            <div class="metric-value" id="fees-collected">$0.00</div>
+        <div class="card-title">Treasury Overview</div>
+        <div class="overview-grid">
+          <div class="overview-item">
+            <div class="overview-label">Fees Collected</div>
+            <div class="overview-value" id="fees-collected">$0.00</div>
           </div>
-          <div>
-            <div class="metric-label">Tokens Burned</div>
-            <div class="metric-value" id="tokens-burned">0</div>
+          <div class="overview-item">
+            <div class="overview-label">Tokens Burned</div>
+            <div class="overview-value" id="tokens-burned">0</div>
           </div>
-          <div>
-            <div class="metric-label">Trading Volume</div>
-            <div class="metric-value" id="trading-volume">$0.00</div>
+          <div class="overview-item">
+            <div class="overview-label">Trading Volume</div>
+            <div class="overview-value" id="trading-volume">$0.00</div>
           </div>
-          <div>
-            <div class="metric-label">Circulating Supply</div>
-            <div class="metric-value" id="circulating-supply">1.00B</div>
-          </div>
-        </div>
-
-        <div class="summary-row">
-          <div class="summary-box">
-            <div class="metric-label">Market Health</div>
-            <div id="market-health" class="health-pill good">Stable</div>
-          </div>
-          <div class="summary-box">
-            <div class="metric-label">Bot Bias</div>
-            <div id="bot-bias" class="health-pill good">Neutral</div>
-          </div>
-          <div class="summary-box">
-            <div class="metric-label">Treasury Risk</div>
-            <div id="treasury-risk" class="health-pill good">Low</div>
+          <div class="overview-item">
+            <div class="overview-label">Supply</div>
+            <div class="overview-value" id="circulating-supply">1.00B</div>
           </div>
         </div>
 
-        <div style="margin-top: 18px;">
-          <div class="metric-label">Recent Activity</div>
-          <ul class="trade-list" id="trade-list">
-            <li class="trade-item"><strong>INIT</strong> Treasury synced to baseline state.</li>
-          </ul>
-        </div>
+        <div class="card-title" style="margin-top: 16px;">Recent Activity</div>
+        <ul class="activity-list" id="activity-list">
+          <li class="activity-item"><strong>INIT</strong> Treasury initialized to baseline.</li>
+        </ul>
+
+        <div class="card-title section-space">Live Market Feed</div>
+        <ul class="feed-list" id="feed-list">
+          <li class="feed-item"><strong>SYS</strong> Market feed idle.</li>
+        </ul>
       </div>
     </div>
 
     <div class="card">
-      <div class="metric-label">📅 Weekly Buy/Sell Volume & Market Activity</div>
-      <div class="week-sim" id="week-sim"></div>
-      <div class="chart-container" id="chart-container"></div>
+      <div class="card-title">📊 Weekly Market Simulation</div>
+      <div class="chart-grid" id="chart-grid"></div>
+    </div>
+
+    <div class="warning-banner">
+      <strong>📡 Real market connection:</strong> This is still a front-end treasury sandbox. To connect to live SOL price data, add a fetch to a public market API like CoinGecko or Pyth and replace the local price feed with that real market price.
     </div>
   </div>
 
@@ -414,16 +426,21 @@
       tradingVolume: 0,
       autoBotEnabled: false,
       autoBotInterval: null,
-      recentTrades: [{ type: 'INIT', note: 'Treasury synced to baseline state.' }],
+      marketTickInterval: null,
+      activityLog: [{ type: 'INIT', note: 'Treasury initialized to baseline.' }],
+      feed: [{ type: 'SYS', note: 'Market feed idle.' }],
       currentDay: 0,
-      weekData: Array(7).fill(0).map(() => ({ volume: 0, buyers: 0, label: '' }))
+      weekData: Array(7).fill(0).map(() => ({ volume: 0, buyers: 0 }))
     };
 
-    const DEX_FEE_RATE = 0.0025;
-    const GAS_FEE = 0.002;
-    const BUYER_TAX_RATE = 0.01;
-    const BURN_BUDGET = 300;
-    const TOKENS_PER_DOLLAR = 50_000;
+    const CONFIG = {
+      DEX_FEE_RATE: 0.0025,
+      GAS_FEE: 0.002,
+      BUYER_TAX_RATE: 0.01,
+      BURN_BUDGET: 300,
+      TOKENS_PER_DOLLAR: 50_000,
+      LIVE_TICK_MS: 3000
+    };
 
     const WEEK_PATTERNS = [
       { buyers: 45, volume: 3200, label: 'Launch Hype' },
@@ -432,151 +449,117 @@
       { buyers: 18, volume: 1100, label: 'Mid-week Rally' },
       { buyers: 25, volume: 1800, label: 'End-week Push' },
       { buyers: 65, volume: 5100, label: 'Weekend Hype' },
-      { buyers: 35, volume: 2900, label: 'Sunday cool-down' }
+      { buyers: 35, volume: 2900, label: 'Sunday Cooldown' }
     ];
 
-    function formatCurrency(value) {
-      return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    }
-
-    function formatSol(value) {
-      return `${Number(value).toFixed(1)} SOL`;
-    }
-
-    function formatSupply(value) {
-      if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
-      if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
-      return value.toLocaleString();
+    function fmt(value, type = 'currency') {
+      if (type === 'currency') {
+        return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
+      if (type === 'sol') {
+        return `${Number(value).toFixed(1)} SOL`;
+      }
+      if (type === 'supply') {
+        if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
+        if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+        return value.toLocaleString();
+      }
+      return String(value);
     }
 
     function getNetWorth() {
       return state.cash + (state.sol * state.price);
     }
 
-    function setHealthStatus() {
-      const netWorth = getNetWorth();
-      const ratio = state.cash / netWorth;
-      const marketHealth = document.getElementById('market-health');
-      const botBias = document.getElementById('bot-bias');
-      const treasuryRisk = document.getElementById('treasury-risk');
-
-      if (ratio > 0.6) {
-        marketHealth.textContent = 'Healthy';
-        marketHealth.className = 'health-pill good';
-      } else {
-        marketHealth.textContent = 'Watch';
-        marketHealth.className = 'health-pill warn';
-      }
-
-      if (state.sol > state.cash) {
-        botBias.textContent = 'Long';
-        botBias.className = 'health-pill good';
-      } else if (state.sol < state.cash * 0.2) {
-        botBias.textContent = 'Neutral';
-        botBias.className = 'health-pill warn';
-      } else {
-        botBias.textContent = 'Neutral';
-        botBias.className = 'health-pill good';
-      }
-
-      if (state.cash < 1000) {
-        treasuryRisk.textContent = 'Elevated';
-        treasuryRisk.className = 'health-pill warn';
-      } else {
-        treasuryRisk.textContent = 'Low';
-        treasuryRisk.className = 'health-pill good';
-      }
-    }
-
-    function addTradeLog(type, note) {
-      state.recentTrades.unshift({ type, note });
-      state.recentTrades = state.recentTrades.slice(0, 6);
-      const list = document.getElementById('trade-list');
-      list.innerHTML = state.recentTrades
-        .map(item => `<li class="trade-item"><strong>${item.type}</strong> ${item.note}</li>`)
-        .join('');
-    }
-
-    function log(message) {
+    function log(msg) {
       const term = document.getElementById('terminal-log');
-      term.innerHTML += `<br>${message}`;
+      term.innerHTML += `<br>${msg}`;
       term.scrollTop = term.scrollHeight;
     }
 
-    function renderDashboard() {
-      const netWorth = getNetWorth();
-      document.getElementById('sol-price').textContent = `$${state.price.toFixed(2)}`;
-      document.getElementById('cash-balance').textContent = formatCurrency(state.cash);
-      document.getElementById('sol-balance').textContent = formatSol(state.sol);
-      document.getElementById('net-worth').textContent = formatCurrency(netWorth);
-      document.getElementById('fees-collected').textContent = formatCurrency(state.feesCollected);
-      document.getElementById('tokens-burned').textContent = Number(state.tokensBurned).toLocaleString();
-      document.getElementById('circulating-supply').textContent = formatSupply(state.circulatingSupply);
-      document.getElementById('trading-volume').textContent = formatCurrency(state.tradingVolume);
-      setHealthStatus();
+    function addActivity(type, note) {
+      state.activityLog.unshift({ type, note });
+      state.activityLog = state.activityLog.slice(0, 6);
+      const list = document.getElementById('activity-list');
+      list.innerHTML = state.activityLog
+        .map(item => `<li class="activity-item"><strong>${item.type}</strong> ${item.note}</li>`)
+        .join('');
     }
 
-    function renderWeekChart() {
-      const weekContainer = document.getElementById('week-sim');
-      const chartContainer = document.getElementById('chart-container');
+    function addFeed(type, note) {
+      state.feed.unshift({ type, note });
+      state.feed = state.feed.slice(0, 6);
+      const list = document.getElementById('feed-list');
+      list.innerHTML = state.feed
+        .map(item => `<li class="feed-item"><strong>${item.type}</strong> ${item.note}</li>`)
+        .join('');
+    }
 
-      weekContainer.innerHTML = DAYS.map((day, idx) => {
-        const dayData = state.weekData[idx];
-        const isActive = idx === state.currentDay;
+    function renderChart() {
+      const grid = document.getElementById('chart-grid');
+      const maxVol = Math.max(...state.weekData.map(d => d.volume), 1);
+
+      grid.innerHTML = DAYS.map((day, idx) => {
+        const data = state.weekData[idx];
+        const height = Math.max((data.volume / maxVol) * 100, 10);
         return `
-          <div class="day-box ${isActive ? 'active' : ''}">
-            <div class="day-label">${day}</div>
-            <div class="day-value">${dayData.buyers}</div>
-            <div class="small-note">${formatCurrency(dayData.volume)}</div>
+          <div class="chart-day">
+            <div class="chart-bar-container">
+              <div class="chart-bar" style="height: ${height}%;"></div>
+            </div>
+            <div class="chart-label">${day}</div>
+            <div class="chart-value">${data.buyers} 👥</div>
           </div>
         `;
       }).join('');
+    }
 
-      const maxVolume = Math.max(...state.weekData.map(d => d.volume), 1);
-      chartContainer.innerHTML = state.weekData.map((dayData, idx) => {
-        const height = (dayData.volume / maxVolume) * 100;
-        return `
-          <div class="chart-bar">
-            <div class="bar" style="height: ${Math.max(height, 15)}%; opacity: ${idx === state.currentDay ? 1 : 0.7};"></div>
-            <div class="bar-label">${DAYS[idx]}</div>
-          </div>
-        `;
-      }).join('');
+    function render() {
+      const nw = getNetWorth();
+      document.getElementById('sol-price').textContent = `$${state.price.toFixed(2)}`;
+      document.getElementById('cash-balance').textContent = fmt(state.cash);
+      document.getElementById('sol-balance').textContent = fmt(state.sol, 'sol');
+      document.getElementById('net-worth').textContent = fmt(nw);
+      document.getElementById('fees-collected').textContent = fmt(state.feesCollected);
+      document.getElementById('tokens-burned').textContent = Number(state.tokensBurned).toLocaleString();
+      document.getElementById('circulating-supply').textContent = fmt(state.circulatingSupply, 'supply');
+      document.getElementById('trading-volume').textContent = fmt(state.tradingVolume);
+      renderChart();
     }
 
     function buyOneSol() {
-      const dexFee = state.price * DEX_FEE_RATE;
-      const totalCost = state.price + dexFee + GAS_FEE;
+      const fee = state.price * CONFIG.DEX_FEE_RATE;
+      const cost = state.price + fee + CONFIG.GAS_FEE;
 
-      if (state.cash < totalCost) {
-        log(`[BUY FAILED] Treasury cash too low. Need ${formatCurrency(totalCost)}, have ${formatCurrency(state.cash)}.`);
+      if (state.cash < cost) {
+        log(`❌ [BUY FAILED] Need ${fmt(cost)}, have ${fmt(state.cash)}.`);
         return false;
       }
 
-      state.cash -= totalCost;
+      state.cash -= cost;
       state.sol += 1.0;
-      state.feesCollected += dexFee + GAS_FEE;
-      renderDashboard();
-      log(`[BOT BUY] Treasury bought 1 SOL at $${state.price.toFixed(2)}. Total cost: ${formatCurrency(totalCost)}.`);
-      addTradeLog('BUY', `1 SOL acquired for ${formatCurrency(totalCost)}.`);
+      state.feesCollected += fee + CONFIG.GAS_FEE;
+      render();
+      log(`✅ [BOT BUY] 1 SOL @ $${state.price.toFixed(2)} | Cost: ${fmt(cost)}`);
+      addActivity('BUY', `1 SOL @ $${state.price.toFixed(2)} for ${fmt(cost)}`);
       return true;
     }
 
     function sellOneSol() {
       if (state.sol < 1.0) {
-        log('[SELL FAILED] Treasury has no SOL to sell.');
+        log('❌ [SELL FAILED] No SOL to sell.');
         return false;
       }
 
-      const dexFee = state.price * DEX_FEE_RATE;
-      const netRevenue = (state.price * (1 - DEX_FEE_RATE)) - GAS_FEE;
+      const fee = state.price * CONFIG.DEX_FEE_RATE;
+      const revenue = (state.price * (1 - CONFIG.DEX_FEE_RATE)) - CONFIG.GAS_FEE;
 
-      state.cash += netRevenue;
+      state.cash += revenue;
       state.sol -= 1.0;
-      state.feesCollected += dexFee + GAS_FEE;
-      renderDashboard();
-      log(`[BOT SELL] Treasury sold 1 SOL at $${state.price.toFixed(2)}. Net revenue: ${formatCurrency(netRevenue)}.`);
-      addTradeLog('SELL', `1 SOL sold for ${formatCurrency(netRevenue)}.`);
+      state.feesCollected += fee + CONFIG.GAS_FEE;
+      render();
+      log(`✅ [BOT SELL] 1 SOL @ $${state.price.toFixed(2)} | Revenue: ${fmt(revenue)}`);
+      addActivity('SELL', `1 SOL @ $${state.price.toFixed(2)} for ${fmt(revenue)}`);
       return true;
     }
 
@@ -592,113 +575,144 @@
 
     function simulateBuyerInflow(volumeOverride = null) {
       const inflow = volumeOverride ?? (400 + Math.random() * 2800);
-      const treasuryTax = inflow * BUYER_TAX_RATE;
-      state.cash += treasuryTax;
-      state.feesCollected += treasuryTax;
+      const tax = inflow * CONFIG.BUYER_TAX_RATE;
+      state.cash += tax;
+      state.feesCollected += tax;
       state.tradingVolume += inflow;
-      renderDashboard();
-      log(`[BUYER INFLOW] ${formatCurrency(inflow)} market volume. Treasury gained ${formatCurrency(treasuryTax)} in fees.`);
-      addTradeLog('FLOW', `${formatCurrency(inflow)} volume -> ${formatCurrency(treasuryTax)} tax.`);
+      render();
+      log(`💰 [BUYER INFLOW] ${fmt(inflow)} market volume → ${fmt(tax)} treasury fees`);
+      addActivity('INFLOW', `${fmt(inflow)} volume → ${fmt(tax)} taxes`);
     }
 
     function triggerBurn() {
-      if (state.cash < BURN_BUDGET) {
-        log(`[BURN FAILED] Treasury cash below burn budget. Need ${formatCurrency(BURN_BUDGET)}, have ${formatCurrency(state.cash)}.`);
+      if (state.cash < CONFIG.BURN_BUDGET) {
+        log(`❌ [BURN FAILED] Need ${fmt(CONFIG.BURN_BUDGET)}.`);
         return;
       }
 
-      const tokensToBurn = BURN_BUDGET * TOKENS_PER_DOLLAR;
-      state.cash -= BURN_BUDGET;
-      state.circulatingSupply -= tokensToBurn;
-      state.tokensBurned += tokensToBurn;
-      renderDashboard();
-      log(`[BURN EVENT] Treasury spent ${formatCurrency(BURN_BUDGET)} to buy back and burn ${tokensToBurn.toLocaleString()} tokens.`);
-      addTradeLog('BURN', `${tokensToBurn.toLocaleString()} tokens removed from supply.`);
+      const totalBurn = CONFIG.BURN_BUDGET * CONFIG.TOKENS_PER_DOLLAR;
+      state.cash -= CONFIG.BURN_BUDGET;
+      state.circulatingSupply -= totalBurn;
+      state.tokensBurned += totalBurn;
+      render();
+      log(`🔥 [BURN EVENT] Spent ${fmt(CONFIG.BURN_BUDGET)} to burn ${totalBurn.toLocaleString()} tokens`);
+      addActivity('BURN', `${totalBurn.toLocaleString()} tokens removed`);
     }
 
-    function autoBotTick() {
-      const movement = (Math.random() * 5.5) - 2.25;
-      state.price *= 1 + (movement / 100);
+    function generateMarketOrder() {
+      const isBuy = Math.random() < 0.55;
+      const largeWhale = Math.random() < 0.12;
+      const size = largeWhale
+        ? (Math.random() * 10 + 4)
+        : (Math.random() * 2.5 + 0.2);
+      const impact = (Math.random() * 1.4 + 0.2) / 100;
+      const fee = size * state.price * CONFIG.BUYER_TAX_RATE;
 
-      if (movement <= -1.0) {
-        buyOneSol();
-      } else if (movement >= 1.5 && state.sol >= 1.0) {
-        sellOneSol();
+      if (isBuy) {
+        const newPrice = state.price * (1 + impact);
+        state.price = newPrice;
+        state.cash += fee;
+        state.feesCollected += fee;
+        state.tradingVolume += size * state.price;
+        addFeed('BUY', `Retail buyer bought ${size.toFixed(2)} SOL @ ${fmt(state.price)} | Treasury +${fmt(fee)}`);
+        log(`🟢 [LIVE BUY] ${size.toFixed(2)} SOL bought @ ${fmt(state.price)} | Treasury +${fmt(fee)}`);
+        addActivity('BUY', `${size.toFixed(2)} SOL purchased`);
       } else {
-        log(`[BOT HOLD] Price drift ${movement.toFixed(2)}% is inside the neutral band.`);
+        const newPrice = state.price * (1 - impact);
+        state.price = newPrice;
+        if (state.sol >= size) {
+          state.sol -= size;
+        }
+        state.tradingVolume += size * state.price;
+        addFeed('SELL', `Seller offloaded ${size.toFixed(2)} SOL @ ${fmt(state.price)} | Market pressure down`);
+        log(`🔴 [LIVE SELL] ${size.toFixed(2)} SOL sold @ ${fmt(state.price)} | Pressure lower`);
+        addActivity('SELL', `${size.toFixed(2)} SOL sold`);
       }
+
+      render();
+    }
+
+    function evaluateBotDecision() {
+      const move = ((Math.random() * 5) - 2.25) / 100;
+      state.price *= 1 + move;
+
+      if (move <= -0.01) {
+        buyOneSol();
+      } else if (move >= 0.015 && state.sol >= 1.0) {
+        sellOneSol();
+      }
+    }
+
+    function startLiveMarket() {
+      if (state.marketTickInterval) clearInterval(state.marketTickInterval);
+      state.marketTickInterval = setInterval(() => {
+        generateMarketOrder();
+        if (state.autoBotEnabled) {
+          evaluateBotDecision();
+        }
+      }, CONFIG.LIVE_TICK_MS);
     }
 
     function toggleAutoBot() {
       state.autoBotEnabled = !state.autoBotEnabled;
-      const toggle = document.getElementById('auto-bot-toggle');
-      const status = document.getElementById('bot-status');
+      const btn = document.getElementById('auto-bot-toggle');
+      const badge = document.getElementById('bot-status');
 
       if (state.autoBotEnabled) {
-        toggle.textContent = '🔄 Auto Bot: ON';
-        status.textContent = 'Auto Bot: Active';
-        status.classList.remove('inactive');
-        log('[BOT ENABLED] Treasury bot is now auto-trading from treasury reserves.');
-        state.autoBotInterval = setInterval(autoBotTick, 2200);
+        btn.textContent = '🔄 Auto Bot: ON';
+        badge.textContent = 'Bot Status: Active';
+        badge.classList.remove('off');
+        log('✅ [BOT ENABLED] Treasury bot now trades against live market pressure.');
+        if (!state.marketTickInterval) startLiveMarket();
       } else {
-        toggle.textContent = '🔄 Auto Bot: OFF';
-        status.textContent = 'Auto Bot: Idle';
-        status.classList.add('inactive');
-        log('[BOT DISABLED] Treasury bot has stopped trading.');
-        if (state.autoBotInterval) clearInterval(state.autoBotInterval);
+        btn.textContent = '🔄 Auto Bot: OFF';
+        badge.textContent = 'Bot Status: Idle';
+        badge.classList.add('off');
+        log('⏹️  [BOT DISABLED] Treasury bot halted.');
       }
     }
 
     async function runWeekSimulation() {
       if (state.autoBotEnabled) toggleAutoBot();
-
       log('[WEEK SIM] Starting 7-day treasury model...');
-      document.getElementById('day-marker').style.display = 'inline-block';
 
       for (let day = 0; day < 7; day++) {
         state.currentDay = day;
-        document.getElementById('day-marker').textContent = `Day ${day + 1} of 7`;
-
         const pattern = WEEK_PATTERNS[day];
         const buyers = pattern.buyers;
         const volume = pattern.volume;
 
-        state.weekData[day] = { volume, buyers, label: pattern.label };
-
-        log(`\n📅 DAY ${day + 1} - ${pattern.label} | ${buyers} buyers | ${formatCurrency(volume)} volume`);
+        state.weekData[day] = { volume, buyers };
+        log(`\n📅 DAY ${day + 1} — ${pattern.label} | ${buyers} buyers | ${fmt(volume)}`);
 
         simulateBuyerInflow(volume);
 
         const dailyMove = (Math.random() * 6) - 3;
         state.price *= 1 + (dailyMove / 100);
-        log(`   📈 SOL price moved to $${state.price.toFixed(2)} (${dailyMove > 0 ? '+' : ''}${dailyMove.toFixed(2)}%)`);
+        log(`   📉 SOL price -> $${state.price.toFixed(2)} (${dailyMove > 0 ? '+' : ''}${dailyMove.toFixed(2)}%)`);
 
         if (dailyMove <= -1.0 && state.cash >= state.price) {
           buyOneSol();
         } else if (dailyMove >= 1.5 && state.sol >= 1.0) {
           sellOneSol();
         } else {
-          log(`   ⏳ Bot held position - market delta was ${dailyMove.toFixed(2)}%.`);
+          log('   ⏳ Bot held position');
         }
 
-        if (day === 3 && state.cash > BURN_BUDGET) {
-          log('   🔥 Thursday burn checkpoint triggered...');
+        if (day === 3 && state.cash > CONFIG.BURN_BUDGET) {
           triggerBurn();
         }
 
-        renderWeekChart();
-        renderDashboard();
-
+        render();
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
-      log('\n✨ Weekly treasury simulation complete.');
-      log(`📊 Final net worth: ${formatCurrency(getNetWorth())}`);
-      log(`💾 Treasury reserves: ${formatCurrency(state.cash)} cash + ${formatSol(state.sol)}`);
+      log('\n✨ [COMPLETE] Weekly simulation finished.');
     }
 
     function resetSimulation() {
       if (state.autoBotEnabled) toggleAutoBot();
+      if (state.marketTickInterval) clearInterval(state.marketTickInterval);
 
       state.cash = 5003.72;
       state.sol = 25.0;
@@ -707,19 +721,18 @@
       state.tokensBurned = 0;
       state.feesCollected = 0;
       state.tradingVolume = 0;
+      state.activityLog = [{ type: 'INIT', note: 'Treasury initialized to baseline.' }];
+      state.feed = [{ type: 'SYS', note: 'Market feed idle.' }];
       state.currentDay = 0;
-      state.weekData = Array(7).fill(0).map(() => ({ volume: 0, buyers: 0, label: '' }));
-      state.recentTrades = [{ type: 'INIT', note: 'Treasury synced to baseline state.' }];
-      document.getElementById('day-marker').style.display = 'none';
-      document.getElementById('terminal-log').innerHTML = '[00:01] Treasury boot sequence online.<br>[00:02] Fee collection engine primed.<br>[00:03] Bot standing by for market conditions...';
+      state.weekData = Array(7).fill(0).map(() => ({ volume: 0, buyers: 0 }));
 
-      renderDashboard();
-      renderWeekChart();
-      log('[RESET] Simulation returned to baseline treasury state.');
+      document.getElementById('terminal-log').innerHTML = '[00:01] Treasury initialization complete.<br>[00:02] Fee collection engine: ACTIVE<br>[00:03] Waiting for market conditions...';
+      render();
+      log('🔄 [RESET] Simulation returned to baseline.');
     }
 
-    renderDashboard();
-    renderWeekChart();
+    render();
+    startLiveMarket();
   </script>
 </body>
 </html>
