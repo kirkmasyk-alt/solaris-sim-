@@ -13,221 +13,46 @@
       --green: #22c55e;
       --red: #ef4444;
       --amber: #f59e0b;
-      --purple: #a855f7;
       --text-main: #e2e8f0;
       --text-dim: #94a3b8;
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Courier New', Courier, monospace;
-    }
-
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      padding: 10px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 480px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .panel {
-      background: var(--panel-bg);
-      border: 1px solid var(--border-color);
-      padding: 12px;
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
-    }
-
-    /* Header */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 8px;
-    }
-
-    .logo {
-      font-size: 16px;
-      font-weight: bold;
-      color: var(--cyan);
-      letter-spacing: 2px;
-    }
-
-    .header-btns {
-      display: flex;
-      gap: 4px;
-    }
-
-    .cyber-btn {
-      background: #111;
-      border: 1px solid var(--border-color);
-      color: var(--cyan);
-      font-size: 10px;
-      padding: 4px 6px;
-      cursor: pointer;
-    }
-    .cyber-btn.danger { border-color: var(--red); color: var(--red); }
-    .cyber-btn.accent { border-color: var(--amber); color: var(--amber); }
-
-    /* Grid Stats */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .stat-box {
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--border-color);
-      padding: 8px;
-    }
-
-    .stat-label {
-      font-size: 9px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-    }
-
-    .stat-value {
-      font-size: 15px;
-      font-weight: bold;
-      color: var(--cyan);
-      margin-top: 4px;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding: 10px; display: flex; justify-content: center; }
+    .container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 12px; }
+    .panel { background: var(--panel-bg); border: 1px solid var(--border-color); padding: 12px; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+    .logo { font-size: 16px; font-weight: bold; color: var(--cyan); letter-spacing: 2px; }
+    .cyber-btn { background: #111; border: 1px solid var(--border-color); color: var(--cyan); font-size: 10px; padding: 4px 6px; cursor: pointer; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-box { background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); padding: 8px; }
+    .stat-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; }
+    .stat-value { font-size: 15px; font-weight: bold; color: var(--cyan); margin-top: 4px; }
     .stat-value.green { color: var(--green); }
-    .stat-value.red { color: var(--red); }
-
-    /* Navigation Tabs */
-    .nav-tabs {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-    }
-
-    .tab-btn {
-      background: #020617;
-      border: 1px solid var(--border-color);
-      color: var(--text-dim);
-      font-size: 10px;
-      padding: 8px 4px;
-      text-align: center;
-      cursor: pointer;
-      text-transform: uppercase;
-    }
-
-    .tab-btn.active {
-      border-color: var(--cyan);
-      color: var(--cyan);
-      background: rgba(56, 189, 248, 0.1);
-    }
-
-    /* Tab Panes */
-    .tab-pane {
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .tab-pane.active {
-      display: flex;
-    }
-
-    /* Terminal Log & Feeds */
-    .terminal-box {
-      background: #020617;
-      border: 1px solid var(--border-color);
-      padding: 8px;
-      height: 220px;
-      overflow-y: auto;
-      font-size: 11px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .feed-item {
-      padding: 6px;
-      border-left: 2px solid var(--cyan);
-      background: rgba(0, 0, 0, 0.3);
-    }
-    .feed-sender {
-      font-weight: bold;
-      font-size: 10px;
-      margin-bottom: 2px;
-    }
-    .feed-text {
-      color: #cbd5e1;
-      font-size: 11px;
-    }
-
-    /* War Room Agent Cards with Robot Heads */
-    .agent-card {
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid var(--border-color);
-      padding: 10px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .agent-card:hover {
-      background: rgba(56, 189, 248, 0.05);
-      border-color: var(--cyan);
-    }
-    .agent-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .robot-head {
-      width: 32px;
-      height: 32px;
-      border: 1px solid;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      background: #020617;
-    }
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 2px;
-      margin-top: 6px;
-      font-size: 8px;
-      background: #020617;
-      padding: 4px;
-      border: 1px solid rgba(255,255,255,0.05);
-      text-align: center;
-    }
+    .nav-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .tab-btn { background: #020617; border: 1px solid var(--border-color); color: var(--text-dim); font-size: 10px; padding: 8px 4px; text-align: center; cursor: pointer; text-transform: uppercase; }
+    .tab-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(56, 189, 248, 0.1); }
+    .tab-pane { display: none; flex-direction: column; gap: 8px; }
+    .tab-pane.active { display: flex; }
+    .terminal-box { background: #020617; border: 1px solid var(--border-color); padding: 8px; height: 220px; overflow-y: auto; font-size: 11px; display: flex; flex-direction: column; gap: 6px; }
+    .feed-item { padding: 6px; border-left: 2px solid var(--cyan); background: rgba(0, 0, 0, 0.3); }
+    .agent-card { background: rgba(0, 0, 0, 0.6); border: 1px solid var(--border-color); padding: 10px; margin-bottom: 8px; cursor: pointer; }
+    .agent-header { display: flex; align-items: center; gap: 8px; }
+    .robot-head { width: 32px; height: 32px; border: 1px solid; display: flex; align-items: center; justify-content: center; font-size: 16px; background: #020617; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-top: 6px; font-size: 8px; background: #020617; padding: 4px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
   </style>
 </head>
 <body>
-
   <div class="container">
-    <!-- Top Header -->
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
         <div style="font-size: 9px; color: var(--text-dim);">AUTONOMOUS TREASURY V2</div>
       </div>
-      <div class="header-btns">
-        <button class="cyber-btn accent" onclick="requestBriefing()">BRIEF</button>
-        <button class="cyber-btn" onclick="promptApiKey()">KEY</button>
-        <button class="cyber-btn danger" onclick="resetTreasury()">RESET</button>
+      <div>
+        <button class="cyber-btn" onclick="resetTreasury()">RESET</button>
       </div>
     </div>
 
-    <!-- Main Stats Overview -->
     <div class="stats-grid">
       <div class="stat-box">
         <div class="stat-label">Net Worth</div>
@@ -247,339 +72,113 @@
       </div>
     </div>
 
-    <!-- Market Quick Ticker -->
     <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 11px;">
       <span>SOL: <strong id="sol-price" style="color: var(--cyan);">$145.20</strong></span>
-      <span>NEWS: <strong style="color: var(--green);">LIVE FEED ACTIVE</strong></span>
-      <span>MODE: <strong style="color: var(--amber);">AGGRESSIVE</strong></span>
+      <span>STATUS: <strong style="color: var(--green);">ONLINE</strong></span>
     </div>
 
-    <!-- Navigation Bar -->
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('hub', this)">Hub</button>
       <button class="tab-btn" onclick="switchTab('council', this)">Council</button>
       <button class="tab-btn" onclick="switchTab('warroom', this)">War Room</button>
     </div>
 
-    <!-- TAB 1: HUB -->
     <div id="tab-hub" class="tab-pane active panel">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 11px; color: var(--cyan);">// SYSTEM DIAGNOSTIC LOG</div>
-        <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
-      </div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// SYSTEM DIAGNOSTIC LOG</div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] High-stakes treasury matrix initialized.</div>
-        <div style="color: var(--cyan);">[00:02] Multi-agent neural trading & telemetry active.</div>
+        <div style="color: var(--green);">[00:01] Solaris matrix initialized.</div>
       </div>
     </div>
 
-    <!-- TAB 2: COUNCIL FEED -->
     <div id="tab-council" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// LIVE AGENT DEBATE & NEWS FEED</div>
-      <div class="terminal-box" style="height: 260px;" id="council-feed-container">
-        <!-- Live chat and news messages populate here -->
-      </div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// LIVE FEED</div>
+      <div class="terminal-box" id="council-feed-container"></div>
     </div>
 
-    <!-- TAB 3: WAR ROOM -->
     <div id="tab-warroom" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (CLICK AGENT FOR INTEL)</div>
-      <div id="war-room-container" style="max-height: 260px; overflow-y: auto;">
-        <!-- Interactive agent cards populate here -->
-      </div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM</div>
+      <div id="war-room-container"></div>
     </div>
   </div>
 
   <script>
-    const marketCoins = [
-      { symbol: 'SOL', price: 145.20, basePrice: 145.20 },
-      { symbol: 'BONK', price: 0.000025, basePrice: 0.000025 },
-      { symbol: 'JTO', price: 1.84, basePrice: 1.84 },
-      { symbol: 'RAY', price: 3.46, basePrice: 3.46 },
-      { symbol: 'WIF', price: 1.32, basePrice: 1.32 }
+    const coins = [{ symbol: 'SOL', price: 145.20 }, { symbol: 'BONK', price: 0.000025 }, { symbol: 'RAY', price: 3.46 }];
+    const agents = [
+      { id: 'fin', name: 'FIN_BOT', role: 'Manager', color: '#38bdf8', icon: '🤖', spent: 0, sold: 0, pnl: 0, min: 0, hr: 0, day: 0, wk: 0 },
+      { id: 'risk', name: 'RISK_CORE', role: 'Risk', color: '#f59e0b', icon: '🛡️', spent: 0, sold: 0, pnl: 0, min: 0, hr: 0, day: 0, wk: 0 },
+      { id: 'alpha', name: 'ALPHA_X', role: 'Trader', color: '#ef4444', icon: '⚡', spent: 0, sold: 0, pnl: 0, min: 0, hr: 0, day: 0, wk: 0 }
     ];
 
-    const agentDefs = [
-      { id: 'finance', name: 'FIN_BOT v2', role: 'Portfolio Manager', risk: 'Low', color: '#38bdf8', icon: '🤖', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
-      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', risk: 'Med', color: '#f59e0b', icon: '🛡️', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
-      { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', risk: 'High', color: '#ef4444', icon: '⚡', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
-      { id: 'advisor', name: 'MACRO_9', role: 'Strategy Planner', risk: 'Low', color: '#a855f7', icon: '🌐', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 },
-      { id: 'cfo', name: 'CFO_UNIT', role: 'Capital Authority', risk: 'Low', color: '#22c55e', icon: '🏛️', totalSpent: 0, totalSold: 0, pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0 }
-    ];
+    let state = { cash: 10000, positions: {}, pnl: 0, feed: [] };
 
-    let state = {
-      cash: 10000,
-      positions: { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
-      avgBuyPrice: { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 },
-      baseline: 10000,
-      realizedPnl: 0,
-      councilFeed: [],
-      agentState: {}
-    };
-
-    const cryptoNewsHeadlines = [
-      "BREAKING: Solana ecosystem TVL surges past multi-month highs on heavy institutional volume.",
-      "MACRO ALERT: Federal Reserve signals stable rates, triggering aggressive altcoin speculation.",
-      "DEX LIQUIDITY SWEEP: Massive order book imbalances detected across SOL and WIF pairs.",
-      "WHALE ACTIVITY: Over $50M in stablecoins moved to exchange treasuries in past hour.",
-      "REGULATORY UPDATE: Global markets embrace decentralized liquidity protocols favorably."
-    ];
-
-    const bigMoneyBanter = [
-      "Deploying 40% of cash reserves into this breakout. Let's ride.",
-      "Risk Core is screaming, but ALPHA_X is heavy-loading positions right now.",
-      "That's a massive liquidity sweep. Liquidating half our stack to lock in gains.",
-      "Reacting to the latest news feed—scaling up our high-conviction assets.",
-      "Exposure levels optimized across all active tokens. Watching order books."
-    ];
-
-    function fmtCurrency(val) {
-      if (Math.abs(val) < 0.001) return '$' + val.toFixed(6);
-      return '$' + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    function switchTab(tabId, btnElement) {
+    function switchTab(id, btn) {
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('tab-' + tabId).classList.add('active');
-      btnElement.classList.add('active');
-    }
-
-    function loadFromStorage() {
-      const saved = localStorage.getItem('solaris_sim_state_v26');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          state.cash = parsed.cash ?? state.cash;
-          state.positions = parsed.positions ?? state.positions;
-          state.avgBuyPrice = parsed.avgBuyPrice ?? state.avgBuyPrice;
-          state.baseline = parsed.baseline ?? state.baseline;
-          state.realizedPnl = parsed.realizedPnl ?? state.realizedPnl;
-          state.councilFeed = parsed.councilFeed ?? state.councilFeed;
-          state.agentState = parsed.agentState ?? state.agentState;
-          if (parsed.agents) {
-            parsed.agents.forEach((savedAgent, idx) => {
-              if (agentDefs[idx]) {
-                agentDefs[idx].totalSpent = savedAgent.totalSpent || 0;
-                agentDefs[idx].totalSold = savedAgent.totalSold || 0;
-                agentDefs[idx].pnl = savedAgent.pnl || 0;
-                agentDefs[idx].minPnl = savedAgent.minPnl || 0;
-                agentDefs[idx].hrPnl = savedAgent.hrPnl || 0;
-                agentDefs[idx].dayPnl = savedAgent.dayPnl || 0;
-                agentDefs[idx].wkPnl = savedAgent.wkPnl || 0;
-              }
-            });
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      }
-      renderCouncilFeed();
-      renderWarRoom();
-    }
-
-    function saveToStorage() {
-      const payload = {
-        ...state,
-        agents: agentDefs.map(a => ({
-          totalSpent: a.totalSpent,
-          totalSold: a.totalSold,
-          pnl: a.pnl,
-          minPnl: a.minPnl,
-          hrPnl: a.hrPnl,
-          dayPnl: a.dayPnl,
-          wkPnl: a.wkPnl
-        }))
-      };
-      localStorage.setItem('solaris_sim_state_v26', JSON.stringify(payload));
+      document.getElementById('tab-' + id).classList.add('active');
+      btn.classList.add('active');
     }
 
     function resetTreasury() {
-      if (confirm("Reset treasury back to $10,000 fresh slate?")) {
-        localStorage.removeItem('solaris_sim_state_v26');
-        location.reload();
-      }
+      localStorage.clear();
+      location.reload();
     }
 
-    function promptApiKey() {
-      const key = prompt("Enter your Gemini API key (stored securely in browser localStorage):", localStorage.getItem('gemini_api_key') || '');
-      if (key !== null) {
-        localStorage.setItem('gemini_api_key', key.trim());
-        alert("API Key saved successfully!");
-      }
+    function logMsg(text) {
+      const box = document.getElementById('system-log');
+      if (!box) return;
+      box.innerHTML += `<div>[${new Date().toTimeString().split(' ')[0]}] ${text}</div>`;
+      box.scrollTop = box.scrollHeight;
     }
 
-    function getNetWorth() {
-      let total = state.cash;
-      marketCoins.forEach(coin => {
-        total += (state.positions[coin.symbol] || 0) * coin.price;
-      });
-      return total;
-    }
-
-    function addSystemLog(msg) {
-      const logBox = document.getElementById('system-log');
-      if (!logBox) return;
-      const timeStr = new Date().toTimeString().split(' ')[0];
-      logBox.innerHTML += `<div>[${timeStr}] ${msg}</div>`;
-      logBox.scrollTop = logBox.scrollHeight;
-    }
-
-    function requestBriefing() {
-      const nw = getNetWorth();
-      const briefingText = `EXECUTIVE BRIEFING: Net Worth is ${fmtCurrency(nw)}. Realized P&L: ${fmtCurrency(state.realizedPnl)}. Cash Reserve: ${fmtCurrency(state.cash)}. All agents operating under high-volatility news matrix.`;
-      const cfo = agentDefs.find(a => a.id === 'cfo') || agentDefs[0];
-
-      state.councilFeed.unshift({
-        sender: cfo.name + ' [BRIEFING]',
-        text: briefingText,
-        color: '#22c55e',
-        time: new Date().toLocaleTimeString()
-      });
-      state.councilFeed = state.councilFeed.slice(0, 30);
-      renderCouncilFeed();
-      saveToStorage();
-      switchTab('council', document.querySelectorAll('.tab-btn')[1]);
-    }
-
-    function inspectAgent(agentId) {
-      const agent = agentDefs.find(a => a.id === agentId);
-      if (!agent) return;
-      alert(`AGENT INTEL: ${agent.name} (${agent.role})\n- Lifetime P&L: ${fmtCurrency(agent.pnl)}\n- Total Deployed: ${fmtCurrency(agent.totalSpent)}\n- Total Harvested: ${fmtCurrency(agent.totalSold)}\n- Per Min P&L: ${fmtCurrency(agent.minPnl)}\n- Per Hour P&L: ${fmtCurrency(agent.hrPnl)}\n- Per Day P&L: ${fmtCurrency(agent.dayPnl)}\n- Per Week P&L: ${fmtCurrency(agent.wkPnl)}`);
-    }
-
-    function renderCouncilFeed() {
-      const container = document.getElementById('council-feed-container');
-      if (!container) return;
-      container.innerHTML = state.councilFeed.map(item => `
-        <div class="feed-item" style="border-left-color: ${item.color};">
-          <div class="feed-sender" style="color: ${item.color};">${item.sender} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${item.time}</span></div>
-          <div class="feed-text">"${item.text}"</div>
+    function render() {
+      document.getElementById('net-worth').textContent = '$' + state.cash.toFixed(2);
+      document.getElementById('realized-pnl').textContent = (state.pnl >= 0 ? '+' : '') + '$' + state.pnl.toFixed(2);
+      document.getElementById('cash-balance').textContent = '$' + state.cash.toFixed(2);
+      
+      const war = document.getElementById('war-room-container');
+      war.innerHTML = agents.map(a => `
+        <div class="agent-card" style="border-color: ${a.color};">
+          <div class="agent-header">
+            <div class="robot-head" style="border-color: ${a.color}; color: ${a.color};">${a.icon}</div>
+            <div>
+              <strong style="color: ${a.color}; font-size: 11px;">${a.name}</strong>
+              <div style="font-size: 9px; color: var(--text-dim);">${a.role}</div>
+            </div>
+          </div>
+          <div class="metrics-grid">
+            <div>MIN: $${a.min.toFixed(2)}</div>
+            <div>HR: $${a.hr.toFixed(2)}</div>
+            <div>DAY: $${a.day.toFixed(2)}</div>
+            <div>WK: $${a.wk.toFixed(2)}</div>
+          </div>
         </div>
       `).join('');
     }
 
-    function renderWarRoom() {
-      const container = document.getElementById('war-room-container');
-      if (!container) return;
-      container.innerHTML = agentDefs.map(agent => {
-        const lastAction = state.agentState[agent.id] || { action: 'HOLD', coin: 'SOL', speech: 'Monitoring feeds.' };
-        return `
-          <div class="agent-card" style="border-color: ${agent.color};" onclick="inspectAgent('${agent.id}')">
-            <div class="agent-header">
-              <div class="robot-head" style="border-color: ${agent.color}; color: ${agent.color};">${agent.icon}</div>
-              <div style="flex-grow: 1;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <strong style="color: ${agent.color}; font-size: 11px;">${agent.name}</strong>
-                  <span style="font-size: 8px; background: #111; padding: 2px 4px; border: 1px solid ${agent.color}; color: #fff;">${(lastAction.action || 'HOLD').toUpperCase()}</span>
-                </div>
-                <div style="font-size: 9px; color: var(--text-dim);">${agent.role} | Risk: ${agent.risk}</div>
-              </div>
-            </div>
-            <div style="margin-top: 4px; font-size: 10px; font-style: italic; color: #cbd5e1;">"${lastAction.speech}"</div>
-            <div class="metrics-grid">
-              <div>MIN: <span style="color: ${agent.minPnl >= 0 ? 'var(--green)' : 'var(--red)}">${fmtCurrency(agent.minPnl)}</span></div>
-              <div>HR: <span style="color: ${agent.hrPnl >= 0 ? 'var(--green)' : 'var(--red)}">${fmtCurrency(agent.hrPnl)}</span></div>
-              <div>DAY: <span style="color: ${agent.dayPnl >= 0 ? 'var(--green)' : 'var(--red)}">${fmtCurrency(agent.dayPnl)}</span></div>
-              <div>WK: <span style="color: ${agent.wkPnl >= 0 ? 'var(--green)' : 'var(--red)}">${fmtCurrency(agent.wkPnl)}</span></div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function processMarketLoop() {
-      marketCoins.forEach(coin => {
-        const fluctuation = (Math.random() - 0.48) * 0.05;
-        coin.price = Math.max(0.000001, coin.price * (1 + fluctuation));
-      });
-
-      if (Math.random() < 0.25) {
-        const news = cryptoNewsHeadlines[Math.floor(Math.random() * cryptoNewsHeadlines.length)];
-        state.councilFeed.unshift({
-          sender: 'NEWSWIRE // FEED',
-          text: news,
-          color: '#38bdf8',
-          time: new Date().toLocaleTimeString()
-        });
-      }
-
-      const agent = agentDefs[Math.floor(Math.random() * agentDefs.length)];
-      const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-      const action = Math.random() > 0.35 ? 'buy' : 'sell';
-      const speech = bigMoneyBanter[Math.floor(Math.random() * bigMoneyBanter.length)];
-
-      if (action === 'buy' && state.cash > 1000) {
-        const allocation = state.cash * (agent.risk === 'High' ? 0.4 : 0.25);
-        state.cash -= allocation;
-        agent.totalSpent += allocation;
-        const qtyPurchased = allocation / coin.price;
-        const currentQty = state.positions[coin.symbol] || 0;
-        const currentAvg = state.avgBuyPrice[coin.symbol] || coin.price;
-
-        state.avgBuyPrice[coin.symbol] = currentQty > 0 ? ((currentQty * currentAvg) + allocation) / (currentQty + qtyPurchased) : coin.price;
-        state.positions[coin.symbol] = currentQty + qtyPurchased;
-        addSystemLog(`[TRADE] ${agent.name} BOUGHT ${allocation.toFixed(2)} USD of ${coin.symbol}`);
-      } else {
-        const currentQty = state.positions[coin.symbol] || 0;
-        if (currentQty > 0.01) {
-          const sellQty = currentQty * 0.6;
-          const revenue = sellQty * coin.price;
-          agent.totalSold += revenue;
-          const costBasis = sellQty * state.avgBuyPrice[coin.symbol];
-          const tradePnl = revenue - costBasis;
-
-          state.cash += revenue;
-          state.positions[coin.symbol] -= sellQty;
-          state.realizedPnl += tradePnl;
-          
-          agent.pnl += tradePnl;
-          agent.minPnl += tradePnl;
-          agent.hrPnl += tradePnl;
-          agent.dayPnl += tradePnl;
-          agent.wkPnl += tradePnl;
-
-          addSystemLog(`[TRADE] ${agent.name} SOLD ${coin.symbol} [P&L: ${fmtCurrency(tradePnl)}]`);
-        }
-      }
-
-      state.agentState[agent.id] = { action, coin: coin.symbol, speech };
-
-      state.councilFeed.unshift({
-        sender: agent.name,
-        text: speech,
-        color: agent.color,
-        time: new Date().toLocaleTimeString()
-      });
-      state.councilFeed = state.councilFeed.slice(0, 30);
-
-      updateMarketStats();
-      renderCouncilFeed();
-      renderWarRoom();
-      saveToStorage();
-    }
-
-    function updateMarketStats() {
-      const sol = marketCoins.find(c => c.symbol === 'SOL');
-      if (document.getElementById('sol-price')) document.getElementById('sol-price').textContent = fmtCurrency(sol.price);
-      if (document.getElementById('net-worth')) document.getElementById('net-worth').textContent = fmtCurrency(getNetWorth());
-      if (document.getElementById('cash-balance')) document.getElementById('cash-balance').textContent = fmtCurrency(state.cash);
+    function loop() {
+      const agent = agents[Math.floor(Math.random() * agents.length)];
+      const coin = coins[Math.floor(Math.random() * coins.length)];
       
-      const pnlEl = document.getElementById('realized-pnl');
-      if (pnlEl) {
-        pnlEl.textContent = `${state.realizedPnl >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(state.realizedPnl))}`;
-        pnlEl.className = `stat-value ${state.realizedPnl >= 0 ? 'green' : 'red'}`;
+      if (state.cash > 2000 && Math.random() > 0.4) {
+        let amt = 500;
+        state.cash -= amt;
+        agent.spent += amt;
+        logMsg(`${agent.name} bought ${coin.symbol} for $${amt}`);
+      } else if (state.cash < 9000) {
+        let rev = 550;
+        state.cash += rev;
+        let pnl = 50;
+        state.pnl += pnl;
+        agent.pnl += pnl;
+        agent.min += pnl;
+        logMsg(`${agent.name} sold position [P&L: +$${pnl}]`);
       }
-
-      if (document.getElementById('position-count')) {
-        document.getElementById('position-count').textContent = Object.values(state.positions).filter(v => v > 0.01).length;
-      }
+      render();
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      loadFromStorage();
-      updateMarketStats();
-      setInterval(processMarketLoop, 5000);
+      render();
+      setInterval(loop, 4000);
     });
   </script>
 </body>
