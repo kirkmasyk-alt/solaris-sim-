@@ -29,8 +29,20 @@ let state = {
   lastTimestamp: Date.now()
 };
 
+const localTableBanter = [
+  "Look, if we don't buy into this dip right now, Alpha X is going to gloat all night.",
+  "Risk Core, stop hyperventilating over a 1% drawdown. We have plenty of dry powder.",
+  "Macro 9 called the sentiment shift correctly, but our entry price on SOL is too heavy.",
+  "CFO Unit is glaring at us because I touched the cash reserve again. Worth it.",
+  "Are we seriously staring at BONK order books while SOL is screaming upward?",
+  "Let's rotate some capital out of dead weight and fund a proper breakout trade.",
+  "If Risk Core blocks this trade one more time, I'm bypassing the safety matrix.",
+  "Volume is pooling into JTO. If we miss this wave, don't blame my portfolio math.",
+  "That last liquidation cascade was brutal. Let's tighten stops before getting greedy."
+];
+
 function loadFromStorage() {
-  const saved = localStorage.getItem('solaris_sim_state_v15');
+  const saved = localStorage.getItem('solaris_sim_state_v16');
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
@@ -83,18 +95,14 @@ function saveToStorage() {
     agentDefs: agentDefs.map(a => ({ id: a.id, wins: a.wins, losses: a.losses, pnl: a.pnl, history: a.history, strategyDirective: a.strategyDirective })),
     lastTimestamp: state.lastTimestamp
   };
-  localStorage.setItem('solaris_sim_state_v15', JSON.stringify(payload));
+  localStorage.setItem('solaris_sim_state_v16', JSON.stringify(payload));
 }
 
 function resetTreasury() {
   if (confirm("Reset treasury back to $10,000 fresh slate?")) {
-    localStorage.removeItem('solaris_sim_state_v15');
+    localStorage.removeItem('solaris_sim_state_v16');
     location.reload();
   }
-}
-
-function randomFrom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 function getNetWorth() {
@@ -225,7 +233,10 @@ function applyAgentDecision(agent, action, targetCoinSymbol, speechText, newStra
 
 async function fetchGeminiDecision(agent) {
   const apiKey = localStorage.getItem('gemini_api_key');
-  if (!apiKey) return false;
+  if (!apiKey) {
+    log(`[AI Status] No API Key found. Running local fallback.`);
+    return false;
+  }
 
   try {
     const marketSnapshot = {
@@ -272,14 +283,21 @@ async function fetchGeminiDecision(agent) {
     });
 
     const data = await response.json();
+    
+    if (data.error) {
+      log(`[AI ERROR] Gemini rejected key: ${data.error.message}`);
+      return false;
+    }
+
     const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (resultText) {
       const parsed = JSON.parse(resultText);
+      log(`[AI SUCCESS] Gemini live response generated for ${agent.name}!`);
       applyAgentDecision(agent, parsed.action, parsed.coin, parsed.speech, parsed.newStrategyDirective);
       return true;
     }
   } catch (err) {
-    console.error("Gemini API call error:", err);
+    log(`[AI EXCEPTION] Network/Parse error: ${err.message}`);
   }
   return false;
 }
@@ -297,9 +315,7 @@ async function processMarketLoop() {
   if (!aiSuccess) {
     const coin = randomFrom(marketCoins);
     const action = randomFrom(['buy', 'sell', 'hold']);
-    let fallbackSpeech = `Let's keep eyes on ${coin.symbol}. Order books are tightening up.`;
-    if (action === 'buy') fallbackSpeech = `I'm grabbing 2 units of ${coin.symbol} here before momentum runs away.`;
-    else if (action === 'sell') fallbackSpeech = `We need to trim our ${coin.symbol} stack to protect cash reserves.`;
+    const fallbackSpeech = randomFrom(localTableBanter);
     
     applyAgentDecision(activeAgent, action, coin.symbol, fallbackSpeech, activeAgent.strategyDirective);
   }
