@@ -7,7 +7,7 @@
   <style>
     :root {
       --bg-color: #050b14;
-      --panel-bg: rgba(5, 15, 30, 0.85);
+      --panel-bg: rgba(5, 15, 30, 0.9);
       --border-color: #1e3a8a;
       --cyan: #38bdf8;
       --green: #22c55e;
@@ -64,16 +64,9 @@
       letter-spacing: 2px;
     }
 
-    .status-badge {
-      font-size: 10px;
-      border: 1px solid var(--green);
-      color: var(--green);
-      padding: 2px 6px;
-    }
-
     .header-btns {
       display: flex;
-      gap: 6px;
+      gap: 4px;
     }
 
     .cyber-btn {
@@ -81,13 +74,11 @@
       border: 1px solid var(--border-color);
       color: var(--cyan);
       font-size: 10px;
-      padding: 4px 8px;
+      padding: 4px 6px;
       cursor: pointer;
     }
-    .cyber-btn.danger {
-      border-color: var(--red);
-      color: var(--red);
-    }
+    .cyber-btn.danger { border-color: var(--red); color: var(--red); }
+    .cyber-btn.accent { border-color: var(--amber); color: var(--amber); }
 
     /* Grid Stats */
     .stats-grid {
@@ -156,7 +147,7 @@
       background: #020617;
       border: 1px solid var(--border-color);
       padding: 8px;
-      height: 180px;
+      height: 220px;
       overflow-y: auto;
       font-size: 11px;
       display: flex;
@@ -179,12 +170,43 @@
       font-size: 11px;
     }
 
-    /* Agent Cards */
+    /* War Room Agent Cards with Robot Heads */
     .agent-card {
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.6);
       border: 1px solid var(--border-color);
       padding: 10px;
       margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .agent-card:hover {
+      background: rgba(56, 189, 248, 0.05);
+      border-color: var(--cyan);
+    }
+    .agent-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .robot-head {
+      width: 28px;
+      height: 28px;
+      border: 1px solid;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      background: #020617;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin-top: 8px;
+      font-size: 9px;
+      background: #020617;
+      padding: 6px;
+      border: 1px solid rgba(255,255,255,0.05);
     }
   </style>
 </head>
@@ -197,8 +219,8 @@
         <div class="logo">SOLARIS // HQ</div>
         <div style="font-size: 9px; color: var(--text-dim);">AUTONOMOUS TREASURY V2</div>
       </div>
-      <div class="status-badge" id="ai-status">AI: BIG MONEY ACTIVE</div>
       <div class="header-btns">
+        <button class="cyber-btn accent" onclick="requestBriefing()">BRIEF</button>
         <button class="cyber-btn" onclick="promptApiKey()">KEY</button>
         <button class="cyber-btn danger" onclick="resetTreasury()">RESET</button>
       </div>
@@ -227,7 +249,7 @@
     <!-- Market Quick Ticker -->
     <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 11px;">
       <span>SOL: <strong id="sol-price" style="color: var(--cyan);">$145.20</strong></span>
-      <span>TOP: <strong id="top-coin" style="color: var(--green);">SOL</strong></span>
+      <span>NEWS: <strong style="color: var(--green);">LIVE FEED ACTIVE</strong></span>
       <span>MODE: <strong style="color: var(--amber);">AGGRESSIVE</strong></span>
     </div>
 
@@ -240,26 +262,29 @@
 
     <!-- TAB 1: HUB -->
     <div id="tab-hub" class="tab-pane active panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// SYSTEM DIAGNOSTIC LOG</div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <div style="font-size: 11px; color: var(--cyan);">// SYSTEM DIAGNOSTIC LOG</div>
+        <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
+      </div>
       <div class="terminal-box" id="system-log">
         <div style="color: var(--green);">[00:01] High-stakes treasury matrix initialized.</div>
-        <div style="color: var(--cyan);">[00:02] Autonomous multi-agent trading loop active.</div>
+        <div style="color: var(--cyan);">[00:02] Multi-agent neural trading & news simulator active.</div>
       </div>
     </div>
 
     <!-- TAB 2: COUNCIL FEED -->
     <div id="tab-council" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// LIVE AGENT DEBATE CHAT</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// LIVE AGENT DEBATE & NEWS FEED</div>
       <div class="terminal-box" style="height: 260px;" id="council-feed-container">
-        <!-- Live chat messages populate here -->
+        <!-- Live chat and news messages populate here -->
       </div>
     </div>
 
     <!-- TAB 3: WAR ROOM -->
     <div id="tab-warroom" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// AGENT STRATEGY CARDS</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (CLICK AGENT FOR INTEL)</div>
       <div id="war-room-container" style="max-height: 260px; overflow-y: auto;">
-        <!-- Agent cards populate here -->
+        <!-- Interactive agent cards populate here -->
       </div>
     </div>
   </div>
@@ -274,11 +299,11 @@
     ];
 
     let agentDefs = [
-      { id: 'finance', name: 'FIN_BOT v2', role: 'Portfolio Manager', risk: 'Low', color: '#38bdf8', wins: 0, losses: 0, pnl: 0 },
-      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', risk: 'Med', color: '#f59e0b', wins: 0, losses: 0, pnl: 0 },
-      { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', risk: 'High', color: '#ef4444', wins: 0, losses: 0, pnl: 0 },
-      { id: 'advisor', name: 'MACRO_9', role: 'Strategy Planner', risk: 'Low', color: '#a855f7', wins: 0, losses: 0, pnl: 0 },
-      { id: 'cfo', name: 'CFO_UNIT', role: 'Capital Authority', risk: 'Low', color: '#22c55e', wins: 0, losses: 0, pnl: 0 }
+      { id: 'finance', name: 'FIN_BOT v2', role: 'Portfolio Manager', risk: 'Low', color: '#38bdf8', icon: '🤖', totalSpent: 0, totalSold: 0, pnl: 0, perMinPnl: 0, perHourPnl: 0 },
+      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', risk: 'Med', color: '#f59e0b', icon: '🛡️', totalSpent: 0, totalSold: 0, pnl: 0, perMinPnl: 0, perHourPnl: 0 },
+      { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', risk: 'High', color: '#ef4444', icon: '⚡', totalSpent: 0, totalSold: 0, pnl: 0, perMinPnl: 0, perHourPnl: 0 },
+      { id: 'advisor', name: 'MACRO_9', role: 'Strategy Planner', risk: 'Low', color: '#a855f7', icon: '🌐', totalSpent: 0, totalSold: 0, pnl: 0, perMinPnl: 0, perHourPnl: 0 },
+      { id: 'cfo', name: 'CFO_UNIT', role: 'Capital Authority', risk: 'Low', color: '#22c55e', icon: '🏛️', totalSpent: 0, totalSold: 0, pnl: 0, perMinPnl: 0, perHourPnl: 0 }
     ];
 
     let state = {
@@ -291,29 +316,36 @@
       agentState: {}
     };
 
+    const cryptoNewsHeadlines = [
+      "BREAKING: Solana ecosystem TVL surges past multi-month highs on heavy institutional volume.",
+      "MACRO ALERT: Federal Reserve signals stable rates, triggering aggressive altcoin speculation.",
+      "DEX LIQUIDITY SWEEP: Massive order book imbalances detected across SOL and WIF pairs.",
+      "WHALE ACTIVITY: Over $50M in stablecoins moved to exchange treasuries in past hour.",
+      "REGULATORY UPDATE: Global markets embrace decentralized liquidity protocols favorably."
+    ];
+
     const bigMoneyBanter = [
       "Deploying 40% of cash reserves into this breakout. Let's ride.",
       "Risk Core is screaming, but ALPHA_X is heavy-loading positions right now.",
       "That's a massive liquidity sweep. Liquidating half our stack to lock in gains.",
-      "If this macro thesis hits, this position is going to print thousands.",
-      "Scaling up our exposure. We aren't here to make pennies."
+      "Reacting to the latest news feed—scaling up our high-conviction assets.",
+      "Exposure levels optimized across all active tokens. Watching order books."
     ];
 
     function fmtCurrency(val) {
-      if (val < 0.001) return '$' + val.toFixed(6);
+      if (Math.abs(val) < 0.001) return '$' + val.toFixed(6);
       return '$' + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function switchTab(tabId, btnElement) {
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      
       document.getElementById('tab-' + tabId).classList.add('active');
       btnElement.classList.add('active');
     }
 
     function loadFromStorage() {
-      const saved = localStorage.getItem('solaris_sim_state_v21');
+      const saved = localStorage.getItem('solaris_sim_state_v23');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -324,6 +356,15 @@
           state.realizedPnl = parsed.realizedPnl ?? state.realizedPnl;
           state.councilFeed = parsed.councilFeed ?? state.councilFeed;
           state.agentState = parsed.agentState ?? state.agentState;
+          if (parsed.agents) {
+            parsed.agents.forEach((savedAgent, idx) => {
+              if (agentDefs[idx]) {
+                agentDefs[idx].totalSpent = savedAgent.totalSpent || 0;
+                agentDefs[idx].totalSold = savedAgent.totalSold || 0;
+                agentDefs[idx].pnl = savedAgent.pnl || 0;
+              }
+            });
+          }
         } catch (e) {
           console.error(e);
         }
@@ -333,12 +374,16 @@
     }
 
     function saveToStorage() {
-      localStorage.setItem('solaris_sim_state_v21', JSON.stringify(state));
+      const payload = {
+        ...state,
+        agents: agentDefs.map(a => ({ totalSpent: a.totalSpent, totalSold: a.totalSold, pnl: a.pnl }))
+      };
+      localStorage.setItem('solaris_sim_state_v23', JSON.stringify(payload));
     }
 
     function resetTreasury() {
       if (confirm("Reset treasury back to $10,000 fresh slate?")) {
-        localStorage.removeItem('solaris_sim_state_v21');
+        localStorage.removeItem('solaris_sim_state_v23');
         location.reload();
       }
     }
@@ -367,6 +412,29 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
+    function requestBriefing() {
+      const nw = getNetWorth();
+      const briefingText = `EXECUTIVE BRIEFING: Net Worth is ${fmtCurrency(nw)}. Realized P&L: ${fmtCurrency(state.realizedPnl)}. Cash Reserve: ${fmtCurrency(state.cash)}. All agents operating under high-volatility news matrix.`;
+      const cfo = agentDefs.find(a => a.id === 'cfo') || agentDefs[0];
+
+      state.councilFeed.unshift({
+        sender: cfo.name + ' [BRIEFING]',
+        text: briefingText,
+        color: '#22c55e',
+        time: new Date().toLocaleTimeString()
+      });
+      state.councilFeed = state.councilFeed.slice(0, 30);
+      renderCouncilFeed();
+      saveToStorage();
+      switchTab('council', document.querySelectorAll('.tab-btn')[1]);
+    }
+
+    function inspectAgent(agentId) {
+      const agent = agentDefs.find(a => a.id === agentId);
+      if (!agent) return;
+      alert(`AGENT INTEL: ${agent.name} (${agent.role})\n- Lifetime P&L: ${fmtCurrency(agent.pnl)}\n- Total Capital Deployed: ${fmtCurrency(agent.totalSpent)}\n- Total Revenue Harvested: ${fmtCurrency(agent.totalSold)}\n- Risk Profile: ${agent.risk}`);
+    }
+
     function renderCouncilFeed() {
       const container = document.getElementById('council-feed-container');
       if (!container) return;
@@ -384,26 +452,47 @@
       if (!container) return;
 
       container.innerHTML = agentDefs.map(agent => {
-        const lastAction = state.agentState[agent.id] || { action: 'HOLD', coin: 'SOL', speech: 'Scanning order books.' };
+        const lastAction = state.agentState[agent.id] || { action: 'HOLD', coin: 'SOL', speech: 'Monitoring feeds.' };
         return `
-          <div class="agent-card" style="border-color: ${agent.color};">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <strong style="color: ${agent.color}; font-size: 12px;">${agent.name}</strong>
-              <span style="font-size: 9px; background: #111; padding: 2px 6px; border: 1px solid ${agent.color}; color: #fff;">${(lastAction.action || 'HOLD').toUpperCase()}</span>
+          <div class="agent-card" style="border-color: ${agent.color};" onclick="inspectAgent('${agent.id}')">
+            <div class="agent-header">
+              <div class="robot-head" style="border-color: ${agent.color}; color: ${agent.color};">${agent.icon}</div>
+              <div style="flex-grow: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="color: ${agent.color}; font-size: 11px;">${agent.name}</strong>
+                  <span style="font-size: 8px; background: #111; padding: 2px 4px; border: 1px solid ${agent.color}; color: #fff;">${(lastAction.action || 'HOLD').toUpperCase()}</span>
+                </div>
+                <div style="font-size: 9px; color: var(--text-dim);">${agent.role} | Risk: ${agent.risk}</div>
+              </div>
             </div>
-            <div style="font-size: 10px; color: var(--text-dim); margin-top: 2px;">${agent.role} | Risk: ${agent.risk}</div>
-            <div style="margin-top: 6px; font-size: 11px; font-style: italic; color: #cbd5e1;">"${lastAction.speech}"</div>
+            <div style="margin-top: 4px; font-size: 10px; font-style: italic; color: #cbd5e1;">"${lastAction.speech}"</div>
+            <div class="metrics-grid">
+              <div>P&L: <span style="color: ${agent.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtCurrency(agent.pnl)}</span></div>
+              <div>Spent: <span style="color: var(--amber)">${fmtCurrency(agent.totalSpent)}</span></div>
+              <div>Sold: <span style="color: var(--cyan)">${fmtCurrency(agent.totalSold)}</span></div>
+            </div>
           </div>
         `;
       }).join('');
     }
 
     function processMarketLoop() {
-      // Fluctuate prices
+      // Fluctuations & News Injection
       marketCoins.forEach(coin => {
         const fluctuation = (Math.random() - 0.48) * 0.05;
         coin.price = Math.max(0.000001, coin.price * (1 + fluctuation));
       });
+
+      // 20% chance to drop a live news bulletin into the feed
+      if (Math.random() < 0.2) {
+        const news = cryptoNewsHeadlines[Math.floor(Math.random() * cryptoNewsHeadlines.length)];
+        state.councilFeed.unshift({
+          sender: 'NEWSWIRE // FEED',
+          text: news,
+          color: '#38bdf8',
+          time: new Date().toLocaleTimeString()
+        });
+      }
 
       const agent = agentDefs[Math.floor(Math.random() * agentDefs.length)];
       const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
@@ -413,6 +502,7 @@
       if (action === 'buy' && state.cash > 1000) {
         const allocation = state.cash * (agent.risk === 'High' ? 0.4 : 0.25);
         state.cash -= allocation;
+        agent.totalSpent += allocation;
         const qtyPurchased = allocation / coin.price;
         const currentQty = state.positions[coin.symbol] || 0;
         const currentAvg = state.avgBuyPrice[coin.symbol] || coin.price;
@@ -425,6 +515,7 @@
         if (currentQty > 0.01) {
           const sellQty = currentQty * 0.6;
           const revenue = sellQty * coin.price;
+          agent.totalSold += revenue;
           const costBasis = sellQty * state.avgBuyPrice[coin.symbol];
           const tradePnl = revenue - costBasis;
 
@@ -444,7 +535,7 @@
         color: agent.color,
         time: new Date().toLocaleTimeString()
       });
-      state.councilFeed = state.councilFeed.slice(0, 25);
+      state.councilFeed = state.councilFeed.slice(0, 30);
 
       updateMarketStats();
       renderCouncilFeed();
