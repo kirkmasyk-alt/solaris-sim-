@@ -6,356 +6,660 @@
     <title>$SOLARIS Treasury & Bot Simulator</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent: #10b981;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
+            --bg-color: #07111f;
+            --panel: #101c2f;
+            --panel-2: #15273d;
+            --accent: #22c55e;
+            --accent-2: #60a5fa;
             --danger: #ef4444;
             --warning: #f59e0b;
+            --text: #e5f0ff;
+            --muted: #8da3be;
+            --border: #24364d;
+            --shadow: rgba(0,0,0,0.3);
         }
+
+        * { box-sizing: border-box; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
             margin: 0;
-            padding: 16px;
+            padding: 18px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(180deg, #07111f 0%, #0b1728 100%);
+            color: var(--text);
         }
+
         .container {
-            max-width: 520px;
+            max-width: 1200px;
             margin: 0 auto;
         }
+
         h1 {
-            font-size: 1.5rem;
             text-align: center;
-            margin-bottom: 4px;
+            margin: 0 0 6px;
             color: var(--accent);
+            font-size: clamp(1.7rem, 3vw, 2.4rem);
         }
+
         .subtitle {
             text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            color: var(--muted);
             margin-bottom: 20px;
+            font-size: 0.9rem;
+            letter-spacing: 0.04em;
         }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
         .card {
-            background-color: var(--card-bg);
+            background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 10px 28px var(--shadow);
+        }
+
+        .metric-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-size: clamp(1.1rem, 2vw, 1.7rem);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1.3fr 0.7fr;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .terminal {
+            background: #01080d;
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        .metric-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        .metric-box {
-            background: rgba(15, 23, 42, 0.5);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-        .metric-label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-        .metric-value {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-top: 4px;
-        }
-        .terminal {
-            background-color: #000;
-            color: var(--accent);
-            font-family: monospace;
-            font-size: 0.8rem;
-            padding: 12px;
-            border-radius: 8px;
-            height: 140px;
+            min-height: 220px;
+            max-height: 300px;
             overflow-y: auto;
-            border: 1px solid var(--border);
-            margin-bottom: 8px;
-        }
-        .button-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-        button {
-            background-color: var(--accent);
-            color: #000;
-            font-weight: bold;
-            border: none;
             padding: 12px;
-            border-radius: 8px;
+            color: var(--accent);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.82rem;
+            line-height: 1.6;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .button-grid.three {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .button-grid.four {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        button {
+            appearance: none;
+            border: 0;
+            border-radius: 10px;
+            padding: 11px 12px;
             cursor: pointer;
+            font-weight: 700;
+            color: #061218;
+            background: var(--accent);
+            transition: transform 0.15s ease, opacity 0.15s ease;
             font-size: 0.9rem;
-            margin-top: 0;
-            transition: opacity 0.2s;
         }
-        button:active {
-            opacity: 0.8;
+
+        button:hover { transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .button-alt {
+            background: var(--accent-2);
         }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+
+        .button-warning {
+            background: var(--warning);
         }
-        .burn-btn {
-            background-color: var(--danger);
+
+        .button-danger {
+            background: var(--danger);
+            color: #fff;
         }
-        .auto-bot-btn {
-            background-color: var(--warning);
-        }
+
         .status-badge {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            margin-top: 8px;
-            background-color: rgba(16, 185, 129, 0.2);
+            margin-top: 12px;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            background: rgba(34, 197, 94, 0.14);
+            border: 1px solid rgba(34, 197, 94, 0.3);
             color: var(--accent);
         }
+
         .status-badge.inactive {
-            background-color: rgba(148, 163, 184, 0.2);
-            color: var(--text-muted);
+            background: rgba(143, 163, 184, 0.12);
+            border-color: rgba(143, 163, 184, 0.2);
+            color: var(--muted);
         }
-        .grid-3col {
+
+        .status-badge.day-marker {
+            background: rgba(96, 165, 250, 0.14);
+            border-color: rgba(96, 165, 250, 0.3);
+            color: var(--accent-2);
+        }
+
+        .mini-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
+            margin-top: 12px;
+        }
+
+        .trade-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .trade-item {
+            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .trade-item strong {
+            color: var(--text);
+        }
+
+        .small-note {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        .week-sim {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .day-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .day-box .day-label {
+            color: var(--muted);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .day-box .day-value {
+            color: var(--text);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .day-box.active {
+            border-color: var(--accent);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .chart-container {
+            background: rgba(15, 23, 42, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 14px;
+            min-height: 180px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+        }
+
+        .chart-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .bar {
+            background: linear-gradient(180deg, var(--accent-2), var(--accent));
+            border-radius: 4px 4px 0 0;
+            width: 100%;
+            max-width: 30px;
+            min-height: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .bar:hover {
+            background: linear-gradient(180deg, var(--accent), var(--accent-2));
+        }
+
+        .bar-label {
+            font-size: 0.7rem;
+            color: var(--muted);
+            margin-top: 6px;
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1>🪙 $SOLARIS</h1>
+        <div class="subtitle">7-Day Treasury & Paper Trading Sandbox</div>
 
-<div class="container">
-    <h1>🪙 $SOLARIS</h1>
-    <div class="subtitle">Autonomous Treasury & Paper Trading Sandbox</div>
-
-    <!-- Key Metrics -->
-    <div class="card">
-        <div class="metric-grid">
-            <div class="metric-box">
+        <div class="dashboard">
+            <div class="card">
                 <div class="metric-label">SOL Price</div>
                 <div class="metric-value" id="sol-price">$110.10</div>
             </div>
-            <div class="metric-box">
+            <div class="card">
                 <div class="metric-label">Treasury Net Worth</div>
                 <div class="metric-value" id="net-worth">$7,756.22</div>
             </div>
-            <div class="metric-box">
+            <div class="card">
                 <div class="metric-label">Stablecoin Cash</div>
                 <div class="metric-value" id="cash-balance">$5,003.72</div>
             </div>
-            <div class="metric-box">
+            <div class="card">
                 <div class="metric-label">Staked SOL</div>
                 <div class="metric-value" id="sol-balance">25.0 SOL</div>
             </div>
         </div>
+
+        <div class="layout">
+            <div class="card">
+                <div class="metric-label" style="margin-bottom: 10px;">🤖 Autonomous Treasury Bot</div>
+                <div class="terminal" id="terminal-log">
+                    [00:01] Treasury boot sequence online.<br>
+                    [00:02] Fee collection engine primed.<br>
+                    [00:03] Bot standing by for market conditions...<br>
+                </div>
+
+                <div class="button-grid three">
+                    <button onclick="simulateMarketDip()">📉 Force Dip</button>
+                    <button class="button-alt" onclick="simulateMarketRally()">📈 Force Rally</button>
+                    <button class="button-warning" id="auto-bot-toggle" onclick="toggleAutoBot()">🔄 Auto Bot: OFF</button>
+                </div>
+
+                <div class="button-grid four">
+                    <button class="button-alt" onclick="simulateBuyerInflow()">💰 Manual Inflow</button>
+                    <button class="button-danger" onclick="triggerBurn()">🔥 Buyback & Burn</button>
+                    <button class="button-alt" onclick="runWeekSimulation()">⏩ Run Week</button>
+                    <button onclick="resetSimulation()">🔄 Reset</button>
+                </div>
+
+                <div id="bot-status" class="status-badge inactive">Auto Bot: Idle</div>
+                <div id="day-marker" class="status-badge day-marker" style="display:none;">Day 1 of 7</div>
+            </div>
+
+            <div class="card">
+                <div class="metric-label">Treasury Overview</div>
+                <div class="mini-grid">
+                    <div>
+                        <div class="metric-label">Fees Collected</div>
+                        <div class="metric-value" id="fees-collected">$0.00</div>
+                    </div>
+                    <div>
+                        <div class="metric-label">Tokens Burned</div>
+                        <div class="metric-value" id="tokens-burned">0</div>
+                    </div>
+                    <div>
+                        <div class="metric-label">Trading Volume</div>
+                        <div class="metric-value" id="trading-volume">$0.00</div>
+                    </div>
+                    <div>
+                        <div class="metric-label">Circulating Supply</div>
+                        <div class="metric-value" id="circulating-supply">1.00B</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 18px;">
+                    <div class="metric-label">Recent Activity</div>
+                    <ul class="trade-list" id="trade-list">
+                        <li class="trade-item"><strong>INIT</strong> Treasury synced to baseline state.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Week Simulation View -->
+        <div class="card">
+            <div class="metric-label">📅 Weekly Buy/Sell Volume & Market Activity</div>
+            <div class="week-sim" id="week-sim"></div>
+            <div class="chart-container" id="chart-container"></div>
+        </div>
     </div>
 
-    <!-- Burn & Supply -->
-    <div class="card">
-        <div class="grid-3col">
-            <div class="metric-box">
-                <div class="metric-label">Tokens Burned</div>
-                <div class="metric-value" id="tokens-burned">0</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-label">Circulating Supply</div>
-                <div class="metric-value" id="circulating-supply">1B</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-label">Treasury Tax Rate</div>
-                <div class="metric-value">1%</div>
-            </div>
-        </div>
-    </div>
+    <script>
+        const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    <!-- Bot Terminal -->
-    <div class="card">
-        <div class="metric-label" style="margin-bottom: 8px;">🤖 Autonomous Bot Live Terminal</div>
-        <div class="terminal" id="terminal-log">
-            [00:01] System initialized. Live feed connected.<br>
-            [00:02] Staking vault active (6% APY baseline).<br>
-            [00:03] Scanning spreads > 0.5% (DEX fee 0.25% active)...<br>
-        </div>
-        <div class="button-group">
-            <button onclick="triggerManualTrade()">📉 Simulate Market Dip</button>
-            <button class="auto-bot-btn" onclick="toggleAutoBot()">🔄 Auto Bot: OFF</button>
-        </div>
-        <div class="button-group">
-            <button class="burn-btn" onclick="triggerBurn()">🔥 Buyback & Burn</button>
-            <button onclick="simulateMarketVolume()">💰 Add Buyer Inflow</button>
-        </div>
-        <div id="bot-status" class="status-badge inactive">Auto Bot: Idle</div>
-    </div>
-</div>
+        const state = {
+            cash: 5003.72,
+            sol: 25.0,
+            price: 110.10,
+            circulatingSupply: 1_000_000_000,
+            tokensBurned: 0,
+            feesCollected: 0,
+            tradingVolume: 0,
+            autoBotEnabled: false,
+            autoBotInterval: null,
+            recentTrades: [
+                { type: 'INIT', note: 'Treasury synced to baseline state.' }
+            ],
+            currentDay: 0,
+            weekData: Array(7).fill(0).map(() => ({ volume: 0, price: 110.10, buyers: 0 }))
+        };
 
-<script>
-    // ======================== STATE & CONSTANTS ========================
-    const STARTING_CASH = 5003.72;
-    const STARTING_SOL = 25.0;
-    const STARTING_PRICE = 110.10;
-    const STARTING_SUPPLY = 1_000_000_000; // 1 Billion
+        const DEX_FEE_RATE = 0.0025;
+        const GAS_FEE = 0.002;
+        const BURN_BUDGET = 300;
+        const TOKENS_PER_DOLLAR = 50_000;
 
-    const DEX_FEE_RATE = 0.0025; // 0.25%
-    const GAS_FEE = 0.002;
-    const TREASURY_TAX_RATE = 0.01; // 1%
-    const BURN_BUDGET = 300.0;
-    const TOKENS_PER_DOLLAR = 50_000;
+        // Weekly market patterns
+        const WEEK_PATTERNS = {
+            0: { buyers: 45, volume: 3200, label: 'Launch Hype' },     // Monday
+            1: { buyers: 12, volume: 800, label: 'Mid-week Dip' },     // Tuesday
+            2: { buyers: 8, volume: 400, label: 'Consolidation' },     // Wednesday
+            3: { buyers: 18, volume: 1100, label: 'Mid-week Rally' },  // Thursday
+            4: { buyers: 25, volume: 1800, label: 'End-week Push' },   // Friday
+            5: { buyers: 65, volume: 5100, label: 'Weekend Hype' },    // Saturday
+            6: { buyers: 35, volume: 2900, label: 'Sunday Cool-down' } // Sunday
+        };
 
-    let cash = STARTING_CASH;
-    let sol = STARTING_SOL;
-    let price = STARTING_PRICE;
-    let circulating_supply = STARTING_SUPPLY;
-    let tokens_burned = 0;
-    let autoBotRunning = false;
-    let autoBotInterval = null;
-
-    // ======================== LOGGING ========================
-    function log(message) {
-        const term = document.getElementById('terminal-log');
-        term.innerHTML += `<br>${message}`;
-        term.scrollTop = term.scrollHeight;
-    }
-
-    // ======================== DASHBOARD RENDER ========================
-    function renderDashboard() {
-        const netWorth = cash + (sol * price);
-
-        document.getElementById('sol-price').innerText = `$${price.toFixed(2)}`;
-        document.getElementById('cash-balance').innerText = `$${cash.toFixed(2)}`;
-        document.getElementById('sol-balance').innerText = `${sol.toFixed(1)} SOL`;
-        document.getElementById('net-worth').innerText = `$${netWorth.toFixed(2)}`;
-        
-        // Format supply
-        const supplyDisplay = circulating_supply >= 1_000_000_000 
-            ? (circulating_supply / 1_000_000_000).toFixed(2) + 'B'
-            : circulating_supply.toLocaleString();
-        document.getElementById('circulating-supply').innerText = supplyDisplay;
-        document.getElementById('tokens-burned').innerText = tokens_burned.toLocaleString();
-    }
-
-    // ======================== BOT TRADING LOGIC ========================
-    /**
-     * Buy the Dip: Bot buys 1 SOL when price drops ≥1.0% and cash available
-     */
-    function triggerManualTrade() {
-        // Simulate price drop
-        price -= 2.50;
-
-        const dexFee = price * DEX_FEE_RATE;
-        const totalPurchaseCost = price + dexFee + GAS_FEE;
-
-        if (cash >= totalPurchaseCost) {
-            cash -= totalPurchaseCost;
-            sol += 1.0;
-
-            renderDashboard();
-            log(`[TRADE] SOL dipped to $${price.toFixed(2)}. Bot bought 1 SOL!`);
-            log(`        💸 Cost: $${totalPurchaseCost.toFixed(4)} (Price: $${price.toFixed(2)} + DEX: $${dexFee.toFixed(4)})`);
-        } else {
-            renderDashboard();
-            log(`[TRADE FAILED] Insufficient cash. Need $${totalPurchaseCost.toFixed(2)}, have $${cash.toFixed(2)}`);
-        }
-    }
-
-    // ======================== BURN & BUYBACK ========================
-    /**
-     * Burn tokens: Spend $300 to remove tokens from circulation
-     */
-    function triggerBurn() {
-        if (cash < BURN_BUDGET) {
-            log(`[BURN FAILED] Insufficient cash. Need $${BURN_BUDGET}, have $${cash.toFixed(2)}`);
-            renderDashboard();
-            return;
+        function formatCurrency(value) {
+            return `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         }
 
-        const tokensToBurn = BURN_BUDGET * TOKENS_PER_DOLLAR;
-        cash -= BURN_BUDGET;
-        circulating_supply -= tokensToBurn;
-        tokens_burned += tokensToBurn;
+        function formatSol(value) {
+            return `${Number(value).toFixed(1)} SOL`;
+        }
 
-        renderDashboard();
-        log(`[BURN EVENT] 🔥 Spent $${BURN_BUDGET} to burn ${tokensToBurn.toLocaleString()} tokens!`);
-        log(`             Supply now: ${(circulating_supply / 1_000_000_000).toFixed(2)}B`);
-    }
+        function formatSupply(value) {
+            if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
+            if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+            return value.toLocaleString();
+        }
 
-    // ======================== MARKET SIMULATION ========================
-    /**
-     * Simulate buyer inflow: Adds stablecoins + applies treasury tax
-     */
-    function simulateMarketVolume() {
-        const capitalInjected = 800.0 + Math.random() * 2400; // Random $800-$3200
-        const taxCollected = capitalInjected * TREASURY_TAX_RATE;
-        cash += taxCollected;
+        function getNetWorth() {
+            return state.cash + (state.sol * state.price);
+        }
 
-        renderDashboard();
-        log(`[BUYER INFLOW] 🛒 Market activity: +$${capitalInjected.toFixed(2)} injected`);
-        log(`               💰 Treasury tax (1%): +$${taxCollected.toFixed(2)}`);
-    }
+        function addTradeLog(type, note) {
+            state.recentTrades.unshift({ type, note });
+            state.recentTrades = state.recentTrades.slice(0, 6);
+            const list = document.getElementById('trade-list');
+            list.innerHTML = state.recentTrades.map(item =>
+                `<li class="trade-item"><strong>${item.type}</strong> ${item.note}</li>`
+            ).join('');
+        }
 
-    // ======================== AUTO BOT LOGIC ========================
-    /**
-     * Auto Bot: Runs every 2 seconds, auto-buys on dips, auto-sells on rips
-     */
-    function autoBot() {
-        const priceMovePct = (Math.random() - 0.5) * 4; // -2% to +2% movement
-        price *= (1 + priceMovePct / 100);
+        function renderDashboard() {
+            const netWorth = getNetWorth();
+            document.getElementById('sol-price').textContent = `$${state.price.toFixed(2)}`;
+            document.getElementById('cash-balance').textContent = formatCurrency(state.cash);
+            document.getElementById('sol-balance').textContent = formatSol(state.sol);
+            document.getElementById('net-worth').textContent = formatCurrency(netWorth);
+            document.getElementById('fees-collected').textContent = formatCurrency(state.feesCollected);
+            document.getElementById('tokens-burned').textContent = Number(state.tokensBurned).toLocaleString();
+            document.getElementById('circulating-supply').textContent = formatSupply(state.circulatingSupply);
+            document.getElementById('trading-volume').textContent = formatCurrency(state.tradingVolume);
+        }
 
-        // Buy on dip
-        if (priceMovePct <= -1.0) {
-            const dexFee = price * DEX_FEE_RATE;
-            const totalPurchaseCost = price + dexFee + GAS_FEE;
+        function renderWeekChart() {
+            const weekContainer = document.getElementById('week-sim');
+            const chartContainer = document.getElementById('chart-container');
+            
+            weekContainer.innerHTML = DAYS.map((day, idx) => {
+                const dayData = state.weekData[idx];
+                const isActive = idx === state.currentDay;
+                return `
+                    <div class="day-box ${isActive ? 'active' : ''}">
+                        <div class="day-label">${day}</div>
+                        <div class="day-value">${dayData.buyers}</div>
+                        <div class="small-note">${formatCurrency(dayData.volume)}</div>
+                    </div>
+                `;
+            }).join('');
 
-            if (cash >= totalPurchaseCost) {
-                cash -= totalPurchaseCost;
-                sol += 1.0;
-                log(`[AUTO BUY] Dip detected (${priceMovePct.toFixed(2)}%). Bought 1 SOL @ $${price.toFixed(2)}`);
+            const maxVolume = Math.max(...state.weekData.map(d => d.volume), 1);
+            chartContainer.innerHTML = state.weekData.map((dayData, idx) => {
+                const height = (dayData.volume / maxVolume) * 100;
+                const isActive = idx === state.currentDay;
+                return `
+                    <div class="chart-bar">
+                        <div class="bar" style="height: ${Math.max(height, 15)}%; opacity: ${isActive ? 1 : 0.7};"></div>
+                        <div class="bar-label">${DAYS[idx]}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function log(message) {
+            const term = document.getElementById('terminal-log');
+            term.innerHTML += `<br>${message}`;
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function executeSolPurchase() {
+            const dexFee = state.price * DEX_FEE_RATE;
+            const totalCost = state.price + dexFee + GAS_FEE;
+
+            if (state.cash < totalCost) {
+                log(`[BUY FAILED] Treasury cash too low. Need ${formatCurrency(totalCost)}.`);
+                return false;
+            }
+
+            state.cash -= totalCost;
+            state.sol += 1.0;
+            state.feesCollected += dexFee + GAS_FEE;
+            renderDashboard();
+            log(`[BOT BUY] Treasury bought 1 SOL at $${state.price.toFixed(2)}. Cost: ${formatCurrency(totalCost)}.`);
+            addTradeLog('BUY', `1 SOL for ${formatCurrency(totalCost)}.`);
+            return true;
+        }
+
+        function executeSolSale() {
+            if (state.sol < 1.0) {
+                log('[SELL FAILED] Treasury has no SOL to sell.');
+                return false;
+            }
+
+            const dexFee = state.price * DEX_FEE_RATE;
+            const netRevenue = (state.price * (1 - DEX_FEE_RATE)) - GAS_FEE;
+
+            state.cash += netRevenue;
+            state.sol -= 1.0;
+            state.feesCollected += dexFee + GAS_FEE;
+            renderDashboard();
+            log(`[BOT SELL] Treasury sold 1 SOL at $${state.price.toFixed(2)}. Revenue: ${formatCurrency(netRevenue)}.`);
+            addTradeLog('SELL', `1 SOL for ${formatCurrency(netRevenue)}.`);
+            return true;
+        }
+
+        function simulateMarketDip() {
+            state.price -= 2.50;
+            executeSolPurchase();
+        }
+
+        function simulateMarketRally() {
+            state.price += 2.50;
+            executeSolSale();
+        }
+
+        function simulateBuyerInflow(volume = null) {
+            const inflow = volume || (400 + Math.random() * 2800);
+            const treasuryTax = inflow * 0.01;
+            state.cash += treasuryTax;
+            state.feesCollected += treasuryTax;
+            state.tradingVolume += inflow;
+            renderDashboard();
+            log(`[BUYER INFLOW] ${formatCurrency(inflow)} market volume. Treasury gained ${formatCurrency(treasuryTax)} tax.`);
+            addTradeLog('FLOW', `${formatCurrency(inflow)} volume → ${formatCurrency(treasuryTax)} tax.`);
+        }
+
+        function triggerBurn() {
+            if (state.cash < BURN_BUDGET) {
+                log(`[BURN FAILED] Need ${formatCurrency(BURN_BUDGET)}.`);
+                return;
+            }
+
+            const tokensToBurn = BURN_BUDGET * TOKENS_PER_DOLLAR;
+            state.cash -= BURN_BUDGET;
+            state.circulatingSupply -= tokensToBurn;
+            state.tokensBurned += tokensToBurn;
+            renderDashboard();
+            log(`[BURN] Spent ${formatCurrency(BURN_BUDGET)}. Burned ${tokensToBurn.toLocaleString()} tokens.`);
+            addTradeLog('BURN', `${tokensToBurn.toLocaleString()} tokens removed.`);
+        }
+
+        function autoBotTick() {
+            const movement = (Math.random() * 5.5) - 2.25;
+            state.price *= 1 + (movement / 100);
+
+            if (movement <= -1.0) {
+                executeSolPurchase();
+            } else if (movement >= 1.5 && state.sol >= 1.0) {
+                executeSolSale();
             }
         }
-        // Sell on rip
-        else if (priceMovePct >= 1.5 && sol >= 1.0) {
-            const dexRevenue = price * (1 - DEX_FEE_RATE) - GAS_FEE;
-            cash += dexRevenue;
-            sol -= 1.0;
-            log(`[AUTO SELL] Rally detected (${priceMovePct.toFixed(2)}%). Sold 1 SOL @ $${price.toFixed(2)}`);
+
+        function toggleAutoBot() {
+            state.autoBotEnabled = !state.autoBotEnabled;
+            const toggle = document.getElementById('auto-bot-toggle');
+            const status = document.getElementById('bot-status');
+
+            if (state.autoBotEnabled) {
+                toggle.textContent = '🔄 Auto Bot: ON';
+                status.textContent = 'Auto Bot: Active';
+                status.classList.remove('inactive');
+                log('[BOT ENABLED] Treasury bot is auto-trading.');
+                state.autoBotInterval = setInterval(autoBotTick, 2200);
+            } else {
+                toggle.textContent = '🔄 Auto Bot: OFF';
+                status.textContent = 'Auto Bot: Idle';
+                status.classList.add('inactive');
+                log('[BOT DISABLED] Treasury bot stopped.');
+                clearInterval(state.autoBotInterval);
+            }
+        }
+
+        async function runWeekSimulation() {
+            if (state.autoBotEnabled) toggleAutoBot();
+            
+            log('[WEEK SIM] Starting 7-day simulation...');
+            document.getElementById('day-marker').style.display = 'inline-block';
+
+            for (let day = 0; day < 7; day++) {
+                state.currentDay = day;
+                document.getElementById('day-marker').textContent = `Day ${day + 1} of 7`;
+                
+                const pattern = WEEK_PATTERNS[day];
+                const volume = pattern.volume;
+                const buyers = pattern.buyers;
+                
+                // Store day data
+                state.weekData[day] = {
+                    volume,
+                    buyers,
+                    price: state.price
+                };
+
+                log(`\n📅 DAY ${day + 1} - ${pattern.label} | ${buyers} buyers, ${formatCurrency(volume)} volume`);
+                
+                // Generate inflow
+                simulateBuyerInflow(volume);
+
+                // Random price movement
+                const dailyMove = (Math.random() * 6) - 3;
+                state.price *= 1 + (dailyMove / 100);
+                log(`   📈 SOL price: $${state.price.toFixed(2)} (${dailyMove > 0 ? '+' : ''}${dailyMove.toFixed(2)}%)`);
+
+                // Bot auto-trades based on conditions
+                if (dailyMove <= -1.0 && state.cash >= state.price) {
+                    executeSolPurchase();
+                } else if (dailyMove >= 1.5 && state.sol >= 1.0) {
+                    executeSolSale();
+                } else {
+                    log(`   ⏳ Bot holding (spread ${dailyMove.toFixed(2)}% outside bands)`);
+                }
+
+                // Occasional burn on key days
+                if (day === 3 && state.cash > BURN_BUDGET) {
+                    log('   🔥 Thursday burn checkpoint...');
+                    triggerBurn();
+                }
+
+                renderWeekChart();
+                renderDashboard();
+
+                // Pause between days
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
+
+            log('\n✨ Week simulation complete!');
+            log(`📊 Final Net Worth: ${formatCurrency(getNetWorth())}`);
+            log(`💾 Treasury: ${formatCurrency(state.cash)} cash + ${formatSol(state.sol)} staked`);
+            renderWeekChart();
+        }
+
+        function resetSimulation() {
+            if (state.autoBotEnabled) toggleAutoBot();
+            
+            state.cash = 5003.72;
+            state.sol = 25.0;
+            state.price = 110.10;
+            state.circulatingSupply = 1_000_000_000;
+            state.tokensBurned = 0;
+            state.feesCollected = 0;
+            state.tradingVolume = 0;
+            state.recentTrades = [{ type: 'INIT', note: 'Treasury synced to baseline state.' }];
+            state.currentDay = 0;
+            state.weekData = Array(7).fill(0).map(() => ({ volume: 0, price: 110.10, buyers: 0 }));
+
+            document.getElementById('day-marker').style.display = 'none';
+            document.getElementById('terminal-log').innerHTML = '[00:01] Treasury boot sequence online.<br>[00:02] Fee collection engine primed.<br>[00:03] Bot standing by for market conditions...';
+            
+            renderDashboard();
+            renderWeekChart();
+            log('[RESET] Simulation returned to baseline state.');
         }
 
         renderDashboard();
-    }
-
-    function toggleAutoBot() {
-        autoBotRunning = !autoBotRunning;
-        const btn = event.target;
-        const statusBadge = document.getElementById('bot-status');
-
-        if (autoBotRunning) {
-            btn.innerText = '🔄 Auto Bot: ON';
-            btn.style.opacity = '1';
-            statusBadge.classList.remove('inactive');
-            statusBadge.innerText = 'Auto Bot: Running';
-            log('[BOT ACTIVATED] Auto-trading initiated. Running every 2 seconds...');
-
-            autoBotInterval = setInterval(autoBot, 2000);
-        } else {
-            btn.innerText = '🔄 Auto Bot: OFF';
-            btn.style.opacity = '0.7';
-            statusBadge.classList.add('inactive');
-            statusBadge.innerText = 'Auto Bot: Idle';
-            log('[BOT STOPPED] Auto-trading halted.');
-
-            clearInterval(autoBotInterval);
-        }
-    }
-
-    // ======================== INIT ========================
-    renderDashboard();
-</script>
-
+        renderWeekChart();
+    </script>
 </body>
 </html>
