@@ -52,7 +52,7 @@
     }
 
     .logo {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: bold;
       color: var(--cyan);
       letter-spacing: 1px;
@@ -63,7 +63,7 @@
       gap: 2px;
       flex-wrap: wrap;
       justify-content: flex-end;
-      max-width: 250px;
+      max-width: 260px;
     }
 
     .cyber-btn {
@@ -256,11 +256,12 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.0</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V7.1</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
         <button class="cyber-btn accent" onclick="adjustFunds()">FUND</button>
+        <button class="cyber-btn" onclick="promptApiKey()">KEY</button>
         <button class="cyber-btn" onclick="requestBriefing()">BRIEF</button>
         <button class="cyber-btn danger" onclick="masterReset()">RESET</button>
       </div>
@@ -342,6 +343,7 @@
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
       <div class="status-row"><span>TOTAL TRANSACTIONS:</span> <strong style="color: var(--cyan);" id="status-tx-count">0 EXECUTED</strong></div>
       <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 6/6 UNITS OPERATIONAL</strong></div>
+      <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
       <div class="status-row"><span>LOCAL STORAGE:</span> <strong style="color: var(--cyan);">● ISOLATED SANDBOX</strong></div>
     </div>
 
@@ -415,6 +417,29 @@
       if (!logBox) return;
       logBox.innerHTML += `<div>[${new Date().toTimeString().split(' ')[0]}] ${msg}</div>`;
       logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function promptApiKey() {
+      const key = prompt("Enter Gemini API key:", localStorage.getItem('gemini_api_key') || '');
+      if (key !== null) {
+        localStorage.setItem('gemini_api_key', key.trim());
+        updateKeyStatus();
+        addSystemLog(`[CONFIG] Gemini API Key updated.`);
+      }
+    }
+
+    function updateKeyStatus() {
+      const k = localStorage.getItem('gemini_api_key');
+      const el = document.getElementById('key-status');
+      if (el) {
+        if (k && k.length > 5) {
+          el.textContent = "● CONFIGURED";
+          el.style.color = "var(--green)";
+        } else {
+          el.textContent = "● NOT CONFIGURED";
+          el.style.color = "var(--text-dim)";
+        }
+      }
     }
 
     function saveState() {
@@ -736,6 +761,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      updateKeyStatus();
       renderAll();
       setInterval(runTradingLoop, 8000);
     });
