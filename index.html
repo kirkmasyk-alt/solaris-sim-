@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.3</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.4</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -272,7 +272,7 @@
       <span style="font-size: 10px; color: var(--text-dim);">OPERATIONAL MODE:</span>
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
-        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (STOP-LOSS ACTIVE)</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (TRAILING LOCK)</button>
       </div>
     </div>
 
@@ -319,11 +319,11 @@
 
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 11px; color: var(--cyan);">// AGGRESSIVE STOP-LOSS & SCALING STREAM</div>
+        <div style="font-size: 11px; color: var(--cyan);">// TICK-LEVEL TRAILING PROFIT STREAM</div>
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Stop-loss defense firewall & partial scaling active.</div>
+        <div style="color: var(--green);">[00:01] State stabilization & trailing profit locks online.</div>
       </div>
     </div>
 
@@ -336,8 +336,8 @@
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // RISK WATCHER</div>
-          <div class="feed-text">Monitoring drawdowns and immediate stop-loss triggers...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // TRAILING WATCHER</div>
+          <div class="feed-text">Monitoring peak gains and instant trailing lock triggers...</div>
         </div>
       </div>
     </div>
@@ -358,15 +358,15 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
-      <div class="status-row"><span>AGGRESSIVE STOP-LOSS:</span> <strong style="color: var(--red);">ACTIVE [-2.5% CUT]</strong></div>
-      <div class="status-row"><span>PARTIAL PROFIT LOCK:</span> <strong style="color: var(--green);">ACTIVE [25% SCALES]</strong></div>
+      <div class="status-row"><span>STATE STABILIZATION:</span> <strong style="color: var(--green);">LOCKED [NO RE-INIT DRIFT]</strong></div>
+      <div class="status-row"><span>TRAILING PROFIT LOCK:</span> <strong style="color: var(--green);">ACTIVE [PEAK DEFENSE]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 DEFENSIVE TRADERS</strong></div>
+      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 STABLE TRADERS</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
 
     <div id="tab-warroom" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (DEFENSIVE AI AGENTS)</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (STABLE AI AGENTS)</div>
       <div id="war-room-container" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
     </div>
   </div>
@@ -377,16 +377,19 @@
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Aggressive stop-loss active. Losing positions will be cut instantly.', time: '00:00' }
+      { title: 'System Initialized', desc: 'State stabilization and trailing profit locks active.', time: '00:00' }
     ];
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
 
+    // Track peak prices per position to enable instant trailing lock defense
+    let peakPrices = JSON.parse(localStorage.getItem('solaris_peak_prices')) || {};
+
     const agentDefs = [
       { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#a855f7', icon: '👁️', pnl: 0, status: 'ADVISORY' },
       { id: 'announcer', name: 'WHALE_EYE', role: 'Multi-Source Fresh Deployment Scanner', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
-      { id: 'finance', name: 'KIRKTRON 9001', role: 'Partial Scaler (25% Profit Lock Engine)', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
-      { id: 'risk', name: 'RISK_CORE', role: 'Aggressive Stop-Loss & Security Firewall', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
+      { id: 'finance', name: 'KIRKTRON 9001', role: 'Trailing Profit Lock Engine', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
+      { id: 'risk', name: 'RISK_CORE', role: 'Aggressive Stop-Loss & State Guard', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
       { id: 'trader', name: 'ALPHA_X', role: 'Verified Secure Swap Executor', color: '#ef4444', icon: '⚡', pnl: 0, status: 'ACTIVE' },
       { id: 'macro', name: 'MACRO_9', role: 'AI Momentum & Winner Scorer', color: '#a855f7', icon: '🌐', pnl: 0, status: 'ACTIVE' },
       { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#22c55e', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
@@ -402,14 +405,13 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'RISK_CORE', text: `Stop-loss firewall active [${operationalMode}]. Cutting losers immediately.`, color: '#f59e0b', time: '00:00' }]
+      councilFeed: [{ sender: 'RISK_CORE', text: `State stabilized in [${operationalMode}] mode. Trailing lock active.`, color: '#f59e0b', time: '00:00' }]
     };
 
     function setTradingMode(mode) {
       operationalMode = mode;
       localStorage.setItem('solaris_mode', mode);
       addSystemLog(`[MODE LOCKED] User set operational mode to: ${mode}`);
-      fetchLiveMarketPrices();
       renderAll();
     }
 
@@ -439,80 +441,40 @@
 
     async function fetchLiveMarketPrices() {
       try {
-        const [searchRes, profilesRes] = await Promise.all([
-          fetch(`https://api.dexscreener.com/latest/dex/search?q=solana`),
-          fetch(`https://api.dexscreener.com/token-profiles/latest/v1`)
-        ]);
+        const searchRes = await fetch(`https://api.dexscreener.com/latest/dex/search?q=solana`);
+        if (!searchRes.ok) return;
+        const searchData = await searchRes.json();
 
         let fetched = [];
-
-        if (searchRes.ok) {
-          const searchData = await searchRes.json();
-          if (searchData && searchData.pairs) {
-            let solPairs = searchData.pairs.filter(p => p.chainId === 'solana' && p.priceUsd && p.liquidity && p.liquidity.usd > 5000);
-            if (operationalMode === 'SNIPER') {
-              solPairs = solPairs.filter(p => p.liquidity.usd <= 150000).slice(0, 15);
-            } else {
-              solPairs = solPairs.slice(0, 15);
-            }
-            solPairs.forEach(p => {
-              if (p.baseToken && p.priceUsd) {
-                fetched.push({
-                  symbol: p.baseToken.symbol.toUpperCase(),
-                  address: p.baseToken.address,
-                  price: parseFloat(p.priceUsd),
-                  change24h: p.priceChange?.h24 || 5.0,
-                  liquidity: p.liquidity.usd,
-                  securityBadge: 'VERIFIED'
-                });
-              }
-            });
+        if (searchData && searchData.pairs) {
+          let solPairs = searchData.pairs.filter(p => p.chainId === 'solana' && p.priceUsd && p.liquidity && p.liquidity.usd > 5000);
+          if (operationalMode === 'SNIPER') {
+            solPairs = solPairs.filter(p => p.liquidity.usd <= 150000).slice(0, 20);
+          } else {
+            solPairs = solPairs.slice(0, 20);
           }
-        }
-
-        if (profilesRes.ok) {
-          const profilesData = await profilesRes.json();
-          if (Array.isArray(profilesData)) {
-            const solProfiles = profilesData.filter(p => p.chainId === 'solana' && p.tokenAddress).slice(0, 10);
-            for (let p of solProfiles) {
-              try {
-                const pairRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${p.tokenAddress}`);
-                if (pairRes.ok) {
-                  const pairData = await pairRes.json();
-                  if (pairData && pairData.pairs && pairData.pairs.length > 0) {
-                    const pair = pairData.pairs[0];
-                    if (pair.baseToken && pair.priceUsd) {
-                      fetched.push({
-                        symbol: pair.baseToken.symbol.toUpperCase(),
-                        address: p.tokenAddress,
-                        price: parseFloat(pair.priceUsd),
-                        change24h: pair.priceChange?.h24 || 15.0,
-                        liquidity: pair.liquidity?.usd || 20000,
-                        securityBadge: 'SECURE [0-1M]'
-                      });
-                    }
-                  }
-                }
-              } catch(e) {}
+          solPairs.forEach(p => {
+            if (p.baseToken && p.priceUsd) {
+              fetched.push({
+                symbol: p.baseToken.symbol.toUpperCase(),
+                address: p.baseToken.address,
+                price: parseFloat(p.priceUsd),
+                change24h: p.priceChange?.h24 || 5.0,
+                liquidity: p.liquidity.usd,
+                securityBadge: operationalMode === 'SNIPER' ? 'SECURE [0-1M]' : 'VERIFIED'
+              });
             }
-          }
+          });
         }
 
         if (fetched.length > 0) {
+          // Merge market prices smoothly without overwriting unmapped active position prices
           marketCoins = fetched;
         }
 
-        const targetCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-        whaleNewsFeed.unshift({
-          title: `DEFENSIVE SCAN [${operationalMode}]: ${targetCoin.symbol}`,
-          desc: `Active Pools: ${marketCoins.length} | Status: ${targetCoin.securityBadge} | Price: ${fmtPrice(targetCoin.price)}`,
-          time: new Date().toLocaleTimeString()
-        });
-        whaleNewsFeed = whaleNewsFeed.slice(0, 20);
-
         renderAll();
       } catch (err) {
-        console.warn("Defensive fetch warning:", err);
+        console.warn("Stable fetch warning:", err);
       }
     }
 
@@ -548,6 +510,7 @@
       localStorage.setItem('solaris_tx_count', state.txCount);
       localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
       localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
+      localStorage.setItem('solaris_peak_prices', JSON.stringify(peakPrices));
       localStorage.setItem('solaris_last_trade', state.lastTradeTime);
     }
 
@@ -568,6 +531,7 @@
       state.vault = 0;
       state.positions = {};
       state.costBasis = {};
+      peakPrices = {};
       saveState();
       addSystemLog(`[CONFIG] Treasury reset to clean baseline.`);
       renderAll();
@@ -621,11 +585,11 @@
     function requestBriefing() {
       let portfolioVal = 0;
       Object.keys(state.positions).forEach(sym => {
-        let coin = marketCoins.find(c => c.symbol === sym);
-        if (coin) portfolioVal += (state.positions[sym] || 0) * coin.price;
+        let coin = marketCoins.find(c => c.symbol === sym) || { price: state.costBasis[sym] || 1 };
+        portfolioVal += (state.positions[sym] || 0) * coin.price;
       });
       let net = state.cash + state.vault + portfolioVal;
-      const brief = `DEFENSIVE TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
+      const brief = `STABLE TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
       state.councilFeed.unshift({ sender: 'RISK_CORE', text: brief, color: '#f59e0b', time: new Date().toLocaleTimeString() });
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
       renderAll();
@@ -643,54 +607,64 @@
 
         let activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
 
-        // AGGRESSIVE STOP-LOSS & PARTIAL SCALING LOOP
+        // TRAILING PROFIT LOCK & STOP-LOSS DEFENSE
         for (let sym of activeSymbols) {
           let coin = marketCoins.find(c => c.symbol === sym);
-          if (coin) {
-            let qty = state.positions[sym];
-            let cost = state.costBasis[sym] || coin.price;
-            let mktVal = qty * coin.price;
-            let gainPct = ((coin.price - cost) / cost) * 100;
+          if (!coin) continue;
 
-            // STOP-LOSS FIREWALL: If any position drops -2.5% or worse into the red, cut it immediately!
-            if (gainPct <= -2.5) {
-              let gross = qty * coin.price;
-              let fee = gross * 0.003;
-              let netReturn = gross - fee;
-              let pnlDelta = netReturn - (qty * cost);
+          let qty = state.positions[sym];
+          let cost = state.costBasis[sym] || coin.price;
+          let gainPct = ((coin.price - cost) / cost) * 100;
 
-              delete state.positions[sym];
-              delete state.costBasis[sym];
-              state.cash += netReturn;
-              state.realizedPnl += pnlDelta;
-              state.totalFeesPaid += fee;
-              state.txCount += 1;
+          // Track peak price for trailing lock
+          if (!peakPrices[sym] || coin.price > peakPrices[sym]) {
+            peakPrices[sym] = coin.price;
+          }
 
-              addSystemLog(`[STOP-LOSS CUT] RISK_CORE killed losing position on ${sym}! Cut at ${gainPct.toFixed(1)}% | P&L: ${fmtCurrency(pnlDelta)}`);
-              saveState();
-              renderAll();
-              return;
-            }
+          let peakPrice = peakPrices[sym];
+          let peakGainPct = ((peakPrice - cost) / cost) * 100;
+          let dropFromPeakPct = peakPrice > 0 ? ((peakPrice - coin.price) / peakPrice) * 100 : 0;
 
-            // PARTIAL SCALING: If a coin pumps over +15%, sell 25% of the holding to lock profits
-            if (gainPct >= 15.0 && qty > 10) {
-              let scaleQty = qty * 0.25;
-              let gross = scaleQty * coin.price;
-              let fee = gross * 0.003;
-              let netReturn = gross - fee;
-              let pnlDelta = netReturn - (scaleQty * cost);
+          // STOP-LOSS FIREWALL: Cut immediately if down -2.5%
+          if (gainPct <= -2.5) {
+            let gross = qty * coin.price;
+            let fee = gross * 0.003;
+            let netReturn = gross - fee;
+            let pnlDelta = netReturn - (qty * cost);
 
-              state.positions[sym] -= scaleQty;
-              state.cash += netReturn;
-              state.realizedPnl += pnlDelta;
-              state.totalFeesPaid += fee;
-              state.txCount += 1;
+            delete state.positions[sym];
+            delete state.costBasis[sym];
+            delete peakPrices[sym];
+            state.cash += netReturn;
+            state.realizedPnl += pnlDelta;
+            state.totalFeesPaid += fee;
+            state.txCount += 1;
 
-              addSystemLog(`[PARTIAL SCALE] KIRKTRON 9001 locked 25% profits on ${sym}! Sold part at +${gainPct.toFixed(1)}% | P&L: +${fmtCurrency(pnlDelta)}`);
-              saveState();
-              renderAll();
-              return;
-            }
+            addSystemLog(`[STOP-LOSS CUT] RISK_CORE cut losing position on ${sym} at ${gainPct.toFixed(1)}% | P&L: ${fmtCurrency(pnlDelta)}`);
+            saveState();
+            renderAll();
+            return;
+          }
+
+          // TRAILING PROFIT LOCK: If a coin pumped past +10% peak and drops 25% from its peak, instant lock-out to prevent round-trip!
+          if (peakGainPct >= 10.0 && dropFromPeakPct >= 25.0) {
+            let gross = qty * coin.price;
+            let fee = gross * 0.003;
+            let netReturn = gross - fee;
+            let pnlDelta = netReturn - (qty * cost);
+
+            delete state.positions[sym];
+            delete state.costBasis[sym];
+            delete peakPrices[sym];
+            state.cash += netReturn;
+            state.realizedPnl += pnlDelta;
+            state.totalFeesPaid += fee;
+            state.txCount += 1;
+
+            addSystemLog(`[TRAILING LOCK] KIRKTRON 9001 secured peak profits on ${sym} before dump! Peak was +${peakGainPct.toFixed(1)}% | P&L: +${fmtCurrency(pnlDelta)}`);
+            saveState();
+            renderAll();
+            return;
           }
         }
 
@@ -724,6 +698,7 @@
           pnlDelta = netReturn - originalCostBasisValue;
           delete state.positions[targetCoin.symbol];
           delete state.costBasis[targetCoin.symbol];
+          delete peakPrices[targetCoin.symbol];
 
           if (pnlDelta > 0 && state.sweepPct > 0) {
             let sweepAmount = pnlDelta * (state.sweepPct / 100);
@@ -737,7 +712,7 @@
           state.totalFeesPaid += fee;
           state.txCount += 1;
 
-          addSystemLog(`[FULL TAKE-PROFIT] Profit target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
+          addSystemLog(`[FULL TAKE-PROFIT] Target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
           action = 'sell';
         } else if (state.cash > 20.0) {
           let spend = state.cash * 0.20;
@@ -753,6 +728,7 @@
           } else {
             state.costBasis[targetCoin.symbol] = targetCoin.price;
             state.positions[targetCoin.symbol] = tokens;
+            peakPrices[targetCoin.symbol] = targetCoin.price;
             addSystemLog(`[NEW ENTRY] ALPHA_X bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
           }
 
@@ -783,10 +759,10 @@
         let portfolioVal = 0;
         let totalCostBasisVal = 0;
         Object.keys(state.positions).forEach(sym => {
-          let coin = marketCoins.find(c => c.symbol === sym);
+          let coin = marketCoins.find(c => c.symbol === sym) || { price: state.costBasis[sym] || 1 };
           let qty = state.positions[sym] || 0;
-          let cost = state.costBasis[sym] || (coin ? coin.price : 1);
-          if (coin && qty > 0) {
+          let cost = state.costBasis[sym] || coin.price;
+          if (qty > 0) {
             portfolioVal += qty * coin.price;
             totalCostBasisVal += qty * cost;
           }
