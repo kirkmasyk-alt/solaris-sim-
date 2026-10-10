@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.8</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.9</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -314,7 +314,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Filtered financial wire active.</div>
+        <div style="color: var(--green);">[00:01] Strict profit-only execution gate active.</div>
       </div>
     </div>
 
@@ -327,8 +327,8 @@
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & BREAKING DISPATCHES</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // FILTERED WIRE</div>
-          <div class="feed-text">Monitoring verified financial boosts and market momentum dispatches...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // VERIFIED FEED</div>
+          <div class="feed-text">Monitoring strict profit targets across boost pools...</div>
         </div>
       </div>
     </div>
@@ -394,7 +394,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'WHALE_EYE', text: 'Financial wire filter active. Streaming token market metrics.', color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'WHALE_EYE', text: 'Strict profit gate active. No random sells permitted.', color: '#38bdf8', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -466,7 +466,6 @@
               if (fetched.length > 0) {
                 marketCoins = fetched;
                 
-                // Push clean financial market updates to the news wire
                 const randomCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
                 whaleNewsFeed.unshift({
                   title: `Liquidity Alert: ${randomCoin.symbol}`,
@@ -660,7 +659,8 @@
         let originalCostBasisValue = curHold * avgCost;
         let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPositionValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
 
-        if (curHold > 0.00001 && (unrealizedGainPct >= 2.0 || Math.random() > 0.85)) {
+        // STRICT PROFIT GATE: Absolutely zero random sells. Must hit +2% genuine profit target or higher to sell.
+        if (curHold > 0.00001 && unrealizedGainPct >= 2.0) {
           let sellTokens = curHold;
           let gross = sellTokens * coin.price;
           fee = gross * 0.003;
@@ -690,7 +690,7 @@
           agent.dayPnl += pnlDelta;
           agent.wkPnl += pnlDelta;
 
-          addSystemLog(`[EXEC] ${agent.name} SELL ${coin.symbol} | P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)} | Fee: ${fmtCurrency(fee)}`);
+          addSystemLog(`[EXEC] ${agent.name} SELL ${coin.symbol} | P&L: +${fmtCurrency(pnlDelta)} | Fee: ${fmtCurrency(fee)}`);
           action = 'sell';
         } else if (state.cash > 15.0 && curHold === 0) {
           let spend = state.cash * 0.20;
@@ -715,7 +715,7 @@
 
         let councilText = action === 'buy' ? 
           `Boost directory target acquired. Allocated 20% block into ${coin.symbol}.` :
-          `Profit target hit on ${coin.symbol}. Position closed with P&L: ${fmtCurrency(pnlDelta)}.`;
+          `Genuine +2% profit target hit on ${coin.symbol}. Position closed with P&L: +${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ 
           sender: agent.name, 
