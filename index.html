@@ -340,7 +340,7 @@
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap;">VAULT SWARM V13.5</div>
+          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap;">VAULT SWARM V13.7</div>
         </div>
       </div>
       <div class="header-btns">
@@ -358,7 +358,7 @@
       <span style="font-size: 15px; color: var(--text-dim);">OPERATIONAL MODE:</span>
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
-        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (MEGA-STREAM)</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (TIERED LADDER)</button>
       </div>
     </div>
 
@@ -508,6 +508,7 @@
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
     let peakPrices = loadJSON('solaris_peak_prices', {});
+    let sniperTierState = loadJSON('solaris_sniper_tiers', {}); // tracks ladder steps (0 = none, 1 = tier 1 sold, 2 = tier 2 sold)
 
     const agentDefs = [
       { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#ff2bd6', icon: '👁️', pnl: 0, status: 'ADVISORY' },
@@ -526,11 +527,8 @@
       sweepPct: parseFloat(localStorage.getItem('solaris_sweep_pct')) || 20,
       positions: loadJSON('solaris_positions', {}),
       costBasis: loadJSON('solaris_cost_basis', {}),
-      // remembers each held token's contract address so held coins keep getting live prices
       addresses: loadJSON('solaris_addresses', {}),
-      // NEW: when each position was opened (for the stale-hold exit)
       entryTimes: loadJSON('solaris_entry_times', {}),
-      // ARCHIVE: coins we've traded and sold are blocked from re-entry until their timer expires
       archive: loadJSON('solaris_archive', {}),
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
@@ -539,28 +537,24 @@
       councilFeed: [{ sender: 'RISK_CORE', text: `Mega-stream active [${operationalMode}]. Massive pool indexing enabled.`, color: '#f9f871', time: '00:00' }]
     };
 
-    // cleanup: older versions benched winners too, so release any archived coin that was sold at a profit
     Object.keys(state.archive).forEach(k => { if ((state.archive[k].pnl || 0) > 0) delete state.archive[k]; });
     localStorage.setItem('solaris_archive', JSON.stringify(state.archive));
 
-    // ---- TRADING RULES (tune these) ----
     const HOUR = 60 * 60 * 1000;
-    // how long a sold coin stays in the archive (blocked from rebuy), by how it was sold
     const ARCHIVE_MS = {
-      'STALE EXIT': 24 * HOUR,       // did nothing: bench it for a day
+      'STALE EXIT': 24 * HOUR,
       'STOP-LOSS CUT': 12 * HOUR,
       'TRAILING LOCK': 4 * HOUR,
       'FULL TAKE-PROFIT': 2 * HOUR,
       'MANUAL': 1 * HOUR
     };
-    // ---- ACTIVITY FILTER: only buy coins that are actually trading and moving ----
-    const MIN_VOLUME_H1 = 10000;     // $ traded in the last hour
-    const MIN_TURNOVER = 0.15;       // 1h volume / liquidity
-    const MIN_TXNS_H1 = 40;          // buys + sells in the last hour
-    const MIN_BUY_RATIO = 0.5;       // buys / (buys + sells)
-    const MIN_CHANGE_5M = 0;         // % price change over 5 min (not dropping right now)
-    const MIN_CHANGE_1H = 0;         // % price change over 1 hour
-    const TOP_PICKS = 5;             // choose randomly among the N most active
+    const MIN_VOLUME_H1 = 10000;
+    const MIN_TURNOVER = 0.15;
+    const MIN_TXNS_H1 = 40;
+    const MIN_BUY_RATIO = 0.5;
+    const MIN_CHANGE_5M = 0;
+    const MIN_CHANGE_1H = 0;
+    const TOP_PICKS = 5;
 
     function isActive(c) {
       const buys = c.buysH1 || 0, sells = c.sellsH1 || 0, tx = buys + sells;
@@ -578,12 +572,11 @@
       return (c.volumeH1 / c.liquidity) * (buys / tx) * (1 + Math.max(0, c.change1h || 0) / 50);
     }
 
-    const REPEAT_STALE_LIMIT = 2;              // this many stale exits = long ban
+    const REPEAT_STALE_LIMIT = 2;
     const REPEAT_BAN_MS = 7 * 24 * HOUR;
-    const MAX_HOLD_MS = 20 * 60 * 1000;        // flat positions older than this get closed
-    const STALE_BAND_PCT = 1.5;                // "flat" = within +/- this % of cost
+    const MAX_HOLD_MS = 20 * 60 * 1000;
+    const STALE_BAND_PCT = 1.5;
 
-    // ---- 8-BIT SOUND EFFECTS (synthesized with Web Audio, no audio files) ----
     let soundOn = localStorage.getItem('orbital_sound') !== 'off';
     let audioCtx = null;
 
@@ -671,6 +664,7 @@
       delete state.addresses[sym];
       delete state.entryTimes[sym];
       delete peakPrices[sym];
+      delete sniperTierState[sym];
       archiveCoin(sym, addr, 'MANUAL', pnlDelta);
 
       state.cash += netReturn;
@@ -709,7 +703,6 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // A failed request returns null instead of breaking the whole scan
     async function safeJson(url) {
       try {
         const res = await fetch(url);
@@ -720,7 +713,6 @@
       }
     }
 
-    // ---- LIVE CRYPTO NEWS (CryptoCompare public news API) ----
     let liveNews = [];
     let newsStatus = 'CONNECTING';
     const seenNews = new Set();
@@ -746,14 +738,12 @@
       };
     }
 
-    // Source 1: RSS feeds converted to JSON by rss2json (CORS-friendly, no key)
     async function newsFromRss2Json(name, feedUrl) {
       const data = await safeJson(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`);
       if (!data || data.status !== 'ok' || !Array.isArray(data.items)) return [];
       return data.items.slice(0, 10).map(i => toNewsItem(name, i.title, i.link, i.pubDate));
     }
 
-    // Source 2: CryptoCompare public news API
     async function newsFromCryptoCompare() {
       const data = await safeJson('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
       if (!data || !Array.isArray(data.Data)) return [];
@@ -761,7 +751,6 @@
         toNewsItem((n.source_info && n.source_info.name) || n.source || 'NEWS', n.title, n.url, (n.published_on || 0) * 1000));
     }
 
-    // Source 3: raw RSS through a public CORS proxy, parsed in the browser
     async function newsFromProxy(name, feedUrl) {
       try {
         const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`);
@@ -802,7 +791,6 @@
         liveNews = items.slice(0, 15);
         newsStatus = 'LIVE [' + via + ']';
 
-        // NEWS_HAWK: announce only headlines we haven't seen yet
         const fresh = liveNews.filter(n => !seenNews.has(n.title));
         liveNews.forEach(n => seenNews.add(n.title));
         const toAnnounce = (newsBootstrapped ? fresh.slice(0, 5) : fresh.slice(0, 2)).reverse();
@@ -824,11 +812,10 @@
     }
 
     const IGNORED_SYMBOLS = ['SOL', 'USDC', 'USDT', 'WSOL'];
-    const RECENT_KEEP_MS = 90 * 1000;   // a coin missed by one scan stays in the pool this long (smooths flaky feeds)
+    const RECENT_KEEP_MS = 90 * 1000;
     let scanReq = 0, scanFail = 0, scanCount = 0;
     let lastScan = { seen: 0, ok: 0, req: 0 };
 
-    // fetch wrapper that counts how many feed requests worked
     async function dexJson(url) {
       scanReq++;
       const data = await safeJson(url);
@@ -836,7 +823,6 @@
       return data;
     }
 
-    // SNIPER mode only trades small pools (the pool is still SEEN, it just isn't bought)
     function modeAllows(c) {
       return operationalMode !== 'SNIPER' || c.liquidity <= 300000;
     }
@@ -851,12 +837,10 @@
                           'bull', 'bear', 'cash', 'fire', 'ghost', 'alien', 'robot', 'punk', 'panda', 'monkey', 'duck', 'fish',
                           'goat', 'wojak', 'chad', 'degen', 'based', 'turbo', 'hamster', 'wolf', 'bird', 'ape', 'sigma', 'mini'];
 
-        // Addresses of tokens we currently hold (so they always get live prices)
         const heldAddrs = Object.keys(state.positions)
           .filter(sym => (state.positions[sym] || 0) > 0.00001 && state.addresses[sym])
           .map(sym => state.addresses[sym]);
 
-        // All requests run in parallel; any single failure is tolerated
         const [profilesData, boostsLatest, boostsTop, takeovers, adsLatest, ...searchResults] = await Promise.all([
           dexJson(`https://api.dexscreener.com/token-profiles/latest/v1`),
           dexJson(`https://api.dexscreener.com/token-boosts/latest/v1`),
@@ -866,7 +850,6 @@
           ...keywords.map(k => dexJson(`https://api.dexscreener.com/latest/dex/search?q=${k}`))
         ]);
 
-        // One entry per ticker; if tickers collide, keep the most liquid pool
         const poolMap = new Map();
 
         const consider = (p, badge, isHeld) => {
@@ -895,12 +878,10 @@
           });
         };
 
-        // 1) Keyword search results
         searchResults.forEach(data => {
           if (data && Array.isArray(data.pairs)) data.pairs.forEach(p => consider(p, 'UNVERIFIED', false));
         });
 
-        // 2) Latest token profiles: look up REAL prices in a single batched request
         const addrSet = new Set();
         [profilesData, boostsLatest, boostsTop, takeovers, adsLatest].forEach(list => {
           if (Array.isArray(list)) {
@@ -919,7 +900,6 @@
           if (data && Array.isArray(data.pairs)) data.pairs.forEach(p => consider(p, 'PROFILE', false));
         });
 
-        // 3) Held positions: fetch by exact address and override any same-ticker collision
         if (heldAddrs.length > 0) {
           const heldData = await dexJson(`https://api.dexscreener.com/latest/dex/tokens/${heldAddrs.slice(0, 30).join(',')}`);
           if (heldData && Array.isArray(heldData.pairs)) {
@@ -963,7 +943,6 @@
           addSystemLog(`[SCAN] ${marketCoins.length} coins seen, ${marketCoins.filter(c => isActive(c) && modeAllows(c)).length} hot | feeds ok ${lastScan.ok}/${lastScan.req}`);
         }
 
-        // WHALE_EYE: flag pools with unusually heavy 1h volume relative to liquidity
         const nowTs = Date.now();
         let whaleFired = false;
         marketCoins
@@ -1029,6 +1008,7 @@
       localStorage.setItem('solaris_entry_times', JSON.stringify(state.entryTimes));
       localStorage.setItem('solaris_archive', JSON.stringify(state.archive));
       localStorage.setItem('solaris_peak_prices', JSON.stringify(peakPrices));
+      localStorage.setItem('solaris_sniper_tiers', JSON.stringify(sniperTierState));
       localStorage.setItem('solaris_last_trade', state.lastTradeTime);
     }
 
@@ -1053,6 +1033,7 @@
       state.entryTimes = {};
       state.archive = {};
       peakPrices = {};
+      sniperTierState = {};
       saveState();
       addSystemLog(`[CONFIG] Treasury reset to clean baseline.`);
       renderAll();
@@ -1117,9 +1098,7 @@
       renderAll();
     }
 
-    // Puts a just-sold coin in the archive so it can't be bought again until the timer runs out.
     function archiveCoin(sym, address, tag, pnl) {
-      // winners are never benched: a profitable sale clears the coin's record and it stays buyable
       if (pnl > 0) { delete state.archive[sym]; return; }
       const now = Date.now();
       Object.keys(state.archive).forEach(k => { if (state.archive[k].until <= now) delete state.archive[k]; });
@@ -1136,7 +1115,6 @@
       state.archive[sym] = entry;
     }
 
-    // True if this coin (by ticker OR contract address) is still archived.
     function isArchived(coin) {
       const now = Date.now();
       const bySym = state.archive[coin.symbol];
@@ -1144,7 +1122,6 @@
       const archivedEntry = bySym || byAddr;
       
       if (archivedEntry && archivedEntry.until > now) {
-        // SMART UNBENCH: If a benched coin starts pumping (1h change > 5% or 5m change > 2%), unbench it early!
         if ((coin.change1h || 0) > 5.0 || (coin.change5m || 0) > 2.0) {
           delete state.archive[coin.symbol];
           Object.keys(state.archive).forEach(k => {
@@ -1159,7 +1136,6 @@
       return false;
     }
 
-    // Closes a whole position at the live price: applies fee, profit sweep, cooldown, logs, saves.
     function closePosition(sym, coin, tag, msg) {
       const qty = state.positions[sym];
       if (!qty || qty <= 0) return;
@@ -1175,6 +1151,7 @@
       delete state.addresses[sym];
       delete state.entryTimes[sym];
       delete peakPrices[sym];
+      delete sniperTierState[sym];
       archiveCoin(sym, addr, tag, pnlDelta);
 
       if (pnlDelta > 0 && state.sweepPct > 0) {
@@ -1204,25 +1181,22 @@
       renderAll();
     }
 
-    // =====================================================================
-    // DECISION PROTOCOL: one rulebook, used by both COUNCIL (talks it out) and AUTO (instant)
-    // =====================================================================
-    const COUNCIL_GAP_MS = 1800;                 // pause between speakers (COUNCIL mode only)
-    const REJECT_BLOCK_MS = 15 * 60 * 1000;      // a rejected coin isn't re-proposed for this long
-    const MAX_POSITIONS = 5;                     // RISK_CORE vetoes entries past this
-    const APPROVE_SCORE = 2;                     // total vote needed to approve
+    const COUNCIL_GAP_MS = 1800;
+    const REJECT_BLOCK_MS = 15 * 60 * 1000;
+    const MAX_POSITIONS = 5;
+    const APPROVE_SCORE = 2;
     const PROTOCOL = {
-      flowYes: 0.58,        // WHALE_EYE: YES if buys are at least this share of 1h trades
-      flowNeutral: 0.50,    //            NEUTRAL above this, NO below
-      newsMood: 3,          // NEWS_HAWK: wire mood (bullish minus bearish headlines) needed for YES / NO
-      momYes: 62,           // MACRO_9: momentum score for YES
-      momNo: 40,            //          below this is NO
-      chaseHard: 80,        // KIRKTRON: NO if already up this % in 1h
-      chaseSoft: 40,        //           NEUTRAL if up this % in 1h
-      thinMomentum: 50,     //           NEUTRAL if momentum score below this
-      minLiquidity: 15000,  // RISK_CORE veto: pool liquidity under this ($)
-      parabolic: 150,       //                 veto: up this % in 1h
-      minCashLeft: 8        // ROBBIEBOT: YES if at least this much cash remains ($)
+      flowYes: 0.58,
+      flowNeutral: 0.50,
+      newsMood: 3,
+      momYes: 62,
+      momNo: 40,
+      chaseHard: 80,
+      chaseSoft: 40,
+      thinMomentum: 50,
+      minLiquidity: 15000,
+      parabolic: 150,
+      minCashLeft: 8
     };
     const NEWS_POS = /\b(surge\w*|soar\w*|rall(y|ies)|jump\w*|gain\w*|record|approv\w*|adopt\w*|bull\w*|rises?|breakout|launch\w*|partnership)\b/i;
     const NEWS_NEG = /\b(crash\w*|plunge\w*|hack\w*|exploit\w*|ban|banned|lawsuit|fraud|scam|dump\w*|liquidat\w*|rug|probe|arrest\w*|bear\w*|sell-?off|drops?|falls?|slump\w*)\b/i;
@@ -1244,14 +1218,14 @@
       renderAll();
     }
 
-    function flowVote(x) {                        // WHALE_EYE
+    function flowVote(x) {
       const b = x.buysH1 || 0, sl = x.sellsH1 || 0, tx = Math.max(1, b + sl);
       const ratio = b / tx, turn = x.liquidity > 0 ? x.volumeH1 / x.liquidity : 0;
       const v = ratio >= PROTOCOL.flowYes ? 1 : (ratio >= PROTOCOL.flowNeutral ? 0 : -1);
       return { v, ratio, turn, b, sl };
     }
 
-    function newsCheck(sym) {                     // NEWS_HAWK (data)
+    function newsCheck(sym) {
       const safe = sym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const re = sym.length >= 3 ? new RegExp('\\b' + safe + '\\b', 'i') : null;
       const out = { mentions: [], pos: 0, neg: 0, total: liveNews.length };
@@ -1265,28 +1239,28 @@
       return out;
     }
 
-    function newsVote(nc) {                       // NEWS_HAWK (vote)
+    function newsVote(nc) {
       if (nc.total === 0) return 0;
       if (nc.mentions.length > 0) return nc.mentions[0].v;
       const mood = nc.pos - nc.neg;
       return mood >= PROTOCOL.newsMood ? 1 : (mood <= -PROTOCOL.newsMood ? -1 : 0);
     }
 
-    function momentumOf(x, fv, nv) {              // MACRO_9
+    function momentumOf(x, fv, nv) {
       const m5 = x.change5m || 0, h1 = x.change1h || 0;
       let score = 50 + clamp(m5, -5, 5) * 4 + clamp(h1, -20, 20) + fv * 10 + nv * 8 + Math.min(20, activityScore(x) * 40);
       score = Math.round(clamp(score, 0, 100));
       return { score, v: score >= PROTOCOL.momYes ? 1 : (score < PROTOCOL.momNo ? -1 : 0), h1, m5 };
     }
 
-    function planVote(mom) {                      // KIRKTRON 9001
+    function planVote(mom) {
       if (mom.h1 > PROTOCOL.chaseHard) return { v: -1, why: 'chase' };
       if (mom.h1 > PROTOCOL.chaseSoft) return { v: 0, why: 'late' };
       if (mom.score < PROTOCOL.thinMomentum) return { v: 0, why: 'thin' };
       return { v: 1, why: '' };
     }
 
-    function riskVote(x, spend, sumSoFar, flow, mom) {   // RISK_CORE (can veto)
+    function riskVote(x, spend, sumSoFar, flow, mom) {
       const openN = Object.keys(state.positions).filter(k => (state.positions[k] || 0) > 0.00001).length;
       const reasons = [];
       if (!(x.liquidity >= PROTOCOL.minLiquidity)) reasons.push(`liquidity ${fmtCurrency(x.liquidity || 0)} is under ${fmtCurrency(PROTOCOL.minLiquidity)}`);
@@ -1297,7 +1271,7 @@
       return { v: veto ? -1 : (sumSoFar >= 1 ? 1 : 0), veto, reasons, openN, share: x.liquidity > 0 ? spend / x.liquidity * 100 : 100 };
     }
 
-    function cashVote(spend) {                    // ROBBIEBOT 9000
+    function cashVote(spend) {
       const left = state.cash - spend;
       return { v: left >= PROTOCOL.minCashLeft ? 1 : 0, left };
     }
@@ -1364,6 +1338,7 @@
       state.entryTimes[sym] = now;
       if (targetCoin.address) state.addresses[sym] = targetCoin.address;
       peakPrices[sym] = targetCoin.price;
+      sniperTierState[sym] = 0; // Reset ladder tier tracker for new entry
 
       state.totalFeesPaid += fee;
       state.txCount += 1;
@@ -1512,13 +1487,13 @@
           return;
         }
 
-        const targetProfit = operationalMode === 'SNIPER' ? 5.0 : 2.5;
         const activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
 
         for (const sym of activeSymbols) {
           const coin = marketCoins.find(c => c.symbol === sym);
           if (!coin) continue;
 
+          const qty = state.positions[sym];
           const cost = state.costBasis[sym] || coin.price;
           const gainPct = ((coin.price - cost) / cost) * 100;
 
@@ -1532,18 +1507,82 @@
           if (!state.entryTimes[sym]) state.entryTimes[sym] = now;
           const heldMs = now - state.entryTimes[sym];
 
+          // STOP LOSS
           if (gainPct <= -2.5) {
             closePosition(sym, coin, 'STOP-LOSS CUT', `RISK_CORE cut at ${gainPct.toFixed(1)}%:`);
             return;
           }
-          if (gainPct >= targetProfit) {
-            closePosition(sym, coin, 'FULL TAKE-PROFIT', 'Target secured on');
-            return;
+
+          // SNIPER TIERED LADDER SCALED RIDE LOGIC
+          if (operationalMode === 'SNIPER') {
+            const currentTier = sniperTierState[sym] || 0;
+
+            // Tier 1: +3.5% gain (Break-even + Fees recovery) -> Sell 40%
+            if (gainPct >= 3.5 && currentTier < 1) {
+              const sellQty = qty * 0.40;
+              const gross = sellQty * coin.price;
+              const fee = gross * 0.003;
+              const netReturn = gross - fee;
+              const pnlDelta = netReturn - (sellQty * cost);
+
+              state.positions[sym] = qty * 0.60; // Keep remaining 60%
+              sniperTierState[sym] = 1;
+
+              state.cash += netReturn;
+              state.realizedPnl += pnlDelta;
+              state.totalFeesPaid += fee;
+              state.txCount += 1;
+
+              playSfx('win');
+              addSystemLog(`[SNIPER TIER 1] Sold 40% of ${sym} at +${gainPct.toFixed(1)}% to cover entry & fees! Realized: +${fmtCurrency(pnlDelta)}. Riding remainder.`);
+              saveState();
+              renderAll();
+              return;
+            }
+
+            // Tier 2: +15.0% gain -> Sell another 35% of original bag (leaving 25% runner)
+            if (gainPct >= 15.0 && currentTier < 2) {
+              const currentQty = state.positions[sym];
+              // Sell ~58.3% of the *remaining* 60% bag (which equals 35% of the original size)
+              const sellQty = currentQty * 0.5833; 
+              const gross = sellQty * coin.price;
+              const fee = gross * 0.003;
+              const netReturn = gross - fee;
+              const pnlDelta = netReturn - (sellQty * cost);
+
+              state.positions[sym] = currentQty - sellQty; // Keep final 25% moon runner
+              sniperTierState[sym] = 2;
+
+              state.cash += netReturn;
+              state.realizedPnl += pnlDelta;
+              state.totalFeesPaid += fee;
+              state.txCount += 1;
+
+              playSfx('win');
+              addSystemLog(`[SNIPER TIER 2] Sold 35% of ${sym} at +${gainPct.toFixed(1)}% profit! Locking gains. Final 25% runner active.`);
+              saveState();
+              renderAll();
+              return;
+            }
+
+            // Tier 3 Runner Exit: If pump stalls and drops 15% from peak after hitting tiers
+            if (currentTier >= 1 && dropFromPeakPct >= 15.0) {
+              closePosition(sym, coin, 'SCALED RUNNER EXIT', 'Runner momentum slowed, closed remaining position on');
+              return;
+            }
+          } else {
+            // Standard Growth Mode exits
+            const targetProfit = 2.5;
+            if (gainPct >= targetProfit) {
+              closePosition(sym, coin, 'FULL TAKE-PROFIT', 'Target secured on');
+              return;
+            }
+            if (peakGainPct >= 10.0 && dropFromPeakPct >= 25.0) {
+              closePosition(sym, coin, 'TRAILING LOCK', 'KIRKTRON 9001 secured peak profits on');
+              return;
+            }
           }
-          if (peakGainPct >= 10.0 && dropFromPeakPct >= 25.0) {
-            closePosition(sym, coin, 'TRAILING LOCK', 'KIRKTRON 9001 secured peak profits on');
-            return;
-          }
+
           if (heldMs >= MAX_HOLD_MS && Math.abs(gainPct) < STALE_BAND_PCT) {
             closePosition(sym, coin, 'STALE EXIT', 'No movement, freeing cash from');
             return;
@@ -1785,7 +1824,6 @@
       }
     }
 
-    // ---- ORBITAL TABLE: animated cyberpunk pixel-art war room ----
     const SCENE_W = 256, SCENE_H = 168;
     const SCENE_FONT = '8px "Press Start 2P", monospace';
     const TABLE = { cx: 128, cy: 112, rx: 64, ry: 22 };
