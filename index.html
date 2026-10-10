@@ -296,7 +296,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V14.8</div>
+          <div class="logo-sub">PAPER TRADING // V14.9</div>
         </div>
       </div>
       <div class="header-btns">
@@ -348,6 +348,7 @@ body::after {
       <button class="tab-btn" data-tab="council">Council</button>
       <button class="tab-btn" data-tab="news">News</button>
       <button class="tab-btn" data-tab="positions">Positions</button>
+      <button class="tab-btn" data-tab="ledger">Ledger</button>
       <button class="tab-btn" data-tab="status">Status</button>
       <button class="tab-btn" data-tab="warroom">War Room</button>
       <button class="tab-btn" id="tab-btn-audit" data-tab="audit">Audit</button>
@@ -380,6 +381,16 @@ body::after {
         <div id="positions-list"></div>
         <div class="section-title">// ARCHIVE (LOSERS &amp; FLAT COINS ONLY)</div>
         <div id="archive-list"></div>
+      </div>
+    </div>
+
+    <div id="tab-ledger" class="tab-pane panel">
+      <div class="pane-title">// COMPLETED TRANSACTION LEDGER</div>
+      <div class="terminal-box" id="ledger-container" style="height: 320px;">
+        <div class="position-row position-header" style="grid-template-columns: 1fr 1.2fr 1fr 1fr;">
+          <div>TIME</div><div>ASSET</div><div>TRIGGER</div><div>P&amp;L ($)</div>
+        </div>
+        <div id="ledger-list"></div>
       </div>
     </div>
 
@@ -451,7 +462,7 @@ const CFG = {
   minLiquidity: 30000,
   skipClones: true,
   minAgeMin: 15,
-  stableReservePct: 0.40, // 40% reserved for stable/major accumulation, 60% for memecoin scalps
+  stableReservePct: 0.40,
   launch: {
     maxMc: 5000,
     maxAgeMin: 10,
@@ -726,7 +737,7 @@ function isFresh(c) { return c && Date.now() - c.seenAt < CFG.staleDataMs; }
 
 function isActive(c) {
   if (isStable(c)) {
-    return c.change5m <= -4.0 && c.liquidity >= 500000; // Stable/Major dip trigger
+    return c.change5m <= -4.0 && c.liquidity >= 500000;
   }
   if (c.ageMin !== null && c.ageMin !== undefined && c.ageMin < CFG.minAgeMin) return false;
   const tx = c.buysH1 + c.sellsH1;
@@ -759,7 +770,7 @@ function isBuyable(c) {
 }
 
 function entryScore(c) {
-  if (isStable(c)) return Math.abs(c.change5m) * 10; // High score for major coin dips
+  if (isStable(c)) return Math.abs(c.change5m) * 10;
   if (state.mode === 'LAUNCH') return c.buysH1 * (c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1));
   return activityScore(c);
 }
@@ -998,7 +1009,17 @@ function recordTrade(addr, tag, total) {
   const rs = state.stats.risk || (state.stats.risk = {});
   if (total < (rs.worst || 0)) rs.worst = total;
   if (f && tag !== 'MANUAL') {
-    state.journal.push({ mode: f.mode, b: bucketOf(f), pct: cost > 0 ? (total / cost) * 100 : 0, win, tag, heldMin: Math.round(heldMin) });
+    state.journal.push({
+      symbol: state.symbols[addr] || '?',
+      mode: f.mode,
+      b: bucketOf(f),
+      pct: cost > 0 ? (total / cost) * 100 : 0,
+      pnl: total,
+      win,
+      tag,
+      time: clock(),
+      heldMin: Math.round(heldMin)
+    });
     if (state.journal.length > 300) state.journal.shift();
   }
 }
@@ -1461,6 +1482,7 @@ function renderNow() {
     }
 
     if (activeTab === 'positions') renderPositions();
+    if (activeTab === 'ledger') renderLedger();
     if (activeTab === 'council') renderCouncil();
     if (activeTab === 'news') renderNewsTab();
     if (activeTab === 'status') { renderProtocol(); renderLessons(); }
@@ -1499,6 +1521,19 @@ function renderPositions() {
         <span>${escapeHtml(e.reason)}</span><span>${fmtSigned(e.pnl)}</span><span>${mins}m</span></div>`;
     }).join('') : '<div class="empty-note">NOTHING BENCHED</div>';
   }
+}
+
+function renderLedger() {
+  const list = $('ledger-list');
+  if (!list) return;
+  const history = state.journal || [];
+  list.innerHTML = history.length ? history.slice().reverse().map(j => `
+    <div class="position-row" style="grid-template-columns: 1fr 1.2fr 1fr 1fr; font-size: 13px;">
+      <span style="color: var(--text-dim);">${escapeHtml(j.time || '12:00')}</span>
+      <strong style="color: var(--cyan);">${escapeHtml(j.symbol || 'ASSET')}</strong>
+      <span>${escapeHtml(j.tag)}</span>
+      <span style="color: ${j.win ? 'var(--green)' : 'var(--red)'};">${fmtSigned(j.pnl || 0)}</span>
+    </div>`).join('') : '<div class="empty-note">NO COMPLETED TRANSACTIONS YET</div>';
 }
 
 function renderCouncil() {
