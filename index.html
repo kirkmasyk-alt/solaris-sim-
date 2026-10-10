@@ -340,7 +340,7 @@
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap;">VAULT SWARM V13.2</div>
+          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap;">VAULT SWARM V13.3</div>
         </div>
       </div>
       <div class="header-btns">
@@ -359,6 +359,15 @@
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
         <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (MEGA-STREAM)</button>
+      </div>
+    </div>
+
+    <!-- DECISION MODE: COUNCIL talks it out, AUTO is the instant rule-based protocol -->
+    <div class="panel" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;">
+      <span style="font-size: 15px; color: var(--text-dim);">DECISIONS:</span>
+      <div style="display: flex; gap: 4px;">
+        <button id="btn-dec-council" class="cyber-btn" onclick="setDecisionMode('COUNCIL')">COUNCIL</button>
+        <button id="btn-dec-auto" class="cyber-btn" onclick="setDecisionMode('AUTO')">⚙ AUTO (NO AI)</button>
       </div>
     </div>
 
@@ -447,11 +456,14 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 16px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
+      <div class="status-row"><span>DECISION MODE:</span> <strong id="status-decision" style="color: var(--cyan);">COUNCIL</strong></div>
       <div class="status-row"><span>DISCOVERY FEED:</span> <strong style="color: var(--green);">ONLINE [MEGA-STREAM + LIVE PROFILES]</strong></div>
       <div class="status-row"><span>MAX POSITION CAP:</span> <strong style="color: var(--green);">ACTIVE [20% BANKROLL PER ENTRY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 8/8 MEGA-STREAM AGENTS</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
+      <div style="font-size: 16px; color: var(--cyan); margin: 8px 0 4px;">// BUY PROTOCOL (COUNCIL + AUTO)</div>
+      <div id="protocol-box"></div>
     </div>
 
     <div id="tab-warroom" class="tab-pane panel">
@@ -1137,15 +1149,31 @@
     }
 
     // =====================================================================
-    // THE COUNCIL: agents share findings and vote before any new entry
+    // DECISION PROTOCOL: one rulebook, used by both COUNCIL (talks it out) and AUTO (instant)
+    //   Six voters each return +1 (yes), 0 (neutral) or -1 (no). RISK_CORE can veto.
+    //   A coin is bought only if the total >= APPROVE_SCORE and there is no veto.
     // =====================================================================
-    const COUNCIL_GAP_MS = 1800;                 // pause between speakers
+    const COUNCIL_GAP_MS = 1800;                 // pause between speakers (COUNCIL mode only)
     const REJECT_BLOCK_MS = 15 * 60 * 1000;      // a rejected coin isn't re-proposed for this long
     const MAX_POSITIONS = 5;                     // RISK_CORE vetoes entries past this
     const APPROVE_SCORE = 2;                     // total vote needed to approve
+    const PROTOCOL = {
+      flowYes: 0.58,        // WHALE_EYE: YES if buys are at least this share of 1h trades
+      flowNeutral: 0.50,    //            NEUTRAL above this, NO below
+      newsMood: 3,          // NEWS_HAWK: wire mood (bullish minus bearish headlines) needed for YES / NO
+      momYes: 62,           // MACRO_9: momentum score for YES
+      momNo: 40,            //          below this is NO
+      chaseHard: 80,        // KIRKTRON: NO if already up this % in 1h
+      chaseSoft: 40,        //           NEUTRAL if up this % in 1h
+      thinMomentum: 50,     //           NEUTRAL if momentum score below this
+      minLiquidity: 15000,  // RISK_CORE veto: pool liquidity under this ($)
+      parabolic: 150,       //                 veto: up this % in 1h
+      minCashLeft: 8        // ROBBIEBOT: YES if at least this much cash remains ($)
+    };
     const NEWS_POS = /\b(surge\w*|soar\w*|rall(y|ies)|jump\w*|gain\w*|record|approv\w*|adopt\w*|bull\w*|rises?|breakout|launch\w*|partnership)\b/i;
     const NEWS_NEG = /\b(crash\w*|plunge\w*|hack\w*|exploit\w*|ban|banned|lawsuit|fraud|scam|dump\w*|liquidat\w*|rug|probe|arrest\w*|bear\w*|sell-?off|drops?|falls?|slump\w*)\b/i;
 
+    let decisionMode = localStorage.getItem('orbital_decision_mode') === 'AUTO' ? 'AUTO' : 'COUNCIL';
     let councilBusy = false;
     const proposalBlock = {};
     const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -1154,18 +1182,23 @@
     const voteWord = v => (v > 0 ? 'YES' : (v < 0 ? 'NO' : 'NEUTRAL'));
     const signedPct = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
 
-    function councilSay(id, to, full, tag) {
-      const a = agentDefs.find(x => x.id === id);
-      if (!a) return;
-      state.councilFeed.unshift({ sender: a.name, text: escapeHtml(full), color: a.color, time: new Date().toLocaleTimeString() });
-      state.councilFeed = state.councilFeed.slice(0, 60);
-      agentSpeak(id, tag, 2000);
-      addBeam(id, to || 'table', a.color);
-      try { tone(480 + agentDefs.indexOf(a) * 90, 0, 0.05, 'square', 0.03); } catch (e) {}
+    function setDecisionMode(mode) {
+      decisionMode = mode === 'AUTO' ? 'AUTO' : 'COUNCIL';
+      localStorage.setItem('orbital_decision_mode', decisionMode);
+      agentSpeak('boss', decisionMode);
+      addSystemLog(`[DECISIONS] Mode set to ${decisionMode}${decisionMode === 'AUTO' ? ' (instant rule-based protocol, no meetings)' : ' (agents hold a meeting before each buy)'}`);
       renderAll();
     }
 
-    function newsCheck(sym) {
+    // ---- the six voters (pure rules, no AI needed) ----
+    function flowVote(x) {                        // WHALE_EYE
+      const b = x.buysH1 || 0, sl = x.sellsH1 || 0, tx = Math.max(1, b + sl);
+      const ratio = b / tx, turn = x.liquidity > 0 ? x.volumeH1 / x.liquidity : 0;
+      const v = ratio >= PROTOCOL.flowYes ? 1 : (ratio >= PROTOCOL.flowNeutral ? 0 : -1);
+      return { v, ratio, turn, b, sl };
+    }
+
+    function newsCheck(sym) {                     // NEWS_HAWK (data)
       const safe = sym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const re = sym.length >= 3 ? new RegExp('\\b' + safe + '\\b', 'i') : null;
       const out = { mentions: [], pos: 0, neg: 0, total: liveNews.length };
@@ -1177,6 +1210,90 @@
         if (re && re.test(t)) out.mentions.push({ title: t, v: (p && !q) ? 1 : ((q && !p) ? -1 : 0) });
       });
       return out;
+    }
+
+    function newsVote(nc) {                       // NEWS_HAWK (vote)
+      if (nc.total === 0) return 0;
+      if (nc.mentions.length > 0) return nc.mentions[0].v;
+      const mood = nc.pos - nc.neg;
+      return mood >= PROTOCOL.newsMood ? 1 : (mood <= -PROTOCOL.newsMood ? -1 : 0);
+    }
+
+    function momentumOf(x, fv, nv) {              // MACRO_9
+      const m5 = x.change5m || 0, h1 = x.change1h || 0;
+      let score = 50 + clamp(m5, -5, 5) * 4 + clamp(h1, -20, 20) + fv * 10 + nv * 8 + Math.min(20, activityScore(x) * 40);
+      score = Math.round(clamp(score, 0, 100));
+      return { score, v: score >= PROTOCOL.momYes ? 1 : (score < PROTOCOL.momNo ? -1 : 0), h1, m5 };
+    }
+
+    function planVote(mom) {                      // KIRKTRON 9001
+      if (mom.h1 > PROTOCOL.chaseHard) return { v: -1, why: 'chase' };
+      if (mom.h1 > PROTOCOL.chaseSoft) return { v: 0, why: 'late' };
+      if (mom.score < PROTOCOL.thinMomentum) return { v: 0, why: 'thin' };
+      return { v: 1, why: '' };
+    }
+
+    function riskVote(x, spend, sumSoFar, flow, mom) {   // RISK_CORE (can veto)
+      const openN = Object.keys(state.positions).filter(k => (state.positions[k] || 0) > 0.00001).length;
+      const reasons = [];
+      if (!(x.liquidity >= PROTOCOL.minLiquidity)) reasons.push(`liquidity ${fmtCurrency(x.liquidity || 0)} is under ${fmtCurrency(PROTOCOL.minLiquidity)}`);
+      if (openN >= MAX_POSITIONS) reasons.push(`all ${MAX_POSITIONS} position slots are full`);
+      if (mom.h1 > PROTOCOL.parabolic) reasons.push(`price is parabolic (${signedPct(mom.h1)} in 1h)`);
+      if (flow.v < 0 && mom.score < PROTOCOL.thinMomentum) reasons.push('sellers lead and momentum is weak');
+      const veto = reasons.length > 0;
+      return { v: veto ? -1 : (sumSoFar >= 1 ? 1 : 0), veto, reasons, openN, share: x.liquidity > 0 ? spend / x.liquidity * 100 : 100 };
+    }
+
+    function cashVote(spend) {                    // ROBBIEBOT 9000
+      const left = state.cash - spend;
+      return { v: left >= PROTOCOL.minCashLeft ? 1 : 0, left };
+    }
+
+    // Runs the whole rulebook on one snapshot of a coin.
+    function scoreProposal(x) {
+      const spend = state.cash * 0.20;
+      const flow = flowVote(x);
+      const nv = newsVote(newsCheck(x.symbol));
+      const mom = momentumOf(x, flow.v, nv);
+      const plan = planVote(mom);
+      const risk = riskVote(x, spend, flow.v + nv + mom.v + plan.v, flow, mom);
+      const cash = cashVote(spend);
+      const votes = { announcer: flow.v, news: nv, macro: mom.v, finance: plan.v, risk: risk.v, cfo: cash.v };
+      const total = Object.values(votes).reduce((a, b) => a + b, 0);
+      return { votes, total, veto: risk.veto, reasons: risk.reasons, approved: total >= APPROVE_SCORE && !risk.veto, mom };
+    }
+
+    const VOTER_NAMES = { announcer: 'WHALE', news: 'NEWS', macro: 'MACRO', finance: 'KIRK', risk: 'RISK', cfo: 'ROBBIE' };
+
+    // AUTO mode: same rulebook, decided instantly, no meeting
+    function autoDecide(seed) {
+      const sym = seed.symbol, short = sym.slice(0, 8);
+      const x = marketCoins.find(c => c.symbol === sym) || seed;
+      const r = scoreProposal(x);
+      sceneVotes = {};
+      Object.keys(r.votes).forEach(id => {
+        sceneVotes[id] = { v: r.votes[id], until: performance.now() + 25000 };
+        const a = agentDefs.find(d => d.id === id);
+        if (a) addBeam(id, 'table', a.color);
+      });
+      const list = Object.keys(VOTER_NAMES).map(k => `${VOTER_NAMES[k]} ${sgn(r.votes[k])}`).join(', ');
+      const verdict = r.approved ? 'APPROVED, buying.' : (r.veto ? 'REJECTED by RISK_CORE veto: ' + r.reasons.join('; ') + '.' : `REJECTED, not enough conviction (need ${sgn(APPROVE_SCORE)}).`);
+      councilSay('boss', ['table'], `AUTO PROTOCOL on ${sym}: ${list} = ${sgn(r.total)}. ${verdict}`, r.approved ? 'AUTO GO' : 'AUTO NO');
+      setVerdict(`${short} ${r.approved ? 'OK' : 'NO'} ${sgn(r.total)}`, r.approved ? '#39ff88' : '#ff3b5c');
+      if (r.approved && executeEntry(sym)) return;
+      proposalBlock[sym] = Date.now();
+      state.lastTradeTime = Date.now();
+    }
+
+    function councilSay(id, to, full, tag) {
+      const a = agentDefs.find(x => x.id === id);
+      if (!a) return;
+      state.councilFeed.unshift({ sender: a.name, text: escapeHtml(full), color: a.color, time: new Date().toLocaleTimeString() });
+      state.councilFeed = state.councilFeed.slice(0, 60);
+      agentSpeak(id, tag, 2000);
+      addBeam(id, to || 'table', a.color);
+      try { tone(480 + agentDefs.indexOf(a) * 90, 0, 0.05, 'square', 0.03); } catch (e) {}
+      renderAll();
     }
 
     function executeEntry(sym) {
@@ -1208,6 +1325,7 @@
       return true;
     }
 
+    // COUNCIL mode: the same rulebook, but the agents talk it through, one at a time
     async function holdCouncil(seed) {
       if (councilBusy) return;
       councilBusy = true;
@@ -1233,26 +1351,22 @@
 
         // 2) WHALE_EYE reads the flow
         x = latest();
-        const b = x.buysH1 || 0, sl = x.sellsH1 || 0, tx = Math.max(1, b + sl);
-        const ratio = b / tx, turn = x.volumeH1 / x.liquidity;
-        const fv = ratio >= 0.58 ? 1 : (ratio >= 0.5 ? 0 : -1);
-        brief.flow = { v: fv, ratio, turn };
-        councilSay('announcer', ['trader'], `${fmtCurrency(x.volumeH1)} traded in the last hour on ${fmtCurrency(x.liquidity)} liquidity (${Math.round(turn * 100)}% turnover). ${b} buys vs ${sl} sells, ${Math.round(ratio * 100)}% buying. ${fv > 0 ? 'Buyers are in control.' : (fv < 0 ? 'Sellers are leading.' : 'Flow is balanced.')} My vote: ${voteWord(fv)}.`, `FLOW ${sgn(fv)}`);
-        vote('announcer', fv);
+        const fl = flowVote(x);
+        brief.flow = fl;
+        councilSay('announcer', ['trader'], `${fmtCurrency(x.volumeH1)} traded in the last hour on ${fmtCurrency(x.liquidity)} liquidity (${Math.round(fl.turn * 100)}% turnover). ${fl.b} buys vs ${fl.sl} sells, ${Math.round(fl.ratio * 100)}% buying. ${fl.v > 0 ? 'Buyers are in control.' : (fl.v < 0 ? 'Sellers are leading.' : 'Flow is balanced.')} My vote: ${voteWord(fl.v)}.`, `FLOW ${sgn(fl.v)}`);
+        vote('announcer', fl.v);
         await sleep(COUNCIL_GAP_MS);
 
         // 3) NEWS_HAWK checks the wire
         const nc = newsCheck(sym);
-        let nv = 0, ntext;
+        const nv = newsVote(nc);
+        let ntext;
         if (nc.total === 0) {
           ntext = 'The news wire is offline, so I have nothing on this one.';
         } else if (nc.mentions.length > 0) {
           const m = nc.mentions[0];
-          nv = m.v;
           ntext = `${nc.mentions.length} headline(s) name ${sym}. Top one: "${m.title.slice(0, 70)}". That reads ${nv > 0 ? 'bullish' : (nv < 0 ? 'bearish' : 'neutral')}.`;
         } else {
-          const mood = nc.pos - nc.neg;
-          nv = mood >= 3 ? 1 : (mood <= -3 ? -1 : 0);
           ntext = `No headlines name ${sym}. Wire mood: ${nc.pos} bullish vs ${nc.neg} bearish out of ${nc.total} headlines.`;
         }
         brief.news = { v: nv };
@@ -1262,53 +1376,41 @@
 
         // 4) MACRO_9 combines flow + news + price action
         x = latest();
-        const m5 = x.change5m || 0, h1 = x.change1h || 0;
-        let score = 50 + clamp(m5, -5, 5) * 4 + clamp(h1, -20, 20) + brief.flow.v * 10 + brief.news.v * 8 + Math.min(20, activityScore(x) * 40);
-        score = Math.round(clamp(score, 0, 100));
-        const mv = score >= 62 ? 1 : (score < 40 ? -1 : 0);
-        brief.momentum = { score, v: mv, h1, m5 };
-        councilSay('macro', ['announcer', 'news'], `Price ${signedPct(m5)} over 5m and ${signedPct(h1)} over 1h. Blending WHALE_EYE's flow (${voteWord(brief.flow.v)}) with NEWS_HAWK's mood (${voteWord(brief.news.v)}) gives momentum ${score}/100. My vote: ${voteWord(mv)}.`, `MOM ${score}`);
-        vote('macro', mv);
+        const mom = momentumOf(x, brief.flow.v, brief.news.v);
+        brief.momentum = mom;
+        councilSay('macro', ['announcer', 'news'], `Price ${signedPct(mom.m5)} over 5m and ${signedPct(mom.h1)} over 1h. Blending WHALE_EYE's flow (${voteWord(brief.flow.v)}) with NEWS_HAWK's mood (${voteWord(brief.news.v)}) gives momentum ${mom.score}/100. My vote: ${voteWord(mom.v)}.`, `MOM ${mom.score}`);
+        vote('macro', mom.v);
         await sleep(COUNCIL_GAP_MS);
 
         // 5) KIRKTRON 9001 lays out the exit plan and checks it fits
         const target = operationalMode === 'SNIPER' ? 5 : 2.5;
-        let kv = 1, warn = '';
-        if (brief.momentum.h1 > 80) { kv = -1; warn = ` It's already ${signedPct(h1)} in 1h, that's a chase.`; }
-        else if (brief.momentum.h1 > 40) { kv = 0; warn = ` It's already ${signedPct(h1)} in 1h, we'd be late.`; }
-        else if (brief.momentum.score < 50) { kv = 0; warn = ` MACRO_9's ${brief.momentum.score}/100 is thin for this target.`; }
-        councilSay('finance', ['macro'], `Exit plan: take profit at +${target}%, cut at -2.5%, trail a 25% drop off any +10% peak, bench it if flat after ${Math.round(MAX_HOLD_MS / 60000)} min. Fees are about 0.6% round trip, so the net target is +${(target - 0.6).toFixed(1)}%.${warn} My vote: ${voteWord(kv)}.`, `PLAN ${sgn(kv)}`);
-        vote('finance', kv);
+        const pl = planVote(mom);
+        const warn = pl.why === 'chase' ? ` It's already ${signedPct(mom.h1)} in 1h, that's a chase.`
+          : (pl.why === 'late' ? ` It's already ${signedPct(mom.h1)} in 1h, we'd be late.`
+          : (pl.why === 'thin' ? ` MACRO_9's ${mom.score}/100 is thin for this target.` : ''));
+        councilSay('finance', ['macro'], `Exit plan: take profit at +${target}%, cut at -2.5%, trail a 25% drop off any +10% peak, bench it if flat after ${Math.round(MAX_HOLD_MS / 60000)} min. Fees are about 0.6% round trip, so the net target is +${(target - 0.6).toFixed(1)}%.${warn} My vote: ${voteWord(pl.v)}.`, `PLAN ${sgn(pl.v)}`);
+        vote('finance', pl.v);
         await sleep(COUNCIL_GAP_MS);
 
         // 6) RISK_CORE checks everyone's work and can veto
         x = latest();
-        const openN = Object.keys(state.positions).filter(k => (state.positions[k] || 0) > 0.00001).length;
-        const share = spend / x.liquidity * 100;
         const sumSoFar = tally();
-        const reasons = [];
-        if (x.liquidity < 15000) reasons.push(`liquidity ${fmtCurrency(x.liquidity)} is under $15k`);
-        if (openN >= MAX_POSITIONS) reasons.push(`all ${MAX_POSITIONS} position slots are full`);
-        if (brief.momentum.h1 > 150) reasons.push(`price is parabolic (${signedPct(h1)} in 1h)`);
-        if (brief.flow.v < 0 && brief.momentum.score < 50) reasons.push('sellers lead and momentum is weak');
-        brief.veto = reasons.length > 0;
-        const rv = brief.veto ? -1 : (sumSoFar >= 1 ? 1 : 0);
-        councilSay('risk', ['finance', 'macro'], `Tally so far ${sgn(sumSoFar)}. Liquidity ${fmtCurrency(x.liquidity)}, our entry would be ${share.toFixed(2)}% of the pool, ${openN}/${MAX_POSITIONS} slots used. ${brief.veto ? 'VETO: ' + reasons.join('; ') + '.' : 'No red flags.'} My vote: ${brief.veto ? 'NO' : voteWord(rv)}.`, brief.veto ? 'VETO!' : `RISK ${sgn(rv)}`);
-        vote('risk', rv);
+        const rk = riskVote(x, spend, sumSoFar, brief.flow, brief.momentum);
+        brief.veto = rk.veto;
+        councilSay('risk', ['finance', 'macro'], `Tally so far ${sgn(sumSoFar)}. Liquidity ${fmtCurrency(x.liquidity)}, our entry would be ${rk.share.toFixed(2)}% of the pool, ${rk.openN}/${MAX_POSITIONS} slots used. ${rk.veto ? 'VETO: ' + rk.reasons.join('; ') + '.' : 'No red flags.'} My vote: ${rk.veto ? 'NO' : voteWord(rk.v)}.`, rk.veto ? 'VETO!' : `RISK ${sgn(rk.v)}`);
+        vote('risk', rk.v);
         await sleep(COUNCIL_GAP_MS);
 
         // 7) ROBBIEBOT 9000 checks the money
-        const left = state.cash - spend;
-        const cv = left >= 8 ? 1 : 0;
-        councilSay('cfo', ['trader'], `Bankroll ${fmtCurrency(state.cash)}, vault ${fmtCurrency(state.vault)}. After this entry ${fmtCurrency(left)} stays liquid. If it wins I sweep ${state.sweepPct}% of the profit to the vault. My vote: ${voteWord(cv)}.`, `CASH ${sgn(cv)}`);
-        vote('cfo', cv);
+        const cs = cashVote(spend);
+        councilSay('cfo', ['trader'], `Bankroll ${fmtCurrency(state.cash)}, vault ${fmtCurrency(state.vault)}. After this entry ${fmtCurrency(cs.left)} stays liquid. If it wins I sweep ${state.sweepPct}% of the profit to the vault. My vote: ${voteWord(cs.v)}.`, `CASH ${sgn(cs.v)}`);
+        vote('cfo', cs.v);
         await sleep(COUNCIL_GAP_MS);
 
         // 8) ORCHESTRATOR-1 tallies and decides
         const total = tally();
         const approved = total >= APPROVE_SCORE && !brief.veto;
-        const names = { announcer: 'WHALE', news: 'NEWS', macro: 'MACRO', finance: 'KIRK', risk: 'RISK', cfo: 'ROBBIE' };
-        const list = Object.keys(names).map(k => `${names[k]} ${sgn(brief.votes[k] || 0)}`).join(', ');
+        const list = Object.keys(VOTER_NAMES).map(k => `${VOTER_NAMES[k]} ${sgn(brief.votes[k] || 0)}`).join(', ');
         const verdict = approved ? 'APPROVED. ALPHA_X, execute.' : (brief.veto ? 'REJECTED by RISK_CORE veto.' : `REJECTED, not enough conviction (need ${sgn(APPROVE_SCORE)}).`);
         councilSay('boss', ['table'], `Votes: ${list} = ${sgn(total)}. ${verdict}`, approved ? 'GO!' : 'NO GO');
         setVerdict(`${short} ${approved ? 'OK' : 'NO'} ${sgn(total)}`, approved ? '#39ff88' : '#ff3b5c');
@@ -1431,7 +1533,7 @@
 
         const pool = active.slice(0, TOP_PICKS);
         const targetCoin = pool[Math.floor(Math.random() * pool.length)];
-        holdCouncil(targetCoin);
+        if (decisionMode === 'AUTO') autoDecide(targetCoin); else holdCouncil(targetCoin);
       } catch (err) {
         console.error("Loop error:", err);
       }
@@ -1484,6 +1586,28 @@
 
         const modeLabel = document.getElementById('status-mode-label');
         if (modeLabel) modeLabel.textContent = `${operationalMode} MODE`;
+
+        const sd = document.getElementById('status-decision');
+        if (sd) sd.textContent = decisionMode === 'AUTO' ? 'AUTO (NO MEETINGS)' : 'COUNCIL';
+        const bdc = document.getElementById('btn-dec-council'), bda = document.getElementById('btn-dec-auto');
+        if (bdc && bda) {
+          bdc.className = `cyber-btn ${decisionMode === 'COUNCIL' ? 'active-mode' : ''}`;
+          bda.className = `cyber-btn ${decisionMode === 'AUTO' ? 'active-mode' : ''}`;
+        }
+        const protoBox = document.getElementById('protocol-box');
+        if (protoBox) {
+          const P = PROTOCOL;
+          const rows = [
+            ['1 FLOW (WHALE_EYE)', `YES at ${Math.round(P.flowYes * 100)}%+ buys, NO under ${Math.round(P.flowNeutral * 100)}%`],
+            ['2 NEWS (NEWS_HAWK)', `named headline, else wire mood +/-${P.newsMood}`],
+            ['3 MOMENTUM (MACRO_9)', `YES ${P.momYes}+, NO under ${P.momNo}`],
+            ['4 PLAN (KIRKTRON)', `NO if +${P.chaseHard}%/1h, NEUTRAL at +${P.chaseSoft}% or momentum under ${P.thinMomentum}`],
+            ['5 RISK (RISK_CORE)', `VETO: liquidity under ${fmtCurrency(P.minLiquidity)}, ${MAX_POSITIONS} slots full, +${P.parabolic}%/1h, sellers + weak momentum`],
+            ['6 CASH (ROBBIEBOT)', `YES if ${fmtCurrency(P.minCashLeft)}+ stays liquid`],
+            ['BUY RULE', `total ${sgn(APPROVE_SCORE)} or more and no veto`]
+          ];
+          protoBox.innerHTML = rows.map(r => `<div class="status-row"><span>${r[0]}</span><strong style="color: var(--green); text-align: right;">${r[1]}</strong></div>`).join('');
+        }
 
         const btnGrowth = document.getElementById('btn-mode-growth');
         const btnSniper = document.getElementById('btn-mode-sniper');
