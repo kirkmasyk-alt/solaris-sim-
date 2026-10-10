@@ -439,7 +439,7 @@
           <div>ACTION</div>
         </div>
         <div id="positions-list"></div>
-        <div style="font-size: 15px; color: var(--amber); margin: 10px 0 4px; border-bottom: 2px solid var(--border-color);">// ARCHIVE (BLOCKED FROM REBUY)</div>
+        <div style="font-size: 15px; color: var(--amber); margin: 10px 0 4px; border-bottom: 2px solid var(--border-color);">// ARCHIVE (LOSERS &amp; FLAT COINS ONLY)</div>
         <div id="archive-list"></div>
       </div>
     </div>
@@ -514,6 +514,10 @@
       lastTradeTime: 0,
       councilFeed: [{ sender: 'RISK_CORE', text: `Mega-stream active [${operationalMode}]. Massive pool indexing enabled.`, color: '#f9f871', time: '00:00' }]
     };
+
+    // cleanup: older versions benched winners too, so release any archived coin that was sold at a profit
+    Object.keys(state.archive).forEach(k => { if ((state.archive[k].pnl || 0) > 0) delete state.archive[k]; });
+    localStorage.setItem('solaris_archive', JSON.stringify(state.archive));
 
     // ---- TRADING RULES (tune these) ----
     const HOUR = 60 * 60 * 1000;
@@ -1062,6 +1066,8 @@
 
     // Puts a just-sold coin in the archive so it can't be bought again until the timer runs out.
     function archiveCoin(sym, address, tag, pnl) {
+      // winners are never benched: a profitable sale clears the coin's record and it stays buyable
+      if (pnl > 0) { delete state.archive[sym]; return; }
       const now = Date.now();
       Object.keys(state.archive).forEach(k => { if (state.archive[k].until <= now) delete state.archive[k]; });
       const prev = state.archive[sym] || { stale: 0, count: 0 };
