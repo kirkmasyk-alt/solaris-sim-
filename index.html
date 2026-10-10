@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V9.0</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V9.1</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -272,30 +272,35 @@
       <div class="net-worth-value" id="net-worth">$100.00</div>
     </div>
 
-    <div class="stats-grid">
+    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
       <div class="stat-box">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div class="stat-label">Realized P&L</div>
-          <button class="cyber-btn danger" style="font-size: 7px; padding: 1px 3px;" onclick="resetPnlOnly()">ZERO</button>
-        </div>
+        <div class="stat-label">Realized P&L</div>
         <div class="stat-value green" id="realized-pnl">+$0.00</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Unrealized P&L</div>
+        <div class="stat-value green" id="unrealized-pnl">+$0.00</div>
       </div>
       <div class="stat-box">
         <div class="stat-label">Total Fees Paid</div>
         <div class="stat-value amber" id="total-fees">$0.00</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Bot Bankroll (Active)</div>
+        <div class="stat-label">Bot Bankroll</div>
         <div class="stat-value amber" id="cash-balance">$100.00</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Main Vault (Cold)</div>
+        <div class="stat-label">Main Vault</div>
         <div class="stat-value purple" id="vault-balance">$0.00</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Boost Pools</div>
+        <div class="stat-value cyan" id="scanned-count">0 ACTIVE</div>
       </div>
     </div>
 
     <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 10px;">
-      <span>BOOST POOLS: <strong id="scanned-count" style="color: var(--cyan);">0 ACTIVE</strong></span>
+      <span>STATUS: <strong style="color: var(--green);">OPTIMIZED SWARM</strong></span>
       <span>SWEEP: <strong style="color: var(--purple);" id="sweep-display">20% TO VAULT</strong></span>
     </div>
 
@@ -314,7 +319,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Whale Watcher intelligence bridge active.</div>
+        <div style="color: var(--green);">[00:01] Unrealized P&L tracking engine active.</div>
       </div>
     </div>
 
@@ -324,11 +329,11 @@
     </div>
 
     <div id="tab-news" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & CONVICTION FEED</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & BREAKING DISPATCHES</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // INTELLIGENCE FEED</div>
-          <div class="feed-text">Analyzing token boost signals for swarm execution validation...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // VERIFIED FEED</div>
+          <div class="feed-text">Monitoring strict profit targets across boost pools...</div>
         </div>
       </div>
     </div>
@@ -349,7 +354,7 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">DEX SCREENER BOOSTS API</strong></div>
-      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--green);">ONLINE [SIGNAL LINKED]</strong></div>
+      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--green);">ONLINE [STRICT FILTER]</strong></div>
       <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
@@ -367,11 +372,11 @@
 
   <script>
     let marketCoins = [
-      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 2.5, liquidity: 1450000, conviction: 'HIGH' }
+      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 2.5, liquidity: 1450000 }
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Whale Watcher wire linked directly to swarm execution filters.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Whale Watcher wire monitoring verified financial dispatches.', time: '00:00' }
     ];
 
     const agentDefs = [
@@ -394,7 +399,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'WHALE_EYE', text: 'Intelligence bridge active. Validating trade targets against live wire.', color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'WHALE_EYE', text: 'Unrealized P&L tracking engine active.', color: '#38bdf8', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -649,8 +654,6 @@
         }
 
         const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
-        
-        // WHALE WATCHER INTELLIGENCE GATE: Agents only buy coins that have verified bullish momentum on the news wire
         const verifiedSignals = marketCoins.filter(c => c.conviction === 'BULLISH' || c.change24h >= 0);
         const coin = verifiedSignals.length > 0 ? verifiedSignals[Math.floor(Math.random() * verifiedSignals.length)] : marketCoins[0];
         if (!coin || coin.price <= 0) return;
@@ -738,16 +741,30 @@
     function renderAll() {
       try {
         let portfolioVal = 0;
+        let totalCostBasisVal = 0;
         Object.keys(state.positions).forEach(sym => {
           let coin = marketCoins.find(c => c.symbol === sym);
-          if (coin) portfolioVal += (state.positions[sym] || 0) * coin.price;
+          let qty = state.positions[sym] || 0;
+          let cost = state.costBasis[sym] || (coin ? coin.price : 1);
+          if (coin && qty > 0) {
+            portfolioVal += qty * coin.price;
+            totalCostBasisVal += qty * cost;
+          }
         });
+
+        let unrealizedPnlVal = portfolioVal > 0 ? portfolioVal - totalCostBasisVal : 0;
         let netWorth = state.cash + state.vault + portfolioVal;
 
         const nw = document.getElementById('net-worth');
         if (nw) {
           nw.textContent = fmtCurrency(netWorth);
           nw.className = `net-worth-value ${netWorth >= 100 ? 'green' : 'red'}`;
+        }
+
+        const unRealEl = document.getElementById('unrealized-pnl');
+        if (unRealEl) {
+          unRealEl.textContent = (unrealizedPnlVal >= 0 ? '+' : '') + fmtCurrency(unrealizedPnlVal);
+          unRealEl.className = `stat-value ${unrealizedPnlVal >= 0 ? 'green' : 'red'}`;
         }
 
         const cb = document.getElementById('cash-balance');
