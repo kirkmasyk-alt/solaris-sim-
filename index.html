@@ -296,7 +296,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V14.5</div>
+          <div class="logo-sub">PAPER TRADING // V14.6</div>
         </div>
       </div>
       <div class="header-btns">
@@ -505,18 +505,18 @@ const AGENT_JOBS = {
   boss: 'Supervises the swarm. In COUNCIL mode it asks Gemini to approve or veto each entry, and it enforces the rules learned from past trades.',
   announcer: 'Watches the market feeds and flags coins whose volume, buy pressure and liquidity pass the buy filters.',
   news: 'Reads crypto headlines from RSS feeds and announces new ones as they appear.',
-  finance: 'Tracks opportunity cost. Closes trades that sit idle too long and reports how much cash is unused.',
+  finance: 'KIRKTRON 9001: Tracks opportunity cost, capital allocation, and major coin dip accumulation.',
   risk: 'Stop-loss firewall. Cuts any position that falls past its stop and reports total exposure.',
   trader: 'The ONLY agent that trades. Opens positions, books partial sells and take-profits.',
   macro: 'Momentum scorer. Ranks candidates by activity and buy pressure and picks the entry. Judged by how its picks perform.',
-  cfo: 'Vault sweeper. Moves a share of every winning trade into the vault.'
+  cfo: 'ROBBIEBOT 9000: Vault sweeper. Moves a share of every winning trade into the secure vault.'
 };
 
 const AGENTS = [
   { id: 'boss',      name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor',     color: '#ff2bd6' },
   { id: 'announcer', name: 'WHALE_EYE',      role: 'Whale Flow Watcher',      color: '#00f0ff' },
   { id: 'news',      name: 'NEWS_HAWK',      role: 'Live News Announcer',     color: '#f9f871' },
-  { id: 'finance',   name: 'KIRKTRON 9001',  role: 'Opportunity Cost Engine', color: '#4d8bff' },
+  { id: 'finance',   name: 'KIRKTRON 9001',  role: 'Value Accumulation Engine', color: '#4d8bff' },
   { id: 'risk',      name: 'RISK_CORE',      role: 'Stop-Loss Firewall',      color: '#ff9a3c' },
   { id: 'trader',    name: 'ALPHA_X',        role: 'Swap Executor',           color: '#ff3b5c' },
   { id: 'macro',     name: 'MACRO_9',        role: 'Momentum Scorer',         color: '#b45cff' },
@@ -925,7 +925,7 @@ function sellTokens(addr, coin, qty) {
     bump('cfo', 'swept', sweep); bump('cfo', 'sweeps');
     state.cash += net - sweep;
     state.vault += sweep;
-    agentSay('cfo', `Swept ${fmtCurrency(sweep)} of profit into the vault.`);
+    agentSay('cfo', `ROBBIEBOT 9000: Swept ${fmtCurrency(sweep)} of profit into the secure vault.`);
   } else {
     state.cash += net;
   }
@@ -1064,8 +1064,8 @@ function openPosition(coin) {
   state.fees += fee;
   state.txCount += 1;
   playSfx('buy');
-  log(`[BUY] ALPHA_X entered ${coin.symbol} | Cost: ${fmtCurrency(spend)}`);
-  agentSay('trader', `Entered ${coin.symbol} with ${fmtCurrency(spend)}.`);
+  log(`[BUY] KIRKTRON 9001 allocated ${fmtCurrency(spend)} to ${coin.symbol}`);
+  agentSay('finance', `KIRKTRON 9001: Deployed ${fmtCurrency(spend)} into ${coin.symbol}. Opportunity cost optimized.`);
   saveState();
   renderAll();
   return true;
