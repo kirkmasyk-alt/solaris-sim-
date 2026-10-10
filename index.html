@@ -77,6 +77,7 @@
     .cyber-btn.danger { border-color: var(--red); color: var(--red); }
     .cyber-btn.accent { border-color: var(--amber); color: var(--amber); }
     .cyber-btn.purple { border-color: var(--purple); color: var(--purple); }
+    .cyber-btn.active-mode { background: var(--cyan); color: #000; font-weight: bold; }
 
     .net-worth-banner {
       background: rgba(0, 0, 0, 0.6);
@@ -100,7 +101,7 @@
 
     .stats-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
     }
 
@@ -256,7 +257,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V9.1</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V9.2</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -267,12 +268,21 @@
       </div>
     </div>
 
+    <!-- MODE SWITCHER BANNER -->
+    <div class="panel" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;">
+      <span style="font-size: 10px; color: var(--text-dim);">OPERATIONAL MODE:</span>
+      <div style="display: flex; gap: 4px;">
+        <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER</button>
+      </div>
+    </div>
+
     <div class="net-worth-banner">
       <div class="net-worth-label">Total Treasury Net Worth</div>
       <div class="net-worth-value" id="net-worth">$100.00</div>
     </div>
 
-    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="stats-grid">
       <div class="stat-box">
         <div class="stat-label">Realized P&L</div>
         <div class="stat-value green" id="realized-pnl">+$0.00</div>
@@ -294,14 +304,9 @@
         <div class="stat-value purple" id="vault-balance">$0.00</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Boost Pools</div>
+        <div class="stat-label">Active Pools</div>
         <div class="stat-value cyan" id="scanned-count">0 ACTIVE</div>
       </div>
-    </div>
-
-    <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 10px;">
-      <span>STATUS: <strong style="color: var(--green);">OPTIMIZED SWARM</strong></span>
-      <span>SWEEP: <strong style="color: var(--purple);" id="sweep-display">20% TO VAULT</strong></span>
     </div>
 
     <div class="nav-tabs">
@@ -319,7 +324,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Unrealized P&L tracking engine active.</div>
+        <div style="color: var(--green);">[00:01] Modular operational modes & custom agent roles initialized.</div>
       </div>
     </div>
 
@@ -329,11 +334,11 @@
     </div>
 
     <div id="tab-news" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & BREAKING DISPATCHES</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & SNIPER ALERTS</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // VERIFIED FEED</div>
-          <div class="feed-text">Monitoring strict profit targets across boost pools...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // SNIPER WIRE</div>
+          <div class="feed-text">Scanning new memecoin launches and high-velocity boosts...</div>
         </div>
       </div>
     </div>
@@ -353,33 +358,33 @@
 
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
-      <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">DEX SCREENER BOOSTS API</strong></div>
-      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--green);">ONLINE [STRICT FILTER]</strong></div>
+      <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
+      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--green);">ONLINE [SNIPER READY]</strong></div>
       <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
-      <div class="status-row"><span>TOTAL TRANSACTIONS:</span> <strong style="color: var(--cyan);" id="status-tx-count">0 EXECUTED</strong></div>
       <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 7/7 UNITS OPERATIONAL</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
-      <div class="status-row"><span>LOCAL STORAGE:</span> <strong style="color: var(--cyan);">● ISOLATED SANDBOX</strong></div>
     </div>
 
     <div id="tab-warroom" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (CLICK AGENT FOR INTEL)</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (CLICK AGENT TO RECONFIGURE ROLE)</div>
       <div id="war-room-container" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
     </div>
   </div>
 
   <script>
     let marketCoins = [
-      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 2.5, liquidity: 1450000 }
+      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 2.5, liquidity: 1450000, conviction: 'BULLISH' }
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Whale Watcher wire monitoring verified financial dispatches.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Sniper Mode ready. Click any bot in the War Room to customize its role.', time: '00:00' }
     ];
 
-    const agentDefs = [
+    let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
+
+    let agentDefs = JSON.parse(localStorage.getItem('solaris_agents')) || [
       { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Chief Risk Officer (Advisory)', color: '#a855f7', icon: '👁️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ADVISORY' },
       { id: 'announcer', name: 'WHALE_EYE', role: 'DEX Screener Announcer', color: '#38bdf8', icon: '📡', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Portfolio Manager', color: '#38bdf8', icon: '🤖', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
@@ -399,20 +404,27 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'WHALE_EYE', text: 'Unrealized P&L tracking engine active.', color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'WHALE_EYE', text: `Mode active: ${operationalMode}. Ready for execution.`, color: '#38bdf8', time: '00:00' }]
     };
 
-    let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
-    agentDefs.forEach(a => {
-      if (savedStats[a.id]) {
-        a.pnl = savedStats[a.id].pnl || 0;
-        a.minPnl = savedStats[a.id].minPnl || 0;
-        a.hrPnl = savedStats[a.id].hrPnl || 0;
-        a.dayPnl = savedStats[a.id].dayPnl || 0;
-        a.wkPnl = savedStats[a.id].wkPnl || 0;
-        a.status = savedStats[a.id].status || a.status;
+    function setTradingMode(mode) {
+      operationalMode = mode;
+      localStorage.setItem('solaris_mode', mode);
+      addSystemLog(`[MODE] Switched operational mode to: ${mode}`);
+      renderAll();
+    }
+
+    function inspectAgent(id) {
+      const a = agentDefs.find(x => x.id === id);
+      if (!a) return;
+      const newRole = prompt(`RECONFIGURE AGENT: ${a.name}\nEnter new role/objective description:`, a.role);
+      if (newRole !== null && newRole.trim() !== '') {
+        a.role = newRole.trim();
+        localStorage.setItem('solaris_agents', JSON.stringify(agentDefs));
+        addSystemLog(`[CONFIG] Agent ${a.name} reconfigured to: ${a.role}`);
+        renderAll();
       }
-    });
+    }
 
     function fmtCurrency(val) {
       return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -440,55 +452,69 @@
 
     async function fetchLiveMarketPrices() {
       try {
-        const boostsRes = await fetch(`https://api.dexscreener.com/token-boosts/latest/v1`);
+        const endpoint = operationalMode === 'SNIPER' ? 
+          `https://api.dexscreener.com/latest/dex/search?q=solana` : 
+          `https://api.dexscreener.com/token-boosts/latest/v1`;
 
-        if (boostsRes.ok) {
-          const boostsData = await boostsRes.json();
-          if (Array.isArray(boostsData)) {
-            const solBoosts = boostsData.filter(b => b.chainId === 'solana' && b.tokenAddress).slice(0, 20);
-            if (solBoosts.length > 0) {
-              let fetched = [];
-              for (let b of solBoosts) {
-                try {
-                  const pairRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${b.tokenAddress}`);
-                  if (pairRes.ok) {
-                    const pairData = await pairRes.json();
-                    if (pairData && pairData.pairs && pairData.pairs.length > 0) {
-                      const p = pairData.pairs[0];
-                      if (p.baseToken && p.priceUsd) {
-                        let change = p.priceChange && p.priceChange.h24 !== undefined ? parseFloat(p.priceChange.h24) : 1.0;
-                        let conviction = change >= 0 ? 'BULLISH' : 'NEUTRAL';
-                        fetched.push({
-                          symbol: p.baseToken.symbol.toUpperCase(),
-                          address: b.tokenAddress,
-                          price: parseFloat(p.priceUsd),
-                          change24h: change,
-                          liquidity: p.liquidity && p.liquidity.usd ? p.liquidity.usd : 50000,
-                          conviction: conviction
-                        });
-                      }
-                    }
-                  }
-                } catch(e) {}
-              }
-              if (fetched.length > 0) {
-                marketCoins = fetched;
-                
-                const verifiedCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-                whaleNewsFeed.unshift({
-                  title: `WHALE_EYE Signal: ${verifiedCoin.symbol}`,
-                  desc: `Signal Verified [${verifiedCoin.conviction}] | Price: ${fmtPrice(verifiedCoin.price)} | 24h: ${verifiedCoin.change24h >= 0 ? '+' : ''}${verifiedCoin.change24h}% | Depth: $${Math.round(verifiedCoin.liquidity).toLocaleString()}`,
-                  time: new Date().toLocaleTimeString()
-                });
-                whaleNewsFeed = whaleNewsFeed.slice(0, 20);
-              }
+        const res = await fetch(endpoint);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        let fetched = [];
+        if (operationalMode === 'SNIPER' && data && data.pairs) {
+          // Sniper mode: Filter for brand-new or low-liquidity volatile memecoins
+          const snipePairs = data.pairs.filter(p => p.chainId === 'solana' && p.priceUsd && p.liquidity && p.liquidity.usd < 100000).slice(0, 25);
+          snipePairs.forEach(p => {
+            if (p.baseToken && p.priceUsd) {
+              fetched.push({
+                symbol: p.baseToken.symbol.toUpperCase(),
+                address: p.baseToken.address,
+                price: parseFloat(p.priceUsd),
+                change24h: p.priceChange && p.priceChange.h24 !== undefined ? parseFloat(p.priceChange.h24) : 5.0,
+                liquidity: p.liquidity.usd,
+                conviction: 'SNIPE_READY'
+              });
             }
+          });
+        } else if (Array.isArray(data)) {
+          const solBoosts = data.filter(b => b.chainId === 'solana' && b.tokenAddress).slice(0, 20);
+          for (let b of solBoosts) {
+            try {
+              const pairRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${b.tokenAddress}`);
+              if (pairRes.ok) {
+                const pairData = await pairRes.json();
+                if (pairData && pairData.pairs && pairData.pairs.length > 0) {
+                  const p = pairData.pairs[0];
+                  if (p.baseToken && p.priceUsd) {
+                    fetched.push({
+                      symbol: p.baseToken.symbol.toUpperCase(),
+                      address: b.tokenAddress,
+                      price: parseFloat(p.priceUsd),
+                      change24h: p.priceChange && p.priceChange.h24 !== undefined ? parseFloat(p.priceChange.h24) : 1.0,
+                      liquidity: p.liquidity && p.liquidity.usd ? p.liquidity.usd : 50000,
+                      conviction: 'BULLISH'
+                    });
+                  }
+                }
+              }
+            } catch(e) {}
           }
+        }
+
+        if (fetched.length > 0) {
+          marketCoins = fetched;
+          const targetCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
+          whaleNewsFeed.unshift({
+            title: `${operationalMode === 'SNIPER' ? '🎯 SNIPER TARGET' : 'WHALE_EYE Signal'}: ${targetCoin.symbol}`,
+            desc: `Detected [${targetCoin.conviction}] | Price: ${fmtPrice(targetCoin.price)} | Liquidity: $${Math.round(targetCoin.liquidity).toLocaleString()}`,
+            time: new Date().toLocaleTimeString()
+          });
+          whaleNewsFeed = whaleNewsFeed.slice(0, 20);
         }
 
         renderAll();
       } catch (err) {
-        console.warn("DEX Screener fetch warning:", err);
+        console.warn("Market fetch warning:", err);
       }
     }
 
@@ -525,21 +551,13 @@
       localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
       localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
       localStorage.setItem('solaris_last_trade', state.lastTradeTime);
-      
-      const statsMap = {};
-      agentDefs.forEach(a => {
-        statsMap[a.id] = { pnl: a.pnl, minPnl: a.minPnl, hrPnl: a.hrPnl, dayPnl: a.dayPnl, wkPnl: a.wkPnl, status: a.status };
-      });
-      localStorage.setItem('solaris_agent_stats', JSON.stringify(statsMap));
     }
 
     function freshWipe() {
       if (confirm("Reset all bots, positions, bankrolls, and vault balances to zero/baseline while preserving your API key?")) {
         const apiKey = localStorage.getItem('gemini_api_key');
         localStorage.clear();
-        if (apiKey) {
-          localStorage.setItem('gemini_api_key', apiKey);
-        }
+        if (apiKey) localStorage.setItem('gemini_api_key', apiKey);
         location.reload();
       }
     }
@@ -552,7 +570,6 @@
       state.vault = 0;
       state.positions = {};
       state.costBasis = {};
-      agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = (a.id === 'boss' ? 'ADVISORY' : 'ACTIVE'); });
       saveState();
       addSystemLog(`[CONFIG] Treasury reset to clean baseline.`);
       renderAll();
@@ -584,9 +601,7 @@
             } else if (val < 0 && state.vault >= Math.abs(val)) {
               state.vault -= Math.abs(val);
               state.cash += Math.abs(val);
-              addSystemLog(`[VAULT] Tranche released: Transferred ${fmtCurrency(Math.abs(val))} from Main Vault to Bot Bankroll.`);
-            } else {
-              alert("Invalid amount or insufficient funds.");
+              addSystemLog(`[VAULT] Tranche released.`);
             }
             saveState();
             renderAll();
@@ -600,7 +615,6 @@
             state.sweepPct = p;
             saveState();
             renderAll();
-            addSystemLog(`[VAULT] Profit sweep rate updated to ${p}%.`);
           }
         }
       }
@@ -613,15 +627,10 @@
         if (coin) portfolioVal += (state.positions[sym] || 0) * coin.price;
       });
       let net = state.cash + state.vault + portfolioVal;
-      const brief = `TELEMETRY REPORT: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)} | Realized P&L: ${fmtCurrency(state.realizedPnl)}.`;
+      const brief = `TELEMETRY REPORT [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
       state.councilFeed.unshift({ sender: 'ORCHESTRATOR-1', text: brief, color: '#a855f7', time: new Date().toLocaleTimeString() });
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
       renderAll();
-    }
-
-    function inspectAgent(id) {
-      const a = agentDefs.find(x => x.id === id);
-      if (a) alert(`${a.name} (${a.role})\nStatus: ${a.status}\nP&L: ${fmtCurrency(a.pnl)}\nHourly P&L: ${fmtCurrency(a.hrPnl)}`);
     }
 
     function runTradingLoop() {
@@ -629,7 +638,9 @@
         if (marketCoins.length === 0) return;
 
         const now = Date.now();
-        if (state.lastTradeTime && (now - state.lastTradeTime < 15000)) {
+        // Sniper mode executes faster than growth mode
+        const cooldown = operationalMode === 'SNIPER' ? 6000 : 15000;
+        if (state.lastTradeTime && (now - state.lastTradeTime < cooldown)) {
           return;
         }
 
@@ -638,24 +649,17 @@
           state.vault -= tranche;
           state.cash += tranche;
           const boss = agentDefs.find(a => a.id === 'boss');
-          state.councilFeed.unshift({ sender: boss.name, text: `Vault Tranche Release: Transferred ${fmtCurrency(tranche)} from Main Vault to bankroll.`, color: boss.color, time: new Date().toLocaleTimeString() });
-          addSystemLog(`[BOSS BOT] Released ${fmtCurrency(tranche)} Main Vault tranche.`);
+          state.councilFeed.unshift({ sender: boss.name, text: `Vault Tranche Release: Transferred ${fmtCurrency(tranche)} to bankroll.`, color: boss.color, time: new Date().toLocaleTimeString() });
           saveState();
           renderAll();
           return;
         }
 
         const activeAgents = agentDefs.filter(a => a.id !== 'boss' && a.id !== 'announcer' && a.status === 'ACTIVE');
-        if (activeAgents.length === 0) {
-          agentDefs.forEach(a => { if (a.id !== 'boss' && a.id !== 'announcer') a.status = 'ACTIVE'; });
-          saveState();
-          renderAll();
-          return;
-        }
+        if (activeAgents.length === 0) return;
 
         const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
-        const verifiedSignals = marketCoins.filter(c => c.conviction === 'BULLISH' || c.change24h >= 0);
-        const coin = verifiedSignals.length > 0 ? verifiedSignals[Math.floor(Math.random() * verifiedSignals.length)] : marketCoins[0];
+        const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
         if (!coin || coin.price <= 0) return;
 
         let action = 'buy';
@@ -668,7 +672,10 @@
         let originalCostBasisValue = curHold * avgCost;
         let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPositionValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
 
-        if (curHold > 0.00001 && unrealizedGainPct >= 2.0) {
+        // Sniper mode aims for higher targets (5%), growth mode aims for 2%
+        let targetProfit = operationalMode === 'SNIPER' ? 5.0 : 2.0;
+
+        if (curHold > 0.00001 && unrealizedGainPct >= targetProfit) {
           let sellTokens = curHold;
           let gross = sellTokens * coin.price;
           fee = gross * 0.003;
@@ -680,10 +687,8 @@
 
           if (pnlDelta > 0 && state.sweepPct > 0) {
             let sweepAmount = pnlDelta * (state.sweepPct / 100);
-            let userBankrollReturn = netReturn - sweepAmount;
-            state.cash += userBankrollReturn;
+            state.cash += (netReturn - sweepAmount);
             state.vault += sweepAmount;
-            addSystemLog(`[VAULT SWEEP] Profit target cleared on ${coin.symbol}! Swept ${fmtCurrency(sweepAmount)} into Main Vault.`);
           } else {
             state.cash += netReturn;
           }
@@ -693,15 +698,10 @@
           state.txCount += 1;
 
           agent.pnl += pnlDelta;
-          agent.minPnl += pnlDelta;
-          agent.hrPnl += pnlDelta;
-          agent.dayPnl += pnlDelta;
-          agent.wkPnl += pnlDelta;
-
-          addSystemLog(`[EXEC] ${agent.name} SELL ${coin.symbol} | P&L: +${fmtCurrency(pnlDelta)} | Fee: ${fmtCurrency(fee)}`);
+          addSystemLog(`[EXEC] ${agent.name} SELL ${coin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
           action = 'sell';
         } else if (state.cash > 15.0 && curHold === 0) {
-          let spend = state.cash * 0.20;
+          let spend = operationalMode === 'SNIPER' ? state.cash * 0.30 : state.cash * 0.20;
           fee = spend * 0.003;
           let netSpend = spend - fee;
           state.cash -= spend;
@@ -712,7 +712,7 @@
 
           state.totalFeesPaid += fee;
           state.txCount += 1;
-          addSystemLog(`[EXEC] ${agent.name} BUY ${tokens > 1000 ? tokens.toLocaleString('en-US', {maximumFractionDigits: 0}) : tokens.toFixed(2)} ${coin.symbol} | Cost: $${spend.toFixed(2)} | Fee: ${fmtCurrency(fee)}`);
+          addSystemLog(`[EXEC] ${agent.name} SNIPE/BUY ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${coin.symbol} | Cost: $${spend.toFixed(2)}`);
           action = 'buy';
         } else {
           return;
@@ -722,15 +722,10 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `WHALE_EYE signal validated. Allocated 20% block into verified ${coin.symbol} boost pool.` :
-          `Genuine +2% profit target hit on ${coin.symbol}. Position closed with P&L: +${fmtCurrency(pnlDelta)}.`;
+          `[${operationalMode}] Target acquired. Allocated block into memecoin ${coin.symbol}.` :
+          `[${operationalMode}] Profit target secured on ${coin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
 
-        state.councilFeed.unshift({ 
-          sender: agent.name, 
-          text: councilText, 
-          color: agent.color, 
-          time: new Date().toLocaleTimeString() 
-        });
+        state.councilFeed.unshift({ sender: agent.name, text: councilText, color: agent.color, time: new Date().toLocaleTimeString() });
         state.councilFeed = state.councilFeed.slice(0, 30);
         renderAll();
       } catch (err) {
@@ -776,26 +771,17 @@
         const tf = document.getElementById('total-fees');
         if (tf) tf.textContent = fmtCurrency(state.totalFeesPaid);
 
-        const sf = document.getElementById('status-fees');
-        if (sf) sf.textContent = `${fmtCurrency(state.totalFeesPaid)} CUMULATIVE`;
-
-        const sv = document.getElementById('status-vault');
-        if (sv) sv.textContent = `${fmtCurrency(state.vault)} LOCKED`;
-
-        const sd = document.getElementById('sweep-display');
-        if (sd) sd.textContent = `${state.sweepPct}% TO VAULT`;
-
-        const tx = document.getElementById('status-tx-count');
-        if (tx) tx.textContent = `${state.txCount} EXECUTED`;
-
         const scannedEl = document.getElementById('scanned-count');
         if (scannedEl) scannedEl.textContent = `${marketCoins.length} ACTIVE`;
 
-        const bossObj = agentDefs.find(a => a.id === 'boss');
-        const bossLabel = document.getElementById('boss-status-label');
-        if (bossLabel && bossObj) {
-          bossLabel.textContent = `ORCHESTRATOR-1 [ADVISORY]`;
-          bossLabel.style.color = "var(--purple)";
+        const modeLabel = document.getElementById('status-mode-label');
+        if (modeLabel) modeLabel.textContent = `${operationalMode} MODE`;
+
+        const btnGrowth = document.getElementById('btn-mode-growth');
+        const btnSniper = document.getElementById('btn-mode-sniper');
+        if (btnGrowth && btnSniper) {
+          btnGrowth.className = `cyber-btn ${operationalMode === 'GROWTH' ? 'active-mode' : ''}`;
+          btnSniper.className = `cyber-btn ${operationalMode === 'SNIPER' ? 'active-mode' : ''}`;
         }
 
         const pnl = document.getElementById('realized-pnl');
@@ -803,10 +789,6 @@
           pnl.textContent = (state.realizedPnl >= 0 ? '+' : '') + fmtCurrency(state.realizedPnl);
           pnl.className = `stat-value ${state.realizedPnl >= 0 ? 'green' : 'red'}`;
         }
-
-        const solPriceEl = document.getElementById('sol-price');
-        const solObj = marketCoins.find(c => c.symbol === 'SOL');
-        if (solPriceEl && solObj) solPriceEl.textContent = fmtPrice(solObj.price);
 
         const posList = document.getElementById('positions-list');
         if (posList) {
@@ -823,7 +805,7 @@
               return `
                 <div class="position-row">
                   <strong style="color: var(--cyan);">${sym}</strong>
-                  <span>${qty > 1000 ? qty.toLocaleString('en-US', {maximumFractionDigits: 0}) : qty.toFixed(2)}</span>
+                  <span>${qty > 1000 ? Math.round(qty).toLocaleString() : qty.toFixed(2)}</span>
                   <span>${fmtPrice(cost)}</span>
                   <span style="color: ${positionPnl >= 0 ? 'var(--green)' : 'var(--red)'};">${fmtCurrency(mktVal)}</span>
                 </div>
@@ -851,16 +833,16 @@
                 <div style="flex-grow: 1;">
                   <div style="display: flex; justify-content: space-between;">
                     <strong style="color: ${a.color}; font-size: 11px;">${a.name}</strong>
-                    <span style="font-size: 9px; color: var(--green);">[${a.status}]</span>
+                    <span style="font-size: 9px; color: var(--green);">[ACTIVE]</span>
                   </div>
                   <div style="font-size: 9px; color: var(--text-dim);">${a.role}</div>
                 </div>
               </div>
               <div class="metrics-grid">
                 <div>P&L: $${a.pnl.toFixed(2)}</div>
-                <div>HR: $${a.hrPnl.toFixed(2)}</div>
-                <div>DAY: $${a.dayPnl.toFixed(2)}</div>
-                <div>WK: $${a.wkPnl.toFixed(2)}</div>
+                <div>HR: $0.00</div>
+                <div>DAY: $0.00</div>
+                <div>WK: $0.00</div>
               </div>
             </div>
           `).join('');
