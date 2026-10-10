@@ -68,13 +68,15 @@ body::after {
 }
 
 .row-panel {
+  flex-wrap: wrap;
+  gap: 6px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
 }
 .row-label { font-size: 15px; color: var(--text-dim); }
-.row-btns { display: flex; gap: 4px; }
+.row-btns { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 
 .header {
   display: flex;
@@ -301,6 +303,7 @@ body::after {
       <div class="row-btns">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
         <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER</button>
+        <button id="btn-mode-launch" class="cyber-btn" onclick="setTradingMode('LAUNCH')">🚀 LAUNCH</button>
       </div>
     </div>
 
@@ -374,7 +377,7 @@ body::after {
       <div class="status-row"><span>DECISION MODE:</span> <strong id="status-decision" style="color: var(--cyan);">COUNCIL</strong></div>
       <div class="status-row"><span>MARKET FEED:</span> <strong id="status-feed" style="color: var(--text-dim);">CONNECTING</strong></div>
       <div class="status-row"><span>NEWS FEED:</span> <strong id="status-news" style="color: var(--text-dim);">CONNECTING</strong></div>
-      <div class="status-row"><span>MAX POSITION CAP:</span> <strong style="color: var(--green);">20% OF BANKROLL</strong></div>
+      <div class="status-row"><span>MAX POSITION CAP:</span> <strong id="status-cap" style="color: var(--green);">20% OF BANKROLL</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
       <div class="pane-title" style="margin-top: 8px;">// BUY PROTOCOL</div>
@@ -413,7 +416,22 @@ const CFG = {
   minTxnsH1: 40,
   minBuyRatio: 0.5,
   topPicks: 5,
-  minAgeMin: 15,           // ignore pools younger than this (launch-minute rugs)
+  minAgeMin: 15,           // GROWTH/SNIPER ignore pools younger than this (launch-minute rugs)
+  launch: {                // LAUNCH mode: buy right as a pool gets liquidity
+    maxMc: 5000,           // only coins at or under this market cap
+    maxAgeMin: 10,         // pool must be this new
+    minLiq: 2000,
+    minTxns: 10,
+    minBuyRatio: 0.55,
+    entryPct: 0.05,        // small size: most launches fail
+    baseSlippage: 0.03,    // launch pools are volatile and thin
+    stopPct: -20,
+    tier1Pct: 100,         // sell 50% at 2x (recovers cost)
+    tier2Pct: 400,         // sell half of the rest at 5x
+    trailPct: 30,          // runner exits on a 30% drop from peak
+    staleMs: 30 * 60 * 1000,
+    stalePct: 10           // out if under +10% after the stale time
+  },
   sniperMaxLiq: 300000,
   councilBlockMs: 5 * 60 * 1000,
   geminiModel: 'gemini-3.5-flash'   // Google retires models often: check ai.google.dev/gemini-api/docs/deprecations
@@ -592,6 +610,7 @@ function toCoin(p) {
     volumeH1: (p.volume && p.volume.h1) || 0,
     buysH1: tx.buys || 0, sellsH1: tx.sells || 0,
     ageMin: p.pairCreatedAt ? (Date.now() - p.pairCreatedAt) / 60000 : null,
+    marketCap: p.marketCap || p.fdv || null,
     seenAt: Date.now()
   };
 }
@@ -615,6 +634,7 @@ function toCoinGT(p) {
     volumeH1: parseFloat(vol.h1) || 0,
     buysH1: tx.buys || 0, sellsH1: tx.sells || 0,
     ageMin: isNaN(created) ? null : (Date.now() - created) / 60000,
+    marketCap: parseFloat(a.market_cap_usd) || parseFloat(a.fdv_usd) || null,
     seenAt: Date.now()
   };
 }
@@ -637,6 +657,22 @@ function activityScore(c) {
   return (c.volumeH1 / c.liquidity) * (c.buysH1 / tx) * (1 + Math.max(0, c.change1h) / 50);
 }
 
+function isLaunchCandidate(c) {
+  const L = CFG.launch;
+  if (c.ageMin === null || c.ageMin === undefined || c.ageMin > L.maxAgeMin) return false;
+  if (!(c.marketCap > 0) || c.marketCap > L.maxMc) return false;
+  if (c.liquidity < L.minLiq) return false;
+  const tx = c.buysH1 + c.sellsH1;
+  return tx >= L.minTxns && c.buysH1 / tx >= L.minBuyRatio;
+}
+
+function isBuyable(c) { return state.mode === 'LAUNCH' ? isLaunchCandidate(c) : (isActive(c) && modeAllows(c)); }
+
+function entryScore(c) {
+  if (state.mode === 'LAUNCH') return c.buysH1 * (c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1));
+  return activityScore(c);
+}
+
 function classifyDipOrDump(c) {
   const tx = Math.max(1, c.buysH1 + c.sellsH1);
   const buyRatio = c.buysH1 / tx;
@@ -649,7 +685,7 @@ function classifyDipOrDump(c) {
 }
 
 function heldAddrs() { return Object.keys(state.positions).filter(a => state.positions[a] > 0.00001); }
-function hotCoins() { return Array.from(market.values()).filter(c => isFresh(c) && isActive(c) && modeAllows(c)); }
+function hotCoins() { return Array.from(market.values()).filter(c => isFresh(c) && isBuyable(c)); }
 
 async function scanMarket() {
   if (scanning) return;
@@ -666,6 +702,7 @@ async function scanMarket() {
       Promise.all([
         getJson(`${GT}/trending_pools?page=1`),
         getJson(`${GT}/new_pools?page=1`),
+        getJson(`${GT}/new_pools?page=2`),
         getJson(`${GT}/pools?page=1&sort=h24_volume_usd_desc`),
         getJson(`${GT}/pools?page=1&sort=h24_tx_count_desc`)
       ]),
@@ -762,7 +799,10 @@ async function fetchLiveNews() {
 }
 
 /* ============================== TRADING ============================== */
-function slippage(usd, liquidity) { return CFG.baseSlippage + Math.min(0.05, usd / Math.max(1, liquidity)); }
+function slippage(usd, liquidity) {
+  const base = state.mode === 'LAUNCH' ? CFG.launch.baseSlippage : CFG.baseSlippage;
+  return base + Math.min(0.15, (2 * usd) / Math.max(1, liquidity));
+}
 
 function isArchived(coin) {
   const e = state.archive[coin.address];
@@ -830,7 +870,7 @@ function manualSellPosition(addr) {
 function openPosition(coin) {
   const addr = coin.address;
   if (state.positions[addr] > 0 || state.cash <= CFG.minCash || isArchived(coin)) return false;
-  const spend = state.cash * CFG.entryPct;
+  const spend = state.cash * (state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct);
   const fee = spend * CFG.feeRate;
   const fill = coin.price * (1 + slippage(spend, coin.liquidity));
   state.cash -= spend;
@@ -868,9 +908,27 @@ function runExits() {
     const healthyDip = classifyDipOrDump(coin) === 'HEALTHY DIP';
     const tier = state.tiers[addr] || 0;
 
-    if (gain <= CFG.stopLossPct) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
+    const launch = state.mode === 'LAUNCH';
+    const L = CFG.launch;
+    if (gain <= (launch ? L.stopPct : CFG.stopLossPct)) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
 
-    if (state.mode === 'SNIPER') {
+    if (launch) {
+      if (gain >= L.tier1Pct && tier < 1) {
+        const q = state.positions[addr] * 0.5;
+        const pnl = sellTokens(addr, coin, q);
+        state.positions[addr] -= q; state.tiers[addr] = 1;
+        playSfx('win'); log(`[LAUNCH TIER 1] Sold 50% of ${sym}, cost recovered | P&L: ${fmtSigned(pnl)}`);
+        saveState(); continue;
+      }
+      if (gain >= L.tier2Pct && tier < 2) {
+        const q = state.positions[addr] * 0.5;
+        const pnl = sellTokens(addr, coin, q);
+        state.positions[addr] -= q; state.tiers[addr] = 2;
+        playSfx('win'); log(`[LAUNCH TIER 2] Sold half the rest of ${sym} | P&L: ${fmtSigned(pnl)}`);
+        saveState(); continue;
+      }
+      if (tier >= 1 && drop >= L.trailPct && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Trailing stop hit on'); continue; }
+    } else if (state.mode === 'SNIPER') {
       if (gain >= 3.5 && tier < 1) {
         const q = state.positions[addr] * 0.40;
         const pnl = sellTokens(addr, coin, q);
@@ -891,7 +949,7 @@ function runExits() {
       continue;
     }
 
-    if (tier === 0 && now - (state.entryTimes[addr] || now) > CFG.staleExitMs && gain < 1) {
+    if (tier === 0 && now - (state.entryTimes[addr] || now) > (launch ? L.staleMs : CFG.staleExitMs) && gain < (launch ? L.stalePct : 1)) {
       closePosition(addr, coin, 'STALE EXIT', 'Going nowhere, closed');
     }
   }
@@ -901,7 +959,7 @@ async function askCouncil(c) {
   const key = localStorage.getItem('gemini_api_key');
   const prompt = 'You are a risk council for a PAPER-TRADING Solana memecoin simulator. Decide whether to open a position. ' +
     'Reply ONLY with JSON: {"approve": boolean, "reason": string under 140 characters}.\nData: ' +
-    JSON.stringify({ symbol: c.symbol, priceUsd: c.price, liquidityUsd: c.liquidity, volume1hUsd: c.volumeH1, buys1h: c.buysH1, sells1h: c.sellsH1, change5mPct: c.change5m, change1hPct: c.change1h, change24hPct: c.change24h, trend: classifyDipOrDump(c), mode: state.mode });
+    JSON.stringify({ symbol: c.symbol, priceUsd: c.price, liquidityUsd: c.liquidity, volume1hUsd: c.volumeH1, buys1h: c.buysH1, sells1h: c.sellsH1, change5mPct: c.change5m, change1hPct: c.change1h, change24hPct: c.change24h, marketCapUsd: c.marketCap, ageMinutes: c.ageMin === null ? null : Math.round(c.ageMin), trend: classifyDipOrDump(c), mode: state.mode });
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CFG.geminiModel}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
@@ -920,8 +978,8 @@ async function considerEntry() {
   if (state.cash <= CFG.minCash || councilBusy) return;
   const now = Date.now();
   const candidates = Array.from(market.values()).filter(c =>
-    isFresh(c) && !(state.positions[c.address] > 0) && !(proposalBlock[c.address] > now) && modeAllows(c) && isActive(c) && !isArchived(c)
-  ).sort((a, b) => activityScore(b) - activityScore(a));
+    isFresh(c) && !(state.positions[c.address] > 0) && !(proposalBlock[c.address] > now) && isBuyable(c) && !isArchived(c)
+  ).sort((a, b) => entryScore(b) - entryScore(a));
   if (!candidates.length) return;
 
   const pick = candidates[Math.floor(Math.random() * Math.min(candidates.length, CFG.topPicks))];
@@ -956,7 +1014,7 @@ function runTradingLoop() {
 
 /* ============================== UI ACTIONS ============================== */
 function setTradingMode(mode) {
-  state.mode = mode === 'SNIPER' ? 'SNIPER' : 'GROWTH';
+  state.mode = ['GROWTH', 'SNIPER', 'LAUNCH'].includes(mode) ? mode : 'GROWTH';
   saveState();
   log(`[MODE] Operational mode: ${state.mode}`);
   renderAll();
@@ -1139,9 +1197,10 @@ function renderNow() {
     setText('status-decision', state.decision);
     setText('status-feed', feedStatus);
     setText('status-news', newsStatus);
+    setText('status-cap', `${Math.round((state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct) * 100)}% OF BANKROLL`);
     setText('btn-sound', state.sound ? 'SND ON' : 'SND OFF');
 
-    ['growth', 'sniper'].forEach(m => { const b = $('btn-mode-' + m); if (b) b.classList.toggle('active-mode', state.mode === m.toUpperCase()); });
+    ['growth', 'sniper', 'launch'].forEach(m => { const b = $('btn-mode-' + m); if (b) b.classList.toggle('active-mode', state.mode === m.toUpperCase()); });
     ['council', 'auto'].forEach(m => { const b = $('btn-dec-' + m); if (b) b.classList.toggle('active-mode', state.decision === m.toUpperCase()); });
 
     const keyEl = $('key-status');
@@ -1218,10 +1277,18 @@ function renderNewsTab() {
 function renderProtocol() {
   const box = $('protocol-box');
   if (!box) return;
-  const lines = [
+  const L = CFG.launch;
+  const lines = state.mode === 'LAUNCH' ? [
+    `Pool age ≤ ${L.maxAgeMin} min, market cap ≤ ${fmtCurrency(L.maxMc)}`,
+    `Liquidity ≥ ${fmtCurrency(L.minLiq)}, txns ≥ ${L.minTxns}, buy ratio ≥ ${Math.round(L.minBuyRatio * 100)}%`,
+    `Entry: ${Math.round(L.entryPct * 100)}% of bankroll`,
+    `Stop-loss ${L.stopPct}% | 50% out at +${L.tier1Pct}%, half the rest at +${L.tier2Pct}%, runner trails ${L.trailPct}%`,
+    `Stale: out after ${L.staleMs / 60000} min if under +${L.stalePct}%`,
+    `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ${(L.baseSlippage * 100).toFixed(0)}%+ slippage per side`
+  ] : [
     `Volume 1h ≥ ${fmtCurrency(CFG.minVolumeH1)}`,
     `Turnover (vol/liquidity) ≥ ${CFG.minTurnover}`,
-    `Txns 1h ≥ ${CFG.minTxnsH1}, buy ratio ≥ ${Math.round(CFG.minBuyRatio * 100)}%`,
+    `Txns 1h ≥ ${CFG.minTxnsH1}, buy ratio ≥ ${Math.round(CFG.minBuyRatio * 100)}%, pool age ≥ ${CFG.minAgeMin} min`,
     `Entry: ${Math.round(CFG.entryPct * 100)}% of bankroll, random pick from top ${CFG.topPicks}`,
     `Stop-loss ${CFG.stopLossPct}% | ${state.mode === 'SNIPER' ? 'Tiers: 40% at +3.5%, 35% at +15%, runner trails 15%' : `Take-profit +${CFG.takeProfitPct}%`}`,
     `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ${(CFG.baseSlippage * 100).toFixed(1)}%+ slippage per side`
