@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V9.4</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V9.6</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -323,7 +323,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Capital rotation and specialized bot specialties online.</div>
+        <div style="color: var(--green);">[00:01] Rotating token discovery engine initialized.</div>
       </div>
     </div>
 
@@ -333,11 +333,11 @@
     </div>
 
     <div id="tab-news" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & SNIPER ALERTS</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & NEW DEPLOYMENTS</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // WIRE ACTIVE</div>
-          <div class="feed-text">Streaming verified boost signals for autonomous execution...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // ROTATING WIRE</div>
+          <div class="feed-text">Scanning latest token profiles and fresh Solana deployments...</div>
         </div>
       </div>
     </div>
@@ -358,16 +358,16 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
-      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--green);">ONLINE [AUTO-ROTATE]</strong></div>
+      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--green);">ONLINE [ROTATING FEED]</strong></div>
       <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
-      <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 7/7 SPECIALIZED UNITS</strong></div>
+      <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 7/7 TRADING UNITS</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
 
     <div id="tab-warroom" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (SPECIALIZED AGENT SPECIALTIES)</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (TRADING SWARM SPECIALTIES)</div>
       <div id="war-room-container" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
     </div>
   </div>
@@ -378,20 +378,19 @@
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Capital rotation protocol active. Bots will balance holdings to keep cash flowing.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Rotating token discovery active. Bots will continuously scan new contract deployments.', time: '00:00' }
     ];
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
 
-    // Permanent optimized agent specialties
     const agentDefs = [
-      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Chief Risk Officer (Advisory & Tranches)', color: '#a855f7', icon: '👁️', pnl: 0, status: 'ADVISORY' },
-      { id: 'announcer', name: 'WHALE_EYE', role: 'DEX Screener Announcer & Signal Feed', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
-      { id: 'finance', name: 'KIRKTRON 9001', role: 'Portfolio Manager (Exit Gates & Sizing)', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
-      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control & Position Limits', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
-      { id: 'trader', name: 'ALPHA_X', role: 'Momentum Sniper & Execution Matrix', color: '#ef4444', icon: '⚡', pnl: 0, status: 'ACTIVE' },
-      { id: 'macro', name: 'MACRO_9', role: 'Trend Strategist & Depth Evaluator', color: '#a855f7', icon: '🌐', pnl: 0, status: 'ACTIVE' },
-      { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Capital Authority & Vault Sweeper', color: '#22c55e', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
+      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#a855f7', icon: '👁️', pnl: 0, status: 'ADVISORY' },
+      { id: 'announcer', name: 'WHALE_EYE', role: 'Live Token & Latest Profiles Scanner', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
+      { id: 'finance', name: 'KIRKTRON 9001', role: 'Profit Gate (+2% / +5% Target Enforcer)', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
+      { id: 'risk', name: 'RISK_CORE', role: 'Capital Rotation & Stale Bag Exit', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
+      { id: 'trader', name: 'ALPHA_X', role: 'Market Order & Swap Executor', color: '#ef4444', icon: '⚡', pnl: 0, status: 'ACTIVE' },
+      { id: 'macro', name: 'MACRO_9', role: 'Liquidity Depth & Trend Evaluator', color: '#a855f7', icon: '🌐', pnl: 0, status: 'ACTIVE' },
+      { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#22c55e', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
     ];
 
     let state = {
@@ -404,13 +403,14 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'WHALE_EYE', text: `Mode active: ${operationalMode}. Capital rotation ready.`, color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'WHALE_EYE', text: `Mode active: ${operationalMode}. Rotating discovery ready.`, color: '#38bdf8', time: '00:00' }]
     };
 
     function setTradingMode(mode) {
       operationalMode = mode;
       localStorage.setItem('solaris_mode', mode);
       addSystemLog(`[MODE] Switched operational mode to: ${mode}`);
+      fetchLiveMarketPrices();
       renderAll();
     }
 
@@ -434,53 +434,43 @@
     function addSystemLog(msg) {
       const logBox = document.getElementById('system-log');
       if (!logBox) return;
-      logBox.innerHTML += `<div>[${new Date().toTimeString().split(' ')[0]}] ${msg}</div>`;
+      logBox.innerHTML += `<div>[${new Date().toTimeString().split(' ')[0]}` + `] ${msg}</div>`;
       logBox.scrollTop = logBox.scrollHeight;
     }
 
     async function fetchLiveMarketPrices() {
       try {
-        const endpoint = operationalMode === 'SNIPER' ? 
-          `https://api.dexscreener.com/latest/dex/search?q=solana` : 
-          `https://api.dexscreener.com/token-boosts/latest/v1`;
-
-        const res = await fetch(endpoint);
-        if (!res.ok) return;
-        const data = await res.json();
+        // Fetch from Latest Token Profiles feed to ensure a constantly rotating supply of new tokens
+        const profilesRes = await fetch(`https://api.dexscreener.com/token-profiles/latest/v1`);
+        if (!profilesRes.ok) return;
+        const profilesData = await profilesRes.json();
 
         let fetched = [];
-        if (operationalMode === 'SNIPER' && data && data.pairs) {
-          const snipePairs = data.pairs.filter(p => p.chainId === 'solana' && p.priceUsd && p.liquidity && p.liquidity.usd < 100000).slice(0, 25);
-          snipePairs.forEach(p => {
-            if (p.baseToken && p.priceUsd) {
-              fetched.push({
-                symbol: p.baseToken.symbol.toUpperCase(),
-                address: p.baseToken.address,
-                price: parseFloat(p.priceUsd),
-                change24h: p.priceChange && p.priceChange.h24 !== undefined ? parseFloat(p.priceChange.h24) : 5.0,
-                liquidity: p.liquidity.usd,
-                conviction: 'SNIPE_READY'
-              });
-            }
-          });
-        } else if (Array.isArray(data)) {
-          const solBoosts = data.filter(b => b.chainId === 'solana' && b.tokenAddress).slice(0, 20);
-          for (let b of solBoosts) {
+        if (Array.isArray(profilesData)) {
+          const solProfiles = profilesData.filter(p => p.chainId === 'solana' && p.tokenAddress).slice(0, 15);
+          for (let p of solProfiles) {
             try {
-              const pairRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${b.tokenAddress}`);
+              const pairRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${p.tokenAddress}`);
               if (pairRes.ok) {
                 const pairData = await pairRes.json();
                 if (pairData && pairData.pairs && pairData.pairs.length > 0) {
-                  const p = pairData.pairs[0];
-                  if (p.baseToken && p.priceUsd) {
-                    fetched.push({
-                      symbol: p.baseToken.symbol.toUpperCase(),
-                      address: b.tokenAddress,
-                      price: parseFloat(p.priceUsd),
-                      change24h: p.priceChange && p.priceChange.h24 !== undefined ? parseFloat(p.priceChange.h24) : 1.0,
-                      liquidity: p.liquidity && p.liquidity.usd ? p.liquidity.usd : 50000,
-                      conviction: 'BULLISH'
-                    });
+                  const pair = pairData.pairs[0];
+                  if (pair.baseToken && pair.priceUsd) {
+                    let sym = pair.baseToken.symbol.toUpperCase();
+                    let price = parseFloat(pair.priceUsd);
+                    let change = pair.priceChange && pair.priceChange.h24 !== undefined ? parseFloat(pair.priceChange.h24) : (Math.random() * 10 - 3);
+                    let liq = pair.liquidity && pair.liquidity.usd ? pair.liquidity.usd : 40000;
+                    
+                    if (operationalMode === 'SNIPER' || liq < 200000) {
+                      fetched.push({
+                        symbol: sym,
+                        address: p.tokenAddress,
+                        price: price,
+                        change24h: change,
+                        liquidity: liq,
+                        conviction: operationalMode === 'SNIPER' ? 'SNIPE_TARGET' : 'FRESH_DEPLOY'
+                      });
+                    }
                   }
                 }
               }
@@ -492,8 +482,8 @@
           marketCoins = fetched;
           const targetCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
           whaleNewsFeed.unshift({
-            title: `${operationalMode === 'SNIPER' ? '🎯 SNIPER TARGET' : 'WHALE_EYE Signal'}: ${targetCoin.symbol}`,
-            desc: `Detected [${targetCoin.conviction}] | Price: ${fmtPrice(targetCoin.price)} | Liquidity: $${Math.round(targetCoin.liquidity).toLocaleString()}`,
+            title: `NEW DEPLOYMENT: ${targetCoin.symbol}`,
+            desc: `Rotating Discovery [${targetCoin.conviction}] | Price: ${fmtPrice(targetCoin.price)} | Depth: $${Math.round(targetCoin.liquidity).toLocaleString()}`,
             time: new Date().toLocaleTimeString()
           });
           whaleNewsFeed = whaleNewsFeed.slice(0, 20);
@@ -501,7 +491,7 @@
 
         renderAll();
       } catch (err) {
-        console.warn("Market fetch warning:", err);
+        console.warn("Rotating market fetch warning:", err);
       }
     }
 
@@ -630,7 +620,6 @@
           return;
         }
 
-        // Capital rotation check: If bankroll is low (<$15) and we hold positions, free up liquidity by selling the oldest bag
         let activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
         if (state.cash < 15.0 && activeSymbols.length > 0) {
           let symToRotate = activeSymbols[0];
@@ -733,7 +722,7 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `[${operationalMode}] Target acquired. Allocated block into ${coin.symbol}.` :
+          `[${operationalMode}] Target acquired. Allocated block into new deployment ${coin.symbol}.` :
           `[${operationalMode}] Profit target secured on ${coin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ sender: agent.name, text: councilText, color: agent.color, time: new Date().toLocaleTimeString() });
@@ -862,7 +851,7 @@
         const feedContainer = document.getElementById('council-feed-container');
         if (feedContainer) {
           feedContainer.innerHTML = state.councilFeed.map(f => `
-            <div class="feed-item" style="border-left-color: f.color;">
+            <div class="feed-item" style="border-left-color: ${f.color};">
               <div class="feed-sender" style="color: ${f.color};">${f.sender} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${f.time || ''}</span></div>
               <div class="feed-text">"${f.text}"</div>
             </div>
