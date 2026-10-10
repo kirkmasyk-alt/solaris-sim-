@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.7</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.8</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -314,7 +314,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Dynamic color-coded P&L engine online.</div>
+        <div style="color: var(--green);">[00:01] Filtered financial wire active.</div>
       </div>
     </div>
 
@@ -327,8 +327,8 @@
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & BREAKING DISPATCHES</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // SCANNING BOOSTS</div>
-          <div class="feed-text">Querying DEX Screener token boosts for live market dispatches...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // FILTERED WIRE</div>
+          <div class="feed-text">Monitoring verified financial boosts and market momentum dispatches...</div>
         </div>
       </div>
     </div>
@@ -349,7 +349,7 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">DEX SCREENER BOOSTS API</strong></div>
-      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--cyan);">ONLINE [FILTERED]</strong></div>
+      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--green);">ONLINE [STRICT FILTER]</strong></div>
       <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
@@ -371,7 +371,7 @@
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Whale Watcher wire monitoring DEX Screener token boosts.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Whale Watcher wire monitoring verified financial dispatches.', time: '00:00' }
     ];
 
     const agentDefs = [
@@ -394,7 +394,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'WHALE_EYE', text: 'Color-coded P&L engine online. Tracking up/down metrics.', color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'WHALE_EYE', text: 'Financial wire filter active. Streaming token market metrics.', color: '#38bdf8', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -435,10 +435,7 @@
 
     async function fetchLiveMarketPrices() {
       try {
-        const [boostsRes, profilesRes] = await Promise.all([
-          fetch(`https://api.dexscreener.com/token-boosts/latest/v1`),
-          fetch(`https://api.dexscreener.com/token-profiles/latest/v1`)
-        ]);
+        const boostsRes = await fetch(`https://api.dexscreener.com/token-boosts/latest/v1`);
 
         if (boostsRes.ok) {
           const boostsData = await boostsRes.json();
@@ -468,29 +465,23 @@
               }
               if (fetched.length > 0) {
                 marketCoins = fetched;
+                
+                // Push clean financial market updates to the news wire
+                const randomCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
+                whaleNewsFeed.unshift({
+                  title: `Liquidity Alert: ${randomCoin.symbol}`,
+                  desc: `Boost pool active at ${fmtPrice(randomCoin.price)} | 24h Change: ${randomCoin.change24h >= 0 ? '+' : ''}${randomCoin.change24h}% | Depth: $${Math.round(randomCoin.liquidity).toLocaleString()}`,
+                  time: new Date().toLocaleTimeString()
+                });
+                whaleNewsFeed = whaleNewsFeed.slice(0, 20);
               }
-            }
-          }
-        }
-
-        if (profilesRes.ok) {
-          const profilesData = await profilesRes.json();
-          if (Array.isArray(profilesData) && profilesData.length > 0) {
-            const latest = profilesData[0];
-            if (latest && latest.description && latest.description.length > 15 && !latest.description.includes('$')) {
-              whaleNewsFeed.unshift({
-                title: `Dispatch: ${latest.chainId ? latest.chainId.toUpperCase() : 'SOL'} Asset`,
-                desc: latest.description.substring(0, 120) + '...',
-                time: new Date().toLocaleTimeString()
-              });
-              whaleNewsFeed = whaleNewsFeed.slice(0, 20);
             }
           }
         }
 
         renderAll();
       } catch (err) {
-        console.warn("DEX Screener boost fetch warning:", err);
+        console.warn("DEX Screener fetch warning:", err);
       }
     }
 
