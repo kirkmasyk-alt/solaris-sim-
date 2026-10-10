@@ -439,6 +439,8 @@
           <div>ACTION</div>
         </div>
         <div id="positions-list"></div>
+        <div style="font-size: 15px; color: var(--amber); margin: 10px 0 4px; border-bottom: 2px solid var(--border-color);">// ARCHIVE (BLOCKED FROM REBUY)</div>
+        <div id="archive-list"></div>
       </div>
     </div>
 
@@ -504,8 +506,8 @@
       addresses: loadJSON('solaris_addresses', {}),
       // NEW: when each position was opened (for the stale-hold exit)
       entryTimes: loadJSON('solaris_entry_times', {}),
-      // NEW: when each coin was last sold (blocks instant rebuys)
-      cooldowns: loadJSON('solaris_cooldowns', {}),
+      // ARCHIVE: coins we've traded and sold are blocked from re-entry until their timer expires
+      archive: loadJSON('solaris_archive', {}),
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
@@ -514,7 +516,17 @@
     };
 
     // ---- TRADING RULES (tune these) ----
-    const REBUY_COOLDOWN_MS = 30 * 60 * 1000;  // wait before buying a sold coin again
+    const HOUR = 60 * 60 * 1000;
+    // how long a sold coin stays in the archive (blocked from rebuy), by how it was sold
+    const ARCHIVE_MS = {
+      'STALE EXIT': 24 * HOUR,       // did nothing: bench it for a day
+      'STOP-LOSS CUT': 12 * HOUR,
+      'TRAILING LOCK': 4 * HOUR,
+      'FULL TAKE-PROFIT': 2 * HOUR,
+      'MANUAL': 1 * HOUR
+    };
+    const REPEAT_STALE_LIMIT = 2;              // this many stale exits = long ban
+    const REPEAT_BAN_MS = 7 * 24 * HOUR;
     const MAX_HOLD_MS = 20 * 60 * 1000;        // flat positions older than this get closed
     const STALE_BAND_PCT = 1.5;                // "flat" = within +/- this % of cost
 
@@ -594,6 +606,7 @@
       if (!qty || qty <= 0) return;
 
       let coin = marketCoins.find(c => c.symbol === sym) || { price: state.costBasis[sym] || 1 };
+      let addr = state.addresses[sym] || coin.address || '';
       let cost = state.costBasis[sym] || coin.price;
       let gross = qty * coin.price;
       let fee = gross * 0.003;
@@ -605,7 +618,7 @@
       delete state.addresses[sym];
       delete state.entryTimes[sym];
       delete peakPrices[sym];
-      state.cooldowns[sym] = Date.now();
+      archiveCoin(sym, addr, 'MANUAL', pnlDelta);
 
       state.cash += netReturn;
       state.realizedPnl += pnlDelta;
@@ -929,7 +942,7 @@
       localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
       localStorage.setItem('solaris_addresses', JSON.stringify(state.addresses));
       localStorage.setItem('solaris_entry_times', JSON.stringify(state.entryTimes));
-      localStorage.setItem('solaris_cooldowns', JSON.stringify(state.cooldowns));
+      localStorage.setItem('solaris_archive', JSON.stringify(state.archive));
       localStorage.setItem('solaris_peak_prices', JSON.stringify(peakPrices));
       localStorage.setItem('solaris_last_trade', state.lastTradeTime);
     }
@@ -953,7 +966,7 @@
       state.costBasis = {};
       state.addresses = {};
       state.entryTimes = {};
-      state.cooldowns = {};
+      state.archive = {};
       peakPrices = {};
       saveState();
       addSystemLog(`[CONFIG] Treasury reset to clean baseline.`);
@@ -1019,10 +1032,36 @@
       renderAll();
     }
 
+    // Puts a just-sold coin in the archive so it can't be bought again until the timer runs out.
+    function archiveCoin(sym, address, tag, pnl) {
+      const now = Date.now();
+      Object.keys(state.archive).forEach(k => { if (state.archive[k].until <= now) delete state.archive[k]; });
+      const prev = state.archive[sym] || { stale: 0, count: 0 };
+      const entry = {
+        address: address || prev.address || '',
+        reason: tag,
+        pnl: pnl,
+        count: (prev.count || 0) + 1,
+        stale: (prev.stale || 0) + (tag === 'STALE EXIT' ? 1 : 0),
+        until: now + (ARCHIVE_MS[tag] || 6 * HOUR)
+      };
+      if (entry.stale >= REPEAT_STALE_LIMIT) entry.until = now + REPEAT_BAN_MS;
+      state.archive[sym] = entry;
+    }
+
+    // True if this coin (by ticker OR contract address) is still archived.
+    function isArchived(coin) {
+      const now = Date.now();
+      const bySym = state.archive[coin.symbol];
+      if (bySym && bySym.until > now) return true;
+      return Object.values(state.archive).some(e => e.until > now && e.address && coin.address && e.address === coin.address);
+    }
+
     // Closes a whole position at the live price: applies fee, profit sweep, cooldown, logs, saves.
     function closePosition(sym, coin, tag, msg) {
       const qty = state.positions[sym];
       if (!qty || qty <= 0) return;
+      const addr = state.addresses[sym] || coin.address || '';
       const cost = state.costBasis[sym] || coin.price;
       const gross = qty * coin.price;
       const fee = gross * 0.003;
@@ -1034,7 +1073,7 @@
       delete state.addresses[sym];
       delete state.entryTimes[sym];
       delete peakPrices[sym];
-      state.cooldowns[sym] = Date.now();
+      archiveCoin(sym, addr, tag, pnlDelta);
 
       if (pnlDelta > 0 && state.sweepPct > 0) {
         const sweep = pnlDelta * (state.sweepPct / 100);
@@ -1119,7 +1158,7 @@
         const candidates = marketCoins.filter(c =>
           c.price > 0 &&
           !((state.positions[c.symbol] || 0) > 0.00001) &&
-          (now - (state.cooldowns[c.symbol] || 0)) > REBUY_COOLDOWN_MS
+          !isArchived(c)
         );
         if (candidates.length === 0) return;
 
@@ -1236,6 +1275,31 @@
                   <span>${fmtPrice(cost)}</span>
                   <span style="color: ${coinPnl >= 0 ? 'var(--green)' : 'var(--red)'};">${coinPnl >= 0 ? '+' : ''}${fmtCurrency(coinPnl)}</span>
                   <button class="cyber-btn danger" style="font-size: 14px; padding: 2px 5px;" onclick="manualSellPosition('${sym}')">SELL</button>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+
+        const archiveList = document.getElementById('archive-list');
+        if (archiveList) {
+          const nowTs = Date.now();
+          const rows = Object.keys(state.archive)
+            .filter(sym => state.archive[sym].until > nowTs)
+            .sort((a, b) => state.archive[b].until - state.archive[a].until);
+          if (rows.length === 0) {
+            archiveList.innerHTML = `<div style="text-align: center; color: var(--text-dim); padding: 10px; font-size: 15px;">ARCHIVE EMPTY</div>`;
+          } else {
+            archiveList.innerHTML = rows.map(sym => {
+              const e = state.archive[sym];
+              const hrs = (e.until - nowTs) / HOUR;
+              const left = hrs >= 1 ? hrs.toFixed(1) + 'h' : Math.max(1, Math.round(hrs * 60)) + 'm';
+              return `
+                <div class="position-row" style="grid-template-columns: 1fr 1.3fr 1fr 0.7fr;">
+                  <strong style="color: var(--text-dim);">${escapeHtml(sym)}</strong>
+                  <span>${escapeHtml(e.reason)}</span>
+                  <span style="color: ${e.pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${e.pnl >= 0 ? '+' : ''}${fmtCurrency(e.pnl)}</span>
+                  <span style="color: var(--amber);">${left}</span>
                 </div>
               `;
             }).join('');
