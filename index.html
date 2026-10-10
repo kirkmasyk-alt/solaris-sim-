@@ -321,7 +321,7 @@
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px;">VAULT SWARM V12.0</div>
+          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px;">VAULT SWARM V12.1</div>
         </div>
       </div>
       <div class="header-btns">
@@ -329,6 +329,7 @@
         <button class="cyber-btn accent" onclick="adjustFunds()">FUND</button>
         <button class="cyber-btn" onclick="promptApiKey()">KEY</button>
         <button class="cyber-btn" onclick="requestBriefing()">BRIEF</button>
+        <button class="cyber-btn" id="btn-sound" onclick="toggleSound()">SND ON</button>
         <button class="cyber-btn danger" onclick="freshWipe()">WIPE</button>
       </div>
     </div>
@@ -487,6 +488,67 @@
       councilFeed: [{ sender: 'RISK_CORE', text: `Mega-stream active [${operationalMode}]. Massive pool indexing enabled.`, color: '#ffd23f', time: '00:00' }]
     };
 
+    // ---- 8-BIT SOUND EFFECTS (synthesized with Web Audio, no audio files) ----
+    let soundOn = localStorage.getItem('orbital_sound') !== 'off';
+    let audioCtx = null;
+
+    function getAudio() {
+      if (!soundOn) return null;
+      try {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return null;
+          audioCtx = new AC();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function tone(freq, delay, dur, type, vol) {
+      const ctx = getAudio();
+      if (!ctx) return;
+      const t = ctx.currentTime + delay;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type || 'square';
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(vol || 0.05, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + dur + 0.02);
+    }
+
+    const SFX = {
+      click() { tone(880, 0, 0.04, 'square', 0.04); },
+      tab()   { tone(660, 0, 0.05, 'square', 0.04); tone(990, 0.05, 0.05, 'square', 0.04); },
+      buy()   { tone(988, 0, 0.07, 'square', 0.05); tone(1319, 0.07, 0.14, 'square', 0.05); },
+      win()   { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.08, 0.12, 'square', 0.05)); },
+      loss()  { [392, 330, 262, 196].forEach((f, i) => tone(f, i * 0.1, 0.14, 'triangle', 0.08)); },
+      whale() { tone(110, 0, 0.3, 'triangle', 0.1); tone(165, 0.14, 0.34, 'triangle', 0.09); },
+      news()  { tone(1568, 0, 0.06, 'square', 0.04); tone(1319, 0.08, 0.1, 'square', 0.04); }
+    };
+
+    function playSfx(name) {
+      try { if (SFX[name]) SFX[name](); } catch (e) {}
+    }
+
+    function updateSoundBtn() {
+      const b = document.getElementById('btn-sound');
+      if (b) b.textContent = soundOn ? 'SND ON' : 'SND OFF';
+    }
+
+    function toggleSound() {
+      soundOn = !soundOn;
+      localStorage.setItem('orbital_sound', soundOn ? 'on' : 'off');
+      updateSoundBtn();
+      if (soundOn) { getAudio(); playSfx('news'); }
+    }
+
     function setTradingMode(mode) {
       operationalMode = mode;
       localStorage.setItem('solaris_mode', mode);
@@ -516,7 +578,7 @@
       state.totalFeesPaid += fee;
       state.txCount += 1;
 
-      addSystemLog(`[MANUAL OVERRIDE] Liquidated ${sym}! Realized P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
+      playSfx(pnlDelta >= 0 ? 'win' : 'loss'); addSystemLog(`[MANUAL OVERRIDE] Liquidated ${sym}! Realized P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
       saveState();
       renderAll();
     }
@@ -642,6 +704,7 @@
         const fresh = liveNews.filter(n => !seenNews.has(n.title));
         liveNews.forEach(n => seenNews.add(n.title));
         const toAnnounce = (newsBootstrapped ? fresh.slice(0, 5) : fresh.slice(0, 2)).reverse();
+        if (newsBootstrapped && toAnnounce.length > 0) playSfx('news');
         newsBootstrapped = true;
         toAnnounce.forEach(n => {
           state.councilFeed.unshift({
@@ -769,6 +832,7 @@
 
         // WHALE_EYE: flag pools with unusually heavy 1h volume relative to liquidity
         const nowTs = Date.now();
+        let whaleFired = false;
         marketCoins
           .filter(c => (c.volumeH1 || 0) >= 25000 && c.liquidity > 0 && (c.volumeH1 / c.liquidity) >= 0.5)
           .sort((a, b) => b.volumeH1 - a.volumeH1)
@@ -776,6 +840,7 @@
           .forEach(c => {
             if (nowTs - (whaleSeen[c.symbol] || 0) < 30 * 60 * 1000) return;
             whaleSeen[c.symbol] = nowTs;
+            whaleFired = true;
             const buys = c.buysH1 || 0, sells = c.sellsH1 || 0;
             const bias = buys > sells * 1.3 ? 'BUY PRESSURE' : (sells > buys * 1.3 ? 'SELL PRESSURE' : 'MIXED FLOW');
             whaleNewsFeed.unshift({
@@ -784,6 +849,7 @@
               time: new Date().toLocaleTimeString()
             });
           });
+        if (whaleFired) playSfx('whale');
         whaleNewsFeed = whaleNewsFeed.slice(0, 20);
 
         renderAll();
@@ -956,7 +1022,7 @@
             state.totalFeesPaid += fee;
             state.txCount += 1;
 
-            addSystemLog(`[STOP-LOSS CUT] RISK_CORE cut ${sym} at ${gainPct.toFixed(1)}% | P&L: ${fmtCurrency(pnlDelta)}`);
+            playSfx('loss'); addSystemLog(`[STOP-LOSS CUT] RISK_CORE cut ${sym} at ${gainPct.toFixed(1)}% | P&L: ${fmtCurrency(pnlDelta)}`);
             saveState();
             renderAll();
             return;
@@ -977,7 +1043,7 @@
             state.totalFeesPaid += fee;
             state.txCount += 1;
 
-            addSystemLog(`[TRAILING LOCK] KIRKTRON 9001 secured peak profits on ${sym}! P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
+            playSfx(pnlDelta >= 0 ? 'win' : 'loss'); addSystemLog(`[TRAILING LOCK] KIRKTRON 9001 secured peak profits on ${sym}! P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
             saveState();
             renderAll();
             return;
@@ -1027,7 +1093,7 @@
           state.totalFeesPaid += fee;
           state.txCount += 1;
 
-          addSystemLog(`[FULL TAKE-PROFIT] Target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
+          playSfx('win'); addSystemLog(`[FULL TAKE-PROFIT] Target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
           action = 'sell';
         } else if (state.cash > 20.0 && curHold === 0) {
           let spend = state.cash * 0.20;
@@ -1043,7 +1109,7 @@
 
           state.totalFeesPaid += fee;
           state.txCount += 1;
-          addSystemLog(`[NEW ENTRY] ALPHA_X bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
+          playSfx('buy'); addSystemLog(`[NEW ENTRY] ALPHA_X bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
           action = 'buy';
         } else {
           return;
@@ -1214,6 +1280,13 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       updateKeyStatus();
+      updateSoundBtn();
+      // browsers only allow audio after a tap, so wake the audio engine on any tap
+      document.addEventListener('pointerdown', () => { if (soundOn) getAudio(); });
+      document.addEventListener('click', e => {
+        const b = e.target.closest ? e.target.closest('.cyber-btn, .tab-btn') : null;
+        if (b && b.id !== 'btn-sound') playSfx(b.classList.contains('tab-btn') ? 'tab' : 'click');
+      });
       fetchLiveMarketPrices();
       fetchLiveNews();
       renderAll();
