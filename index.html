@@ -234,9 +234,9 @@
 
     .position-row {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
-      font-size: 9px;
-      padding: 6px;
+      grid-template-columns: 1fr 1fr 1fr 1fr 0.8fr;
+      font-size: 8px;
+      padding: 6px 2px;
       background: rgba(0, 0, 0, 0.4);
       border-bottom: 1px solid rgba(255,255,255,0.05);
       align-items: center;
@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.4</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.5</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -272,7 +272,7 @@
       <span style="font-size: 10px; color: var(--text-dim);">OPERATIONAL MODE:</span>
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
-        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (TRAILING LOCK)</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (MANUAL SELL)</button>
       </div>
     </div>
 
@@ -319,16 +319,16 @@
 
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 11px; color: var(--cyan);">// TICK-LEVEL TRAILING PROFIT STREAM</div>
+        <div style="font-size: 11px; color: var(--cyan);">// MANUAL LIQUIDATION STREAM</div>
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] State stabilization & trailing profit locks online.</div>
+        <div style="color: var(--green);">[00:01] Manual position liquidation buttons online.</div>
       </div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & DEFENSE LOG</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & EXECUTION LOG</div>
       <div class="terminal-box" style="height: 240px;" id="council-feed-container"></div>
     </div>
 
@@ -336,20 +336,21 @@
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // TRAILING WATCHER</div>
-          <div class="feed-text">Monitoring peak gains and instant trailing lock triggers...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // MONITOR</div>
+          <div class="feed-text">Manual override controls active in positions ledger...</div>
         </div>
       </div>
     </div>
 
     <div id="tab-positions" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// OPEN HOLDINGS & INDIVIDUAL P&L AUDIT</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// OPEN HOLDINGS & MANUAL LIQUIDATION</div>
       <div class="terminal-box" style="height: 240px; padding: 4px;" id="positions-container">
         <div class="position-row position-header">
           <div>ASSET</div>
           <div>HOLDING</div>
           <div>AVG COST</div>
           <div>P&L ($)</div>
+          <div>ACTION</div>
         </div>
         <div id="positions-list"></div>
       </div>
@@ -358,15 +359,15 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
-      <div class="status-row"><span>STATE STABILIZATION:</span> <strong style="color: var(--green);">LOCKED [NO RE-INIT DRIFT]</strong></div>
+      <div class="status-row"><span>MANUAL OVERRIDE:</span> <strong style="color: var(--green);">ACTIVE [POSITION SELL BUTTONS]</strong></div>
       <div class="status-row"><span>TRAILING PROFIT LOCK:</span> <strong style="color: var(--green);">ACTIVE [PEAK DEFENSE]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 STABLE TRADERS</strong></div>
+      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 OVERRIDE READY</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
 
     <div id="tab-warroom" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (STABLE AI AGENTS)</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (CONTROL AI AGENTS)</div>
       <div id="war-room-container" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
     </div>
   </div>
@@ -377,19 +378,17 @@
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'State stabilization and trailing profit locks active.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Manual position sell buttons active in the Positions tab.', time: '00:00' }
     ];
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
-
-    // Track peak prices per position to enable instant trailing lock defense
     let peakPrices = JSON.parse(localStorage.getItem('solaris_peak_prices')) || {};
 
     const agentDefs = [
       { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#a855f7', icon: '👁️', pnl: 0, status: 'ADVISORY' },
       { id: 'announcer', name: 'WHALE_EYE', role: 'Multi-Source Fresh Deployment Scanner', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Trailing Profit Lock Engine', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
-      { id: 'risk', name: 'RISK_CORE', role: 'Aggressive Stop-Loss & State Guard', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
+      { id: 'risk', name: 'RISK_CORE', role: 'Aggressive Stop-Loss & Manual Override', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
       { id: 'trader', name: 'ALPHA_X', role: 'Verified Secure Swap Executor', color: '#ef4444', icon: '⚡', pnl: 0, status: 'ACTIVE' },
       { id: 'macro', name: 'MACRO_9', role: 'AI Momentum & Winner Scorer', color: '#a855f7', icon: '🌐', pnl: 0, status: 'ACTIVE' },
       { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#22c55e', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
@@ -405,13 +404,38 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'RISK_CORE', text: `State stabilized in [${operationalMode}] mode. Trailing lock active.`, color: '#f59e0b', time: '00:00' }]
+      councilFeed: [{ sender: 'RISK_CORE', text: `Manual sell buttons enabled in Positions tab.`, color: '#f59e0b', time: '00:00' }]
     };
 
     function setTradingMode(mode) {
       operationalMode = mode;
       localStorage.setItem('solaris_mode', mode);
       addSystemLog(`[MODE LOCKED] User set operational mode to: ${mode}`);
+      renderAll();
+    }
+
+    function manualSellPosition(sym) {
+      let qty = state.positions[sym];
+      if (!qty || qty <= 0) return;
+
+      let coin = marketCoins.find(c => c.symbol === sym) || { price: state.costBasis[sym] || 1 };
+      let cost = state.costBasis[sym] || coin.price;
+      let gross = qty * coin.price;
+      let fee = gross * 0.003;
+      let netReturn = gross - fee;
+      let pnlDelta = netReturn - (qty * cost);
+
+      delete state.positions[sym];
+      delete state.costBasis[sym];
+      delete peakPrices[sym];
+
+      state.cash += netReturn;
+      state.realizedPnl += pnlDelta;
+      state.totalFeesPaid += fee;
+      state.txCount += 1;
+
+      addSystemLog(`[MANUAL OVERRIDE] Liquidated ${sym}! Realized P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
+      saveState();
       renderAll();
     }
 
@@ -468,7 +492,6 @@
         }
 
         if (fetched.length > 0) {
-          // Merge market prices smoothly without overwriting unmapped active position prices
           marketCoins = fetched;
         }
 
@@ -589,7 +612,7 @@
         portfolioVal += (state.positions[sym] || 0) * coin.price;
       });
       let net = state.cash + state.vault + portfolioVal;
-      const brief = `STABLE TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
+      const brief = `MANUAL OVERRIDE TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
       state.councilFeed.unshift({ sender: 'RISK_CORE', text: brief, color: '#f59e0b', time: new Date().toLocaleTimeString() });
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
       renderAll();
@@ -607,7 +630,6 @@
 
         let activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
 
-        // TRAILING PROFIT LOCK & STOP-LOSS DEFENSE
         for (let sym of activeSymbols) {
           let coin = marketCoins.find(c => c.symbol === sym);
           if (!coin) continue;
@@ -616,7 +638,6 @@
           let cost = state.costBasis[sym] || coin.price;
           let gainPct = ((coin.price - cost) / cost) * 100;
 
-          // Track peak price for trailing lock
           if (!peakPrices[sym] || coin.price > peakPrices[sym]) {
             peakPrices[sym] = coin.price;
           }
@@ -625,7 +646,6 @@
           let peakGainPct = ((peakPrice - cost) / cost) * 100;
           let dropFromPeakPct = peakPrice > 0 ? ((peakPrice - coin.price) / peakPrice) * 100 : 0;
 
-          // STOP-LOSS FIREWALL: Cut immediately if down -2.5%
           if (gainPct <= -2.5) {
             let gross = qty * coin.price;
             let fee = gross * 0.003;
@@ -640,13 +660,12 @@
             state.totalFeesPaid += fee;
             state.txCount += 1;
 
-            addSystemLog(`[STOP-LOSS CUT] RISK_CORE cut losing position on ${sym} at ${gainPct.toFixed(1)}% | P&L: ${fmtCurrency(pnlDelta)}`);
+            addSystemLog(`[STOP-LOSS CUT] RISK_CORE cut ${sym} at ${gainPct.toFixed(1)}% | P&L: ${fmtCurrency(pnlDelta)}`);
             saveState();
             renderAll();
             return;
           }
 
-          // TRAILING PROFIT LOCK: If a coin pumped past +10% peak and drops 25% from its peak, instant lock-out to prevent round-trip!
           if (peakGainPct >= 10.0 && dropFromPeakPct >= 25.0) {
             let gross = qty * coin.price;
             let fee = gross * 0.003;
@@ -661,14 +680,13 @@
             state.totalFeesPaid += fee;
             state.txCount += 1;
 
-            addSystemLog(`[TRAILING LOCK] KIRKTRON 9001 secured peak profits on ${sym} before dump! Peak was +${peakGainPct.toFixed(1)}% | P&L: +${fmtCurrency(pnlDelta)}`);
+            addSystemLog(`[TRAILING LOCK] KIRKTRON 9001 secured peak profits on ${sym}! P&L: +${fmtCurrency(pnlDelta)}`);
             saveState();
             renderAll();
             return;
           }
         }
 
-        // WINNER ACCUMULATION OR NEW ENTRY
         let winningSymbol = activeSymbols.find(sym => {
           let coin = marketCoins.find(c => c.symbol === sym);
           let cost = state.costBasis[sym] || 1;
@@ -724,7 +742,7 @@
           if (curHold > 0) {
             state.costBasis[targetCoin.symbol] = (avgCost + targetCoin.price) / 2;
             state.positions[targetCoin.symbol] += tokens;
-            addSystemLog(`[DIP ACCUMULATION] RISK_CORE added to winning position ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
+            addSystemLog(`[DIP ACCUMULATION] RISK_CORE added to ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
           } else {
             state.costBasis[targetCoin.symbol] = targetCoin.price;
             state.positions[targetCoin.symbol] = tokens;
@@ -829,6 +847,7 @@
                   <span>${qty > 1000 ? Math.round(qty).toLocaleString() : qty.toFixed(2)}</span>
                   <span>${fmtPrice(cost)}</span>
                   <span style="color: ${coinPnl >= 0 ? 'var(--green)' : 'var(--red)'};">${coinPnl >= 0 ? '+' : ''}${fmtCurrency(coinPnl)}</span>
+                  <button class="cyber-btn danger" style="font-size: 6px; padding: 2px 2px;" onclick="manualSellPosition('${sym}')">SELL</button>
                 </div>
               `;
             }).join('');
