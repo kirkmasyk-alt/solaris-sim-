@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.5</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.6</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -272,7 +272,7 @@
       <span style="font-size: 10px; color: var(--text-dim);">OPERATIONAL MODE:</span>
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
-        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (MANUAL SELL)</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (CAPPED DIPS)</button>
       </div>
     </div>
 
@@ -319,11 +319,11 @@
 
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 11px; color: var(--cyan);">// MANUAL LIQUIDATION STREAM</div>
+        <div style="font-size: 11px; color: var(--cyan);">// CAPPED ACCUMULATION STREAM</div>
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Manual position liquidation buttons online.</div>
+        <div style="color: var(--green);">[00:01] Max position size caps & manual sell buttons active.</div>
       </div>
     </div>
 
@@ -337,7 +337,7 @@
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
           <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // MONITOR</div>
-          <div class="feed-text">Manual override controls active in positions ledger...</div>
+          <div class="feed-text">Position caps enforced. Manual sell override ready...</div>
         </div>
       </div>
     </div>
@@ -359,10 +359,10 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
+      <div class="status-row"><span>MAX POSITION CAP:</span> <strong style="color: var(--green);">ACTIVE [35% BANKROLL LIMIT]</strong></div>
       <div class="status-row"><span>MANUAL OVERRIDE:</span> <strong style="color: var(--green);">ACTIVE [POSITION SELL BUTTONS]</strong></div>
-      <div class="status-row"><span>TRAILING PROFIT LOCK:</span> <strong style="color: var(--green);">ACTIVE [PEAK DEFENSE]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 OVERRIDE READY</strong></div>
+      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 CAPPED TRADERS</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
 
@@ -378,7 +378,7 @@
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Manual position sell buttons active in the Positions tab.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Position caps and manual sell buttons active.', time: '00:00' }
     ];
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
@@ -388,7 +388,7 @@
       { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#a855f7', icon: '👁️', pnl: 0, status: 'ADVISORY' },
       { id: 'announcer', name: 'WHALE_EYE', role: 'Multi-Source Fresh Deployment Scanner', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Trailing Profit Lock Engine', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
-      { id: 'risk', name: 'RISK_CORE', role: 'Aggressive Stop-Loss & Manual Override', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
+      { id: 'risk', name: 'RISK_CORE', role: 'Position Capping & Stop-Loss Firewall', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
       { id: 'trader', name: 'ALPHA_X', role: 'Verified Secure Swap Executor', color: '#ef4444', icon: '⚡', pnl: 0, status: 'ACTIVE' },
       { id: 'macro', name: 'MACRO_9', role: 'AI Momentum & Winner Scorer', color: '#a855f7', icon: '🌐', pnl: 0, status: 'ACTIVE' },
       { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#22c55e', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
@@ -404,7 +404,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'RISK_CORE', text: `Manual sell buttons enabled in Positions tab.`, color: '#f59e0b', time: '00:00' }]
+      councilFeed: [{ sender: 'RISK_CORE', text: `Position capping active [${operationalMode}]. Manual sell buttons enabled.`, color: '#f59e0b', time: '00:00' }]
     };
 
     function setTradingMode(mode) {
@@ -612,7 +612,7 @@
         portfolioVal += (state.positions[sym] || 0) * coin.price;
       });
       let net = state.cash + state.vault + portfolioVal;
-      const brief = `MANUAL OVERRIDE TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
+      const brief = `CAPPED TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
       state.councilFeed.unshift({ sender: 'RISK_CORE', text: brief, color: '#f59e0b', time: new Date().toLocaleTimeString() });
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
       renderAll();
@@ -687,24 +687,25 @@
           }
         }
 
-        let winningSymbol = activeSymbols.find(sym => {
-          let coin = marketCoins.find(c => c.symbol === sym);
-          let cost = state.costBasis[sym] || 1;
-          return coin && coin.price > cost;
-        });
-
-        let targetCoin = winningSymbol ? marketCoins.find(c => c.symbol === winningSymbol) : marketCoins[Math.floor(Math.random() * marketCoins.length)];
+        // Pick a target coin (preventing single-asset over-accumulation by capping individual position size at 35% of net worth)
+        let targetCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
         if (!targetCoin || targetCoin.price <= 0) return;
+
+        let curHold = state.positions[targetCoin.symbol] || 0;
+        let currentPosValue = curHold * targetCoin.price;
+        let totalNetWorthEst = state.cash + state.vault + currentPosValue;
+
+        // If this coin already makes up more than 35% of net worth, skip adding to it to avoid over-concentration!
+        if (currentPosValue > totalNetWorthEst * 0.35) {
+          return;
+        }
 
         let action = 'buy';
         let pnlDelta = 0;
         let fee = 0;
-        const curHold = state.positions[targetCoin.symbol] || 0;
         const avgCost = state.costBasis[targetCoin.symbol] || targetCoin.price;
-
-        let currentPositionValue = curHold * targetCoin.price;
         let originalCostBasisValue = curHold * avgCost;
-        let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPositionValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
+        let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPosValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
         let targetProfit = operationalMode === 'SNIPER' ? 5.0 : 2.5;
 
         if (curHold > 0.00001 && unrealizedGainPct >= targetProfit) {
@@ -732,26 +733,20 @@
 
           addSystemLog(`[FULL TAKE-PROFIT] Target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
           action = 'sell';
-        } else if (state.cash > 20.0) {
+        } else if (state.cash > 20.0 && curHold === 0) {
           let spend = state.cash * 0.20;
           fee = spend * 0.003;
           let netSpend = spend - fee;
           state.cash -= spend;
           
           let tokens = netSpend / targetCoin.price;
-          if (curHold > 0) {
-            state.costBasis[targetCoin.symbol] = (avgCost + targetCoin.price) / 2;
-            state.positions[targetCoin.symbol] += tokens;
-            addSystemLog(`[DIP ACCUMULATION] RISK_CORE added to ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
-          } else {
-            state.costBasis[targetCoin.symbol] = targetCoin.price;
-            state.positions[targetCoin.symbol] = tokens;
-            peakPrices[targetCoin.symbol] = targetCoin.price;
-            addSystemLog(`[NEW ENTRY] ALPHA_X bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
-          }
+          state.costBasis[targetCoin.symbol] = targetCoin.price;
+          state.positions[targetCoin.symbol] = tokens;
+          peakPrices[targetCoin.symbol] = targetCoin.price;
 
           state.totalFeesPaid += fee;
           state.txCount += 1;
+          addSystemLog(`[NEW ENTRY] ALPHA_X bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
           action = 'buy';
         } else {
           return;
@@ -764,7 +759,7 @@
           `[${operationalMode}] Swarm executed entry into ${targetCoin.symbol}.` :
           `[${operationalMode}] Target closed on ${targetCoin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
 
-        state.councilFeed.unshift({ sender: winningSymbol ? 'RISK_CORE' : 'ALPHA_X', text: councilText, color: '#38bdf8', time: new Date().toLocaleTimeString() });
+        state.councilFeed.unshift({ sender: 'ALPHA_X', text: councilText, color: '#38bdf8', time: new Date().toLocaleTimeString() });
         state.councilFeed = state.councilFeed.slice(0, 30);
         renderAll();
       } catch (err) {
