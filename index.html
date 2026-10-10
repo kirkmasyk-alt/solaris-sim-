@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.9</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V9.0</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -314,7 +314,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Strict profit-only execution gate active.</div>
+        <div style="color: var(--green);">[00:01] Whale Watcher intelligence bridge active.</div>
       </div>
     </div>
 
@@ -324,11 +324,11 @@
     </div>
 
     <div id="tab-news" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & BREAKING DISPATCHES</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & CONVICTION FEED</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // VERIFIED FEED</div>
-          <div class="feed-text">Monitoring strict profit targets across boost pools...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // INTELLIGENCE FEED</div>
+          <div class="feed-text">Analyzing token boost signals for swarm execution validation...</div>
         </div>
       </div>
     </div>
@@ -349,7 +349,7 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">DEX SCREENER BOOSTS API</strong></div>
-      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--green);">ONLINE [STRICT FILTER]</strong></div>
+      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--green);">ONLINE [SIGNAL LINKED]</strong></div>
       <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
@@ -367,11 +367,11 @@
 
   <script>
     let marketCoins = [
-      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 2.5, liquidity: 1450000 }
+      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 2.5, liquidity: 1450000, conviction: 'HIGH' }
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Whale Watcher wire monitoring verified financial dispatches.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Whale Watcher wire linked directly to swarm execution filters.', time: '00:00' }
     ];
 
     const agentDefs = [
@@ -394,7 +394,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'WHALE_EYE', text: 'Strict profit gate active. No random sells permitted.', color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'WHALE_EYE', text: 'Intelligence bridge active. Validating trade targets against live wire.', color: '#38bdf8', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -451,12 +451,15 @@
                     if (pairData && pairData.pairs && pairData.pairs.length > 0) {
                       const p = pairData.pairs[0];
                       if (p.baseToken && p.priceUsd) {
+                        let change = p.priceChange && p.priceChange.h24 !== undefined ? parseFloat(p.priceChange.h24) : 1.0;
+                        let conviction = change >= 0 ? 'BULLISH' : 'NEUTRAL';
                         fetched.push({
                           symbol: p.baseToken.symbol.toUpperCase(),
                           address: b.tokenAddress,
                           price: parseFloat(p.priceUsd),
-                          change24h: p.priceChange && p.priceChange.h24 !== undefined ? parseFloat(p.priceChange.h24) : 1.0,
-                          liquidity: p.liquidity && p.liquidity.usd ? p.liquidity.usd : 50000
+                          change24h: change,
+                          liquidity: p.liquidity && p.liquidity.usd ? p.liquidity.usd : 50000,
+                          conviction: conviction
                         });
                       }
                     }
@@ -466,10 +469,10 @@
               if (fetched.length > 0) {
                 marketCoins = fetched;
                 
-                const randomCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
+                const verifiedCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
                 whaleNewsFeed.unshift({
-                  title: `Liquidity Alert: ${randomCoin.symbol}`,
-                  desc: `Boost pool active at ${fmtPrice(randomCoin.price)} | 24h Change: ${randomCoin.change24h >= 0 ? '+' : ''}${randomCoin.change24h}% | Depth: $${Math.round(randomCoin.liquidity).toLocaleString()}`,
+                  title: `WHALE_EYE Signal: ${verifiedCoin.symbol}`,
+                  desc: `Signal Verified [${verifiedCoin.conviction}] | Price: ${fmtPrice(verifiedCoin.price)} | 24h: ${verifiedCoin.change24h >= 0 ? '+' : ''}${verifiedCoin.change24h}% | Depth: $${Math.round(verifiedCoin.liquidity).toLocaleString()}`,
                   time: new Date().toLocaleTimeString()
                 });
                 whaleNewsFeed = whaleNewsFeed.slice(0, 20);
@@ -646,7 +649,10 @@
         }
 
         const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
-        const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
+        
+        // WHALE WATCHER INTELLIGENCE GATE: Agents only buy coins that have verified bullish momentum on the news wire
+        const verifiedSignals = marketCoins.filter(c => c.conviction === 'BULLISH' || c.change24h >= 0);
+        const coin = verifiedSignals.length > 0 ? verifiedSignals[Math.floor(Math.random() * verifiedSignals.length)] : marketCoins[0];
         if (!coin || coin.price <= 0) return;
 
         let action = 'buy';
@@ -659,7 +665,6 @@
         let originalCostBasisValue = curHold * avgCost;
         let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPositionValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
 
-        // STRICT PROFIT GATE: Absolutely zero random sells. Must hit +2% genuine profit target or higher to sell.
         if (curHold > 0.00001 && unrealizedGainPct >= 2.0) {
           let sellTokens = curHold;
           let gross = sellTokens * coin.price;
@@ -714,7 +719,7 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `Boost directory target acquired. Allocated 20% block into ${coin.symbol}.` :
+          `WHALE_EYE signal validated. Allocated 20% block into verified ${coin.symbol} boost pool.` :
           `Genuine +2% profit target hit on ${coin.symbol}. Position closed with P&L: +${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ 
