@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.2</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.3</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -272,7 +272,7 @@
       <span style="font-size: 10px; color: var(--text-dim);">OPERATIONAL MODE:</span>
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
-        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (PARTIAL SCALING)</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (STOP-LOSS ACTIVE)</button>
       </div>
     </div>
 
@@ -319,16 +319,16 @@
 
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 11px; color: var(--cyan);">// PARTIAL SCALING & WINNER ACCUMULATION STREAM</div>
+        <div style="font-size: 11px; color: var(--cyan);">// AGGRESSIVE STOP-LOSS & SCALING STREAM</div>
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] 25% partial profit taking & winner dip-buying online.</div>
+        <div style="color: var(--green);">[00:01] Stop-loss defense firewall & partial scaling active.</div>
       </div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & SCALING LOG</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & DEFENSE LOG</div>
       <div class="terminal-box" style="height: 240px;" id="council-feed-container"></div>
     </div>
 
@@ -336,8 +336,8 @@
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // SCALING WATCHER</div>
-          <div class="feed-text">Monitoring momentum breakouts and scaling triggers...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // RISK WATCHER</div>
+          <div class="feed-text">Monitoring drawdowns and immediate stop-loss triggers...</div>
         </div>
       </div>
     </div>
@@ -358,15 +358,15 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
+      <div class="status-row"><span>AGGRESSIVE STOP-LOSS:</span> <strong style="color: var(--red);">ACTIVE [-2.5% CUT]</strong></div>
       <div class="status-row"><span>PARTIAL PROFIT LOCK:</span> <strong style="color: var(--green);">ACTIVE [25% SCALES]</strong></div>
-      <div class="status-row"><span>WINNER DIP-BUYING:</span> <strong style="color: var(--purple);">ACTIVE [MOMENTUM ACCUMULATION]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 SCALING TRADERS</strong></div>
+      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 DEFENSIVE TRADERS</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
 
     <div id="tab-warroom" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (SCALING AI AGENTS)</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (DEFENSIVE AI AGENTS)</div>
       <div id="war-room-container" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
     </div>
   </div>
@@ -377,7 +377,7 @@
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Partial scaling and winner dip-buying active. Bots will lock 25% profits on pumps.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Aggressive stop-loss active. Losing positions will be cut instantly.', time: '00:00' }
     ];
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
@@ -386,7 +386,7 @@
       { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#a855f7', icon: '👁️', pnl: 0, status: 'ADVISORY' },
       { id: 'announcer', name: 'WHALE_EYE', role: 'Multi-Source Fresh Deployment Scanner', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Partial Scaler (25% Profit Lock Engine)', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
-      { id: 'risk', name: 'RISK_CORE', role: 'Winner Dip-Buyer & Security Firewall', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
+      { id: 'risk', name: 'RISK_CORE', role: 'Aggressive Stop-Loss & Security Firewall', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
       { id: 'trader', name: 'ALPHA_X', role: 'Verified Secure Swap Executor', color: '#ef4444', icon: '⚡', pnl: 0, status: 'ACTIVE' },
       { id: 'macro', name: 'MACRO_9', role: 'AI Momentum & Winner Scorer', color: '#a855f7', icon: '🌐', pnl: 0, status: 'ACTIVE' },
       { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#22c55e', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
@@ -402,7 +402,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'KIRKTRON 9001', text: `Partial scaling engine active [${operationalMode}]. Locking 25% profits on pumps.`, color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'RISK_CORE', text: `Stop-loss firewall active [${operationalMode}]. Cutting losers immediately.`, color: '#f59e0b', time: '00:00' }]
     };
 
     function setTradingMode(mode) {
@@ -504,7 +504,7 @@
 
         const targetCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
         whaleNewsFeed.unshift({
-          title: `SCALING SCAN [${operationalMode}]: ${targetCoin.symbol}`,
+          title: `DEFENSIVE SCAN [${operationalMode}]: ${targetCoin.symbol}`,
           desc: `Active Pools: ${marketCoins.length} | Status: ${targetCoin.securityBadge} | Price: ${fmtPrice(targetCoin.price)}`,
           time: new Date().toLocaleTimeString()
         });
@@ -512,7 +512,7 @@
 
         renderAll();
       } catch (err) {
-        console.warn("Scaling fetch warning:", err);
+        console.warn("Defensive fetch warning:", err);
       }
     }
 
@@ -625,8 +625,8 @@
         if (coin) portfolioVal += (state.positions[sym] || 0) * coin.price;
       });
       let net = state.cash + state.vault + portfolioVal;
-      const brief = `SCALING TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
-      state.councilFeed.unshift({ sender: 'KIRKTRON 9001', text: brief, color: '#38bdf8', time: new Date().toLocaleTimeString() });
+      const brief = `DEFENSIVE TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
+      state.councilFeed.unshift({ sender: 'RISK_CORE', text: brief, color: '#f59e0b', time: new Date().toLocaleTimeString() });
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
       renderAll();
     }
@@ -636,14 +636,14 @@
         if (marketCoins.length === 0) return;
 
         const now = Date.now();
-        const cooldown = operationalMode === 'SNIPER' ? 4000 : 10000;
+        const cooldown = operationalMode === 'SNIPER' ? 3000 : 8000;
         if (state.lastTradeTime && (now - state.lastTradeTime < cooldown)) {
           return;
         }
 
-        // Check for existing winning positions to see if we should scale out 25% or buy a dip
         let activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
-        
+
+        // AGGRESSIVE STOP-LOSS & PARTIAL SCALING LOOP
         for (let sym of activeSymbols) {
           let coin = marketCoins.find(c => c.symbol === sym);
           if (coin) {
@@ -652,7 +652,27 @@
             let mktVal = qty * coin.price;
             let gainPct = ((coin.price - cost) / cost) * 100;
 
-            // PARTIAL SCALING: If a coin pumps over +15%, sell 25% of the holding to lock profits while staying in the game
+            // STOP-LOSS FIREWALL: If any position drops -2.5% or worse into the red, cut it immediately!
+            if (gainPct <= -2.5) {
+              let gross = qty * coin.price;
+              let fee = gross * 0.003;
+              let netReturn = gross - fee;
+              let pnlDelta = netReturn - (qty * cost);
+
+              delete state.positions[sym];
+              delete state.costBasis[sym];
+              state.cash += netReturn;
+              state.realizedPnl += pnlDelta;
+              state.totalFeesPaid += fee;
+              state.txCount += 1;
+
+              addSystemLog(`[STOP-LOSS CUT] RISK_CORE killed losing position on ${sym}! Cut at ${gainPct.toFixed(1)}% | P&L: ${fmtCurrency(pnlDelta)}`);
+              saveState();
+              renderAll();
+              return;
+            }
+
+            // PARTIAL SCALING: If a coin pumps over +15%, sell 25% of the holding to lock profits
             if (gainPct >= 15.0 && qty > 10) {
               let scaleQty = qty * 0.25;
               let gross = scaleQty * coin.price;
@@ -666,7 +686,7 @@
               state.totalFeesPaid += fee;
               state.txCount += 1;
 
-              addSystemLog(`[PARTIAL SCALE] KIRKTRON 9001 locked 25% profits on ${sym}! Sold ${Math.round(scaleQty).toLocaleString()} tokens | P&L: +${fmtCurrency(pnlDelta)}`);
+              addSystemLog(`[PARTIAL SCALE] KIRKTRON 9001 locked 25% profits on ${sym}! Sold part at +${gainPct.toFixed(1)}% | P&L: +${fmtCurrency(pnlDelta)}`);
               saveState();
               renderAll();
               return;
@@ -674,7 +694,7 @@
           }
         }
 
-        // WINNER ACCUMULATION: If we already hold a winning coin, give it priority for a dip-buy add-on
+        // WINNER ACCUMULATION OR NEW ENTRY
         let winningSymbol = activeSymbols.find(sym => {
           let coin = marketCoins.find(c => c.symbol === sym);
           let cost = state.costBasis[sym] || 1;
@@ -693,7 +713,7 @@
         let currentPositionValue = curHold * targetCoin.price;
         let originalCostBasisValue = curHold * avgCost;
         let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPositionValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
-        let targetProfit = operationalMode === 'SNIPER' ? 6.0 : 3.0;
+        let targetProfit = operationalMode === 'SNIPER' ? 5.0 : 2.5;
 
         if (curHold > 0.00001 && unrealizedGainPct >= targetProfit) {
           let sellTokens = curHold;
@@ -717,7 +737,7 @@
           state.totalFeesPaid += fee;
           state.txCount += 1;
 
-          addSystemLog(`[FULL EXIT] Profit target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
+          addSystemLog(`[FULL TAKE-PROFIT] Profit target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
           action = 'sell';
         } else if (state.cash > 20.0) {
           let spend = state.cash * 0.20;
@@ -727,7 +747,6 @@
           
           let tokens = netSpend / targetCoin.price;
           if (curHold > 0) {
-            // Average down / add to winner
             state.costBasis[targetCoin.symbol] = (avgCost + targetCoin.price) / 2;
             state.positions[targetCoin.symbol] += tokens;
             addSystemLog(`[DIP ACCUMULATION] RISK_CORE added to winning position ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
@@ -748,7 +767,7 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `[${operationalMode}] Swarm executed momentum allocation into ${targetCoin.symbol}.` :
+          `[${operationalMode}] Swarm executed entry into ${targetCoin.symbol}.` :
           `[${operationalMode}] Target closed on ${targetCoin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ sender: winningSymbol ? 'RISK_CORE' : 'ALPHA_X', text: councilText, color: '#38bdf8', time: new Date().toLocaleTimeString() });
