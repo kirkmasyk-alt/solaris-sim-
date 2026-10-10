@@ -296,7 +296,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V14.9</div>
+          <div class="logo-sub">PAPER TRADING // V15.0</div>
         </div>
       </div>
       <div class="header-btns">
@@ -400,7 +400,7 @@ body::after {
       <div class="status-row"><span>DECISION MODE:</span> <strong id="status-decision" style="color: var(--cyan);">COUNCIL</strong></div>
       <div class="status-row"><span>MARKET FEED:</span> <strong id="status-feed" style="color: var(--text-dim);">CONNECTING</strong></div>
       <div class="status-row"><span>NEWS FEED:</span> <strong id="status-news" style="color: var(--text-dim);">CONNECTING</strong></div>
-      <div class="status-row"><span>STABLE RESERVE %:</span> <strong id="status-stable" style="color: var(--green);">40% BANKROLL</strong></div>
+      <div class="status-row"><span>MAJOR LEVERAGE:</span> <strong id="status-leverage" style="color: var(--green);">3.0x PERPS</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
       <div class="pane-title" style="margin-top: 8px;">// BUY PROTOCOL</div>
@@ -462,7 +462,9 @@ const CFG = {
   minLiquidity: 30000,
   skipClones: true,
   minAgeMin: 15,
-  stableReservePct: 0.40,
+  majorLeverage: 3.0,         // Simulated 3x leverage for major wave assets
+  stableMinLiq: 500000,       // Minimum liquidity for major wave coins
+  stableTargetProfitUsd: 1.00,// Minimum $1.00 net dollar profit floor for major coin exits
   launch: {
     maxMc: 5000,
     maxAgeMin: 10,
@@ -510,17 +512,17 @@ const auditSeen = {};
 
 const HOUR = 60 * 60 * 1000;
 const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR };
-const IGNORED_SYMBOLS = ['USDC', 'USDT', 'WSOL'];
+const IGNORED_SYMBOLS = ['USDC', 'USDT'];
 const STORE_KEY = 'orbital_state_v2';
 
 const AGENT_JOBS = {
   boss: 'Supervises the swarm. In COUNCIL mode it asks Gemini to approve or veto each entry, and it enforces the rules learned from past trades.',
-  announcer: 'Watches the market feeds and flags coins whose volume, buy pressure and liquidity pass the buy filters.',
+  announcer: 'Watches market feeds and flags momentum breakouts and major statistical dips.',
   news: 'Reads crypto headlines from RSS feeds and announces new ones as they appear.',
-  finance: 'KIRKTRON 9001: Manages the stable reserve vs memecoin split and accumulates major dips.',
+  finance: 'KIRKTRON 9001: Executes mean-reversion dip accumulation on major assets with 3x leverage.',
   risk: 'Stop-loss firewall. Cuts any position that falls past its stop and reports total exposure.',
   trader: 'The ONLY agent that trades. Opens positions, books partial sells and take-profits.',
-  macro: 'Momentum scorer. Ranks candidates by activity and buy pressure and picks the entry. Judged by how its picks perform.',
+  macro: 'Momentum scorer. Ranks candidates by breakout velocity and buy pressure.',
   cfo: 'ROBBIEBOT 9000: Vault sweeper. Moves a share of every winning trade into the secure vault.'
 };
 
@@ -528,7 +530,7 @@ const AGENTS = [
   { id: 'boss',      name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor',     color: '#ff2bd6' },
   { id: 'announcer', name: 'WHALE_EYE',      role: 'Whale Flow Watcher',      color: '#00f0ff' },
   { id: 'news',      name: 'NEWS_HAWK',      role: 'Live News Announcer',     color: '#f9f871' },
-  { id: 'finance',   name: 'KIRKTRON 9001',  role: 'Stable/Meme Allocator',   color: '#4d8bff' },
+  { id: 'finance',   name: 'KIRKTRON 9001',  role: 'Mean Reversion Engine',   color: '#4d8bff' },
   { id: 'risk',      name: 'RISK_CORE',      role: 'Stop-Loss Firewall',      color: '#ff9a3c' },
   { id: 'trader',    name: 'ALPHA_X',        role: 'Swap Executor',           color: '#ff3b5c' },
   { id: 'macro',     name: 'MACRO_9',        role: 'Momentum Scorer',         color: '#b45cff' },
@@ -728,17 +730,19 @@ function toCoinGT(p) {
   };
 }
 
-function isStable(coin) {
-  return coin.symbol === 'SOL' || coin.symbol === 'WSOL' || coin.liquidity > 1000000;
+function isMajorWave(coin) {
+  return coin.symbol === 'SOL' || coin.symbol === 'WSOL' || coin.liquidity >= CFG.stableMinLiq;
 }
 
 function modeAllows(c) { return state.mode !== 'SNIPER' || c.liquidity <= CFG.sniperMaxLiq; }
 function isFresh(c) { return c && Date.now() - c.seenAt < CFG.staleDataMs; }
 
 function isActive(c) {
-  if (isStable(c)) {
-    return c.change5m <= -4.0 && c.liquidity >= 500000;
+  if (isMajorWave(c)) {
+    // Mean Reversion Strategy: Trigger accumulation on oversold short-term dips (-1.5% to -5% in 5m)
+    return c.change5m <= -1.5 && c.change5m >= -8.0;
   }
+  // Momentum Breakout Strategy for Memecoins
   if (c.ageMin !== null && c.ageMin !== undefined && c.ageMin < CFG.minAgeMin) return false;
   const tx = c.buysH1 + c.sellsH1;
   if (c.liquidity < CFG.minLiquidity) return false;
@@ -755,7 +759,7 @@ function activityScore(c) {
 }
 
 function isLaunchCandidate(c) {
-  if (isStable(c)) return false;
+  if (isMajorWave(c)) return false;
   const L = CFG.launch;
   if (c.ageMin === null || c.ageMin === undefined || c.ageMin > L.maxAgeMin) return false;
   if (!(c.marketCap > 0) || c.marketCap > L.maxMc) return false;
@@ -765,12 +769,12 @@ function isLaunchCandidate(c) {
 }
 
 function isBuyable(c) {
-  if (classifyDipOrDump(c) === 'DUMP' && !isStable(c)) return false;
+  if (classifyDipOrDump(c) === 'DUMP' && !isMajorWave(c)) return false;
   return state.mode === 'LAUNCH' ? isLaunchCandidate(c) : (isActive(c) && modeAllows(c) && !(CFG.skipClones && isClone(c)));
 }
 
 function entryScore(c) {
-  if (isStable(c)) return Math.abs(c.change5m) * 10;
+  if (isMajorWave(c)) return Math.abs(c.change5m) * 15; // Prioritize deeper mean-reversion dips
   if (state.mode === 'LAUNCH') return c.buysH1 * (c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1));
   return activityScore(c);
 }
@@ -1077,17 +1081,19 @@ function openPosition(coin) {
   const addr = coin.address;
   if (state.positions[addr] > 0 || state.cash <= CFG.minCash || isArchived(coin)) return false;
 
-  const stable = isStable(coin);
+  const major = isMajorWave(coin);
   const held = heldAddrs();
-  const stableHeldCount = held.filter(a => {
+  const majorHeldCount = held.filter(a => {
     const sym = state.symbols[a];
     return sym === 'SOL' || sym === 'WSOL';
   }).length;
 
-  if (stable && stableHeldCount >= 2) return;
+  if (major && majorHeldCount >= 2) return; // Cap major coin wave holdings
 
-  const wanted = state.cash * (stable ? 0.30 : (state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct));
-  const spend = Math.min(wanted, coin.liquidity * CFG.maxSpendPctOfLiq);
+  // Apply simulated 3x leverage for major wave assets
+  const leverage = major ? CFG.majorLeverage : 1.0;
+  const wanted = state.cash * (major ? 0.30 : (state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct)) * leverage;
+  const spend = Math.min(wanted, coin.liquidity * CFG.maxSpendPctOfLiq * leverage);
   if (spend < 1) return false;
 
   const fee = spend * CFG.feeRate;
@@ -1107,9 +1113,9 @@ function openPosition(coin) {
   state.txCount += 1;
   playSfx('buy');
 
-  const tag = stable ? '[STABLE RESERVE DIP ACCUMULATION]' : '[MEMECOIN SCALP]';
-  log(`${tag} KIRKTRON 9001 deployed ${fmtCurrency(spend)} into ${coin.symbol}`);
-  agentSay('finance', `KIRKTRON 9001: Allocated ${fmtCurrency(spend)} to ${coin.symbol} (${stable ? 'Stable Hold' : 'Meme Scalp'}).`);
+  const tag = major ? '[MAJOR WAVE // 3X PERP ACCUMULATION]' : '[MEMECOIN MOMENTUM SCALP]';
+  log(`${tag} KIRKTRON 9001 deployed ${fmtCurrency(spend)} into ${coin.symbol} (${leverage}x leverage)`);
+  agentSay('finance', `KIRKTRON 9001: Allocated ${fmtCurrency(spend)} to ${coin.symbol} at ${leverage}x leverage.`);
   saveState();
   renderAll();
   return true;
@@ -1132,18 +1138,22 @@ function runExits() {
     const drop = ((state.peaks[addr] - coin.price) / state.peaks[addr]) * 100;
     const healthyDip = classifyDipOrDump(coin) === 'HEALTHY DIP';
     const tier = state.tiers[addr] || 0;
-    const stable = isStable(coin);
+    const major = isMajorWave(coin);
 
     const launch = state.mode === 'LAUNCH';
     const L = CFG.launch;
     
-    const stopLimit = stable ? -12.0 : (launch ? L.stopPct : CFG.stopLossPct);
-    const profitLimit = stable ? 20.0 : CFG.takeProfitPct;
+    const stopLimit = major ? -8.0 : (launch ? L.stopPct : CFG.stopLossPct);
+    const currentProfitUsd = (coin.price - cost) * (state.positions[addr] || 0);
 
     if (gain <= stopLimit) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
 
-    if (stable) {
-      if (gain >= profitLimit) { closePosition(addr, coin, 'TAKE-PROFIT', 'Major dip recovery target secured on'); continue; }
+    if (major) {
+      // Enforce $1.00+ net dollar profit floor for major coin waves
+      if (currentProfitUsd >= CFG.stableTargetProfitUsd) {
+        closePosition(addr, coin, 'TAKE-PROFIT ($1+)', `Secured target profit of $${currentProfitUsd.toFixed(2)} on`);
+        continue;
+      }
     } else if (launch) {
       if (gain >= L.tier1Pct && tier < 1) {
         const q = state.positions[addr] * 0.5;
@@ -1176,12 +1186,12 @@ function runExits() {
         saveState(); continue;
       }
       if (tier >= 1 && drop >= 15 && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Locked remaining runner on'); continue; }
-    } else if (gain >= profitLimit) {
+    } else if (gain >= CFG.takeProfitPct) {
       closePosition(addr, coin, 'TAKE-PROFIT', 'Target secured on');
       continue;
     }
 
-    if (!stable && tier === 0 && now - (state.entryTimes[addr] || now) > (launch ? L.staleMs : CFG.staleExitMs) && gain < (launch ? L.stalePct : 1)) {
+    if (!major && tier === 0 && now - (state.entryTimes[addr] || now) > (launch ? L.staleMs : CFG.staleExitMs) && gain < (launch ? L.stalePct : 1)) {
       closePosition(addr, coin, 'STALE EXIT', 'Going nowhere, closed');
     }
   }
@@ -1228,7 +1238,7 @@ async function considerEntry() {
   const pick = allowed[Math.floor(Math.random() * Math.min(allowed.length, CFG.topPicks))];
   const hasKey = (localStorage.getItem('gemini_api_key') || '').length > 5;
 
-  if (state.decision === 'COUNCIL' && hasKey && !isStable(pick)) {
+  if (state.decision === 'COUNCIL' && hasKey && !isMajorWave(pick)) {
     councilBusy = true;
     try {
       const v = await askCouncil(pick);
@@ -1468,7 +1478,7 @@ function renderNow() {
     setText('status-decision', state.decision);
     setText('status-feed', feedStatus);
     setText('status-news', newsStatus);
-    setText('status-stable', `${Math.round(CFG.stableReservePct * 100)}% BANKROLL`);
+    setText('status-leverage', `${CFG.majorLeverage}x PERPS`);
     setText('btn-sound', state.sound ? 'SND ON' : 'SND OFF');
 
     ['growth', 'sniper', 'launch'].forEach(m => { const b = $('btn-mode-' + m); if (b) b.classList.toggle('active-mode', state.mode === m.toUpperCase()); });
