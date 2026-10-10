@@ -77,7 +77,7 @@
     .cyber-btn.danger { border-color: var(--red); color: var(--red); }
     .cyber-btn.accent { border-color: var(--amber); color: var(--amber); }
     .cyber-btn.purple { border-color: var(--purple); color: var(--purple); }
-    .cyber-btn.active-mode { background: var(--cyan); color: #000; font-weight: bold; }
+    .cyber-btn.active-mode { background: var(--cyan); color: #000; font-weight: bold; border-color: var(--cyan); }
 
     .net-worth-banner {
       background: rgba(0, 0, 0, 0.6);
@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.0</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.1</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -272,7 +272,7 @@
       <span style="font-size: 10px; color: var(--text-dim);">OPERATIONAL MODE:</span>
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
-        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (0-1M MULTI-SCAN)</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (0-1M LOCKED)</button>
       </div>
     </div>
 
@@ -319,11 +319,11 @@
 
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 11px; color: var(--cyan);">// MULTI-SOURCE EXECUTION STREAM</div>
+        <div style="font-size: 11px; color: var(--cyan);">// LOCKED-MODE EXECUTION STREAM</div>
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Multi-source discovery & RugCheck engine active.</div>
+        <div style="color: var(--green);">[00:01] Mode lock state successfully initialized.</div>
       </div>
     </div>
 
@@ -336,8 +336,8 @@
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE (0-1 MIN POOLS)</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // MULTI-SCANNER</div>
-          <div class="feed-text">Scanning multiple Solana liquidity sources concurrently...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // LOCKED SCANNER</div>
+          <div class="feed-text">Monitoring live market pools according to user mode selection...</div>
         </div>
       </div>
     </div>
@@ -358,7 +358,7 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
-      <div class="status-row"><span>RUGCHECK SECURITY GATE:</span> <strong style="color: var(--green);">ACTIVE [MULTI-SCAN]</strong></div>
+      <div class="status-row"><span>MODE SWITCHER STATE:</span> <strong style="color: var(--green);">LOCKED [USER CONTROLLED]</strong></div>
       <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 SECURE TRADERS</strong></div>
@@ -377,9 +377,10 @@
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Multi-source discovery active. Monitoring robust pool counts.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Mode switch lock active. Your selected mode will remain fixed.', time: '00:00' }
     ];
 
+    // Explicitly read mode from storage once, never letting background refreshes overwrite it
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
 
     const agentDefs = [
@@ -402,13 +403,13 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'RISK_CORE', text: `Multi-source scanner active [${operationalMode}].`, color: '#f59e0b', time: '00:00' }]
+      councilFeed: [{ sender: 'RISK_CORE', text: `Mode locked to [${operationalMode}]. Ready.`, color: '#f59e0b', time: '00:00' }]
     };
 
     function setTradingMode(mode) {
       operationalMode = mode;
       localStorage.setItem('solaris_mode', mode);
-      addSystemLog(`[MODE] Switched operational mode to: ${mode}`);
+      addSystemLog(`[MODE LOCKED] User set operational mode to: ${mode}`);
       fetchLiveMarketPrices();
       renderAll();
     }
@@ -733,7 +734,7 @@
 
           state.totalFeesPaid += fee;
           state.txCount += 1;
-          addSystemLog(`[SECURE EXEC] ${agent.name} BUY ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${coin.symbol} [Multi-Scan] | Cost: $${spend.toFixed(2)}`);
+          addSystemLog(`[SECURE EXEC] ${agent.name} BUY ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${coin.symbol} [${operationalMode}] | Cost: $${spend.toFixed(2)}`);
           action = 'buy';
         } else {
           return;
