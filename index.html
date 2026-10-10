@@ -296,7 +296,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V14.6</div>
+          <div class="logo-sub">PAPER TRADING // V14.7</div>
         </div>
       </div>
       <div class="header-btns">
@@ -389,7 +389,7 @@ body::after {
       <div class="status-row"><span>DECISION MODE:</span> <strong id="status-decision" style="color: var(--cyan);">COUNCIL</strong></div>
       <div class="status-row"><span>MARKET FEED:</span> <strong id="status-feed" style="color: var(--text-dim);">CONNECTING</strong></div>
       <div class="status-row"><span>NEWS FEED:</span> <strong id="status-news" style="color: var(--text-dim);">CONNECTING</strong></div>
-      <div class="status-row"><span>MAX POSITION CAP:</span> <strong id="status-cap" style="color: var(--green);">20% OF BANKROLL</strong></div>
+      <div class="status-row"><span>STABLE RESERVE %:</span> <strong id="status-stable" style="color: var(--green);">40% BANKROLL</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
       <div class="pane-title" style="margin-top: 8px;">// BUY PROTOCOL</div>
@@ -451,6 +451,7 @@ const CFG = {
   minLiquidity: 30000,
   skipClones: true,
   minAgeMin: 15,
+  stableReservePct: 0.40, // 40% reserved for stable/major accumulation, 60% for memecoin scalps
   launch: {
     maxMc: 5000,
     maxAgeMin: 10,
@@ -498,14 +499,14 @@ const auditSeen = {};
 
 const HOUR = 60 * 60 * 1000;
 const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR };
-const IGNORED_SYMBOLS = ['SOL', 'USDC', 'USDT', 'WSOL'];
+const IGNORED_SYMBOLS = ['USDC', 'USDT', 'WSOL'];
 const STORE_KEY = 'orbital_state_v2';
 
 const AGENT_JOBS = {
   boss: 'Supervises the swarm. In COUNCIL mode it asks Gemini to approve or veto each entry, and it enforces the rules learned from past trades.',
   announcer: 'Watches the market feeds and flags coins whose volume, buy pressure and liquidity pass the buy filters.',
   news: 'Reads crypto headlines from RSS feeds and announces new ones as they appear.',
-  finance: 'KIRKTRON 9001: Tracks opportunity cost, capital allocation, and major coin dip accumulation.',
+  finance: 'KIRKTRON 9001: Manages the stable reserve vs memecoin split and accumulates major dips.',
   risk: 'Stop-loss firewall. Cuts any position that falls past its stop and reports total exposure.',
   trader: 'The ONLY agent that trades. Opens positions, books partial sells and take-profits.',
   macro: 'Momentum scorer. Ranks candidates by activity and buy pressure and picks the entry. Judged by how its picks perform.',
@@ -516,7 +517,7 @@ const AGENTS = [
   { id: 'boss',      name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor',     color: '#ff2bd6' },
   { id: 'announcer', name: 'WHALE_EYE',      role: 'Whale Flow Watcher',      color: '#00f0ff' },
   { id: 'news',      name: 'NEWS_HAWK',      role: 'Live News Announcer',     color: '#f9f871' },
-  { id: 'finance',   name: 'KIRKTRON 9001',  role: 'Value Accumulation Engine', color: '#4d8bff' },
+  { id: 'finance',   name: 'KIRKTRON 9001',  role: 'Stable/Meme Allocator',   color: '#4d8bff' },
   { id: 'risk',      name: 'RISK_CORE',      role: 'Stop-Loss Firewall',      color: '#ff9a3c' },
   { id: 'trader',    name: 'ALPHA_X',        role: 'Swap Executor',           color: '#ff3b5c' },
   { id: 'macro',     name: 'MACRO_9',        role: 'Momentum Scorer',         color: '#b45cff' },
@@ -680,7 +681,7 @@ function toCoin(p) {
   const price = parseFloat(p.priceUsd);
   if (!(liquidity > 0) || !(price > 0)) return null;
   const symbol = cleanSymbol(p.baseToken.symbol);
-  if (!symbol || IGNORED_SYMBOLS.includes(symbol)) return null;
+  if (!symbol) return null;
   const pc = p.priceChange || {}, tx = (p.txns && p.txns.h1) || {};
   return {
     address: p.baseToken.address, symbol, price, liquidity,
@@ -701,7 +702,7 @@ function toCoinGT(p) {
   const price = parseFloat(a.base_token_price_usd);
   const liquidity = parseFloat(a.reserve_in_usd);
   const symbol = cleanSymbol(String(a.name || '').split(' / ')[0]);
-  if (!address || !(price > 0) || !(liquidity > 0) || !symbol || IGNORED_SYMBOLS.includes(symbol)) return null;
+  if (!address || !(price > 0) || !(liquidity > 0) || !symbol) return null;
   const pc = a.price_change_percentage || {}, vol = a.volume_usd || {};
   const tx = (a.transactions && a.transactions.h1) || {};
   const created = a.pool_created_at ? Date.parse(a.pool_created_at) : NaN;
@@ -716,10 +717,17 @@ function toCoinGT(p) {
   };
 }
 
+function isStable(coin) {
+  return coin.symbol === 'SOL' || coin.symbol === 'WSOL' || coin.liquidity > 1000000;
+}
+
 function modeAllows(c) { return state.mode !== 'SNIPER' || c.liquidity <= CFG.sniperMaxLiq; }
 function isFresh(c) { return c && Date.now() - c.seenAt < CFG.staleDataMs; }
 
 function isActive(c) {
+  if (isStable(c)) {
+    return c.change5m <= -4.0 && c.liquidity >= 500000; // Stable/Major dip trigger
+  }
   if (c.ageMin !== null && c.ageMin !== undefined && c.ageMin < CFG.minAgeMin) return false;
   const tx = c.buysH1 + c.sellsH1;
   if (c.liquidity < CFG.minLiquidity) return false;
@@ -736,6 +744,7 @@ function activityScore(c) {
 }
 
 function isLaunchCandidate(c) {
+  if (isStable(c)) return false;
   const L = CFG.launch;
   if (c.ageMin === null || c.ageMin === undefined || c.ageMin > L.maxAgeMin) return false;
   if (!(c.marketCap > 0) || c.marketCap > L.maxMc) return false;
@@ -745,11 +754,12 @@ function isLaunchCandidate(c) {
 }
 
 function isBuyable(c) {
-  if (classifyDipOrDump(c) === 'DUMP') return false;
+  if (classifyDipOrDump(c) === 'DUMP' && !isStable(c)) return false;
   return state.mode === 'LAUNCH' ? isLaunchCandidate(c) : (isActive(c) && modeAllows(c) && !(CFG.skipClones && isClone(c)));
 }
 
 function entryScore(c) {
+  if (isStable(c)) return Math.abs(c.change5m) * 10; // High score for major coin dips
   if (state.mode === 'LAUNCH') return c.buysH1 * (c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1));
   return activityScore(c);
 }
@@ -925,7 +935,7 @@ function sellTokens(addr, coin, qty) {
     bump('cfo', 'swept', sweep); bump('cfo', 'sweeps');
     state.cash += net - sweep;
     state.vault += sweep;
-    agentSay('cfo', `ROBBIEBOT 9000: Swept ${fmtCurrency(sweep)} of profit into the secure vault.`);
+    agentSay('cfo', `ROBBIEBOT 9000: Swept ${fmtCurrency(sweep)} into vault.`);
   } else {
     state.cash += net;
   }
@@ -1045,9 +1055,21 @@ function manualSellPosition(addr) {
 function openPosition(coin) {
   const addr = coin.address;
   if (state.positions[addr] > 0 || state.cash <= CFG.minCash || isArchived(coin)) return false;
-  const wanted = state.cash * (state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct);
+
+  // Enforce Dual-Track Allocation Check
+  const stable = isStable(coin);
+  const held = heldAddrs();
+  const stableHeldCount = held.filter(a => {
+    const sym = state.symbols[a];
+    return sym === 'SOL' || sym === 'WSOL';
+  }).length;
+
+  if (stable && stableHeldCount >= 2) return; // Cap stable reserves to 2 concurrent holdings
+
+  const wanted = state.cash * (stable ? 0.30 : (state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct));
   const spend = Math.min(wanted, coin.liquidity * CFG.maxSpendPctOfLiq);
   if (spend < 1) return false;
+
   const fee = spend * CFG.feeRate;
   const fill = coin.price * (1 + slippage(spend, coin.liquidity));
   state.cash -= spend;
@@ -1064,8 +1086,10 @@ function openPosition(coin) {
   state.fees += fee;
   state.txCount += 1;
   playSfx('buy');
-  log(`[BUY] KIRKTRON 9001 allocated ${fmtCurrency(spend)} to ${coin.symbol}`);
-  agentSay('finance', `KIRKTRON 9001: Deployed ${fmtCurrency(spend)} into ${coin.symbol}. Opportunity cost optimized.`);
+
+  const tag = stable ? '[STABLE RESERVE DIP ACCUMULATION]' : '[MEMECOIN SCALP]';
+  log(`${tag} KIRKTRON 9001 deployed ${fmtCurrency(spend)} into ${coin.symbol}`);
+  agentSay('finance', `KIRKTRON 9001: Allocated ${fmtCurrency(spend)} to ${coin.symbol} (${stable ? 'Stable Hold' : 'Meme Scalp'}).`);
   saveState();
   renderAll();
   return true;
@@ -1088,12 +1112,20 @@ function runExits() {
     const drop = ((state.peaks[addr] - coin.price) / state.peaks[addr]) * 100;
     const healthyDip = classifyDipOrDump(coin) === 'HEALTHY DIP';
     const tier = state.tiers[addr] || 0;
+    const stable = isStable(coin);
 
     const launch = state.mode === 'LAUNCH';
     const L = CFG.launch;
-    if (gain <= (launch ? L.stopPct : CFG.stopLossPct)) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
+    
+    // Stable assets get wider stop losses and patient profit targets
+    const stopLimit = stable ? -12.0 : (launch ? L.stopPct : CFG.stopLossPct);
+    const profitLimit = stable ? 20.0 : CFG.takeProfitPct;
 
-    if (launch) {
+    if (gain <= stopLimit) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
+
+    if (stable) {
+      if (gain >= profitLimit) { closePosition(addr, coin, 'TAKE-PROFIT', 'Major dip recovery target secured on'); continue; }
+    } else if (launch) {
       if (gain >= L.tier1Pct && tier < 1) {
         const q = state.positions[addr] * 0.5;
         const pnl = sellTokens(addr, coin, q);
@@ -1125,12 +1157,12 @@ function runExits() {
         saveState(); continue;
       }
       if (tier >= 1 && drop >= 15 && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Locked remaining runner on'); continue; }
-    } else if (gain >= CFG.takeProfitPct) {
+    } else if (gain >= profitLimit) {
       closePosition(addr, coin, 'TAKE-PROFIT', 'Target secured on');
       continue;
     }
 
-    if (tier === 0 && now - (state.entryTimes[addr] || now) > (launch ? L.staleMs : CFG.staleExitMs) && gain < (launch ? L.stalePct : 1)) {
+    if (!stable && tier === 0 && now - (state.entryTimes[addr] || now) > (launch ? L.staleMs : CFG.staleExitMs) && gain < (launch ? L.stalePct : 1)) {
       closePosition(addr, coin, 'STALE EXIT', 'Going nowhere, closed');
     }
   }
@@ -1177,7 +1209,7 @@ async function considerEntry() {
   const pick = allowed[Math.floor(Math.random() * Math.min(allowed.length, CFG.topPicks))];
   const hasKey = (localStorage.getItem('gemini_api_key') || '').length > 5;
 
-  if (state.decision === 'COUNCIL' && hasKey) {
+  if (state.decision === 'COUNCIL' && hasKey && !isStable(pick)) {
     councilBusy = true;
     try {
       const v = await askCouncil(pick);
@@ -1386,7 +1418,7 @@ function renderNow() {
     setText('status-decision', state.decision);
     setText('status-feed', feedStatus);
     setText('status-news', newsStatus);
-    setText('status-cap', `${Math.round((state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct) * 100)}% OF BANKROLL`);
+    setText('status-stable', `${Math.round(CFG.stableReservePct * 100)}% BANKROLL`);
     setText('btn-sound', state.sound ? 'SND ON' : 'SND OFF');
 
     ['growth', 'sniper', 'launch'].forEach(m => { const b = $('btn-mode-' + m); if (b) b.classList.toggle('active-mode', state.mode === m.toUpperCase()); });
@@ -1911,7 +1943,6 @@ function runAudit() {
     add(js.expectancy < 0 ? 'bad' : 'ok', 'expect', js.expectancy < 0 ? 'Strategy loses money' : 'Strategy is profitable', `${js.n} trades: win rate ${Math.round(js.winRate * 100)}%, expectancy ${js.expectancy.toFixed(2)}%/trade.`);
   }
 
-  // AUTONOMOUS LIVE FIX AUTHORITY FOR AUDITOR-7
   F.forEach(f => {
     if (f.sev === 'bad' && f.fix) {
       const key = f.fix.key, val = f.fix.value;
