@@ -296,7 +296,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V15.0</div>
+          <div class="logo-sub">PAPER TRADING // V15.1</div>
         </div>
       </div>
       <div class="header-btns">
@@ -400,7 +400,7 @@ body::after {
       <div class="status-row"><span>DECISION MODE:</span> <strong id="status-decision" style="color: var(--cyan);">COUNCIL</strong></div>
       <div class="status-row"><span>MARKET FEED:</span> <strong id="status-feed" style="color: var(--text-dim);">CONNECTING</strong></div>
       <div class="status-row"><span>NEWS FEED:</span> <strong id="status-news" style="color: var(--text-dim);">CONNECTING</strong></div>
-      <div class="status-row"><span>MAJOR LEVERAGE:</span> <strong id="status-leverage" style="color: var(--green);">3.0x PERPS</strong></div>
+      <div class="status-row"><span>SCAN FREQUENCY:</span> <strong id="status-scan" style="color: var(--green);">60 SECONDS</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
       <div class="pane-title" style="margin-top: 8px;">// BUY PROTOCOL</div>
@@ -449,7 +449,7 @@ const CFG = {
   stopLossPct: -3.0,
   takeProfitPct: 12.0,
   staleExitMs: 2 * 60 * 60 * 1000,
-  scanEveryMs: 35000,
+  scanEveryMs: 60000,         // Optimized to 1-minute cadence to prevent API rate limits
   newsEveryMs: 120000,
   recentKeepMs: 90000,
   staleDataMs: 60000,
@@ -462,9 +462,9 @@ const CFG = {
   minLiquidity: 30000,
   skipClones: true,
   minAgeMin: 15,
-  majorLeverage: 3.0,         // Simulated 3x leverage for major wave assets
-  stableMinLiq: 500000,       // Minimum liquidity for major wave coins
-  stableTargetProfitUsd: 1.00,// Minimum $1.00 net dollar profit floor for major coin exits
+  majorLeverage: 3.0,
+  stableMinLiq: 500000,
+  stableTargetProfitUsd: 1.00,
   launch: {
     maxMc: 5000,
     maxAgeMin: 10,
@@ -499,7 +499,7 @@ const TUNABLE = {
   minTxnsH1: { min: 5, max: 500 },
   minBuyRatio: { min: 0.4, max: 0.8 },
   minAgeMin: { min: 0, max: 180 },
-  scanEveryMs: { min: 10000, max: 120000, reload: true }
+  scanEveryMs: { min: 30000, max: 120000, reload: true }
 };
 
 const diag = { hotZero: 0, geminiErr: 0, geminiMsg: '' };
@@ -739,10 +739,8 @@ function isFresh(c) { return c && Date.now() - c.seenAt < CFG.staleDataMs; }
 
 function isActive(c) {
   if (isMajorWave(c)) {
-    // Mean Reversion Strategy: Trigger accumulation on oversold short-term dips (-1.5% to -5% in 5m)
     return c.change5m <= -1.5 && c.change5m >= -8.0;
   }
-  // Momentum Breakout Strategy for Memecoins
   if (c.ageMin !== null && c.ageMin !== undefined && c.ageMin < CFG.minAgeMin) return false;
   const tx = c.buysH1 + c.sellsH1;
   if (c.liquidity < CFG.minLiquidity) return false;
@@ -774,7 +772,7 @@ function isBuyable(c) {
 }
 
 function entryScore(c) {
-  if (isMajorWave(c)) return Math.abs(c.change5m) * 15; // Prioritize deeper mean-reversion dips
+  if (isMajorWave(c)) return Math.abs(c.change5m) * 15;
   if (state.mode === 'LAUNCH') return c.buysH1 * (c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1));
   return activityScore(c);
 }
@@ -1088,9 +1086,8 @@ function openPosition(coin) {
     return sym === 'SOL' || sym === 'WSOL';
   }).length;
 
-  if (major && majorHeldCount >= 2) return; // Cap major coin wave holdings
+  if (major && majorHeldCount >= 2) return;
 
-  // Apply simulated 3x leverage for major wave assets
   const leverage = major ? CFG.majorLeverage : 1.0;
   const wanted = state.cash * (major ? 0.30 : (state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct)) * leverage;
   const spend = Math.min(wanted, coin.liquidity * CFG.maxSpendPctOfLiq * leverage);
@@ -1149,7 +1146,6 @@ function runExits() {
     if (gain <= stopLimit) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
 
     if (major) {
-      // Enforce $1.00+ net dollar profit floor for major coin waves
       if (currentProfitUsd >= CFG.stableTargetProfitUsd) {
         closePosition(addr, coin, 'TAKE-PROFIT ($1+)', `Secured target profit of $${currentProfitUsd.toFixed(2)} on`);
         continue;
@@ -1478,7 +1474,7 @@ function renderNow() {
     setText('status-decision', state.decision);
     setText('status-feed', feedStatus);
     setText('status-news', newsStatus);
-    setText('status-leverage', `${CFG.majorLeverage}x PERPS`);
+    setText('status-scan', '60 SECONDS');
     setText('btn-sound', state.sound ? 'SND ON' : 'SND OFF');
 
     ['growth', 'sniper', 'launch'].forEach(m => { const b = $('btn-mode-' + m); if (b) b.classList.toggle('active-mode', state.mode === m.toUpperCase()); });
