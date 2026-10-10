@@ -340,7 +340,7 @@
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap;">VAULT SWARM V13.4</div>
+          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap;">VAULT SWARM V13.5</div>
         </div>
       </div>
       <div class="header-btns">
@@ -1140,8 +1140,23 @@
     function isArchived(coin) {
       const now = Date.now();
       const bySym = state.archive[coin.symbol];
-      if (bySym && bySym.until > now) return true;
-      return Object.values(state.archive).some(e => e.until > now && e.address && coin.address && e.address === coin.address);
+      const byAddr = Object.values(state.archive).find(e => e.address && coin.address && e.address === coin.address);
+      const archivedEntry = bySym || byAddr;
+      
+      if (archivedEntry && archivedEntry.until > now) {
+        // SMART UNBENCH: If a benched coin starts pumping (1h change > 5% or 5m change > 2%), unbench it early!
+        if ((coin.change1h || 0) > 5.0 || (coin.change5m || 0) > 2.0) {
+          delete state.archive[coin.symbol];
+          Object.keys(state.archive).forEach(k => {
+            if (state.archive[k].address === coin.address) delete state.archive[k];
+          });
+          saveState();
+          addSystemLog(`[PUMP UNBENCH] ${coin.symbol} was benched but is now pumping (${(coin.change1h || 0).toFixed(1)}% 1h)! Unbenched.`);
+          return false;
+        }
+        return true;
+      }
+      return false;
     }
 
     // Closes a whole position at the live price: applies fee, profit sweep, cooldown, logs, saves.
@@ -1191,8 +1206,6 @@
 
     // =====================================================================
     // DECISION PROTOCOL: one rulebook, used by both COUNCIL (talks it out) and AUTO (instant)
-    //   Six voters each return +1 (yes), 0 (neutral) or -1 (no). RISK_CORE can veto.
-    //   A coin is bought only if the total >= APPROVE_SCORE and there is no veto.
     // =====================================================================
     const COUNCIL_GAP_MS = 1800;                 // pause between speakers (COUNCIL mode only)
     const REJECT_BLOCK_MS = 15 * 60 * 1000;      // a rejected coin isn't re-proposed for this long
@@ -1231,7 +1244,6 @@
       renderAll();
     }
 
-    // ---- the six voters (pure rules, no AI needed) ----
     function flowVote(x) {                        // WHALE_EYE
       const b = x.buysH1 || 0, sl = x.sellsH1 || 0, tx = Math.max(1, b + sl);
       const ratio = b / tx, turn = x.liquidity > 0 ? x.volumeH1 / x.liquidity : 0;
@@ -1290,7 +1302,6 @@
       return { v: left >= PROTOCOL.minCashLeft ? 1 : 0, left };
     }
 
-    // Runs the whole rulebook on one snapshot of a coin.
     function scoreProposal(x) {
       const spend = state.cash * 0.20;
       const flow = flowVote(x);
@@ -1306,7 +1317,6 @@
 
     const VOTER_NAMES = { announcer: 'WHALE', news: 'NEWS', macro: 'MACRO', finance: 'KIRK', risk: 'RISK', cfo: 'ROBBIE' };
 
-    // AUTO mode: same rulebook, decided instantly, no meeting
     function autoDecide(seed) {
       const sym = seed.symbol, short = sym.slice(0, 8);
       const x = marketCoins.find(c => c.symbol === sym) || seed;
@@ -1366,7 +1376,6 @@
       return true;
     }
 
-    // COUNCIL mode: the same rulebook, but the agents talk it through, one at a time
     async function holdCouncil(seed) {
       if (councilBusy) return;
       councilBusy = true;
@@ -1384,13 +1393,11 @@
         };
         setVerdict(`RE:${short} ...`, '#00f0ff');
 
-        // 1) ALPHA_X proposes
         let x = latest();
         const spend = state.cash * 0.20;
         councilSay('trader', ['table'], `Proposing entry: ${sym} at ${fmtPrice(x.price)}. That puts ${fmtCurrency(spend)} (20% of bankroll) to work. Scanners, what do you see?`, 'PROPOSE');
         await sleep(COUNCIL_GAP_MS);
 
-        // 2) WHALE_EYE reads the flow
         x = latest();
         const fl = flowVote(x);
         brief.flow = fl;
@@ -1398,7 +1405,6 @@
         vote('announcer', fl.v);
         await sleep(COUNCIL_GAP_MS);
 
-        // 3) NEWS_HAWK checks the wire
         const nc = newsCheck(sym);
         const nv = newsVote(nc);
         let ntext;
@@ -1415,7 +1421,6 @@
         vote('news', nv);
         await sleep(COUNCIL_GAP_MS);
 
-        // 4) MACRO_9 combines flow + news + price action
         x = latest();
         const mom = momentumOf(x, brief.flow.v, brief.news.v);
         brief.momentum = mom;
@@ -1423,7 +1428,6 @@
         vote('macro', mom.v);
         await sleep(COUNCIL_GAP_MS);
 
-        // 5) KIRKTRON 9001 lays out the exit plan and checks it fits
         const target = operationalMode === 'SNIPER' ? 5 : 2.5;
         const pl = planVote(mom);
         const warn = pl.why === 'chase' ? ` It's already ${signedPct(mom.h1)} in 1h, that's a chase.`
@@ -1433,7 +1437,6 @@
         vote('finance', pl.v);
         await sleep(COUNCIL_GAP_MS);
 
-        // 6) RISK_CORE checks everyone's work and can veto
         x = latest();
         const sumSoFar = tally();
         const rk = riskVote(x, spend, sumSoFar, brief.flow, brief.momentum);
@@ -1442,13 +1445,11 @@
         vote('risk', rk.v);
         await sleep(COUNCIL_GAP_MS);
 
-        // 7) ROBBIEBOT 9000 checks the money
         const cs = cashVote(spend);
         councilSay('cfo', ['trader'], `Bankroll ${fmtCurrency(state.cash)}, vault ${fmtCurrency(state.vault)}. After this entry ${fmtCurrency(cs.left)} stays liquid. If it wins I sweep ${state.sweepPct}% of the profit to the vault. My vote: ${voteWord(cs.v)}.`, `CASH ${sgn(cs.v)}`);
         vote('cfo', cs.v);
         await sleep(COUNCIL_GAP_MS);
 
-        // 8) ORCHESTRATOR-1 tallies and decides
         const total = tally();
         const approved = total >= APPROVE_SCORE && !brief.veto;
         const list = Object.keys(VOTER_NAMES).map(k => `${VOTER_NAMES[k]} ${sgn(brief.votes[k] || 0)}`).join(', ');
@@ -1457,7 +1458,6 @@
         setVerdict(`${short} ${approved ? 'OK' : 'NO'} ${sgn(total)}`, approved ? '#39ff88' : '#ff3b5c');
         await sleep(COUNCIL_GAP_MS);
 
-        // 9) ALPHA_X acts on the decision
         if (approved) {
           const ok = executeEntry(sym);
           councilSay('trader', ['boss'], ok ? `Filled. Bought ${sym} on a ${sgn(total)} vote. Exit rules are live.` : `Order dropped, conditions changed before I could fill ${sym}.`, ok ? 'FILLED' : 'DROPPED');
@@ -1475,7 +1475,6 @@
       }
     }
 
-    // Periodic status chatter about open positions
     function positionChatter() {
       if (councilBusy) return;
       const nowMs = Date.now();
@@ -1513,7 +1512,6 @@
           return;
         }
 
-        // ---- EXITS: every held coin is checked on every tick ----
         const targetProfit = operationalMode === 'SNIPER' ? 5.0 : 2.5;
         const activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
 
@@ -1531,7 +1529,6 @@
           const peakGainPct = ((peakPrice - cost) / cost) * 100;
           const dropFromPeakPct = peakPrice > 0 ? ((peakPrice - coin.price) / peakPrice) * 100 : 0;
 
-          // positions opened before this update have no timestamp: start their clock now
           if (!state.entryTimes[sym]) state.entryTimes[sym] = now;
           const heldMs = now - state.entryTimes[sym];
 
@@ -1553,7 +1550,6 @@
           }
         }
 
-        // ---- ENTRY: only coins we don't hold and haven't just sold, and only if the council agrees ----
         if (state.cash <= 20.0) return;
         if (councilBusy) return;
 
@@ -1848,21 +1844,17 @@
       const R = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
       const rnd = mulberry32(2077);
 
-      // night sky in hard pixel bands
       ['#07010f', '#0c0220', '#14042e', '#220a44', '#3a0e57', '#5a1260', '#7a1868'].forEach((col, i) => R(0, i * 10, SCENE_W, 10, col));
-      // neon moon
       g.globalAlpha = 0.18; fillEllipse(g, 206, 22, 14, 14, '#ff2bd6'); g.globalAlpha = 1;
       fillEllipse(g, 206, 22, 8, 8, '#ffd9f5');
       fillEllipse(g, 209, 20, 6, 6, '#ffb3ec');
 
-      // far skyline
       let x = 0;
       while (x < SCENE_W) {
         const w = 8 + Math.floor(rnd() * 14), h = 14 + Math.floor(rnd() * 26);
         R(x, 70 - h, w, h, '#1a0838');
         x += w;
       }
-      // mid skyline with lit windows
       x = -4;
       while (x < SCENE_W) {
         const w = 12 + Math.floor(rnd() * 16), h = 20 + Math.floor(rnd() * 34);
@@ -1877,19 +1869,16 @@
         if (rnd() > 0.6) { R(x + Math.floor(w / 2), 70 - h - 5, 1, 5, '#2a0f5e'); R(x + Math.floor(w / 2), 70 - h - 5, 1, 1, '#ff2bd6'); }
         x += w + Math.floor(rnd() * 3);
       }
-      // a few windows that will blink on top of the skyline
       sceneBlinkers = [];
       for (let k = 0; k < 14; k++) {
         sceneBlinkers.push({ x: 4 + Math.floor(rnd() * 240), y: 28 + Math.floor(rnd() * 36), c: ['#ff2bd6', '#00f0ff', '#f9f871'][k % 3], k: k });
       }
 
-      // window frame + sill
       R(0, 0, SCENE_W, 2, '#05000f');
       R(85, 0, 2, 70, '#05000f'); R(171, 0, 2, 70, '#05000f');
       R(0, 68, SCENE_W, 6, '#05000f');
       R(0, 70, SCENE_W, 1, '#0a6a78');
 
-      // floor
       R(0, 74, SCENE_W, SCENE_H - 74, '#0a0420');
       [80, 88, 98, 110, 125, 143, 164].forEach(y => R(0, y, SCENE_W, 1, '#1b0b4a'));
       for (let k = -4; k <= 4; k++) {
@@ -1898,7 +1887,6 @@
           if (fx >= 0 && fx < SCENE_W) R(fx, y, 1, 1, k % 2 ? '#1b0b4a' : '#2a1060');
         }
       }
-      // table underglow on the floor
       g.globalAlpha = 0.16; fillEllipse(g, TABLE.cx, TABLE.cy + 10, TABLE.rx + 20, TABLE.ry + 12, '#ff2bd6');
       g.globalAlpha = 0.14; fillEllipse(g, TABLE.cx, TABLE.cy + 10, TABLE.rx + 8, TABLE.ry + 5, '#00f0ff');
       g.globalAlpha = 1;
@@ -1921,7 +1909,7 @@
       });
     }
 
-    const AGENT_K = 2;   // each sprite pixel is 2x2 scene pixels
+    const AGENT_K = 2;
 
     function drawAgent(g, s, t) {
       const K = AGENT_K;
@@ -1935,8 +1923,8 @@
       const facing = s.row !== 'front';
       const R = (lx, ly, w, h, col) => { g.fillStyle = col; g.fillRect(bx + lx * K, by + ly * K, w * K, h * K); };
 
-      g.globalAlpha = 0.35; g.fillStyle = c; g.fillRect(bx - 2 * K, s.ay, 16 * K, 2); g.globalAlpha = 1;   // floor light
-      R(-1, 8, 14, 10, '#150a30');                                                                       // chair back
+      g.globalAlpha = 0.35; g.fillStyle = c; g.fillRect(bx - 2 * K, s.ay, 16 * K, 2); g.globalAlpha = 1;
+      R(-1, 8, 14, 10, '#150a30');
       g.globalAlpha = 0.7; R(-1, 8, 1, 10, c); R(12, 8, 1, 10, c); g.globalAlpha = 1;
       if (facing) {
         R(1, 8, 10, 8, '#2a2057'); R(1, 8, 10, 1, '#4a3d8f');
@@ -1946,8 +1934,8 @@
       } else {
         R(-1, 8, 14, 1, c);
       }
-      R(5, 8, 2, 1, '#1c1538');                                   // neck
-      R(2, 0, 8, 8, '#1c1538'); R(2, 0, 8, 1, '#4a3d8f');         // head
+      R(5, 8, 2, 1, '#1c1538');
+      R(2, 0, 8, 8, '#1c1538'); R(2, 0, 8, 1, '#4a3d8f');
       R(1, 2, 1, 4, '#2a2057'); R(10, 2, 1, 4, '#2a2057');
       if (facing) {
         R(3, 3, 6, 2, '#05000f');
@@ -1957,7 +1945,7 @@
       } else {
         g.globalAlpha = 0.85; R(4, 5, 4, 1, c); g.globalAlpha = 1;
       }
-      switch (a.id) {       // role gear
+      switch (a.id) {
         case 'boss':      R(2, -3, 2, 3, c); R(5, -3, 2, 3, c); R(8, -3, 2, 3, c); R(2, -1, 8, 1, c); break;
         case 'announcer': R(9, -4, 1, 4, '#4a3d8f'); R(8, -5, 3, 1, c); if (Math.floor(t / 400) % 2) R(10, -7, 1, 1, c); break;
         case 'finance':   R(3, -2, 6, 2, '#4a3d8f'); R(5, -3, 2, 1, c); break;
@@ -1982,7 +1970,6 @@
       g.fillStyle = 'rgba(0,240,255,0.25)';
       g.fillRect(T.cx - (T.rx - 20), T.cy, (T.rx - 20) * 2, 1);
       g.fillRect(T.cx, T.cy - (T.ry - 8), 1, (T.ry - 8) * 2);
-      // seat pads light up for their agent
       sceneSeats.forEach(s => {
         const sp = sceneSpeech[s.a.id];
         const on = sp && t < sp.until;
@@ -2001,7 +1988,7 @@
     function drawHologram(g, t) {
       const T = TABLE, cx = T.cx, cy = T.cy - 14;
       g.fillStyle = 'rgba(0,240,255,0.10)';
-      for (let i = 0; i < 6; i++) g.fillRect(cx - 10 + i, cy + 6 + i * 2, 20 - i * 2, 2);   // light cone
+      for (let i = 0; i < 6; i++) g.fillRect(cx - 10 + i, cy + 6 + i * 2, 20 - i * 2, 2);
       const spin = sceneReduceMotion ? 0.2 : t / 450;
       const w = Math.max(1, Math.round(Math.abs(Math.cos(spin)) * 9));
       g.fillStyle = '#b8a800'; g.fillRect(cx - Math.floor(w / 2) + 1, cy - 4, w, 10);
@@ -2059,7 +2046,6 @@
       g.fillStyle = s.a.color; g.fillRect(s.x - 1, by + h, 3, 1); g.fillRect(s.x, by + h + 1, 1, 1);
     }
 
-    // ---- cyberpunk comms layer: neon floor ring, data beams between agents, vote verdict strip ----
     function seatPoint(id) {
       if (!id || id === 'table') return { x: TABLE.cx, y: TABLE.cy - 14 };
       const s = sceneSeats.find(q => q.a.id === id);
@@ -2125,7 +2111,6 @@
       g.imageSmoothingEnabled = false;
       g.drawImage(sceneBg, 0, 0);
 
-      // blinking windows, neon sign and rain outside the glass
       sceneBlinkers.forEach(b => {
         if (sceneReduceMotion || Math.floor(t / 900 + b.k * 3.1) % 4 === 0) { g.fillStyle = b.c; g.fillRect(b.x, b.y, 2, 2); }
       });
@@ -2144,7 +2129,6 @@
 
       drawTicker(g, t);
 
-      // ambient chatter so the table never feels frozen
       if (!sceneReduceMotion && t > sceneNextChatter) {
         const idle = sceneSeats.filter(s => !(sceneSpeech[s.a.id] && t < sceneSpeech[s.a.id].until));
         if (idle.length) agentSpeak(idle[Math.floor(Math.random() * idle.length)].a.id, AMBIENT_LINES[Math.floor(Math.random() * AMBIENT_LINES.length)], 1300);
@@ -2155,7 +2139,7 @@
       sceneSeats.filter(s => s.row === 'back').forEach(s => drawAgent(g, s, t));
       drawTable(g, t);
       drawHologram(g, t);
-      sceneSeats.filter(s => s.row !== 'back').forEach(s => drawAgent(g, s, t));
+      sceneSeats.filter(s => s.row !== 'front').forEach(s => drawAgent(g, s, t));
       drawBeams(g, t);
       sceneSeats.forEach(s => drawBubble(g, s, t));
       drawVerdict(g, t);
@@ -2201,7 +2185,6 @@
       updateKeyStatus();
       updateSoundBtn();
       try { initScene(); } catch (e) { console.warn('Scene init failed:', e); }
-      // browsers only allow audio after a tap, so wake the audio engine on any tap
       document.addEventListener('pointerdown', () => { if (soundOn) getAudio(); });
       document.addEventListener('click', e => {
         const b = e.target.closest ? e.target.closest('.cyber-btn, .tab-btn') : null;
