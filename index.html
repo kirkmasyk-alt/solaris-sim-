@@ -39,10 +39,11 @@
         linear-gradient(90deg, rgba(255,43,214,0.06) 1px, transparent 1px);
       background-size: 24px 24px, 24px 24px;
       color: var(--text-main);
-      font-size: 16px;
+      font-size: 18px;
       padding: 10px 14px 14px 10px;
       display: flex;
       justify-content: center;
+      min-height: 100vh;
     }
 
     body::after {
@@ -69,252 +70,263 @@
       padding: 12px;
     }
 
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--pixel);
+      font-size: 11px;
+      color: var(--text-dim);
+      padding: 2px 4px;
+    }
+    .top-bar .time { color: var(--text-main); }
+    .top-bar .mode { color: var(--cyan); }
+
     .header-panel {
       border-color: var(--border-color);
       text-align: center;
+      padding: 10px;
     }
-
-    .header-title {
-      font-family: var(--pixel);
-      font-size: 12px;
-      color: var(--cyan);
-      margin-bottom: 4px;
-    }
-
-    .header-subtitle {
-      font-family: var(--pixel);
-      font-size: 10px;
-      color: var(--text-main);
-    }
-
-    .row-panel {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-      gap: 6px;
-    }
-    
-    .row-label { 
-      font-size: 15px; 
-      color: var(--text-dim); 
-      text-transform: uppercase; 
-    }
-    
-    .row-value { 
-      font-family: var(--pixel); 
-      font-size: 11px; 
-      color: var(--amber); 
-    }
-    
-    .row-value.green { color: var(--green); }
-    .row-value.red { color: var(--red); }
-
-    .terminal-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .terminal-title {
+    .networth-title {
       font-size: 13px;
       color: var(--text-dim);
-      padding-left: 4px;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+      font-family: var(--pixel);
+    }
+    .networth-amount {
+      font-family: var(--pixel);
+      font-size: 28px;
+      color: var(--green);
+      text-shadow: 2px 2px 0 #05000f;
     }
 
-    .terminal-screen {
-      background: #05000f;
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .grid-box {
+      background: rgba(5, 0, 15, 0.4);
       border: 2px solid #251254;
-      padding: 10px;
-      height: 150px;
-      overflow-y: auto;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      color: var(--green);
+      padding: 6px 8px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
+    }
+    .grid-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+    .grid-value {
+      font-family: var(--pixel);
+      font-size: 11px;
+      color: var(--amber);
+    }
+    .grid-value.green { color: var(--green); }
+    .grid-value.red { color: var(--red); }
+    .grid-value.purple { color: var(--purple); }
+    .grid-value.cyan { color: var(--cyan); }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .menu-btn {
+      background: #1c0d3f;
+      border: 2px solid var(--outline);
+      color: var(--text-dim);
+      font-family: var(--pixel);
+      font-size: 10px;
+      padding: 8px 0;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 2px 2px 0 var(--outline);
+    }
+    .menu-btn.active {
+      background: var(--cyan);
+      color: var(--outline);
+      border-color: var(--outline);
+      box-shadow: none;
+      transform: translate(2px, 2px);
     }
 
-    .btn-panel {
+    .ledger-title {
+      font-family: var(--pixel);
+      font-size: 11px;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+    .ledger-table-container {
+      background: #05000f;
+      border: 2px solid #251254;
+      height: 220px;
+      overflow-y: auto;
+    }
+    .ledger-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+    .ledger-table tr {
+      border-bottom: 1px solid rgba(37, 18, 84, 0.4);
+    }
+    .ledger-table td {
+      padding: 6px 8px;
+    }
+    .td-time { color: var(--text-dim); width: 75px; }
+    .td-coin { color: var(--cyan); font-weight: bold; width: 85px; }
+    .td-type { color: var(--text-main); }
+    .td-pnl { text-align: right; font-weight: bold; width: 80px; }
+    .td-pnl.red { color: var(--red); }
+    .td-pnl.green { color: var(--green); }
+
+    .control-panel {
       display: flex;
       gap: 10px;
     }
-
-    button {
+    .ctrl-btn {
       flex: 1;
-      background: #251254;
-      border: 3px solid var(--outline);
-      color: var(--text-main);
       font-family: var(--pixel);
-      font-size: 10px;
+      font-size: 11px;
       padding: 12px 0;
-      cursor: pointer;
+      border: 3px solid var(--outline);
       box-shadow: 3px 3px 0 var(--outline);
+      cursor: pointer;
+      background: #251254;
+      color: var(--text-main);
     }
-
-    button:active {
+    .ctrl-btn:active {
       transform: translate(2px, 2px);
       box-shadow: 1px 1px 0 var(--outline);
     }
-
-    button#start-btn { border-color: var(--green); color: var(--green); }
-    button#stop-btn { border-color: var(--red); color: var(--red); }
+    #run-btn { border-color: var(--green); color: var(--green); }
+    #halt-btn { border-color: var(--red); color: var(--red); }
   </style>
 </head>
 <body>
 
   <div class="container">
     
-    <!-- HEADER -->
+    <!-- TOP META BAR -->
+    <div class="top-bar">
+      <div>DECISIONS: <span class="time" id="top-time">16:24:00</span></div>
+      <div class="mode" id="bot-mode">AUTO (AI LEARNING)</div>
+    </div>
+    
+    <!-- TOTAL TREASURY VALUE HEADER -->
     <div class="panel header-panel">
-      <div class="header-title">ORBITAL // HQ</div>
-      <div class="header-subtitle">AUTONOMOUS CRYPTO TREASURY AI</div>
+      <div class="networth-title">TOTAL TREASURY NET WORTH</div>
+      <div class="networth-amount" id="networth-val">$785.75</div>
     </div>
 
-    <!-- METRICS DISPLAY ROWS -->
+    <!-- METRICS GRID MATRIX -->
+    <div class="panel grid-container">
+      <div class="grid-box">
+        <span class="grid-label">Realized P&L</span>
+        <span class="grid-value red" id="realized-val">-$210.79</span>
+      </div>
+      <div class="grid-box">
+        <span class="grid-label">Unrealized P&L</span>
+        <span class="grid-value green" id="unrealized-val">+$3.88</span>
+      </div>
+      <div class="grid-box">
+        <span class="grid-label">Total Fees Paid</span>
+        <span class="grid-value" id="fees-val">$13.09</span>
+      </div>
+      <div class="grid-box">
+        <span class="grid-label">Bot Bankroll</span>
+        <span class="grid-value" id="bankroll-val">$462.36</span>
+      </div>
+      <div class="grid-box">
+        <span class="grid-label">Main Vault</span>
+        <span class="grid-value purple" id="vault-val">$6.90</span>
+      </div>
+      <div class="grid-box">
+        <span class="grid-label">Coins Seen</span>
+        <span class="grid-value cyan" id="seen-val">30</span>
+      </div>
+      <div class="grid-box">
+        <span class="grid-label">Hot (Buyable)</span>
+        <span class="grid-value green" id="hot-val">8</span>
+      </div>
+      <div class="grid-box">
+        <span class="grid-label">Benched</span>
+        <span class="grid-value" id="benched-val">2</span>
+      </div>
+      <div class="grid-box">
+        <span class="grid-label">Feeds Online</span>
+        <span class="grid-value purple" id="feeds-val">4/9</span>
+      </div>
+    </div>
+
+    <!-- NAVIGATION TABS -->
+    <div class="menu-grid">
+      <div class="menu-btn">HUB</div>
+      <div class="menu-btn">COUNCIL</div>
+      <div class="menu-btn">NEWS</div>
+      <div class="menu-btn">POSITIONS</div>
+      <div class="menu-btn active">LEDGER</div>
+      <div class="menu-btn">STATUS</div>
+      <div class="menu-btn">WAR ROOM</div>
+      <div class="menu-btn">AUDIT 2!</div>
+    </div>
+
+    <!-- COMPLETED TRANSACTION LEDGER -->
     <div class="panel">
-      <div class="row-panel">
-        <span class="row-label">TRAINING CYCLE (EPISODE):</span>
-        <span id="cycle-val" class="row-value">0</span>
-      </div>
-      <div class="row-panel">
-        <span class="row-label">CURRENT PRICE STATE:</span>
-        <span id="state-val" class="row-value">NORMAL_UP</span>
-      </div>
-      <div class="row-panel">
-        <span class="row-label">LAST AI ACTION:</span>
-        <span id="action-val" class="row-value">HOLD</span>
-      </div>
-      <div class="row-panel">
-        <span class="row-label">WIN / LOSS REWARD:</span>
-        <span id="reward-val" class="row-value">0</span>
-      </div>
-      <div class="row-panel">
-        <span class="row-label">TOTAL TREASURY VALUE:</span>
-        <span id="balance-val" class="row-value green">$1,000.00</span>
+      <div class="ledger-title">// COMPLETED TRANSACTION LEDGER</div>
+      <div class="ledger-table-container">
+        <table class="ledger-table" id="ledger-body">
+          <tr>
+            <td class="td-time">16:23:31</td>
+            <td class="td-coin">UZICAT</td>
+            <td class="td-type">STOP-LOSS CUT</td>
+            <td class="td-pnl red">-$7.38</td>
+          </tr>
+          <tr>
+            <td class="td-time">16:13:40</td>
+            <td class="td-coin">FRANK</td>
+            <td class="td-type">STOP-LOSS CUT</td>
+            <td class="td-pnl red">-$5.74</td>
+          </tr>
+          <tr>
+            <td class="td-time">16:09:45</td>
+            <td class="td-coin">UZICAT</td>
+            <td class="td-type">STOP-LOSS CUT</td>
+            <td class="td-pnl red">-$38.13</td>
+          </tr>
+          <tr>
+            <td class="td-time">16:08:04</td>
+            <td class="td-coin">CYBERINU</td>
+            <td class="td-type">STOP-LOSS CUT</td>
+            <td class="td-pnl red">-$23.20</td>
+          </tr>
+        </table>
       </div>
     </div>
 
-    <!-- AI LOG TERMINAL -->
-    <div class="panel terminal-panel">
-      <div class="terminal-title">> LEARNING ENGINE OUTPUT</div>
-      <div id="terminal" class="terminal-screen">
-        <div>[SYSTEM] AI initialized. Press START RUN to begin optimization loop...</div>
-      </div>
-    </div>
-
-    <!-- MAIN BUTTON INTERACTIVE ACTION TRIGGERS -->
-    <div class="btn-panel">
-      <button id="start-btn" onclick="startTraining()">START RUN</button>
-      <button id="stop-btn" onclick="stopTraining()">HALT</button>
+    <!-- INTERACTIVE CONTROL ACTIONS -->
+    <div class="control-panel">
+      <button class="ctrl-btn" id="run-btn" onclick="startAutonomousTraining()">START RUN</button>
+      <button class="ctrl-btn" id="halt-btn" onclick="stopAutonomousTraining()">HALT</button>
     </div>
 
   </div>
 
-  <!-- REINFORCEMENT LEARNING PROCESSING CORE -->
   <script>
-    const TOKENS = ["UZICAT", "CYBERINU", "QOMPUTE", "FRANK", "QT", "LLM", "PQC"];
+    const COIN_POOL = ["UZICAT", "CYBERINU", "QOMPUTE", "FRANK", "QT", "LLM", "PQC", "QCAT"];
     const STATES = ["NORMAL_UP", "MINOR_DRAWDOWN", "CRITICAL_ZONE", "FREE_FALL"];
     const ACTIONS = ["HOLD", "STOP_LOSS_CUT"];
 
-    // AI Policy matrix optimizing risk actions across dynamic drawdown depth fields
     let qTable = {
       "NORMAL_UP":       { "HOLD": 15,  "STOP_LOSS_CUT": -40 },
       "MINOR_DRAWDOWN":  { "HOLD": 8,   "STOP_LOSS_CUT": -15 },
-      "CRITICAL_ZONE":   { "HOLD": -5,  "STOP_LOSS_CUT": -5  },
+      "CRITICAL_ZONE":   { "HOLD": -5,  "STOP_LOSS_CUT": -5  }, 
       "FREE_FALL":       { "HOLD": -90, "STOP_LOSS_CUT": 35  }
     };
 
-    let learningRate = 0.25;
+    let learningRate = 0.20;
     let discountFactor = 0.80;
-    let explorationRate = 0.40;
-
-    let treasuryBalance = 1000.00;
-    let currentCycle = 0;
-    let trainingInterval = null;
-
-    const terminalEl = document.getElementById("terminal");
-
-    function logToTerminal(text) {
-      const line = document.createElement("div");
-      line.innerText = text;
-      terminalEl.appendChild(line);
-      terminalEl.scrollTop = terminalEl.scrollHeight;
-    }
-
-    function executeTrainingStep() {
-      currentCycle++;
-      document.getElementById("cycle-val").innerText = currentCycle;
-
-      // Advance environment simulation values
-      const currentState = STATES[Math.floor(Math.random() * STATES.length)];
-      const targetToken = TOKENS[Math.floor(Math.random() * TOKENS.length)];
-      document.getElementById("state-val").innerText = currentState;
-
-      // Policy execution path checks
-      let chosenAction = "";
-      if (Math.random() < explorationRate) {
-        chosenAction = ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
-      } else {
-        chosenAction = qTable[currentState]["HOLD"] >= qTable[currentState]["STOP_LOSS_CUT"] ? "HOLD" : "STOP_LOSS_CUT";
-      }
-      document.getElementById("action-val").innerText = chosenAction;
-
-      const isRecovery = Math.random() > 0.45;
-      let reward = 0;
-      let balanceChange = 0;
-
-      // Calculate localized math rewards based on multi-state protection thresholds
-      if (currentState === "CRITICAL_ZONE") {
-        if (chosenAction === "HOLD") {
-          reward = isRecovery ? 150 : -120;
-          balanceChange = isRecovery ? (Math.random() * 20 + 5) : -(Math.random() * 25 + 5);
-        } else {
-          reward = isRecovery ? -180 : 110; 
-          balanceChange = -(Math.random() * 6);
-        }
-      } else if (currentState === "FREE_FALL") {
-        if (chosenAction === "STOP_LOSS_CUT") {
-          reward = 130;
-          balanceChange = -(Math.random() * 10);
-        } else {
-          reward = -200;
-          balanceChange = -(Math.random() * 70);
-        }
-      } else {
-        reward = chosenAction === "HOLD" ? 15 : -10;
-        balanceChange = chosenAction === "HOLD" ? (Math.random() * 5) : -(Math.random() * 2);
-      }
-
-      // Bellman matrix weight adjustment calculations
-      let nextState = STATES[Math.floor(Math.random() * STATES.length)];
-      let maxFutureReward = Math.max(qTable[nextState]["HOLD"], qTable[nextState]["STOP_LOSS_CUT"]);
-      let currentQ = qTable[currentState][chosenAction];
-      
-      qTable[currentState][chosenAction] = currentQ + learningRate * (reward + (discountFactor * maxFutureReward) - currentQ);
-
-      // Render updated integers back to core window elements
-      treasuryBalance += balanceChange;
-      const balEl = document.getElementById("balance-val");
-      balEl.innerText = `$${treasuryBalance.toFixed(2)}`;
-      balEl.className = treasuryBalance >= 1000 ? "row-value green" : "row-value red";
-
-      const rewEl = document.getElementById("reward-val");
-      rewEl.innerText = reward >= 0 ? `+${reward} (WIN)` : `${reward} (LOSS)`;
-      rewEl.className = reward >= 0 ? "row-value green" : "row-value red";
-
-      logToTerminal(`[EPISODE ${currentCycle}] ${targetToken} ${currentState} -> Picked ${chosenAction} (${reward >= 0 ? 'WIN' : 'LOSS'})`);
-
-      if (explorationRate > 0.05) explorationRate -= 0.005;
-    }
-
-    function startTraining() {
-      if (!trainingInterval) {
-        logToTerminal("[SYSTEM] Optimization Engine active. Rebalancing threshold weights...");
-        trainingInterval = setInterval(executeTrainingStep, 800);
-      }
-    }
-
-    function stopTraining() {
-      if (trainingInterval) {
