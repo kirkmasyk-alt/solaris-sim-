@@ -258,7 +258,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V11.4</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V11.5</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -505,16 +505,74 @@
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
-    async function fetchLiveNews() {
+    function toNewsItem(source, title, link, dateStr) {
+      let ts = Date.parse(dateStr);
+      if (isNaN(ts) && typeof dateStr === 'string') ts = Date.parse(dateStr.replace(' ', 'T') + 'Z');
+      if (isNaN(ts)) ts = Date.now();
+      return {
+        title: title || 'Untitled',
+        source: source,
+        ts: ts,
+        time: new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        url: (typeof link === 'string' && link.startsWith('https://')) ? link : ''
+      };
+    }
+
+    // Source 1: RSS feeds converted to JSON by rss2json (CORS-friendly, no key)
+    async function newsFromRss2Json(name, feedUrl) {
+      const data = await safeJson(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`);
+      if (!data || data.status !== 'ok' || !Array.isArray(data.items)) return [];
+      return data.items.slice(0, 10).map(i => toNewsItem(name, i.title, i.link, i.pubDate));
+    }
+
+    // Source 2: CryptoCompare public news API
+    async function newsFromCryptoCompare() {
       const data = await safeJson('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
-      if (data && Array.isArray(data.Data) && data.Data.length > 0) {
-        liveNews = data.Data.slice(0, 15).map(n => ({
-          title: n.title || 'Untitled',
-          source: (n.source_info && n.source_info.name) || n.source || 'NEWS',
-          time: new Date((n.published_on || 0) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          url: (typeof n.url === 'string' && n.url.startsWith('https://')) ? n.url : ''
-        }));
-        newsStatus = 'LIVE';
+      if (!data || !Array.isArray(data.Data)) return [];
+      return data.Data.slice(0, 15).map(n =>
+        toNewsItem((n.source_info && n.source_info.name) || n.source || 'NEWS', n.title, n.url, (n.published_on || 0) * 1000));
+    }
+
+    // Source 3: raw RSS through a public CORS proxy, parsed in the browser
+    async function newsFromProxy(name, feedUrl) {
+      try {
+        const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`);
+        if (!res.ok) return [];
+        const doc = new DOMParser().parseFromString(await res.text(), 'text/xml');
+        return Array.from(doc.querySelectorAll('item')).slice(0, 10).map(i => {
+          const g = tag => { const el = i.querySelector(tag); return el ? el.textContent : ''; };
+          return toNewsItem(name, g('title'), g('link').trim(), g('pubDate'));
+        });
+      } catch (e) {
+        return [];
+      }
+    }
+
+    async function fetchLiveNews() {
+      let items = [];
+      let via = '';
+
+      const rssResults = await Promise.all([
+        newsFromRss2Json('COINTELEGRAPH', 'https://cointelegraph.com/rss'),
+        newsFromRss2Json('COINDESK', 'https://www.coindesk.com/arc/outboundfeeds/rss/'),
+        newsFromRss2Json('DECRYPT', 'https://decrypt.co/feed')
+      ]);
+      items = [].concat(...rssResults);
+      if (items.length > 0) via = 'RSS';
+
+      if (items.length === 0) {
+        items = await newsFromCryptoCompare();
+        if (items.length > 0) via = 'CRYPTOCOMPARE';
+      }
+      if (items.length === 0) {
+        items = await newsFromProxy('COINTELEGRAPH', 'https://cointelegraph.com/rss');
+        if (items.length > 0) via = 'PROXY';
+      }
+
+      if (items.length > 0) {
+        items.sort((a, b) => b.ts - a.ts);
+        liveNews = items.slice(0, 15);
+        newsStatus = 'LIVE [' + via + ']';
 
         // NEWS_HAWK: announce only headlines we haven't seen yet
         const fresh = liveNews.filter(n => !seenNews.has(n.title));
@@ -1029,7 +1087,7 @@
 
         const newsContainer = document.getElementById('whale-news-container');
         if (newsContainer) {
-          const statusColor = newsStatus === 'LIVE' ? 'var(--green)' : (newsStatus === 'OFFLINE' ? 'var(--red)' : 'var(--amber)');
+          const statusColor = newsStatus.startsWith('LIVE') ? 'var(--green)' : (newsStatus === 'OFFLINE' ? 'var(--red)' : 'var(--amber)');
           const headlinesHtml = liveNews.length === 0
             ? `<div class="feed-item" style="border-left-color: var(--amber);"><div class="feed-text">${newsStatus === 'OFFLINE' ? 'News source unreachable. Retrying...' : 'Connecting to news wire...'}</div></div>`
             : liveNews.map(n => `
