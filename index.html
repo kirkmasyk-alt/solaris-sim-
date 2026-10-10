@@ -9,17 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-color: #120e2b;
-      --panel-bg: #1f1946;
-      --outline: #05031a;
-      --border-color: #5b4fc4;
-      --cyan: #4cc9f0;
-      --green: #6bf29a;
-      --red: #ff5470;
-      --amber: #ffd23f;
-      --purple: #c084fc;
-      --text-main: #f1ecff;
-      --text-dim: #9d94d6;
+      --bg-color: #0a0118;
+      --panel-bg: #150a30;
+      --outline: #05000f;
+      --border-color: #ff2bd6;
+      --cyan: #00f0ff;
+      --green: #39ff88;
+      --red: #ff3b5c;
+      --amber: #f9f871;
+      --purple: #b45cff;
+      --text-main: #e9f7ff;
+      --text-dim: #8a7fb8;
       --pixel: 'Press Start 2P', 'Courier New', monospace;
       --body: 'VT323', 'Courier New', monospace;
     }
@@ -33,11 +33,10 @@
     body {
       background-color: var(--bg-color);
       background-image:
-        radial-gradient(rgba(255,255,255,0.85) 1px, transparent 1.6px),
-        radial-gradient(rgba(157,148,214,0.7) 1px, transparent 1.6px),
-        radial-gradient(rgba(255,210,63,0.6) 1px, transparent 1.6px);
-      background-size: 97px 97px, 53px 53px, 151px 151px;
-      background-position: 0 0, 23px 31px, 61px 17px;
+        linear-gradient(rgba(0,240,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,43,214,0.06) 1px, transparent 1px);
+      background-size: 24px 24px, 24px 24px;
+      background-position: 0 0, 0 0;
       color: var(--text-main);
       font-size: 16px;
       padding: 10px 14px 14px 10px;
@@ -45,6 +44,7 @@
       justify-content: center;
     }
 
+    /* faint CRT scanlines; never blocks taps */
     body::after {
       content: '';
       position: fixed;
@@ -66,14 +66,16 @@
       background: var(--panel-bg);
       border: 4px solid var(--outline);
       box-shadow:
-        inset 2px 2px 0 #4b41a8,
-        inset -2px -2px 0 #130f33,
+        inset 2px 2px 0 #3a1d78,
+        inset -2px -2px 0 #0d0422,
         4px 4px 0 var(--outline);
       padding: 12px;
     }
 
     .header {
       display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
       justify-content: space-between;
       align-items: center;
       padding-bottom: 12px;
@@ -84,10 +86,11 @@
     .logo {
       font-family: var(--pixel);
       font-size: 12px;
-      color: var(--amber);
+      color: var(--cyan);
       letter-spacing: 0;
-      text-shadow: 2px 2px 0 var(--outline);
+      text-shadow: 2px 2px 0 var(--border-color);
       line-height: 1.3;
+      white-space: nowrap;
     }
 
     .header-btns {
@@ -95,11 +98,11 @@
       gap: 4px;
       flex-wrap: wrap;
       justify-content: flex-end;
-      max-width: 250px;
+      flex: 1 1 200px;
     }
 
     .cyber-btn {
-      --btn-bg: #2f6fd0; --btn-hi: #7aa9ff; --btn-lo: #1b3f86; --btn-fg: #ffffff;
+      --btn-bg: #12306b; --btn-hi: #00b8d4; --btn-lo: #081a40; --btn-fg: #ffffff;
       font-family: var(--body);
       background: var(--btn-bg);
       color: var(--btn-fg);
@@ -116,15 +119,15 @@
       box-shadow: inset 2px 2px 0 var(--btn-lo), inset -2px -2px 0 var(--btn-hi);
     }
     .cyber-btn:focus-visible, .tab-btn:focus-visible { outline: 2px dashed var(--amber); outline-offset: 2px; }
-    .cyber-btn.danger { --btn-bg: #c2304d; --btn-hi: #ff8aa0; --btn-lo: #7a1329; }
-    .cyber-btn.accent { --btn-bg: #e0a800; --btn-hi: #ffe27a; --btn-lo: #8a6600; --btn-fg: #1a1200; text-shadow: none; }
-    .cyber-btn.purple { --btn-bg: #8a45d6; --btn-hi: #c99aff; --btn-lo: #4f2290; }
-    .cyber-btn.active-mode { --btn-bg: #4cc9f0; --btn-hi: #c4f1ff; --btn-lo: #1d7fa0; --btn-fg: #04101a; text-shadow: none; }
+    .cyber-btn.danger { --btn-bg: #c2185b; --btn-hi: #ff5c9d; --btn-lo: #6a0a33; }
+    .cyber-btn.accent { --btn-bg: #d4c400; --btn-hi: #fffb9a; --btn-lo: #7a7000; --btn-fg: #1a1700; text-shadow: none; }
+    .cyber-btn.purple { --btn-bg: #6a2bd9; --btn-hi: #b58cff; --btn-lo: #35127a; }
+    .cyber-btn.active-mode { --btn-bg: #00f0ff; --btn-hi: #b8fbff; --btn-lo: #0096a3; --btn-fg: #001014; text-shadow: none; }
 
     .net-worth-banner {
-      background: #0b0820;
+      background: #07010f;
       border: 4px solid var(--outline);
-      box-shadow: inset 0 0 0 3px var(--amber), 4px 4px 0 var(--outline);
+      box-shadow: inset 0 0 0 3px var(--border-color), 0 0 14px rgba(255,43,214,0.35), 4px 4px 0 var(--outline);
       padding: 16px 12px 18px;
       text-align: center;
     }
@@ -137,9 +140,9 @@
     .net-worth-value {
       font-family: var(--pixel);
       font-size: 22px;
-      color: var(--amber);
+      color: var(--cyan);
       margin-top: 10px;
-      text-shadow: 3px 3px 0 var(--outline);
+      text-shadow: 3px 3px 0 var(--outline), 0 0 10px rgba(0,240,255,0.5);
     }
     .net-worth-value.green { color: var(--green); }
     .net-worth-value.red { color: var(--red); }
@@ -151,9 +154,9 @@
     }
 
     .stat-box {
-      background: #0b0820;
+      background: #07010f;
       border: 3px solid var(--outline);
-      box-shadow: inset 2px 2px 0 #2c2466, 3px 3px 0 var(--outline);
+      box-shadow: inset 2px 2px 0 #2a1a66, 3px 3px 0 var(--outline);
       padding: 8px;
       position: relative;
     }
@@ -186,9 +189,9 @@
 
     .tab-btn {
       font-family: var(--body);
-      background: #2a2260;
+      background: #1a0f40;
       border: 2px solid var(--outline);
-      box-shadow: inset 2px 2px 0 #5b4fc4, inset -2px -2px 0 #171040;
+      box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422;
       color: var(--text-dim);
       font-size: 14px;
       padding: 7px 0;
@@ -199,9 +202,9 @@
     }
 
     .tab-btn.active {
-      background: var(--amber);
-      color: #1a1200;
-      box-shadow: inset 2px 2px 0 #fff0a8, inset -2px -2px 0 #a97f00;
+      background: var(--cyan);
+      color: #001014;
+      box-shadow: inset 2px 2px 0 #b8fbff, inset -2px -2px 0 #0096a3;
     }
 
     .tab-pane {
@@ -214,9 +217,9 @@
     }
 
     .terminal-box {
-      background: #0b0820;
+      background: #07010f;
       border: 3px solid var(--outline);
-      box-shadow: inset 2px 2px 0 #2c2466;
+      box-shadow: inset 2px 2px 0 #2a1a66;
       padding: 8px;
       height: 220px;
       overflow-y: auto;
@@ -248,15 +251,15 @@
       gap: 8px;
       font-size: 15px;
       padding: 6px 8px;
-      background: #0b0820;
+      background: #07010f;
       border: 2px solid var(--outline);
-      box-shadow: inset 2px 2px 0 #2c2466;
+      box-shadow: inset 2px 2px 0 #2a1a66;
       margin-bottom: 4px;
       align-items: center;
     }
 
     .agent-card {
-      background: #0b0820;
+      background: #07010f;
       border: 3px solid var(--outline);
       box-shadow: 3px 3px 0 var(--outline);
       padding: 8px;
@@ -275,7 +278,7 @@
       align-items: center;
       justify-content: center;
       font-size: 16px;
-      background: #1f1946;
+      background: #150a30;
       flex-shrink: 0;
     }
     .metrics-grid {
@@ -284,7 +287,7 @@
       gap: 2px;
       margin-top: 6px;
       font-size: 14px;
-      background: #1f1946;
+      background: #150a30;
       padding: 4px;
       border: 2px solid var(--outline);
       text-align: center;
@@ -296,9 +299,26 @@
       font-size: 14px;
       padding: 6px 2px;
       background: rgba(255, 255, 255, 0.04);
-      border-bottom: 2px solid #2c2466;
+      border-bottom: 2px solid #2a1a66;
       align-items: center;
       text-align: center;
+    }
+    #orbital-table {
+      width: 100%;
+      height: auto;
+      display: block;
+      image-rendering: pixelated;
+      border: 3px solid var(--outline);
+      box-shadow: 0 0 0 2px var(--cyan), 0 0 16px rgba(0,240,255,0.35);
+      cursor: pointer;
+      touch-action: manipulation;
+      background: #07010f;
+    }
+    .scene-caption {
+      font-size: 16px;
+      color: var(--text-dim);
+      min-height: 20px;
+      padding: 0 2px 4px;
     }
     .position-header {
       color: var(--amber);
@@ -313,14 +333,14 @@
     <div class="panel header">
       <div style="display:flex;align-items:center;gap:10px;">
         <svg class="planet" width="30" height="30" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">
-          <g fill="#4cc9f0"><rect x="4" y="2" width="4" height="1"/><rect x="3" y="3" width="6" height="1"/><rect x="2" y="4" width="8" height="4"/><rect x="3" y="8" width="6" height="1"/><rect x="4" y="9" width="4" height="1"/></g>
+          <g fill="#00f0ff"><rect x="4" y="2" width="4" height="1"/><rect x="3" y="3" width="6" height="1"/><rect x="2" y="4" width="8" height="4"/><rect x="3" y="8" width="6" height="1"/><rect x="4" y="9" width="4" height="1"/></g>
           <g fill="#2a7fc0"><rect x="6" y="6" width="4" height="2"/><rect x="5" y="8" width="4" height="1"/></g>
           <g fill="#c8f3ff"><rect x="4" y="3" width="2" height="1"/><rect x="3" y="4" width="2" height="1"/></g>
-          <g fill="#ffd23f"><rect x="0" y="7" width="2" height="1"/><rect x="2" y="6" width="8" height="1"/><rect x="10" y="5" width="2" height="1"/></g>
+          <g fill="#ff2bd6"><rect x="0" y="7" width="2" height="1"/><rect x="2" y="6" width="8" height="1"/><rect x="10" y="5" width="2" height="1"/></g>
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px;">VAULT SWARM V12.5</div>
+          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap;">VAULT SWARM V13.0</div>
         </div>
       </div>
       <div class="header-btns">
@@ -338,16 +358,7 @@
       <span style="font-size: 15px; color: var(--text-dim);">OPERATIONAL MODE:</span>
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
-        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER</button>
-      </div>
-    </div>
-
-    <!-- ENGINE SWITCHER BANNER -->
-    <div class="panel" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;">
-      <span style="font-size: 15px; color: var(--text-dim);">ENGINE PROTOCOL:</span>
-      <div style="display: flex; gap: 4px;">
-        <button id="btn-engine-ai" class="cyber-btn" onclick="setEngineMode('AI')">🧠 AI NEURAL</button>
-        <button id="btn-engine-auto" class="cyber-btn" onclick="setEngineMode('AUTO')">⚙️ AUTONOMOUS</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (MEGA-STREAM)</button>
       </div>
     </div>
 
@@ -394,16 +405,16 @@
 
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 16px; color: var(--cyan);">// DUAL-ENGINE MARKET DISCOVERY</div>
+        <div style="font-size: 16px; color: var(--cyan);">// MEGA-STREAM DISCOVERY ENGINE</div>
         <button class="cyber-btn" style="font-size: 14px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] DexScreener & CoinGecko dual oracles active.</div>
+        <div style="color: var(--green);">[00:01] Multi-endpoint mega-stream discovery active.</div>
       </div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// AI & AUTONOMOUS SWARM LOG</div>
+      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & EXECUTION LOG</div>
       <div class="terminal-box" style="height: 240px;" id="council-feed-container"></div>
     </div>
 
@@ -411,8 +422,8 @@
       <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// NEWS_HAWK & WHALE_EYE LIVE WIRE</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // DUAL-FEED SCANNER</div>
-          <div class="feed-text">Scanning memecoins and cross-verifying with CoinGecko...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // MEGA-SCANNER</div>
+          <div class="feed-text">Streaming real-time Solana memecoins...</div>
         </div>
       </div>
     </div>
@@ -434,20 +445,23 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 16px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
-      <div class="status-row"><span>ENGINE PROTOCOL:</span> <strong id="status-engine-label" style="color: var(--amber);">AI NEURAL MODE</strong></div>
-      <div class="status-row"><span>MARKET ORACLES:</span> <strong style="color: var(--green);">ONLINE [DEXSCREENER + COINGECKO]</strong></div>
+      <div class="status-row"><span>DISCOVERY FEED:</span> <strong style="color: var(--green);">ONLINE [MEGA-STREAM + LIVE PROFILES]</strong></div>
+      <div class="status-row"><span>MAX POSITION CAP:</span> <strong style="color: var(--green);">ACTIVE [35% BANKROLL LIMIT]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 8/8 AGENTS READY</strong></div>
+      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 8/8 MEGA-STREAM AGENTS</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
 
     <div id="tab-warroom" class="tab-pane panel">
       <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (CONTROL AI AGENTS)</div>
+      <canvas id="orbital-table" width="256" height="168" role="img" aria-label="Animated pixel scene: the AI agents sit around a holographic table in a neon city office while rain falls outside"></canvas>
+      <div id="scene-caption" class="scene-caption">Tap an agent to see who they are.</div>
       <div id="war-room-container" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
     </div>
   </div>
 
   <script>
+    // Safe localStorage JSON reader: a corrupted value can never crash startup
     function loadJSON(key, fallback) {
       try {
         const raw = localStorage.getItem(key);
@@ -463,22 +477,21 @@
     let isFetching = false;
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Dual DexScreener & CoinGecko oracle feed active.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Mega-stream discovery active. Streaming massive memecoin volume.', time: '00:00' }
     ];
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
-    let engineMode = localStorage.getItem('solaris_engine') || 'AI';
     let peakPrices = loadJSON('solaris_peak_prices', {});
 
     const agentDefs = [
-      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#c084fc', icon: '👁️', pnl: 0, status: 'ADVISORY' },
-      { id: 'announcer', name: 'WHALE_EYE', role: 'Whale Flow & Rug-Scan Watcher', color: '#4cc9f0', icon: '📡', pnl: 0, status: 'ACTIVE' },
-      { id: 'news', name: 'NEWS_HAWK', role: 'Live Crypto News Announcer', color: '#ffd23f', icon: '📰', pnl: 0, status: 'ACTIVE' },
-      { id: 'finance', name: 'KIRKTRON 9001', role: 'Trailing Profit Lock Engine', color: '#4cc9f0', icon: '🤖', pnl: 0, status: 'ACTIVE' },
-      { id: 'risk', name: 'RISK_CORE', role: 'Position Capping & Rug Firewall', color: '#ffd23f', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
-      { id: 'trader', name: 'ALPHA_X', role: 'Memecoin Swap Executor', color: '#ff5470', icon: '⚡', pnl: 0, status: 'ACTIVE' },
-      { id: 'macro', name: 'MACRO_9', role: 'AI / Heuristic Scorer', color: '#c084fc', icon: '🌐', pnl: 0, status: 'ACTIVE' },
-      { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#6bf29a', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
+      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#ff2bd6', icon: '👁️', pnl: 0, status: 'ADVISORY' },
+      { id: 'announcer', name: 'WHALE_EYE', role: 'Whale Flow & Volume Surge Watcher', color: '#00f0ff', icon: '📡', pnl: 0, status: 'ACTIVE' },
+      { id: 'news', name: 'NEWS_HAWK', role: 'Live Crypto News Announcer', color: '#f9f871', icon: '📰', pnl: 0, status: 'ACTIVE' },
+      { id: 'finance', name: 'KIRKTRON 9001', role: 'Trailing Profit Lock Engine', color: '#4d8bff', icon: '🤖', pnl: 0, status: 'ACTIVE' },
+      { id: 'risk', name: 'RISK_CORE', role: 'Position Capping & Stop-Loss Firewall', color: '#ff9a3c', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
+      { id: 'trader', name: 'ALPHA_X', role: 'Memecoin Swap Executor', color: '#ff3b5c', icon: '⚡', pnl: 0, status: 'ACTIVE' },
+      { id: 'macro', name: 'MACRO_9', role: 'AI Momentum & Winner Scorer', color: '#b45cff', icon: '🌐', pnl: 0, status: 'ACTIVE' },
+      { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#39ff88', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
     ];
 
     let state = {
@@ -487,14 +500,16 @@
       sweepPct: parseFloat(localStorage.getItem('solaris_sweep_pct')) || 20,
       positions: loadJSON('solaris_positions', {}),
       costBasis: loadJSON('solaris_cost_basis', {}),
+      // NEW: remembers each held token's contract address so held coins keep getting live prices
       addresses: loadJSON('solaris_addresses', {}),
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'RISK_CORE', text: `Dual oracles online [DexScreener + CoinGecko].`, color: '#ffd23f', time: '00:00' }]
+      councilFeed: [{ sender: 'RISK_CORE', text: `Mega-stream active [${operationalMode}]. Massive pool indexing enabled.`, color: '#f9f871', time: '00:00' }]
     };
 
+    // ---- 8-BIT SOUND EFFECTS (synthesized with Web Audio, no audio files) ----
     let soundOn = localStorage.getItem('orbital_sound') !== 'off';
     let audioCtx = null;
 
@@ -541,6 +556,7 @@
 
     function playSfx(name) {
       try { if (SFX[name]) SFX[name](); } catch (e) {}
+      try { if (SPEAK_MAP[name]) agentSpeak(SPEAK_MAP[name][0], SPEAK_MAP[name][1]); } catch (e) {}
     }
 
     function updateSoundBtn() {
@@ -552,45 +568,16 @@
       soundOn = !soundOn;
       localStorage.setItem('orbital_sound', soundOn ? 'on' : 'off');
       updateSoundBtn();
-      if (soundOn) { getAudio(); playSfx('news'); }
+      if (soundOn) { getAudio(); SFX.news(); }
     }
 
     function setTradingMode(mode) {
       operationalMode = mode;
       localStorage.setItem('solaris_mode', mode);
-      addSystemLog(`[MODE LOCKED] Operational mode: ${mode}`);
+      agentSpeak('macro', mode);
+      addSystemLog(`[MODE LOCKED] User set operational mode to: ${mode}`);
       fetchLiveMarketPrices();
       renderAll();
-    }
-
-    function setEngineMode(mode) {
-      engineMode = mode;
-      localStorage.setItem('solaris_engine', mode);
-      addSystemLog(`[PROTOCOL SWITCH] Engine set to: ${mode === 'AI' ? 'AI NEURAL' : 'AUTONOMOUS RULE-BASED'}`);
-      renderAll();
-    }
-
-    function promptApiKey() {
-      const key = prompt("Enter your Gemini API key:", localStorage.getItem('gemini_api_key') || '');
-      if (key !== null) {
-        localStorage.setItem('gemini_api_key', key.trim());
-        updateKeyStatus();
-        addSystemLog(`[CONFIG] Gemini API Key successfully configured.`);
-      }
-    }
-
-    function updateKeyStatus() {
-      const k = localStorage.getItem('gemini_api_key');
-      const el = document.getElementById('key-status');
-      if (el) {
-        if (k && k.length > 5) {
-          el.textContent = "● CONFIGURED";
-          el.style.color = "var(--green)";
-        } else {
-          el.textContent = "● NOT CONFIGURED";
-          el.style.color = "var(--text-dim)";
-        }
-      }
     }
 
     function manualSellPosition(sym) {
@@ -614,8 +601,7 @@
       state.totalFeesPaid += fee;
       state.txCount += 1;
 
-      playSfx(pnlDelta >= 0 ? 'win' : 'loss');
-      addSystemLog(`[MANUAL OVERRIDE] Liquidated ${sym}! P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
+      playSfx(pnlDelta >= 0 ? 'win' : 'loss'); addSystemLog(`[MANUAL OVERRIDE] Liquidated ${sym}! Realized P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
       saveState();
       renderAll();
     }
@@ -635,15 +621,17 @@
       if (target) target.classList.add('active');
       if (btnElement) btnElement.classList.add('active');
       renderAll();
+      if (tabId === 'warroom' && typeof sceneFrame === 'function') sceneFrame();
     }
 
     function addSystemLog(msg) {
       const logBox = document.getElementById('system-log');
       if (!logBox) return;
-      logBox.innerHTML += `<div>[${new Date().toTimeString().split(' ')[0]}]${msg}</div>`;
+      logBox.innerHTML += `<div>[${new Date().toTimeString().split(' ')[0]}] ${msg}</div>`;
       logBox.scrollTop = logBox.scrollHeight;
     }
 
+    // A failed request returns null instead of breaking the whole scan
     async function safeJson(url) {
       try {
         const res = await fetch(url);
@@ -654,6 +642,7 @@
       }
     }
 
+    // ---- LIVE CRYPTO NEWS (CryptoCompare public news API) ----
     let liveNews = [];
     let newsStatus = 'CONNECTING';
     const seenNews = new Set();
@@ -679,17 +668,34 @@
       };
     }
 
+    // Source 1: RSS feeds converted to JSON by rss2json (CORS-friendly, no key)
     async function newsFromRss2Json(name, feedUrl) {
       const data = await safeJson(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`);
       if (!data || data.status !== 'ok' || !Array.isArray(data.items)) return [];
       return data.items.slice(0, 10).map(i => toNewsItem(name, i.title, i.link, i.pubDate));
     }
 
+    // Source 2: CryptoCompare public news API
     async function newsFromCryptoCompare() {
       const data = await safeJson('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
       if (!data || !Array.isArray(data.Data)) return [];
       return data.Data.slice(0, 15).map(n =>
         toNewsItem((n.source_info && n.source_info.name) || n.source || 'NEWS', n.title, n.url, (n.published_on || 0) * 1000));
+    }
+
+    // Source 3: raw RSS through a public CORS proxy, parsed in the browser
+    async function newsFromProxy(name, feedUrl) {
+      try {
+        const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`);
+        if (!res.ok) return [];
+        const doc = new DOMParser().parseFromString(await res.text(), 'text/xml');
+        return Array.from(doc.querySelectorAll('item')).slice(0, 10).map(i => {
+          const g = tag => { const el = i.querySelector(tag); return el ? el.textContent : ''; };
+          return toNewsItem(name, g('title'), g('link').trim(), g('pubDate'));
+        });
+      } catch (e) {
+        return [];
+      }
     }
 
     async function fetchLiveNews() {
@@ -708,12 +714,17 @@
         items = await newsFromCryptoCompare();
         if (items.length > 0) via = 'CRYPTOCOMPARE';
       }
+      if (items.length === 0) {
+        items = await newsFromProxy('COINTELEGRAPH', 'https://cointelegraph.com/rss');
+        if (items.length > 0) via = 'PROXY';
+      }
 
       if (items.length > 0) {
         items.sort((a, b) => b.ts - a.ts);
         liveNews = items.slice(0, 15);
         newsStatus = 'LIVE [' + via + ']';
 
+        // NEWS_HAWK: announce only headlines we haven't seen yet
         const fresh = liveNews.filter(n => !seenNews.has(n.title));
         liveNews.forEach(n => seenNews.add(n.title));
         const toAnnounce = (newsBootstrapped ? fresh.slice(0, 5) : fresh.slice(0, 2)).reverse();
@@ -722,8 +733,8 @@
         toAnnounce.forEach(n => {
           state.councilFeed.unshift({
             sender: 'NEWS_HAWK',
-            text: `${escapeHtml(n.source)}:${escapeHtml(n.title)}`,
-            color: '#ffd23f',
+            text: `${escapeHtml(n.source)}: ${escapeHtml(n.title)}`,
+            color: '#f9f871',
             time: new Date().toLocaleTimeString()
           });
         });
@@ -741,40 +752,22 @@
       isFetching = true;
       try {
         const keywords = ['pump', 'ai', 'dog', 'sol', 'cat', 'pepe', 'inu', 'moon', 'trump', 'baby', 'meme', 'coin'];
+
+        // Addresses of tokens we currently hold (so they always get live prices)
         const heldAddrs = Object.keys(state.positions)
           .filter(sym => (state.positions[sym] || 0) > 0.00001 && state.addresses[sym])
           .map(sym => state.addresses[sym]);
 
-        // Dual-Engine query: DexScreener + CoinGecko Oracle
-        const [profilesData, boostsLatest, boostsTop, geckoCoins, ...searchResults] = await Promise.all([
+        // All requests run in parallel; any single failure is tolerated
+        const [profilesData, boostsLatest, boostsTop, ...searchResults] = await Promise.all([
           safeJson(`https://api.dexscreener.com/token-profiles/latest/v1`),
           safeJson(`https://api.dexscreener.com/token-boosts/latest/v1`),
           safeJson(`https://api.dexscreener.com/token-boosts/top/v1`),
-          safeJson(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false`),
           ...keywords.map(k => safeJson(`https://api.dexscreener.com/latest/dex/search?q=${k}`))
         ]);
 
+        // One entry per ticker; if tickers collide, keep the most liquid pool
         const poolMap = new Map();
-
-        // Integrate CoinGecko oracle baseline prices for added safety checks
-        if (Array.isArray(geckoCoins)) {
-          geckoCoins.forEach(coin => {
-            const sym = coin.symbol.toUpperCase();
-            if (!IGNORED_SYMBOLS.includes(sym) && coin.current_price) {
-              poolMap.set(sym, {
-                symbol: sym,
-                address: coin.id,
-                price: parseFloat(coin.current_price),
-                change24h: coin.price_change_percentage_24h || 5.0,
-                liquidity: coin.total_volume || 50000,
-                volumeH1: 15000,
-                buysH1: 50,
-                sellsH1: 20,
-                securityBadge: 'COINGECKO ORACLE'
-              });
-            }
-          });
-        }
 
         const consider = (p, badge, isHeld) => {
           if (!p || p.chainId !== 'solana' || !p.priceUsd || !p.baseToken || !p.baseToken.symbol) return;
@@ -787,9 +780,7 @@
           if (!isHeld && operationalMode === 'SNIPER' && liq > 300000) return;
 
           const existing = poolMap.get(sym);
-          // If CoinGecko already set it or existing liquidity is higher, keep it unless DexScreener pool is superior
-          if (existing && existing.securityBadge === 'COINGECKO ORACLE' && liq < 50000) return;
-
+          if (existing && existing.liquidity >= liq) return;
           poolMap.set(sym, {
             symbol: sym,
             address: p.baseToken.address,
@@ -803,10 +794,12 @@
           });
         };
 
+        // 1) Keyword search results
         searchResults.forEach(data => {
-          if (data && Array.isArray(data.pairs)) data.pairs.forEach(p => consider(p, 'DEXSCREENER', false));
+          if (data && Array.isArray(data.pairs)) data.pairs.forEach(p => consider(p, 'UNVERIFIED', false));
         });
 
+        // 2) Latest token profiles: look up REAL prices in a single batched request
         const addrSet = new Set();
         [profilesData, boostsLatest, boostsTop].forEach(list => {
           if (Array.isArray(list)) {
@@ -825,6 +818,7 @@
           if (data && Array.isArray(data.pairs)) data.pairs.forEach(p => consider(p, 'PROFILE', false));
         });
 
+        // 3) Held positions: fetch by exact address and override any same-ticker collision
         if (heldAddrs.length > 0) {
           const heldData = await safeJson(`https://api.dexscreener.com/latest/dex/tokens/${heldAddrs.slice(0, 30).join(',')}`);
           if (heldData && Array.isArray(heldData.pairs)) {
@@ -860,12 +854,154 @@
           marketCoins = fetched;
         }
 
+        // WHALE_EYE: flag pools with unusually heavy 1h volume relative to liquidity
+        const nowTs = Date.now();
+        let whaleFired = false;
+        marketCoins
+          .filter(c => (c.volumeH1 || 0) >= 25000 && c.liquidity > 0 && (c.volumeH1 / c.liquidity) >= 0.5)
+          .sort((a, b) => b.volumeH1 - a.volumeH1)
+          .slice(0, 3)
+          .forEach(c => {
+            if (nowTs - (whaleSeen[c.symbol] || 0) < 30 * 60 * 1000) return;
+            whaleSeen[c.symbol] = nowTs;
+            whaleFired = true;
+            const buys = c.buysH1 || 0, sells = c.sellsH1 || 0;
+            const bias = buys > sells * 1.3 ? 'BUY PRESSURE' : (sells > buys * 1.3 ? 'SELL PRESSURE' : 'MIXED FLOW');
+            whaleNewsFeed.unshift({
+              title: `🐋 WHALE_EYE: ${c.symbol}`,
+              desc: `1h volume ${fmtCurrency(c.volumeH1)} on ${fmtCurrency(c.liquidity)} liquidity | ${buys} buys / ${sells} sells | ${bias}`,
+              time: new Date().toLocaleTimeString()
+            });
+          });
+        if (whaleFired) playSfx('whale');
+        whaleNewsFeed = whaleNewsFeed.slice(0, 20);
+
         renderAll();
       } catch (err) {
-        console.warn("Dual-engine fetch warning:", err);
+        console.warn("Mega-stream fetch warning:", err);
       } finally {
         isFetching = false;
       }
+    }
+
+    function promptApiKey() {
+      const key = prompt("Enter your Gemini API key:", localStorage.getItem('gemini_api_key') || '');
+      if (key !== null) {
+        localStorage.setItem('gemini_api_key', key.trim());
+        updateKeyStatus();
+        addSystemLog(`[CONFIG] Gemini API Key successfully configured.`);
+      }
+    }
+
+    function updateKeyStatus() {
+      const k = localStorage.getItem('gemini_api_key');
+      const el = document.getElementById('key-status');
+      if (el) {
+        if (k && k.length > 5) {
+          el.textContent = "● CONFIGURED";
+          el.style.color = "var(--green)";
+        } else {
+          el.textContent = "● NOT CONFIGURED";
+          el.style.color = "var(--text-dim)";
+        }
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem('solaris_cash', state.cash);
+      localStorage.setItem('solaris_vault', state.vault);
+      localStorage.setItem('solaris_sweep_pct', state.sweepPct);
+      localStorage.setItem('solaris_pnl', state.realizedPnl);
+      localStorage.setItem('solaris_fees', state.totalFeesPaid);
+      localStorage.setItem('solaris_tx_count', state.txCount);
+      localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
+      localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
+      localStorage.setItem('solaris_addresses', JSON.stringify(state.addresses));
+      localStorage.setItem('solaris_peak_prices', JSON.stringify(peakPrices));
+      localStorage.setItem('solaris_last_trade', state.lastTradeTime);
+    }
+
+    function freshWipe() {
+      if (confirm("Reset all bots, positions, bankrolls, and vault balances to zero/baseline while preserving your API key?")) {
+        const apiKey = localStorage.getItem('gemini_api_key');
+        localStorage.clear();
+        if (apiKey) localStorage.setItem('gemini_api_key', apiKey);
+        location.reload();
+      }
+    }
+
+    function resetPnlOnly() {
+      state.realizedPnl = 0;
+      state.totalFeesPaid = 0;
+      state.txCount = 0;
+      state.cash = 100;
+      state.vault = 0;
+      state.positions = {};
+      state.costBasis = {};
+      state.addresses = {};
+      peakPrices = {};
+      saveState();
+      addSystemLog(`[CONFIG] Treasury reset to clean baseline.`);
+      renderAll();
+    }
+
+    function adjustFunds() {
+      const input = prompt("Enter new Active Bot Bankroll amount ($):", state.cash);
+      if (input !== null) {
+        const amt = parseFloat(input);
+        if (!isNaN(amt) && amt >= 0) {
+          state.cash = amt;
+          saveState();
+          renderAll();
+        }
+      }
+    }
+
+    function configureVault() {
+      const choice = prompt(`MAIN VAULT MANAGEMENT:\n- Vault Balance: ${fmtCurrency(state.vault)}\n- Profit Sweep Rate: ${state.sweepPct}%\n\nEnter '1' to transfer funds between Vault & Bankroll\nEnter '2' to change Profit Sweep %`, '1');
+      if (choice === '1') {
+        const transferAmt = prompt(`Transfer amount (+ to Vault, - to Bankroll):`, '0');
+        if (transferAmt !== null) {
+          const val = parseFloat(transferAmt);
+          if (!isNaN(val)) {
+            if (val > 0 && state.cash >= val) {
+              state.cash -= val;
+              state.vault += val;
+              addSystemLog(`[VAULT] Transferred ${fmtCurrency(val)} to Main Vault.`);
+            } else if (val < 0 && state.vault >= Math.abs(val)) {
+              state.vault -= Math.abs(val);
+              state.cash += Math.abs(val);
+              addSystemLog(`[VAULT] Tranche released.`);
+            }
+            saveState();
+            renderAll();
+          }
+        }
+      } else if (choice === '2') {
+        const newPct = prompt(`Enter new profit sweep percentage (0 to 100):`, state.sweepPct);
+        if (newPct !== null) {
+          const p = parseFloat(newPct);
+          if (!isNaN(p) && p >= 0 && p <= 100) {
+            state.sweepPct = p;
+            saveState();
+            renderAll();
+          }
+        }
+      }
+    }
+
+    function requestBriefing() {
+      agentSpeak('boss', 'BRIEFING');
+      let portfolioVal = 0;
+      Object.keys(state.positions).forEach(sym => {
+        let coin = marketCoins.find(c => c.symbol === sym) || { price: state.costBasis[sym] || 1 };
+        portfolioVal += (state.positions[sym] || 0) * coin.price;
+      });
+      let net = state.cash + state.vault + portfolioVal;
+      const brief = `MEGA-STREAM TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
+      state.councilFeed.unshift({ sender: 'RISK_CORE', text: brief, color: '#f9f871', time: new Date().toLocaleTimeString() });
+      switchTab('council', document.querySelectorAll('.tab-btn')[1]);
+      renderAll();
     }
 
     function runTradingLoop() {
@@ -911,8 +1047,7 @@
             state.totalFeesPaid += fee;
             state.txCount += 1;
 
-            playSfx('loss');
-            addSystemLog(`[STOP-LOSS CUT] RISK_CORE cut ${sym} at ${gainPct.toFixed(1)}% | P&L: ${fmtCurrency(pnlDelta)}`);
+            playSfx('loss'); addSystemLog(`[STOP-LOSS CUT] RISK_CORE cut ${sym} at ${gainPct.toFixed(1)}% | P&L: ${fmtCurrency(pnlDelta)}`);
             saveState();
             renderAll();
             return;
@@ -933,8 +1068,7 @@
             state.totalFeesPaid += fee;
             state.txCount += 1;
 
-            playSfx(pnlDelta >= 0 ? 'win' : 'loss');
-            addSystemLog(`[TRAILING LOCK] KIRKTRON 9001 secured peak profits on ${sym}! P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
+            playSfx(pnlDelta >= 0 ? 'win' : 'loss'); addSystemLog(`[TRAILING LOCK] KIRKTRON 9001 secured peak profits on ${sym}! P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
             saveState();
             renderAll();
             return;
@@ -976,6 +1110,7 @@
             let sweepAmount = pnlDelta * (state.sweepPct / 100);
             state.cash += (netReturn - sweepAmount);
             state.vault += sweepAmount;
+            agentSpeak('cfo', 'SWEEP!');
           } else {
             state.cash += netReturn;
           }
@@ -984,8 +1119,7 @@
           state.totalFeesPaid += fee;
           state.txCount += 1;
 
-          playSfx('win');
-          addSystemLog(`[FULL TAKE-PROFIT] Target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
+          playSfx('win'); addSystemLog(`[FULL TAKE-PROFIT] Target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
           action = 'sell';
         } else if (state.cash > 20.0 && curHold === 0) {
           let spend = state.cash * 0.20;
@@ -1001,9 +1135,7 @@
 
           state.totalFeesPaid += fee;
           state.txCount += 1;
-          playSfx('buy');
-          const prefix = engineMode === 'AI' ? '[AI NEURAL] ALPHA_X' : '[AUTONOMOUS] RULE-BASED BOT';
-          addSystemLog(`${prefix} bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
+          playSfx('buy'); addSystemLog(`[NEW ENTRY] ALPHA_X bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
           action = 'buy';
         } else {
           return;
@@ -1013,10 +1145,10 @@
         saveState();
 
         let councilText = action === 'buy' ?
-          `[${operationalMode} / ${engineMode}] Swarm executed entry into memecoin ${targetCoin.symbol}.` :
-          `[${operationalMode} / ${engineMode}] Target closed on ${targetCoin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
+          `[${operationalMode}] Swarm executed entry into memecoin ${targetCoin.symbol}.` :
+          `[${operationalMode}] Target closed on ${targetCoin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
 
-        state.councilFeed.unshift({ sender: engineMode === 'AI' ? 'ALPHA_X' : 'RISK_CORE', text: councilText, color: '#4cc9f0', time: new Date().toLocaleTimeString() });
+        state.councilFeed.unshift({ sender: 'ALPHA_X', text: councilText, color: '#00f0ff', time: new Date().toLocaleTimeString() });
         state.councilFeed = state.councilFeed.slice(0, 30);
         renderAll();
       } catch (err) {
@@ -1040,6 +1172,7 @@
 
         let unrealizedPnlVal = portfolioVal > 0 ? portfolioVal - totalCostBasisVal : 0;
         let netWorth = state.cash + state.vault + portfolioVal;
+        lastNetWorth = netWorth;
 
         const nw = document.getElementById('net-worth');
         if (nw) {
@@ -1071,21 +1204,11 @@
         const modeLabel = document.getElementById('status-mode-label');
         if (modeLabel) modeLabel.textContent = `${operationalMode} MODE`;
 
-        const engineLabel = document.getElementById('status-engine-label');
-        if (engineLabel) engineLabel.textContent = engineMode === 'AI' ? 'AI NEURAL MODE' : 'AUTONOMOUS RULE-BASED';
-
         const btnGrowth = document.getElementById('btn-mode-growth');
         const btnSniper = document.getElementById('btn-mode-sniper');
         if (btnGrowth && btnSniper) {
           btnGrowth.className = `cyber-btn ${operationalMode === 'GROWTH' ? 'active-mode' : ''}`;
           btnSniper.className = `cyber-btn ${operationalMode === 'SNIPER' ? 'active-mode' : ''}`;
-        }
-
-        const btnAi = document.getElementById('btn-engine-ai');
-        const btnAuto = document.getElementById('btn-engine-auto');
-        if (btnAi && btnAuto) {
-          btnAi.className = `cyber-btn ${engineMode === 'AI' ? 'active-mode' : ''}`;
-          btnAuto.className = `cyber-btn ${engineMode === 'AUTO' ? 'active-mode' : ''}`;
         }
 
         const pnl = document.getElementById('realized-pnl');
@@ -1126,13 +1249,13 @@
             ? `<div class="feed-item" style="border-left-color: var(--amber);"><div class="feed-text">${newsStatus === 'OFFLINE' ? 'News source unreachable. Retrying...' : 'Connecting to news wire...'}</div></div>`
             : liveNews.map(n => `
             <div class="feed-item" style="border-left-color: var(--amber);">
-              <div class="feed-sender" style="color: var(--amber);">${escapeHtml(n.source)} <span style="font-weight: normal; color: #9d94d6; font-size: 14px;">${escapeHtml(n.time)}</span></div>
-              <div class="feed-text">${n.url ? `<a href="${escapeHtml(n.url)}" target="_blank" rel="noopener noreferrer" style="color: #f1ecff; text-decoration: none;">${escapeHtml(n.title)}</a>` : escapeHtml(n.title)}</div>
+              <div class="feed-sender" style="color: var(--amber);">${escapeHtml(n.source)} <span style="font-weight: normal; color: #8a7fb8; font-size: 14px;">${escapeHtml(n.time)}</span></div>
+              <div class="feed-text">${n.url ? `<a href="${escapeHtml(n.url)}" target="_blank" rel="noopener noreferrer" style="color: #e9f7ff; text-decoration: none;">${escapeHtml(n.title)}</a>` : escapeHtml(n.title)}</div>
             </div>
           `).join('');
           const scannerHtml = whaleNewsFeed.map(n => `
             <div class="feed-item" style="border-left-color: var(--cyan);">
-              <div class="feed-sender" style="color: var(--cyan);">${n.title} <span style="font-weight: normal; color: #9d94d6; font-size: 14px;">${n.time}</span></div>
+              <div class="feed-sender" style="color: var(--cyan);">${n.title} <span style="font-weight: normal; color: #8a7fb8; font-size: 14px;">${n.time}</span></div>
               <div class="feed-text">${n.desc}</div>
             </div>
           `).join('');
@@ -1172,7 +1295,7 @@
         if (feedContainer) {
           feedContainer.innerHTML = state.councilFeed.map(f => `
             <div class="feed-item" style="border-left-color: ${f.color};">
-              <div class="feed-sender" style="color: ${f.color};">${f.sender} <span style="font-weight: normal; color: #9d94d6; font-size: 14px;">${f.time || ''}</span></div>
+              <div class="feed-sender" style="color: ${f.color};">${f.sender} <span style="font-weight: normal; color: #8a7fb8; font-size: 14px;">${f.time || ''}</span></div>
               <div class="feed-text">"${f.text}"</div>
             </div>
           `).join('');
@@ -1182,9 +1305,352 @@
       }
     }
 
+    // ---- ORBITAL TABLE: animated cyberpunk pixel-art war room ----
+    const SCENE_W = 256, SCENE_H = 168;
+    const SCENE_FONT = '8px "Press Start 2P", monospace';
+    const TABLE = { cx: 128, cy: 112, rx: 64, ry: 22 };
+    const SEAT_LAYOUT = {
+      macro:     { deg: 215, row: 'back' },
+      boss:      { deg: 250, row: 'back' },
+      news:      { deg: 290, row: 'back' },
+      announcer: { deg: 325, row: 'back' },
+      trader:    { deg: 180, row: 'side' },
+      cfo:       { deg: 0,   row: 'side' },
+      finance:   { deg: 120, row: 'front' },
+      risk:      { deg: 60,  row: 'front' }
+    };
+    const SPEAK_MAP = {
+      buy:   ['trader', 'BUY!'],
+      win:   ['finance', 'PROFIT!'],
+      loss:  ['risk', 'CUT!'],
+      whale: ['announcer', 'WHALE!'],
+      news:  ['news', 'NEWS!']
+    };
+    const AMBIENT_LINES = ['...', 'hmm', 'scan', 'ok', '?!', 'ping'];
+    const sceneReduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    let lastNetWorth = 100;
+    let sceneCanvas = null, sceneCtx = null, sceneBg = null;
+    let sceneSeats = [], sceneSpeech = {}, sceneRain = [], sceneBlinkers = [];
+    let sceneNextChatter = 0, sceneLastT = 0;
+    let tickerKey = '', tickerText = '', tickerW = 1;
+
+    function agentSpeak(id, text, ms) {
+      const now = performance.now();
+      sceneSpeech[id] = { text: String(text), start: now, until: now + (ms || 2400) };
+    }
+
+    function mulberry32(a) {
+      return function () {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    function fillEllipse(g, cx, cy, rx, ry, color) {
+      g.fillStyle = color;
+      for (let dy = -ry; dy <= ry; dy++) {
+        const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (dy * dy) / (ry * ry))));
+        g.fillRect(cx - w, cy + dy, w * 2, 1);
+      }
+    }
+
+    function buildSceneBg() {
+      const c = document.createElement('canvas');
+      c.width = SCENE_W; c.height = SCENE_H;
+      const g = c.getContext('2d');
+      const R = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+      const rnd = mulberry32(2077);
+
+      // night sky in hard pixel bands
+      ['#07010f', '#0c0220', '#14042e', '#220a44', '#3a0e57', '#5a1260', '#7a1868'].forEach((col, i) => R(0, i * 10, SCENE_W, 10, col));
+      // neon moon
+      g.globalAlpha = 0.18; fillEllipse(g, 206, 22, 14, 14, '#ff2bd6'); g.globalAlpha = 1;
+      fillEllipse(g, 206, 22, 8, 8, '#ffd9f5');
+      fillEllipse(g, 209, 20, 6, 6, '#ffb3ec');
+
+      // far skyline
+      let x = 0;
+      while (x < SCENE_W) {
+        const w = 8 + Math.floor(rnd() * 14), h = 14 + Math.floor(rnd() * 26);
+        R(x, 70 - h, w, h, '#1a0838');
+        x += w;
+      }
+      // mid skyline with lit windows
+      x = -4;
+      while (x < SCENE_W) {
+        const w = 12 + Math.floor(rnd() * 16), h = 20 + Math.floor(rnd() * 34);
+        R(x, 70 - h, w, h, '#0e0426');
+        R(x, 70 - h, 1, h, '#2a0f5e');
+        for (let wy = 70 - h + 3; wy < 66; wy += 4) {
+          for (let wx = x + 3; wx < x + w - 2; wx += 4) {
+            const r = rnd();
+            if (r > 0.64) R(wx, wy, 2, 2, r > 0.92 ? '#ff2bd6' : (r > 0.82 ? '#00f0ff' : '#f9f871'));
+          }
+        }
+        if (rnd() > 0.6) { R(x + Math.floor(w / 2), 70 - h - 5, 1, 5, '#2a0f5e'); R(x + Math.floor(w / 2), 70 - h - 5, 1, 1, '#ff2bd6'); }
+        x += w + Math.floor(rnd() * 3);
+      }
+      // a few windows that will blink on top of the skyline
+      sceneBlinkers = [];
+      for (let k = 0; k < 14; k++) {
+        sceneBlinkers.push({ x: 4 + Math.floor(rnd() * 240), y: 28 + Math.floor(rnd() * 36), c: ['#ff2bd6', '#00f0ff', '#f9f871'][k % 3], k: k });
+      }
+
+      // window frame + sill
+      R(0, 0, SCENE_W, 2, '#05000f');
+      R(85, 0, 2, 70, '#05000f'); R(171, 0, 2, 70, '#05000f');
+      R(0, 68, SCENE_W, 6, '#05000f');
+      R(0, 70, SCENE_W, 1, '#0a6a78');
+
+      // floor
+      R(0, 74, SCENE_W, SCENE_H - 74, '#0a0420');
+      [80, 88, 98, 110, 125, 143, 164].forEach(y => R(0, y, SCENE_W, 1, '#1b0b4a'));
+      for (let k = -4; k <= 4; k++) {
+        for (let y = 75; y < SCENE_H; y++) {
+          const fx = Math.round(128 + (k * 70) * (y - 40) / (SCENE_H - 40));
+          if (fx >= 0 && fx < SCENE_W) R(fx, y, 1, 1, k % 2 ? '#1b0b4a' : '#2a1060');
+        }
+      }
+      // table underglow on the floor
+      g.globalAlpha = 0.16; fillEllipse(g, TABLE.cx, TABLE.cy + 10, TABLE.rx + 20, TABLE.ry + 12, '#ff2bd6');
+      g.globalAlpha = 0.14; fillEllipse(g, TABLE.cx, TABLE.cy + 10, TABLE.rx + 8, TABLE.ry + 5, '#00f0ff');
+      g.globalAlpha = 1;
+      return c;
+    }
+
+    function buildSeats() {
+      sceneSeats = [];
+      agentDefs.forEach((a, idx) => {
+        const lay = SEAT_LAYOUT[a.id];
+        if (!lay) return;
+        const th = lay.deg * Math.PI / 180;
+        sceneSeats.push({
+          a: a, idx: idx, row: lay.row, th: th,
+          x: Math.round(TABLE.cx + (TABLE.rx + 16) * Math.cos(th)),
+          ay: Math.round(TABLE.cy + (TABLE.ry + 11) * Math.sin(th)) + 10,
+          padX: Math.round(TABLE.cx + (TABLE.rx - 9) * Math.cos(th)),
+          padY: Math.round(TABLE.cy + (TABLE.ry - 5) * Math.sin(th))
+        });
+      });
+    }
+
+    const AGENT_K = 2;   // each sprite pixel is 2x2 scene pixels
+
+    function drawAgent(g, s, t) {
+      const K = AGENT_K;
+      const a = s.a, c = a.color, idx = s.idx;
+      const sp = sceneSpeech[a.id];
+      const talking = !!(sp && t < sp.until);
+      const hop = (talking && t - sp.start < 160) ? 3 : 0;
+      const bob = sceneReduceMotion ? 0 : (Math.floor(t / 700 + idx * 0.45) % 2);
+      const bx = s.x - 6 * K, by = s.ay - 18 * K + bob * K - hop;
+      const blink = !sceneReduceMotion && ((t + idx * 777) % 3400 < 120);
+      const facing = s.row !== 'front';
+      const R = (lx, ly, w, h, col) => { g.fillStyle = col; g.fillRect(bx + lx * K, by + ly * K, w * K, h * K); };
+
+      g.globalAlpha = 0.35; g.fillStyle = c; g.fillRect(bx - 2 * K, s.ay, 16 * K, 2); g.globalAlpha = 1;   // floor light
+      R(-1, 8, 14, 10, '#150a30');                                                                       // chair back
+      g.globalAlpha = 0.7; R(-1, 8, 1, 10, c); R(12, 8, 1, 10, c); g.globalAlpha = 1;
+      if (facing) {
+        R(1, 8, 10, 8, '#2a2057'); R(1, 8, 10, 1, '#4a3d8f');
+        R(0, 9, 1, 6, '#1c1538'); R(11, 9, 1, 6, '#1c1538');
+        R(5, 11, 2, 2, (Math.floor(t / 500 + idx) % 4 === 0) ? '#ffffff' : c);
+        R(1, 15, 10, 1, '#05000f');
+      } else {
+        R(-1, 8, 14, 1, c);
+      }
+      R(5, 8, 2, 1, '#1c1538');                                   // neck
+      R(2, 0, 8, 8, '#1c1538'); R(2, 0, 8, 1, '#4a3d8f');         // head
+      R(1, 2, 1, 4, '#2a2057'); R(10, 2, 1, 4, '#2a2057');
+      if (facing) {
+        R(3, 3, 6, 2, '#05000f');
+        if (talking) R(3, 3, 6, 2, '#ffffff');
+        else if (!blink) { R(3, 3, 6, 2, c); R(4, 3, 1, 1, '#ffffff'); }
+        else R(3, 4, 6, 1, c);
+      } else {
+        g.globalAlpha = 0.85; R(4, 5, 4, 1, c); g.globalAlpha = 1;
+      }
+      switch (a.id) {       // role gear
+        case 'boss':      R(2, -3, 2, 3, c); R(5, -3, 2, 3, c); R(8, -3, 2, 3, c); R(2, -1, 8, 1, c); break;
+        case 'announcer': R(9, -4, 1, 4, '#4a3d8f'); R(8, -5, 3, 1, c); if (Math.floor(t / 400) % 2) R(10, -7, 1, 1, c); break;
+        case 'finance':   R(3, -2, 6, 2, '#4a3d8f'); R(5, -3, 2, 1, c); break;
+        case 'risk':      R(1, -2, 10, 2, '#2a2057'); R(5, -3, 2, 1, c); break;
+        case 'trader':    R(5, -4, 2, 4, c); R(4, -2, 1, 2, c); R(7, -2, 1, 2, c); break;
+        case 'macro':     R(2, -3, 8, 1, c); R(1, -2, 1, 1, c); R(10, -2, 1, 1, c); break;
+        case 'cfo':       R(3, -5, 6, 4, '#05000f'); R(3, -3, 6, 1, c); R(1, -1, 10, 1, '#05000f'); break;
+        case 'news':      R(7, -3, 1, 3, c); R(8, -2, 1, 2, c); R(9, -1, 1, 1, c); if (facing) R(5, 5, 2, 2, c); break;
+      }
+    }
+
+    function drawTable(g, t) {
+      const T = TABLE;
+      g.globalAlpha = 0.2; fillEllipse(g, T.cx, T.cy + 9, T.rx + 4, T.ry + 3, '#00f0ff'); g.globalAlpha = 1;
+      fillEllipse(g, T.cx, T.cy + 6, T.rx, T.ry, '#05000f');
+      fillEllipse(g, T.cx, T.cy + 3, T.rx, T.ry, '#1a0f3d');
+      fillEllipse(g, T.cx, T.cy, T.rx, T.ry, '#00f0ff');
+      fillEllipse(g, T.cx, T.cy, T.rx - 2, T.ry - 1, '#0b1233');
+      fillEllipse(g, T.cx, T.cy, T.rx - 14, T.ry - 6, '#ff2bd6');
+      fillEllipse(g, T.cx, T.cy, T.rx - 15, T.ry - 7, '#0f1d4d');
+      fillEllipse(g, T.cx, T.cy, T.rx - 30, T.ry - 12, '#162a66');
+      g.fillStyle = 'rgba(0,240,255,0.25)';
+      g.fillRect(T.cx - (T.rx - 20), T.cy, (T.rx - 20) * 2, 1);
+      g.fillRect(T.cx, T.cy - (T.ry - 8), 1, (T.ry - 8) * 2);
+      // seat pads light up for their agent
+      sceneSeats.forEach(s => {
+        const sp = sceneSpeech[s.a.id];
+        const on = sp && t < sp.until;
+        g.fillStyle = on ? '#ffffff' : s.a.color;
+        g.globalAlpha = on ? 1 : 0.8;
+        g.fillRect(s.padX - 2, s.padY - 1, 4, 2);
+        g.globalAlpha = 1;
+      });
+    }
+
+    function drawHologram(g, t) {
+      const T = TABLE, cx = T.cx, cy = T.cy - 14;
+      g.fillStyle = 'rgba(0,240,255,0.10)';
+      for (let i = 0; i < 6; i++) g.fillRect(cx - 10 + i, cy + 6 + i * 2, 20 - i * 2, 2);   // light cone
+      const spin = sceneReduceMotion ? 0.2 : t / 450;
+      const w = Math.max(1, Math.round(Math.abs(Math.cos(spin)) * 9));
+      g.fillStyle = '#b8a800'; g.fillRect(cx - Math.floor(w / 2) + 1, cy - 4, w, 10);
+      g.fillStyle = '#f9f871'; g.fillRect(cx - Math.floor(w / 2), cy - 5, w, 10);
+      if (w > 4) { g.fillStyle = '#fffbb0'; g.fillRect(cx - 1, cy - 2, 2, 5); }
+      if (!sceneReduceMotion) {
+        for (let k = 0; k < 4; k++) {
+          const ang = t / 700 + k * Math.PI / 2;
+          g.fillStyle = k % 2 ? '#ff2bd6' : '#00f0ff';
+          g.fillRect(Math.round(cx + Math.cos(ang) * 18), Math.round(cy + Math.sin(ang) * 5), 2, 2);
+        }
+      }
+      const label = '$' + Math.round(lastNetWorth);
+      g.font = SCENE_FONT; g.textBaseline = 'top';
+      const tw = g.measureText(label).width;
+      g.fillStyle = lastNetWorth >= 100 ? '#39ff88' : '#ff3b5c';
+      g.fillText(label, Math.round(cx - tw / 2), cy - 20);
+    }
+
+    function refreshTicker(g) {
+      const key = liveNews.length + '|' + (liveNews[0] ? liveNews[0].title : '');
+      if (key === tickerKey) return;
+      tickerKey = key;
+      tickerText = liveNews.length
+        ? liveNews.slice(0, 6).map(n => (n.source + ': ' + n.title).slice(0, 80)).join('   //   ') + '   //   '
+        : 'NEWS_HAWK: CONNECTING TO THE WIRE   //   ';
+      g.font = SCENE_FONT;
+      tickerW = Math.max(40, Math.ceil(g.measureText(tickerText).width));
+    }
+
+    function drawTicker(g, t) {
+      refreshTicker(g);
+      g.fillStyle = '#05000f'; g.fillRect(60, 5, 136, 15);
+      g.fillStyle = '#f9f871'; g.fillRect(60, 5, 136, 1); g.fillRect(60, 19, 136, 1); g.fillRect(60, 5, 1, 15); g.fillRect(195, 5, 1, 15);
+      g.save();
+      g.beginPath(); g.rect(63, 7, 130, 12); g.clip();
+      g.font = SCENE_FONT; g.textBaseline = 'top'; g.fillStyle = '#f9f871';
+      const off = sceneReduceMotion ? 0 : Math.floor((t / 1000) * 26) % tickerW;
+      for (let x = 64 - off; x < 196; x += tickerW) g.fillText(tickerText, x, 10);
+      g.restore();
+    }
+
+    function drawBubble(g, s, t) {
+      const sp = sceneSpeech[s.a.id];
+      if (!sp || t >= sp.until) return;
+      if (sp.until - t < 350 && Math.floor(t / 90) % 2) return;
+      g.font = SCENE_FONT; g.textBaseline = 'top';
+      const tw = Math.ceil(g.measureText(sp.text).width);
+      const w = tw + 8, h = 13;
+      const bx = Math.max(2, Math.min(SCENE_W - w - 2, Math.round(s.x - w / 2)));
+      const by = Math.max(2, s.ay - 46 - h - 3);
+      g.fillStyle = s.a.color; g.fillRect(bx, by, w, h);
+      g.fillStyle = '#05000f'; g.fillRect(bx + 1, by + 1, w - 2, h - 2);
+      g.fillStyle = '#ffffff'; g.fillText(sp.text, bx + 4, by + 3);
+      g.fillStyle = s.a.color; g.fillRect(s.x - 1, by + h, 3, 1); g.fillRect(s.x, by + h + 1, 1, 1);
+    }
+
+    function drawScene(t) {
+      const g = sceneCtx;
+      if (!g) return;
+      const dt = Math.min(0.2, (t - (sceneLastT || t)) / 1000);
+      sceneLastT = t;
+      g.imageSmoothingEnabled = false;
+      g.drawImage(sceneBg, 0, 0);
+
+      // blinking windows, neon sign and rain outside the glass
+      sceneBlinkers.forEach(b => {
+        if (sceneReduceMotion || Math.floor(t / 900 + b.k * 3.1) % 4 === 0) { g.fillStyle = b.c; g.fillRect(b.x, b.y, 2, 2); }
+      });
+      const flick = (!sceneReduceMotion && Math.floor(t / 90) % 23 === 0) ? 0.35 : 1;
+      g.globalAlpha = flick; g.fillStyle = '#ff2bd6'; g.fillRect(16, 8, 3, 34); g.fillStyle = '#00f0ff'; g.fillRect(8, 24, 20, 2); g.globalAlpha = 1;
+      if (!sceneReduceMotion) {
+        g.fillStyle = 'rgba(170,235,255,0.55)';
+        sceneRain.forEach(d => {
+          d.y += d.v * dt; d.x -= 10 * dt;
+          if (d.y > 68) { d.y = -3; d.x = Math.random() * SCENE_W; }
+          if (d.x < 0) d.x += SCENE_W;
+          g.fillRect(Math.round(d.x), Math.round(d.y), 1, 3);
+        });
+        g.fillStyle = '#05000f'; g.fillRect(85, 0, 2, 68); g.fillRect(171, 0, 2, 68);
+      }
+
+      drawTicker(g, t);
+
+      // ambient chatter so the table never feels frozen
+      if (!sceneReduceMotion && t > sceneNextChatter) {
+        const idle = sceneSeats.filter(s => !(sceneSpeech[s.a.id] && t < sceneSpeech[s.a.id].until));
+        if (idle.length) agentSpeak(idle[Math.floor(Math.random() * idle.length)].a.id, AMBIENT_LINES[Math.floor(Math.random() * AMBIENT_LINES.length)], 1300);
+        sceneNextChatter = t + 3500 + Math.random() * 3500;
+      }
+
+      sceneSeats.filter(s => s.row === 'back').forEach(s => drawAgent(g, s, t));
+      drawTable(g, t);
+      drawHologram(g, t);
+      sceneSeats.filter(s => s.row !== 'back').forEach(s => drawAgent(g, s, t));
+      sceneSeats.forEach(s => drawBubble(g, s, t));
+    }
+
+    function sceneFrame() {
+      if (document.hidden) return;
+      const pane = document.getElementById('tab-warroom');
+      if (!pane || !pane.classList.contains('active')) return;
+      drawScene(performance.now());
+    }
+
+    function initScene() {
+      sceneCanvas = document.getElementById('orbital-table');
+      if (!sceneCanvas || !sceneCanvas.getContext) return;
+      sceneCtx = sceneCanvas.getContext('2d');
+      sceneBg = buildSceneBg();
+      buildSeats();
+      for (let i = 0; i < 36; i++) sceneRain.push({ x: Math.random() * SCENE_W, y: Math.random() * 68, v: 45 + Math.random() * 40 });
+      sceneCanvas.addEventListener('click', ev => {
+        const r = sceneCanvas.getBoundingClientRect();
+        const lx = (ev.clientX - r.left) * SCENE_W / r.width;
+        const ly = (ev.clientY - r.top) * SCENE_H / r.height;
+        let hit = null, best = 1e9;
+        sceneSeats.forEach(s => {
+          if (lx >= s.x - 14 && lx <= s.x + 14 && ly >= s.ay - 48 && ly <= s.ay + 3) {
+            const d = Math.abs(lx - s.x) + Math.abs(ly - (s.ay - 20));
+            if (d < best) { best = d; hit = s; }
+          }
+        });
+        if (hit) {
+          agentSpeak(hit.a.id, hit.a.name, 2200);
+          const cap = document.getElementById('scene-caption');
+          if (cap) cap.textContent = hit.a.icon + ' ' + hit.a.name + ' - ' + hit.a.role;
+          drawScene(performance.now());
+        }
+      });
+      setInterval(sceneFrame, sceneReduceMotion ? 250 : 83);
+      sceneFrame();
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       updateKeyStatus();
       updateSoundBtn();
+      try { initScene(); } catch (e) { console.warn('Scene init failed:', e); }
+      // browsers only allow audio after a tap, so wake the audio engine on any tap
       document.addEventListener('pointerdown', () => { if (soundOn) getAudio(); });
       document.addEventListener('click', e => {
         const b = e.target.closest ? e.target.closest('.cyber-btn, .tab-btn') : null;
