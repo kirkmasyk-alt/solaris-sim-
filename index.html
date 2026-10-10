@@ -296,7 +296,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V15.1</div>
+          <div class="logo-sub">PAPER TRADING // V15.2</div>
         </div>
       </div>
       <div class="header-btns">
@@ -447,9 +447,9 @@ const CFG = {
   feeRate: 0.003,
   baseSlippage: 0.005,
   stopLossPct: -3.0,
-  takeProfitPct: 12.0,
+  takeProfitPct: 15.0,
   staleExitMs: 2 * 60 * 60 * 1000,
-  scanEveryMs: 60000,         // Optimized to 1-minute cadence to prevent API rate limits
+  scanEveryMs: 60000,
   newsEveryMs: 120000,
   recentKeepMs: 90000,
   staleDataMs: 60000,
@@ -516,24 +516,24 @@ const IGNORED_SYMBOLS = ['USDC', 'USDT'];
 const STORE_KEY = 'orbital_state_v2';
 
 const AGENT_JOBS = {
-  boss: 'Supervises the swarm. In COUNCIL mode it asks Gemini to approve or veto each entry, and it enforces the rules learned from past trades.',
-  announcer: 'Watches market feeds and flags momentum breakouts and major statistical dips.',
+  boss: 'Supervises the swarm. Enforces momentum-based duration rules and principal-recovery exits.',
+  announcer: 'Watches market feeds and flags momentum breakouts and volume spikes.',
   news: 'Reads crypto headlines from RSS feeds and announces new ones as they appear.',
-  finance: 'KIRKTRON 9001: Executes mean-reversion dip accumulation on major assets with 3x leverage.',
-  risk: 'Stop-loss firewall. Cuts any position that falls past its stop and reports total exposure.',
-  trader: 'The ONLY agent that trades. Opens positions, books partial sells and take-profits.',
-  macro: 'Momentum scorer. Ranks candidates by breakout velocity and buy pressure.',
-  cfo: 'ROBBIEBOT 9000: Vault sweeper. Moves a share of every winning trade into the secure vault.'
+  finance: 'KIRKTRON 9001: Manages principal recovery, free runners, and dynamic hold horizons.',
+  risk: 'Stop-loss firewall. Cuts any position that falls past its stop and protects capital.',
+  trader: 'The ONLY agent that trades. Executes entries, principal-recovery sells, and profit-locks.',
+  macro: 'Momentum analyzer. Evaluates buy pressure and turnover to decide if a coin is a minute scalp or multi-day hold.',
+  cfo: 'ROBBIEBOT 9000: Vault sweeper. Moves a share of every realized win into the secure vault.'
 };
 
 const AGENTS = [
   { id: 'boss',      name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor',     color: '#ff2bd6' },
   { id: 'announcer', name: 'WHALE_EYE',      role: 'Whale Flow Watcher',      color: '#00f0ff' },
   { id: 'news',      name: 'NEWS_HAWK',      role: 'Live News Announcer',     color: '#f9f871' },
-  { id: 'finance',   name: 'KIRKTRON 9001',  role: 'Mean Reversion Engine',   color: '#4d8bff' },
+  { id: 'finance',   name: 'KIRKTRON 9001',  role: 'Duration & Vault Core',   color: '#4d8bff' },
   { id: 'risk',      name: 'RISK_CORE',      role: 'Stop-Loss Firewall',      color: '#ff9a3c' },
   { id: 'trader',    name: 'ALPHA_X',        role: 'Swap Executor',           color: '#ff3b5c' },
-  { id: 'macro',     name: 'MACRO_9',        role: 'Momentum Scorer',         color: '#b45cff' },
+  { id: 'macro',     name: 'MACRO_9',        role: 'Momentum Duration Scorer',color: '#b45cff' },
   { id: 'cfo',       name: 'ROBBIEBOT 9000', role: 'Vault Sweeper',           color: '#39ff88' }
 ].map(a => Object.assign(a, { says: 'Standing by.', job: AGENT_JOBS[a.id] }));
 
@@ -541,8 +541,7 @@ function defaultState() {
   return {
     cash: CFG.startBankroll, vault: 0, sweepPct: 20,
     positions: {}, costBasis: {}, symbols: {}, entryTimes: {}, peaks: {}, tiers: {},
-    archive: {},
-    realizedPnl: 0, fees: 0, txCount: 0,
+    archive: {}, realizedPnl: 0, fees: 0, txCount: 0,
     mode: 'GROWTH', decision: 'COUNCIL', sound: true,
     stats: {}, ledger: {}, tradePnl: {}, entryFeat: {}, entryCost: {}, journal: [], overrides: {}
   };
@@ -751,6 +750,18 @@ function isActive(c) {
   return true;
 }
 
+// MACRO_9: Dynamic Duration Analyzer (Decides if coin is minute scalp or multi-day hold)
+function determineHoldHorizon(c) {
+  const turnover = c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0;
+  const tx = Math.max(1, c.buysH1 + c.sellsH1);
+  const buyRatio = c.buysH1 / tx;
+  
+  if (isMajorWave(c)) return 'MULTI-DAY WAVE';
+  if (turnover > 1.5 && buyRatio > 0.65) return 'MOMENTUM SURGE (Hours)';
+  if (turnover > 0.5) return 'QUICK SCALP (Minutes)';
+  return 'PATIENT HOLD';
+}
+
 function activityScore(c) {
   const tx = Math.max(1, c.buysH1 + c.sellsH1);
   return (c.volumeH1 / c.liquidity) * (c.buysH1 / tx) * (1 + Math.max(0, c.change1h) / 50);
@@ -790,7 +801,7 @@ function classifyDipOrDump(c) {
 
 function isClone(c) {
   const t = symbolTop[c.symbol];
-  return !!t && t.address !== c.address && t.liquidity > c.liquidity;
+  return !!t && t.address !== c.address && t.liquidity > t.liquidity;
 }
 
 function heldAddrs() { return Object.keys(state.positions).filter(a => state.positions[a] > 0.00001); }
@@ -959,7 +970,7 @@ function sellTokens(addr, coin, qty) {
 }
 
 function clearPosition(addr) {
-  ['positions', 'costBasis', 'entryTimes', 'peaks', 'tiers', 'tradePnl', 'entryFeat', 'entryCost'].forEach(k => { delete state[k][addr]; });
+  ['positions', 'costBasis', 'entryTimes', 'peaks', 'tiers', 'tradePnl', 'entryFeat', 'entryCost', 'runnerRecovered'].forEach(k => { delete state[k][addr]; });
 }
 
 function forceClearStalePositions() {
@@ -1105,14 +1116,16 @@ function openPosition(coin) {
   state.entryFeat[addr] = featOf(coin);
   state.entryCost[addr] = spend;
   state.tradePnl[addr] = 0;
+  state.runnerRecovered[addr] = false; // Tracks if initial cost + profit has been recovered
   bump('trader', 'entries'); bump('macro', 'picks');
   state.fees += fee;
   state.txCount += 1;
   playSfx('buy');
 
-  const tag = major ? '[MAJOR WAVE // 3X PERP ACCUMULATION]' : '[MEMECOIN MOMENTUM SCALP]';
+  const horizon = determineHoldHorizon(coin);
+  const tag = major ? '[MAJOR WAVE // 3X PERP]' : `[MEMECOIN // ${horizon}]`;
   log(`${tag} KIRKTRON 9001 deployed ${fmtCurrency(spend)} into ${coin.symbol} (${leverage}x leverage)`);
-  agentSay('finance', `KIRKTRON 9001: Allocated ${fmtCurrency(spend)} to ${coin.symbol} at ${leverage}x leverage.`);
+  agentSay('macro', `MACRO_9: Horizon classified as ${horizon} for ${coin.symbol}.`);
   saveState();
   renderAll();
   return true;
@@ -1134,16 +1147,43 @@ function runExits() {
     if (!(state.peaks[addr] >= coin.price)) state.peaks[addr] = coin.price;
     const drop = ((state.peaks[addr] - coin.price) / state.peaks[addr]) * 100;
     const healthyDip = classifyDipOrDump(coin) === 'HEALTHY DIP';
-    const tier = state.tiers[addr] || 0;
     const major = isMajorWave(coin);
+    const horizon = determineHoldHorizon(coin);
 
     const launch = state.mode === 'LAUNCH';
     const L = CFG.launch;
     
     const stopLimit = major ? -8.0 : (launch ? L.stopPct : CFG.stopLossPct);
     const currentProfitUsd = (coin.price - cost) * (state.positions[addr] || 0);
+    const totalCurrentValue = state.positions[addr] * coin.price;
 
     if (gain <= stopLimit) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
+
+    // PRINCIPAL-RECOVERY & FREE RUNNER LOGIC:
+    // When a trade hits +10% gain (or +$1.00 profit), sell enough of the position to recover 100% of the initial cost + profit, letting the rest ride as a free runner!
+    if (!state.runnerRecovered[addr] && gain >= 8.0) {
+      const initialCost = state.entryCost[addr] || (totalCurrentValue / (1 + gain / 100));
+      // Sell exact quantity equal to initial cost + desired profit target, leaving a free runner bag
+      const sellFraction = Math.min(0.85, initialCost / totalCurrentValue);
+      const qtyToSell = state.positions[addr] * sellFraction;
+      
+      if (qtyToSell > 0) {
+        const pnl = sellTokens(addr, coin, qtyToSell);
+        state.positions[addr] -= qtyToSell;
+        state.runnerRecovered[addr] = true;
+        playSfx('win');
+        log(`[PRINCIPAL RECOVERED] Sold initial cost & profit for ${sym} | P&L: ${fmtSigned(pnl)}. Remaining bag is now a FREE RUNNER!`);
+        agentSay('finance', `KIRKTRON 9001: Principal secured on ${sym}. Free runner activated.`);
+        saveState();
+        continue;
+      }
+    }
+
+    // Trailing stop-loss for free runner bags or standard exits
+    if (state.runnerRecovered[addr] && drop >= 12.0 && !healthyDip) {
+      closePosition(addr, coin, 'RUNNER EXIT', 'Free runner trailing stop hit on');
+      continue;
+    }
 
     if (major) {
       if (currentProfitUsd >= CFG.stableTargetProfitUsd) {
@@ -1151,44 +1191,46 @@ function runExits() {
         continue;
       }
     } else if (launch) {
-      if (gain >= L.tier1Pct && tier < 1) {
+      if (gain >= L.tier1Pct && state.tiers[addr] < 1) {
         const q = state.positions[addr] * 0.5;
         const pnl = sellTokens(addr, coin, q);
         state.positions[addr] -= q; state.tiers[addr] = 1;
         playSfx('win'); log(`[LAUNCH TIER 1] Sold 50% of ${sym}, cost recovered | P&L: ${fmtSigned(pnl)}`);
         saveState(); continue;
       }
-      if (gain >= L.tier2Pct && tier < 2) {
+      if (gain >= L.tier2Pct && state.tiers[addr] < 2) {
         const q = state.positions[addr] * 0.5;
         const pnl = sellTokens(addr, coin, q);
         state.positions[addr] -= q; state.tiers[addr] = 2;
         playSfx('win'); log(`[LAUNCH TIER 2] Sold half the rest of ${sym} | P&L: ${fmtSigned(pnl)}`);
         saveState(); continue;
       }
-      if (tier >= 1 && drop >= L.trailPct && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Trailing stop hit on'); continue; }
+      if (state.tiers[addr] >= 1 && drop >= L.trailPct && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Trailing stop hit on'); continue; }
     } else if (state.mode === 'SNIPER') {
-      if (gain >= 3.5 && tier < 1) {
+      if (gain >= 3.5 && state.tiers[addr] < 1) {
         const q = state.positions[addr] * 0.40;
         const pnl = sellTokens(addr, coin, q);
         state.positions[addr] -= q; state.tiers[addr] = 1;
         playSfx('win'); log(`[SNIPER TIER 1] Secured 40% of ${sym} | P&L: ${fmtSigned(pnl)}`);
         saveState(); continue;
       }
-      if (gain >= 15 && tier < 2) {
+      if (gain >= 15 && state.tiers[addr] < 2) {
         const q = state.positions[addr] * 0.5833;
         const pnl = sellTokens(addr, coin, q);
         state.positions[addr] -= q; state.tiers[addr] = 2;
         playSfx('win'); log(`[SNIPER TIER 2] Secured 35% of ${sym} | P&L: ${fmtSigned(pnl)}`);
         saveState(); continue;
       }
-      if (tier >= 1 && drop >= 15 && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Locked remaining runner on'); continue; }
+      if (state.tiers[addr] >= 1 && drop >= 15 && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Locked remaining runner on'); continue; }
     } else if (gain >= CFG.takeProfitPct) {
       closePosition(addr, coin, 'TAKE-PROFIT', 'Target secured on');
       continue;
     }
 
-    if (!major && tier === 0 && now - (state.entryTimes[addr] || now) > (launch ? L.staleMs : CFG.staleExitMs) && gain < (launch ? L.stalePct : 1)) {
-      closePosition(addr, coin, 'STALE EXIT', 'Going nowhere, closed');
+    // Dynamic Horizon Stale Exit: Scalps close quickly in minutes, while multi-hour/multi-day waves stay patient
+    const maxHoldTime = horizon === 'QUICK SCALP (Minutes)' ? 30 * 60 * 1000 : (horizon === 'MOMENTUM SURGE (Hours)' ? 6 * 60 * 60 * 1000 : CFG.staleExitMs);
+    if (!major && !state.runnerRecovered[addr] && now - (state.entryTimes[addr] || now) > maxHoldTime && gain < 2.0) {
+      closePosition(addr, coin, 'STALE EXIT', `Horizon (${horizon}) time elapsed, closed`);
     }
   }
 }
@@ -1375,6 +1417,7 @@ async function freshWipe() {
   state.tradePnl = {};
   state.entryFeat = {};
   state.entryCost = {};
+  state.runnerRecovered = {};
   state.journal = [];
   state.overrides = {};
   saveState();
@@ -1594,7 +1637,7 @@ function renderProtocol() {
     `Txns 1h ≥ ${CFG.minTxnsH1}, buy ratio ≥ ${Math.round(CFG.minBuyRatio * 100)}%, pool age ≥ ${CFG.minAgeMin} min`,
     `Liquidity ≥ ${fmtCurrency(CFG.minLiquidity)}, max ${CFG.maxOpenPositions} open, copycat tickers skipped`,
     `Entry: ${Math.round(CFG.entryPct * 100)}% of bankroll, random pick from top ${CFG.topPicks}`,
-    `Stop-loss ${CFG.stopLossPct}% | ${state.mode === 'SNIPER' ? 'Tiers: 40% at +3.5%, 35% at +15%, runner trails 15%' : `Take-profit +${CFG.takeProfitPct}%`}`,
+    `Stop-loss ${CFG.stopLossPct}% | Principal Recovery + Free Runner Active`,
     `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ${(CFG.baseSlippage * 100).toFixed(1)}%+ slippage per side`
   ];
   box.innerHTML = lines.map(l => `<div class="protocol-line">• ${escapeHtml(l)}</div>`).join('');
