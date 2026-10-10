@@ -1,332 +1,202 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ORBITAL // HQ - Autonomous Crypto Treasury</title>
-  <link rel="preconnect" href="https://googleapis.com">
-  <link rel="preconnect" href="https://gstatic.com" crossorigin>
-  <link href="https://googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-color: #0a0118;
-      --panel-bg: #150a30;
-      --outline: #05000f;
-      --border-color: #ff2bd6;
-      --cyan: #00f0ff;
-      --green: #39ff88;
-      --red: #ff3b5c;
-      --amber: #f9f871;
-      --purple: #b45cff;
-      --text-main: #e9f7ff;
-      --text-dim: #8a7fb8;
-      --pixel: 'Press Start 2P', 'Courier New', monospace;
-      --body: 'VT323', 'Courier New', monospace;
-    }
+/* ORBITAL // HQ robot avatars.
+   Load this AFTER the main script (see the one-line edit). It replaces the character sprites only. */
+(function () {
+  if (typeof CHARS === 'undefined' || typeof blob === 'undefined') { console.warn('robots.js must load after the main script'); return; }
 
-    * {
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0;
-      font-family: var(--body);
-      -webkit-font-smoothing: none;
-    }
+  const DARK = '#0b0f1c';
 
-    body {
-      background-color: var(--bg-color);
-      background-image:
-        linear-gradient(rgba(0,240,255,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,43,214,0.06) 1px, transparent 1px);
-      background-size: 24px 24px, 24px 24px;
-      color: var(--text-main);
-      font-size: 18px;
-      padding: 10px 14px 14px 10px;
-      display: flex;
-      justify-content: center;
-      min-height: 100vh;
-    }
+  // ---- shared robot parts ----
+  function rbHead(g, p, x, y, w, h) {          // beveled metal box with corner bolts
+    shadeRect(g, x, y, w, h, p);
+    [[x, y], [x + w - 1, y], [x, y + h - 1], [x + w - 1, y + h - 1]].forEach(c => { g[c[1]][c[0]] = null; });
+    dots(g, [[x + 2, y + 2], [x + w - 3, y + 2]], p.dk);
+  }
+  function rbNeck(g, p) { rect(g, 15, 23, 6, 6, p.lo); rect(g, 15, 24, 6, 1, p.dk); rect(g, 15, 26, 6, 1, p.dk); }
+  function rbBody(g, p, joint) {                 // boxy chest with shoulder ball joints
+    shadeRect(g, 4, 28, 28, 14, p);
+    dots(g, [[4, 28], [31, 28]], null);
+    g[28][4] = null; g[28][31] = null;
+    blob(g, 4, 33, 4.5, 4.5, joint); blob(g, 31, 33, 4.5, 4.5, joint);
+  }
+  function rbEyes(g, y, col, glint) {            // two square LED eyes
+    [12, 20].forEach(x => {
+      rect(g, x, y, 4, 3, DARK);
+      rect(g, x + 1, y + 1, 2, 1, col);
+      dots(g, [[x, y + 1], [x + 3, y + 1]], shade(col, -0.45));
+    });
+    if (glint) dots(g, [[13, y + 1], [21, y + 1]], '#ffffff');
+  }
+  function rbGrille(g, x, y, w, col) {
+    rect(g, x, y, w, 3, DARK);
+    for (let i = x + 1; i < x + w; i += 2) { put(g, i, y, col); put(g, i, y + 1, col); put(g, i, y + 2, col); }
+  }
+  function rbSmile(g, y, col) { dots(g, [[13, y], [14, y + 1], [15, y + 2], [16, y + 2], [17, y + 2], [18, y + 2], [19, y + 2], [20, y + 2], [21, y + 1], [22, y]], col); }
 
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 50;
-      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.14) 0px, rgba(0,0,0,0.14) 1px, transparent 1px, transparent 3px);
-    }
+  const R = {
+    // ORCHESTRATOR-1: magenta overlord, gold prongs, three glowing eyes
+    boss(g) {
+      const mag = ramp('#b0407f'), steel = ramp('#8a8fb0'), gold = ramp('#f0bf30');
+      rbBody(g, mag, steel);
+      rect(g, 11, 28, 14, 2, gold.base); rect(g, 11, 28, 14, 1, gold.hi);
+      shadeRect(g, 14, 32, 8, 6, ramp('#2a0f26')); blob(g, 18, 35, 2.5, 2.5, ramp('#ff5ad8'));
+      rbNeck(g, steel);
+      const prong = [[9, 8], [8, 7], [8, 6], [7, 5], [7, 4], [6, 3], [6, 2], [7, 1]];
+      [prong, mirror(prong)].forEach(pr => { dots(g, pr, gold.base); dots(g, pr.map(p => [p[0] + (p[0] < 18 ? 1 : -1), p[1]]), gold.lo); });
+      rbHead(g, steel, 9, 6, 18, 17);
+      rect(g, 9, 6, 18, 3, mag.base); rect(g, 9, 6, 18, 1, mag.hi);
+      blob(g, 18, 8, 2, 2, ramp('#ff5ad8'));
+      rect(g, 11, 12, 14, 5, DARK);
+      [12, 17, 22].forEach(x => { rect(g, x, 13, 2, 2, '#ff5ad8'); put(g, x, 13, '#ffffff'); });
+      rbGrille(g, 13, 19, 10, '#6a6f90');
+    },
 
-    .container {
-      width: 100%;
-      max-width: 480px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
+    // WHALE_EYE: teal dome, one giant lens, radar dish
+    announcer(g) {
+      const teal = ramp('#1a8a9c'), steel = ramp('#7fa2ad');
+      rbBody(g, teal, steel);
+      rect(g, 12, 28, 12, 2, teal.hi); rect(g, 17, 31, 2, 3, '#ffd84a');
+      rbNeck(g, steel);
+      rect(g, 27, 6, 1, 7, steel.lo); blob(g, 29, 5, 3.5, 2.4, steel); put(g, 29, 5, '#00f0ff');
+      blob(g, 18, 15, 10, 10, teal);
+      rect(g, 12, 22, 12, 3, steel.lo); rbGrille(g, 13, 22, 10, '#3a6a78');
+      blob(g, 18, 15, 6.5, 6.5, ramp('#08242c'));
+      blob(g, 18, 15, 4.8, 4.8, ramp('#00c8e0'));
+      blob(g, 18, 15, 2.2, 2.2, ramp('#052a33'));
+      dots(g, [[15, 12], [16, 12], [15, 13]], '#ffffff');
+    },
 
-    .panel {
-      background: var(--panel-bg);
-      border: 4px solid var(--outline);
-      box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422, 4px 4px 0 var(--outline);
-      padding: 12px;
-    }
+    // NEWS_HAWK: yellow robot with a beak, sharp brow plates, headset
+    news(g) {
+      const gold = ramp('#e2b52c'), steel = ramp('#9aa3b4'), orange = ramp('#e8782a');
+      rbBody(g, gold, steel);
+      rect(g, 13, 28, 10, 2, '#f4f4f0');
+      rect(g, 6, 33, 6, 4, '#ffffff'); rect(g, 7, 34, 4, 1, '#222222'); rect(g, 7, 36, 3, 1, '#999999');
+      rbNeck(g, steel);
+      blob(g, 18, 3, 3, 4.5, orange, undefined, 6); put(g, 18, 0, '#ffffff');
+      rbHead(g, gold, 9, 6, 18, 17);
+      rbEyes(g, 13, '#fff27a', true);
+      dots(g, [[11, 11], [12, 11], [13, 12], [14, 12], [15, 12]], steel.dk);
+      dots(g, mirror([[11, 11], [12, 11], [13, 12], [14, 12], [15, 12]]), steel.dk);
+      rect(g, 16, 17, 4, 2, orange.base); rect(g, 17, 19, 2, 2, orange.lo); put(g, 17, 21, orange.dk); dots(g, [[16, 17], [16, 18]], orange.hi);
+      rect(g, 7, 13, 3, 6, steel.lo); dots(g, [[8, 19], [9, 20], [10, 21], [11, 22], [12, 22]], '#222222'); rect(g, 13, 21, 2, 2, orange.base);
+    },
 
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      font-family: var(--pixel);
-      font-size: 11px;
-      color: var(--text-dim);
-      padding: 2px 4px;
-    }
-    .top-bar .time { color: var(--text-main); }
-    .top-bar .mode { color: var(--cyan); }
+    // KIRKTRON 9001: black hoodie, long brown hair tucked inside the hood, brown mustache
+    finance(g) {
+      const hood = ramp('#1c1c24'), metal = ramp('#9aa8c8'), hair = ramp('#7a4e28'), stache = ramp('#4a2a12');
+      blob(g, 18, 40, 16, 13, hood);
+      rect(g, 11, 33, 14, 6, hood.lo); rect(g, 11, 33, 14, 1, hood.hi); rect(g, 17, 33, 2, 6, hood.dk);
+      dots(g, [[15, 28], [15, 29], [15, 30], [15, 31], [15, 32], [20, 28], [20, 29], [20, 30], [20, 31], [20, 32]], '#cfd3dc');
+      dots(g, [[15, 33], [20, 33]], '#ffffff');
+      blob(g, 18, 14, 13, 13, hood, 1, 29);
+      rect(g, 15, 23, 6, 5, metal.dk);
+      rect(g, 9, 8, 18, 17, '#08080c');
+      rbHead(g, metal, 10, 9, 16, 14);
+      rect(g, 10, 12, 16, 1, metal.lo);                                   // forehead panel seam
+      rect(g, 10, 9, 16, 2, hair.base); rect(g, 10, 9, 16, 1, hair.hi);   // fringe peeking out of the hood
+      dots(g, [[11, 11], [13, 11], [16, 11], [19, 11], [22, 11], [24, 11]], hair.base);
+      dots(g, [[17, 9], [18, 9], [17, 10], [18, 10]], hair.dk);
+      rect(g, 10, 12, 1, 8, hair.lo);                                     // a strand along each cheek
+      rect(g, 25, 12, 1, 8, hair.lo);
+      rect(g, 8, 5, 20, 4, hood.base); rect(g, 8, 5, 20, 1, hood.hi);     // hood rim hides the roots
+      rect(g, 7, 8, 3, 18, hood.base); rect(g, 26, 8, 3, 18, hood.base); rect(g, 7, 8, 1, 18, hood.hi);
+      rbEyes(g, 14, '#4d8bff', true);
+      dots(g, [[11, 17], [11, 19], [24, 17], [24, 19]], metal.dk);        // cheek vents
+      rect(g, 12, 19, 12, 2, stache.base); rect(g, 12, 19, 12, 1, stache.hi);
+      dots(g, [[11, 20], [11, 21], [24, 20], [24, 21], [12, 21], [23, 21]], stache.base); dots(g, [[17, 20], [18, 20]], stache.lo);
+      rect(g, 12, 21, 12, 2, metal.lo); rect(g, 15, 21, 6, 1, DARK);
+    },
 
-    .header-panel {
-      border-color: var(--border-color);
-      text-align: center;
-      padding: 10px;
-    }
-    .networth-title {
-      font-size: 13px;
-      color: var(--text-dim);
-      letter-spacing: 1px;
-      margin-bottom: 4px;
-      font-family: var(--pixel);
-    }
-    .networth-amount {
-      font-family: var(--pixel);
-      font-size: 28px;
-      color: var(--green);
-      text-shadow: 2px 2px 0 #05000f;
-    }
+    // RISK_CORE: orange and steel knight robot with a visor slit and vents
+    risk(g) {
+      const steel = ramp('#8c93a6'), dsteel = ramp('#6f7690'), orange = ramp('#e07b1c');
+      rbBody(g, steel, dsteel);
+      shadeRect(g, 14, 29, 8, 11, orange);
+      rect(g, 17, 31, 2, 6, '#3a1a08'); rect(g, 15, 33, 6, 1, '#3a1a08');
+      blob(g, 5, 33, 6, 6, steel); blob(g, 31, 33, 6, 6, steel);
+      dots(g, [[5, 32], [31, 32], [3, 34], [33, 34]], orange.base);
+      rbNeck(g, dsteel);
+      rect(g, 17, 2, 2, 5, dsteel.base); blob(g, 18, 2, 2, 2, orange);
+      rbHead(g, steel, 9, 6, 18, 17);
+      rect(g, 17, 6, 2, 17, steel.hi);
+      rect(g, 10, 13, 16, 4, DARK); rect(g, 11, 14, 14, 2, '#ff9a3c'); rect(g, 17, 13, 2, 4, steel.base);
+      rbGrille(g, 12, 19, 12, '#5a6075');
+    },
 
-    .grid-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-    }
-    .grid-box {
-      background: rgba(5, 0, 15, 0.4);
-      border: 2px solid #251254;
-      padding: 6px 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .grid-label {
-      font-size: 12px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      font-weight: bold;
-    }
-    .grid-value {
-      font-family: var(--pixel);
-      font-size: 11px;
-      color: var(--amber);
-    }
-    .grid-value.green { color: var(--green); }
-    .grid-value.red { color: var(--red); }
-    .grid-value.purple { color: var(--purple); }
-    .grid-value.cyan { color: var(--cyan); }
+    // ALPHA_X: red berserker robot, cable mane, cracked faceplate, jagged teeth
+    trader(g) {
+      const red = ramp('#c23a34'), cable = ramp('#1b1426'), fur = ramp('#7a5638');
+      rbBody(g, red, ramp('#8a2a2a'));
+      blob(g, 6, 33, 7, 5, fur); blob(g, 30, 33, 7, 5, fur);
+      dots(g, [[2, 29], [4, 28], [7, 28], [29, 28], [32, 28], [34, 29]], fur.hi);
+      dots(g, [[16, 30], [17, 31], [17, 32], [18, 33], [18, 34], [19, 35]], red.dk);
+      blob(g, 18, 16, 13, 14, cable, 2, 32);
+      [8, 10, 25, 27].forEach(x => rect(g, x, 12, 1, 16, cable.hi));
+      rbNeck(g, ramp('#7c5a58'));
+      rbHead(g, red, 9, 6, 18, 17);
+      rbEyes(g, 13, '#ff3030', true);
+      dots(g, [[11, 11], [12, 11], [13, 12], [14, 12], [15, 12]], red.dk);
+      dots(g, mirror([[11, 11], [12, 11], [13, 12], [14, 12], [15, 12]]), red.dk);
+      dots(g, [[24, 7], [23, 8], [23, 9], [22, 10], [22, 11], [21, 12], [21, 16], [20, 17], [20, 18]], '#ffc0b0');
+      rect(g, 12, 19, 12, 3, DARK);
+      for (let x = 13; x <= 21; x += 2) { put(g, x, 19, '#e8e8e8'); put(g, x + 1, 21, '#e8e8e8'); }
+    },
 
-    .menu-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-    }
-    .menu-btn {
-      background: #1c0d3f;
-      border: 2px solid var(--outline);
-      color: var(--text-dim);
-      font-family: var(--pixel);
-      font-size: 10px;
-      padding: 8px 0;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: 2px 2px 0 var(--outline);
-    }
-    .menu-btn.active {
-      background: var(--cyan);
-      color: var(--outline);
-      border-color: var(--outline);
-      box-shadow: none;
-      transform: translate(2px, 2px);
-    }
+    // MACRO_9: purple wizard robot with a star hat and a fibre-optic beard
+    macro(g) {
+      const robe = ramp('#6b32c4'), steel = ramp('#a899d8'), gold = '#f3c33a';
+      rbBody(g, robe, ramp('#8d78d0'));
+      rect(g, 13, 28, 10, 2, gold); dots(g, [[8, 34], [28, 36], [10, 37], [26, 33]], gold);
+      rbNeck(g, steel);
+      rbHead(g, steel, 10, 10, 16, 14);
+      for (let y = 0; y <= 9; y++) {
+        const w = 1 + y * 0.95;
+        for (let x = Math.round(18 - w); x <= Math.round(18 + w); x++) put(g, x, y, x < 18 - w * 0.4 ? robe.hi : x > 18 + w * 0.5 ? robe.lo : robe.base);
+      }
+      blob(g, 18, 10, 13, 3, robe);
+      rect(g, 11, 8, 14, 2, gold);
+      dots(g, [[18, 2], [17, 3], [18, 3], [19, 3], [18, 4]], '#fff3a0');
+      rbEyes(g, 14, '#d28bff', true);
+      blob(g, 18, 23, 8, 9, ramp('#e4e4f0'), 19);
+      dots(g, [[15, 22], [18, 24], [21, 22], [16, 26], [20, 26], [18, 29]], '#9fd8ff');
+    },
 
-    .ledger-title {
-      font-family: var(--pixel);
-      font-size: 11px;
-      color: var(--cyan);
-      margin-bottom: 8px;
+    // ROBBIEBOT 9000: plain green t-shirt, tall blonde mohawk fin, friendly LED smile
+    cfo(g) {
+      const metal = ramp('#a9bdd0'), tee = ramp('#34c26e'), hair = ramp('#f2d04a');
+      rect(g, 0, 36, 5, 4, metal.base); rect(g, 31, 36, 5, 4, metal.base); rect(g, 0, 36, 1, 4, metal.hi); rect(g, 35, 36, 1, 4, metal.lo);
+      blob(g, 18, 41, 14, 14, tee);
+      blob(g, 5, 34, 5, 5, tee); blob(g, 31, 34, 5, 5, tee);
+      rbNeck(g, metal);
+      rect(g, 13, 28, 10, 1, tee.lo); rect(g, 14, 29, 8, 1, tee.lo); rect(g, 15, 28, 6, 2, metal.lo);
+      rbHead(g, metal, 9, 6, 18, 17);
+      const fin = [[0, 18, 19], [1, 17, 19], [2, 16, 19], [3, 16, 20], [4, 15, 20], [5, 15, 20], [6, 15, 20]];
+      fin.forEach(r => {
+        for (let x = r[1]; x <= r[2]; x++) put(g, x, r[0], x === r[1] ? hair.hi : x === r[2] ? hair.lo : hair.base);
+      });
+      dots(g, [[14, 5], [21, 5], [14, 6], [21, 6]], hair.base);   // loose strands at the base
+      dots(g, [[17, 3], [17, 4], [18, 1]], hair.lo);
+      rbEyes(g, 12, '#39ff88', true);
+      rbSmile(g, 18, '#39ff88');
+      dots(g, [[9, 13], [26, 13], [9, 17], [26, 17]], metal.dk);
+    },
+
+    // AUDITOR-7: silver inspector robot, big round lenses, antenna sprouts, lab coat
+    auditor(g) {
+      const coat = ramp('#e6ebf5'), metal = ramp('#a8b4c8');
+      blob(g, 18, 40, 16, 13, coat);
+      rect(g, 14, 28, 8, 2, '#ffffff'); rect(g, 17, 29, 2, 10, '#c22b3a'); put(g, 17, 29, '#e8505e');
+      rect(g, 13, 29, 1, 11, coat.lo); rect(g, 22, 29, 1, 11, coat.lo);
+      rect(g, 6, 33, 6, 5, coat.lo); dots(g, [[7, 32], [9, 32], [11, 32]], '#2a6bd6'); dots(g, [[8, 32]], '#c22b3a');
+      rbNeck(g, metal);
+      rbHead(g, metal, 9, 6, 18, 17);
+      [11, 14, 17, 20, 23].forEach(x => { rect(g, x, 2 + (x % 2), 1, 4, '#d8dce8'); put(g, x, 1 + (x % 2), '#39ff88'); });
+      [13, 23].forEach(x => { blob(g, x, 14, 3.8, 3.6, ramp('#2a2a3a')); blob(g, x, 14, 2.8, 2.6, ramp('#bfe8ff')); put(g, x, 14, '#39ff88'); put(g, x - 1, 13, '#ffffff'); });
+      rect(g, 16, 13, 4, 1, '#2a2a3a');
+      rbSmile(g, 19, '#39ff88');
     }
-    .ledger-table-container {
-      background: #05000f;
-      border: 2px solid #251254;
-      height: 220px;
-      overflow-y: auto;
-    }
-    .ledger-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-    }
-    .ledger-table tr {
-      border-bottom: 1px solid rgba(37, 18, 84, 0.4);
-    }
-    .ledger-table td {
-      padding: 6px 8px;
-    }
-    .td-time { color: var(--text-dim); width: 75px; }
-    .td-coin { color: var(--cyan); font-weight: bold; width: 85px; }
-    .td-type { color: var(--text-main); }
-    .td-pnl { text-align: right; font-weight: bold; width: 80px; }
-    .td-pnl.red { color: var(--red); }
-    .td-pnl.green { color: var(--green); }
+  };
 
-    .control-panel {
-      display: flex;
-      gap: 10px;
-    }
-    .ctrl-btn {
-      flex: 1;
-      font-family: var(--pixel);
-      font-size: 11px;
-      padding: 12px 0;
-      border: 3px solid var(--outline);
-      box-shadow: 3px 3px 0 var(--outline);
-      cursor: pointer;
-      background: #251254;
-      color: var(--text-main);
-    }
-    .ctrl-btn:active {
-      transform: translate(2px, 2px);
-      box-shadow: 1px 1px 0 var(--outline);
-    }
-    #run-btn { border-color: var(--green); color: var(--green); }
-    #halt-btn { border-color: var(--red); color: var(--red); }
-  </style>
-</head>
-<body>
-
-  <div class="container">
-    
-    <!-- TOP META BAR -->
-    <div class="top-bar">
-      <div>DECISIONS: <span class="time" id="top-time">16:24:00</span></div>
-      <div class="mode" id="bot-mode">AUTO (AI LEARNING)</div>
-    </div>
-    
-    <!-- TOTAL TREASURY VALUE HEADER -->
-    <div class="panel header-panel">
-      <div class="networth-title">TOTAL TREASURY NET WORTH</div>
-      <div class="networth-amount" id="networth-val">$785.75</div>
-    </div>
-
-    <!-- METRICS GRID MATRIX -->
-    <div class="panel grid-container">
-      <div class="grid-box">
-        <span class="grid-label">Realized P&L</span>
-        <span class="grid-value red" id="realized-val">-$210.79</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Unrealized P&L</span>
-        <span class="grid-value green" id="unrealized-val">+$3.88</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Total Fees Paid</span>
-        <span class="grid-value" id="fees-val">$13.09</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Bot Bankroll</span>
-        <span class="grid-value" id="bankroll-val">$462.36</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Main Vault</span>
-        <span class="grid-value purple" id="vault-val">$6.90</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Coins Seen</span>
-        <span class="grid-value cyan" id="seen-val">30</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Hot (Buyable)</span>
-        <span class="grid-value green" id="hot-val">8</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Benched</span>
-        <span class="grid-value" id="benched-val">2</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Feeds Online</span>
-        <span class="grid-value purple" id="feeds-val">4/9</span>
-      </div>
-    </div>
-
-    <!-- NAVIGATION TABS -->
-    <div class="menu-grid">
-      <div class="menu-btn">HUB</div>
-      <div class="menu-btn">COUNCIL</div>
-      <div class="menu-btn">NEWS</div>
-      <div class="menu-btn">POSITIONS</div>
-      <div class="menu-btn active">LEDGER</div>
-      <div class="menu-btn">STATUS</div>
-      <div class="menu-btn">WAR ROOM</div>
-      <div class="menu-btn">AUDIT 2!</div>
-    </div>
-
-    <!-- COMPLETED TRANSACTION LEDGER -->
-    <div class="panel">
-      <div class="ledger-title">// COMPLETED TRANSACTION LEDGER</div>
-      <div class="ledger-table-container">
-        <table class="ledger-table" id="ledger-body">
-          <tr>
-            <td class="td-time">16:23:31</td>
-            <td class="td-coin">UZICAT</td>
-            <td class="td-type">STOP-LOSS CUT</td>
-            <td class="td-pnl red">-$7.38</td>
-          </tr>
-          <tr>
-            <td class="td-time">16:13:40</td>
-            <td class="td-coin">FRANK</td>
-            <td class="td-type">STOP-LOSS CUT</td>
-            <td class="td-pnl red">-$5.74</td>
-          </tr>
-          <tr>
-            <td class="td-time">16:09:45</td>
-            <td class="td-coin">UZICAT</td>
-            <td class="td-type">STOP-LOSS CUT</td>
-            <td class="td-pnl red">-$38.13</td>
-          </tr>
-          <tr>
-            <td class="td-time">16:08:04</td>
-            <td class="td-coin">CYBERINU</td>
-            <td class="td-type">STOP-LOSS CUT</td>
-            <td class="td-pnl red">-$23.20</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-
-    <!-- INTERACTIVE CONTROL ACTIONS -->
-    <div class="control-panel">
-      <button class="ctrl-btn" id="run-btn" onclick="startAutonomousTraining()">START RUN</button>
-      <button class="ctrl-btn" id="halt-btn" onclick="stopAutonomousTraining()">HALT</button>
-    </div>
-
-  </div>
-
-  <script>
-    const COIN_POOL = ["UZICAT", "CYBERINU", "QOMPUTE", "FRANK", "QT", "LLM", "PQC", "QCAT"];
-    const STATES = ["NORMAL_UP", "MINOR_DRAWDOWN", "CRITICAL_ZONE", "FREE_FALL"];
-    const ACTIONS = ["HOLD", "STOP_LOSS_CUT"];
-
-    let qTable = {
-      "NORMAL_UP":       { "HOLD": 15,  "STOP_LOSS_CUT": -40 },
-      "MINOR_DRAWDOWN":  { "HOLD": 8,   "STOP_LOSS_CUT": -15 },
-      "CRITICAL_ZONE":   { "HOLD": -5,  "STOP_LOSS_CUT": -5  }, 
-      "FREE_FALL":       { "HOLD": -90, "STOP_LOSS_CUT": 35  }
-    };
-
-    let learningRate = 0.20;
-    let discountFactor = 0.80;
+  Object.keys(R).forEach(id => { CHARS[id] = R[id]; });
+  if (typeof spriteCache !== 'undefined') Object.keys(spriteCache).forEach(k => { delete spriteCache[k]; });
+})();
