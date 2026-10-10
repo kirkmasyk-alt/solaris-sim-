@@ -3,29 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SOLARIS // HQ - Autonomous Crypto Treasury</title>
+  <title>ORBITAL // HQ - Autonomous Crypto Treasury</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-color: #050b14;
-      --panel-bg: rgba(5, 15, 30, 0.9);
-      --border-color: #1e3a8a;
-      --cyan: #38bdf8;
-      --green: #22c55e;
-      --red: #ef4444;
-      --amber: #f59e0b;
-      --purple: #a855f7;
-      --text-main: #e2e8f0;
-      --text-dim: #94a3b8;
+      --bg-color: #120e2b;
+      --panel-bg: #1f1946;
+      --outline: #05031a;
+      --border-color: #5b4fc4;
+      --cyan: #4cc9f0;
+      --green: #6bf29a;
+      --red: #ff5470;
+      --amber: #ffd23f;
+      --purple: #c084fc;
+      --text-main: #f1ecff;
+      --text-dim: #9d94d6;
+      --pixel: 'Press Start 2P', 'Courier New', monospace;
+      --body: 'VT323', 'Courier New', monospace;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+    * {
+      box-sizing: border-box; margin: 0; padding: 0;
+      font-family: var(--body);
+      -webkit-font-smoothing: none;
+    }
 
     body {
       background-color: var(--bg-color);
+      background-image:
+        radial-gradient(rgba(255,255,255,0.85) 1px, transparent 1.6px),
+        radial-gradient(rgba(157,148,214,0.7) 1px, transparent 1.6px),
+        radial-gradient(rgba(255,210,63,0.6) 1px, transparent 1.6px);
+      background-size: 97px 97px, 53px 53px, 151px 151px;
+      background-position: 0 0, 23px 31px, 61px 17px;
       color: var(--text-main);
-      padding: 10px;
+      font-size: 16px;
+      padding: 10px 14px 14px 10px;
       display: flex;
       justify-content: center;
+    }
+
+    /* faint CRT scanlines; never blocks taps */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.14) 0px, rgba(0,0,0,0.14) 1px, transparent 1px, transparent 3px);
     }
 
     .container {
@@ -33,70 +60,87 @@
       max-width: 480px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
     }
 
     .panel {
       background: var(--panel-bg);
-      border: 1px solid var(--border-color);
+      border: 4px solid var(--outline);
+      box-shadow:
+        inset 2px 2px 0 #4b41a8,
+        inset -2px -2px 0 #130f33,
+        4px 4px 0 var(--outline);
       padding: 12px;
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
     }
 
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 8px;
+      padding-bottom: 12px;
     }
 
+    .planet { image-rendering: pixelated; flex-shrink: 0; }
+
     .logo {
-      font-size: 13px;
-      font-weight: bold;
-      color: var(--cyan);
-      letter-spacing: 1px;
+      font-family: var(--pixel);
+      font-size: 12px;
+      color: var(--amber);
+      letter-spacing: 0;
+      text-shadow: 2px 2px 0 var(--outline);
+      line-height: 1.3;
     }
 
     .header-btns {
       display: flex;
-      gap: 2px;
+      gap: 4px;
       flex-wrap: wrap;
       justify-content: flex-end;
-      max-width: 270px;
+      max-width: 250px;
     }
 
     .cyber-btn {
-      background: #111;
-      border: 1px solid var(--border-color);
-      color: var(--cyan);
-      font-size: 8px;
-      padding: 4px 4px;
+      --btn-bg: #2f6fd0; --btn-hi: #7aa9ff; --btn-lo: #1b3f86; --btn-fg: #ffffff;
+      font-family: var(--body);
+      background: var(--btn-bg);
+      color: var(--btn-fg);
+      border: 2px solid var(--outline);
+      box-shadow: inset 2px 2px 0 var(--btn-hi), inset -2px -2px 0 var(--btn-lo);
+      font-size: 15px;
+      line-height: 1;
+      padding: 5px 7px;
       cursor: pointer;
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.45);
     }
-    .cyber-btn.danger { border-color: var(--red); color: var(--red); }
-    .cyber-btn.accent { border-color: var(--amber); color: var(--amber); }
-    .cyber-btn.purple { border-color: var(--purple); color: var(--purple); }
-    .cyber-btn.active-mode { background: var(--cyan); color: #000; font-weight: bold; border-color: var(--cyan); }
+    .cyber-btn:active {
+      transform: translate(1px, 1px);
+      box-shadow: inset 2px 2px 0 var(--btn-lo), inset -2px -2px 0 var(--btn-hi);
+    }
+    .cyber-btn:focus-visible, .tab-btn:focus-visible { outline: 2px dashed var(--amber); outline-offset: 2px; }
+    .cyber-btn.danger { --btn-bg: #c2304d; --btn-hi: #ff8aa0; --btn-lo: #7a1329; }
+    .cyber-btn.accent { --btn-bg: #e0a800; --btn-hi: #ffe27a; --btn-lo: #8a6600; --btn-fg: #1a1200; text-shadow: none; }
+    .cyber-btn.purple { --btn-bg: #8a45d6; --btn-hi: #c99aff; --btn-lo: #4f2290; }
+    .cyber-btn.active-mode { --btn-bg: #4cc9f0; --btn-hi: #c4f1ff; --btn-lo: #1d7fa0; --btn-fg: #04101a; text-shadow: none; }
 
     .net-worth-banner {
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid var(--cyan);
-      padding: 12px;
+      background: #0b0820;
+      border: 4px solid var(--outline);
+      box-shadow: inset 0 0 0 3px var(--amber), 4px 4px 0 var(--outline);
+      padding: 16px 12px 18px;
       text-align: center;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
     }
     .net-worth-label {
-      font-size: 10px;
+      font-size: 16px;
       color: var(--text-dim);
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 2px;
     }
     .net-worth-value {
-      font-size: 24px;
-      font-weight: bold;
-      color: var(--cyan);
-      margin-top: 4px;
+      font-family: var(--pixel);
+      font-size: 22px;
+      color: var(--amber);
+      margin-top: 10px;
+      text-shadow: 3px 3px 0 var(--outline);
     }
     .net-worth-value.green { color: var(--green); }
     .net-worth-value.red { color: var(--red); }
@@ -104,27 +148,31 @@
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      gap: 10px;
     }
 
     .stat-box {
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--border-color);
+      background: #0b0820;
+      border: 3px solid var(--outline);
+      box-shadow: inset 2px 2px 0 #2c2466, 3px 3px 0 var(--outline);
       padding: 8px;
       position: relative;
     }
 
     .stat-label {
-      font-size: 9px;
+      font-size: 14px;
       color: var(--text-dim);
       text-transform: uppercase;
+      line-height: 1.1;
     }
 
     .stat-value {
-      font-size: 14px;
-      font-weight: bold;
+      font-family: var(--pixel);
+      font-size: 10px;
       color: var(--cyan);
-      margin-top: 4px;
+      margin-top: 8px;
+      line-height: 1.4;
+      word-break: break-all;
     }
     .stat-value.green { color: var(--green); }
     .stat-value.red { color: var(--red); }
@@ -134,24 +182,27 @@
     .nav-tabs {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
-      gap: 2px;
+      gap: 3px;
     }
 
     .tab-btn {
-      background: #020617;
-      border: 1px solid var(--border-color);
+      font-family: var(--body);
+      background: #2a2260;
+      border: 2px solid var(--outline);
+      box-shadow: inset 2px 2px 0 #5b4fc4, inset -2px -2px 0 #171040;
       color: var(--text-dim);
-      font-size: 7px;
-      padding: 8px 1px;
+      font-size: 14px;
+      padding: 7px 0;
       text-align: center;
       cursor: pointer;
       text-transform: uppercase;
+      line-height: 1;
     }
 
     .tab-btn.active {
-      border-color: var(--cyan);
-      color: var(--cyan);
-      background: rgba(56, 189, 248, 0.1);
+      background: var(--amber);
+      color: #1a1200;
+      box-shadow: inset 2px 2px 0 #fff0a8, inset -2px -2px 0 #a97f00;
     }
 
     .tab-pane {
@@ -164,48 +215,53 @@
     }
 
     .terminal-box {
-      background: #020617;
-      border: 1px solid var(--border-color);
+      background: #0b0820;
+      border: 3px solid var(--outline);
+      box-shadow: inset 2px 2px 0 #2c2466;
       padding: 8px;
       height: 220px;
       overflow-y: auto;
-      font-size: 11px;
+      font-size: 16px;
+      line-height: 1.15;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
 
     .feed-item {
-      padding: 6px;
-      border-left: 2px solid var(--cyan);
-      background: rgba(0, 0, 0, 0.3);
+      padding: 6px 8px;
+      border-left: 4px solid var(--cyan);
+      background: rgba(255, 255, 255, 0.04);
     }
     .feed-sender {
-      font-weight: bold;
-      font-size: 10px;
+      font-size: 15px;
       margin-bottom: 2px;
+      letter-spacing: 1px;
     }
     .feed-text {
-      color: #cbd5e1;
-      font-size: 11px;
+      color: var(--text-main);
+      font-size: 16px;
     }
 
     .status-row {
       display: flex;
       justify-content: space-between;
-      font-size: 10px;
+      gap: 8px;
+      font-size: 15px;
       padding: 6px 8px;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.05);
+      background: #0b0820;
+      border: 2px solid var(--outline);
+      box-shadow: inset 2px 2px 0 #2c2466;
       margin-bottom: 4px;
       align-items: center;
     }
 
     .agent-card {
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid var(--border-color);
+      background: #0b0820;
+      border: 3px solid var(--outline);
+      box-shadow: 3px 3px 0 var(--outline);
       padding: 8px;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .agent-header {
       display: flex;
@@ -213,41 +269,41 @@
       gap: 8px;
     }
     .robot-head {
-      width: 28px;
-      height: 28px;
-      border: 1px solid;
+      width: 32px;
+      height: 32px;
+      border: 3px solid;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
-      background: #020617;
+      font-size: 16px;
+      background: #1f1946;
+      flex-shrink: 0;
     }
     .metrics-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 2px;
-      margin-top: 4px;
-      font-size: 8px;
-      background: #020617;
-      padding: 3px;
-      border: 1px solid rgba(255,255,255,0.05);
+      margin-top: 6px;
+      font-size: 14px;
+      background: #1f1946;
+      padding: 4px;
+      border: 2px solid var(--outline);
       text-align: center;
     }
 
     .position-row {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr 0.8fr;
-      font-size: 8px;
+      font-size: 14px;
       padding: 6px 2px;
-      background: rgba(0, 0, 0, 0.4);
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      background: rgba(255, 255, 255, 0.04);
+      border-bottom: 2px solid #2c2466;
       align-items: center;
       text-align: center;
     }
     .position-header {
-      font-weight: bold;
-      color: var(--cyan);
-      border-bottom: 1px solid var(--border-color);
+      color: var(--amber);
+      border-bottom: 2px solid var(--border-color);
       padding-bottom: 4px;
     }
   </style>
@@ -256,9 +312,17 @@
 
   <div class="container">
     <div class="panel header">
-      <div>
-        <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V11.5</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <svg class="planet" width="30" height="30" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">
+          <g fill="#4cc9f0"><rect x="4" y="2" width="4" height="1"/><rect x="3" y="3" width="6" height="1"/><rect x="2" y="4" width="8" height="4"/><rect x="3" y="8" width="6" height="1"/><rect x="4" y="9" width="4" height="1"/></g>
+          <g fill="#2a7fc0"><rect x="6" y="6" width="4" height="2"/><rect x="5" y="8" width="4" height="1"/></g>
+          <g fill="#c8f3ff"><rect x="4" y="3" width="2" height="1"/><rect x="3" y="4" width="2" height="1"/></g>
+          <g fill="#ffd23f"><rect x="0" y="7" width="2" height="1"/><rect x="2" y="6" width="8" height="1"/><rect x="10" y="5" width="2" height="1"/></g>
+        </svg>
+        <div>
+          <div class="logo">ORBITAL // HQ</div>
+          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px;">VAULT SWARM V12.0</div>
+        </div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -271,7 +335,7 @@
 
     <!-- MODE SWITCHER BANNER -->
     <div class="panel" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;">
-      <span style="font-size: 10px; color: var(--text-dim);">OPERATIONAL MODE:</span>
+      <span style="font-size: 15px; color: var(--text-dim);">OPERATIONAL MODE:</span>
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
         <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (MEGA-STREAM)</button>
@@ -321,8 +385,8 @@
 
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 11px; color: var(--cyan);">// MEGA-STREAM DISCOVERY ENGINE</div>
-        <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
+        <div style="font-size: 16px; color: var(--cyan);">// MEGA-STREAM DISCOVERY ENGINE</div>
+        <button class="cyber-btn" style="font-size: 14px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
         <div style="color: var(--green);">[00:01] Multi-endpoint mega-stream discovery active.</div>
@@ -330,12 +394,12 @@
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & EXECUTION LOG</div>
+      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & EXECUTION LOG</div>
       <div class="terminal-box" style="height: 240px;" id="council-feed-container"></div>
     </div>
 
     <div id="tab-news" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// NEWS_HAWK & WHALE_EYE LIVE WIRE</div>
+      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// NEWS_HAWK & WHALE_EYE LIVE WIRE</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
           <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // MEGA-SCANNER</div>
@@ -345,7 +409,7 @@
     </div>
 
     <div id="tab-positions" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// OPEN HOLDINGS & MANUAL LIQUIDATION</div>
+      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// OPEN HOLDINGS & MANUAL LIQUIDATION</div>
       <div class="terminal-box" style="height: 240px; padding: 4px;" id="positions-container">
         <div class="position-row position-header">
           <div>ASSET</div>
@@ -359,7 +423,7 @@
     </div>
 
     <div id="tab-status" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
+      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
       <div class="status-row"><span>DISCOVERY FEED:</span> <strong style="color: var(--green);">ONLINE [MEGA-STREAM + LIVE PROFILES]</strong></div>
       <div class="status-row"><span>MAX POSITION CAP:</span> <strong style="color: var(--green);">ACTIVE [35% BANKROLL LIMIT]</strong></div>
@@ -369,7 +433,7 @@
     </div>
 
     <div id="tab-warroom" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (CONTROL AI AGENTS)</div>
+      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (CONTROL AI AGENTS)</div>
       <div id="war-room-container" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
     </div>
   </div>
@@ -398,14 +462,14 @@
     let peakPrices = loadJSON('solaris_peak_prices', {});
 
     const agentDefs = [
-      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#a855f7', icon: '👁️', pnl: 0, status: 'ADVISORY' },
-      { id: 'announcer', name: 'WHALE_EYE', role: 'Whale Flow & Volume Surge Watcher', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
-      { id: 'news', name: 'NEWS_HAWK', role: 'Live Crypto News Announcer', color: '#f59e0b', icon: '📰', pnl: 0, status: 'ACTIVE' },
-      { id: 'finance', name: 'KIRKTRON 9001', role: 'Trailing Profit Lock Engine', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
-      { id: 'risk', name: 'RISK_CORE', role: 'Position Capping & Stop-Loss Firewall', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
-      { id: 'trader', name: 'ALPHA_X', role: 'Memecoin Swap Executor', color: '#ef4444', icon: '⚡', pnl: 0, status: 'ACTIVE' },
-      { id: 'macro', name: 'MACRO_9', role: 'AI Momentum & Winner Scorer', color: '#a855f7', icon: '🌐', pnl: 0, status: 'ACTIVE' },
-      { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#22c55e', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
+      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#c084fc', icon: '👁️', pnl: 0, status: 'ADVISORY' },
+      { id: 'announcer', name: 'WHALE_EYE', role: 'Whale Flow & Volume Surge Watcher', color: '#4cc9f0', icon: '📡', pnl: 0, status: 'ACTIVE' },
+      { id: 'news', name: 'NEWS_HAWK', role: 'Live Crypto News Announcer', color: '#ffd23f', icon: '📰', pnl: 0, status: 'ACTIVE' },
+      { id: 'finance', name: 'KIRKTRON 9001', role: 'Trailing Profit Lock Engine', color: '#4cc9f0', icon: '🤖', pnl: 0, status: 'ACTIVE' },
+      { id: 'risk', name: 'RISK_CORE', role: 'Position Capping & Stop-Loss Firewall', color: '#ffd23f', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
+      { id: 'trader', name: 'ALPHA_X', role: 'Memecoin Swap Executor', color: '#ff5470', icon: '⚡', pnl: 0, status: 'ACTIVE' },
+      { id: 'macro', name: 'MACRO_9', role: 'AI Momentum & Winner Scorer', color: '#c084fc', icon: '🌐', pnl: 0, status: 'ACTIVE' },
+      { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#6bf29a', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
     ];
 
     let state = {
@@ -420,7 +484,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'RISK_CORE', text: `Mega-stream active [${operationalMode}]. Massive pool indexing enabled.`, color: '#f59e0b', time: '00:00' }]
+      councilFeed: [{ sender: 'RISK_CORE', text: `Mega-stream active [${operationalMode}]. Massive pool indexing enabled.`, color: '#ffd23f', time: '00:00' }]
     };
 
     function setTradingMode(mode) {
@@ -583,7 +647,7 @@
           state.councilFeed.unshift({
             sender: 'NEWS_HAWK',
             text: `${escapeHtml(n.source)}: ${escapeHtml(n.title)}`,
-            color: '#f59e0b',
+            color: '#ffd23f',
             time: new Date().toLocaleTimeString()
           });
         });
@@ -844,7 +908,7 @@
       });
       let net = state.cash + state.vault + portfolioVal;
       const brief = `MEGA-STREAM TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
-      state.councilFeed.unshift({ sender: 'RISK_CORE', text: brief, color: '#f59e0b', time: new Date().toLocaleTimeString() });
+      state.councilFeed.unshift({ sender: 'RISK_CORE', text: brief, color: '#ffd23f', time: new Date().toLocaleTimeString() });
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
       renderAll();
     }
@@ -992,7 +1056,7 @@
           `[${operationalMode}] Swarm executed entry into memecoin ${targetCoin.symbol}.` :
           `[${operationalMode}] Target closed on ${targetCoin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
 
-        state.councilFeed.unshift({ sender: 'ALPHA_X', text: councilText, color: '#38bdf8', time: new Date().toLocaleTimeString() });
+        state.councilFeed.unshift({ sender: 'ALPHA_X', text: councilText, color: '#4cc9f0', time: new Date().toLocaleTimeString() });
         state.councilFeed = state.councilFeed.slice(0, 30);
         renderAll();
       } catch (err) {
@@ -1064,7 +1128,7 @@
         if (posList) {
           let activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
           if (activeSymbols.length === 0) {
-            posList.innerHTML = `<div style="text-align: center; color: var(--text-dim); padding: 20px; font-size: 10px;">NO ACTIVE POSITIONS HELD</div>`;
+            posList.innerHTML = `<div style="text-align: center; color: var(--text-dim); padding: 20px; font-size: 15px;">NO ACTIVE POSITIONS HELD</div>`;
           } else {
             posList.innerHTML = activeSymbols.map(sym => {
               let coin = marketCoins.find(c => c.symbol === sym) || { price: state.costBasis[sym] || 1 };
@@ -1078,7 +1142,7 @@
                   <span>${qty > 1000 ? Math.round(qty).toLocaleString() : qty.toFixed(2)}</span>
                   <span>${fmtPrice(cost)}</span>
                   <span style="color: ${coinPnl >= 0 ? 'var(--green)' : 'var(--red)'};">${coinPnl >= 0 ? '+' : ''}${fmtCurrency(coinPnl)}</span>
-                  <button class="cyber-btn danger" style="font-size: 6px; padding: 2px 2px;" onclick="manualSellPosition('${sym}')">SELL</button>
+                  <button class="cyber-btn danger" style="font-size: 14px; padding: 2px 5px;" onclick="manualSellPosition('${sym}')">SELL</button>
                 </div>
               `;
             }).join('');
@@ -1092,20 +1156,20 @@
             ? `<div class="feed-item" style="border-left-color: var(--amber);"><div class="feed-text">${newsStatus === 'OFFLINE' ? 'News source unreachable. Retrying...' : 'Connecting to news wire...'}</div></div>`
             : liveNews.map(n => `
             <div class="feed-item" style="border-left-color: var(--amber);">
-              <div class="feed-sender" style="color: var(--amber);">${escapeHtml(n.source)} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${escapeHtml(n.time)}</span></div>
-              <div class="feed-text">${n.url ? `<a href="${escapeHtml(n.url)}" target="_blank" rel="noopener noreferrer" style="color: #cbd5e1; text-decoration: none;">${escapeHtml(n.title)}</a>` : escapeHtml(n.title)}</div>
+              <div class="feed-sender" style="color: var(--amber);">${escapeHtml(n.source)} <span style="font-weight: normal; color: #9d94d6; font-size: 14px;">${escapeHtml(n.time)}</span></div>
+              <div class="feed-text">${n.url ? `<a href="${escapeHtml(n.url)}" target="_blank" rel="noopener noreferrer" style="color: #f1ecff; text-decoration: none;">${escapeHtml(n.title)}</a>` : escapeHtml(n.title)}</div>
             </div>
           `).join('');
           const scannerHtml = whaleNewsFeed.map(n => `
             <div class="feed-item" style="border-left-color: var(--cyan);">
-              <div class="feed-sender" style="color: var(--cyan);">${n.title} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${n.time}</span></div>
+              <div class="feed-sender" style="color: var(--cyan);">${n.title} <span style="font-weight: normal; color: #9d94d6; font-size: 14px;">${n.time}</span></div>
               <div class="feed-text">${n.desc}</div>
             </div>
           `).join('');
           newsContainer.innerHTML = `
-            <div style="font-size: 9px; color: ${statusColor};">● NEWS_HAWK WIRE: ${newsStatus}</div>
+            <div style="font-size: 14px; color: ${statusColor};">● NEWS_HAWK WIRE: ${newsStatus}</div>
             ${headlinesHtml}
-            <div style="font-size: 9px; color: var(--text-dim); margin-top: 4px;">— 🐋 WHALE_EYE ALERTS —</div>
+            <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px;">— 🐋 WHALE_EYE ALERTS —</div>
             ${scannerHtml}
           `;
         }
@@ -1118,10 +1182,10 @@
                 <div class="robot-head" style="border-color: ${a.color}; color: ${a.color};">${a.icon}</div>
                 <div style="flex-grow: 1;">
                   <div style="display: flex; justify-content: space-between;">
-                    <strong style="color: ${a.color}; font-size: 11px;">${a.name}</strong>
-                    <span style="font-size: 9px; color: var(--green);">[ACTIVE]</span>
+                    <strong style="color: ${a.color}; font-size: 16px;">${a.name}</strong>
+                    <span style="font-size: 14px; color: var(--green);">[ACTIVE]</span>
                   </div>
-                  <div style="font-size: 9px; color: var(--text-dim);">${a.role}</div>
+                  <div style="font-size: 14px; color: var(--text-dim);">${a.role}</div>
                 </div>
               </div>
               <div class="metrics-grid">
@@ -1138,7 +1202,7 @@
         if (feedContainer) {
           feedContainer.innerHTML = state.councilFeed.map(f => `
             <div class="feed-item" style="border-left-color: ${f.color};">
-              <div class="feed-sender" style="color: ${f.color};">${f.sender} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${f.time || ''}</span></div>
+              <div class="feed-sender" style="color: ${f.color};">${f.sender} <span style="font-weight: normal; color: #9d94d6; font-size: 14px;">${f.time || ''}</span></div>
               <div class="feed-text">"${f.text}"</div>
             </div>
           `).join('');
