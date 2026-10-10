@@ -130,7 +130,7 @@
 
     .nav-tabs {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 2px;
     }
 
@@ -138,7 +138,7 @@
       background: #020617;
       border: 1px solid var(--border-color);
       color: var(--text-dim);
-      font-size: 8px;
+      font-size: 7px;
       padding: 8px 1px;
       text-align: center;
       cursor: pointer;
@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.2</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.4</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -295,13 +295,14 @@
     </div>
 
     <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 10px;">
-      <span>SCAN POOLS: <strong id="scanned-count" style="color: var(--cyan);">5 ACTIVE</strong></span>
+      <span>SCAN POOLS: <strong id="scanned-count" style="color: var(--cyan);">0 ACTIVE</strong></span>
       <span>SWEEP: <strong style="color: var(--purple);" id="sweep-display">20% TO VAULT</strong></span>
     </div>
 
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('hub', this)">Hub</button>
       <button class="tab-btn" onclick="switchTab('council', this)">Council</button>
+      <button class="tab-btn" onclick="switchTab('news', this)">News</button>
       <button class="tab-btn" onclick="switchTab('positions', this)">Positions</button>
       <button class="tab-btn" onclick="switchTab('status', this)">Status</button>
       <button class="tab-btn" onclick="switchTab('warroom', this)">War Room</button>
@@ -313,13 +314,23 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Dynamic DEX Screener directory browser online.</div>
+        <div style="color: var(--green);">[00:01] Fully dynamic DEX Screener discovery engine active.</div>
       </div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// LIVE TELEMETRY & AGENT SWARM DEBATE</div>
       <div class="terminal-box" style="height: 240px;" id="council-feed-container"></div>
+    </div>
+
+    <div id="tab-news" class="tab-pane panel">
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & BREAKING DISPATCHES</div>
+      <div class="terminal-box" style="height: 240px;" id="whale-news-container">
+        <div class="feed-item" style="border-left-color: var(--cyan);">
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // SCANNING DIRECTORY</div>
+          <div class="feed-text">Querying live DEX Screener search feeds for trending Solana pairs...</div>
+        </div>
+      </div>
     </div>
 
     <div id="tab-positions" class="tab-pane panel">
@@ -338,7 +349,8 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">DEX SCREENER SEARCH API</strong></div>
-      <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong id="boss-status-label" style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
+      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--cyan);">ONLINE [LIVE]</strong></div>
+      <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
       <div class="status-row"><span>TOTAL TRANSACTIONS:</span> <strong style="color: var(--cyan);" id="status-tx-count">0 EXECUTED</strong></div>
@@ -354,13 +366,11 @@
   </div>
 
   <script>
-    // Dynamic market directory that expands as DEX Screener returns trending pairs
-    let marketCoins = [
-      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 2.5, liquidity: 1450000 },
-      { symbol: 'BONK', address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', price: 0.000025, change24h: 1.2, liquidity: 850000 },
-      { symbol: 'JTO', address: 'jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL', price: 2.50, change24h: -0.5, liquidity: 620000 },
-      { symbol: 'RAY', address: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R', price: 2.10, change24h: 3.1, liquidity: 910000 },
-      { symbol: 'WIF', address: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm', price: 1.80, change24h: 0.8, liquidity: 1100000 }
+    // Fully dynamic directory initialized empty; populated purely from live DEX Screener search results
+    let marketCoins = [];
+
+    let whaleNewsFeed = [
+      { title: 'Directory Initialized', desc: 'Whale Watcher scanning live DEX Screener search results.', time: '00:00' }
     ];
 
     const agentDefs = [
@@ -383,7 +393,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'WHALE_EYE', text: 'Browsing active Solana liquidity pairs via DEX Screener search API.', color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'WHALE_EYE', text: 'Dynamic discovery engine online. Browsing live DEX Screener pairs.', color: '#38bdf8', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -424,48 +434,52 @@
 
     async function fetchLiveMarketPrices() {
       try {
-        // Query DEX Screener search endpoint for active Solana tokens to dynamically expand our browsing directory
-        const response = await fetch(`https://api.dexscreener.com/latest/dex/search?q=solana`);
-        if (!response.ok) return;
-        const data = await response.json();
-        
-        if (data && data.pairs) {
-          const solPairs = data.pairs.filter(p => p.chainId === 'solana' && p.liquidity && p.liquidity.usd > 20000).slice(0, 15);
-          
-          solPairs.forEach(pair => {
-            if (!pair.baseToken || !pair.baseToken.symbol || !pair.priceUsd) return;
-            const sym = pair.baseToken.symbol.toUpperCase();
-            const addr = pair.baseToken.address;
-            const price = parseFloat(pair.priceUsd);
-            const change = pair.priceChange && pair.priceChange.h24 !== undefined ? parseFloat(pair.priceChange.h24) : 0;
-            const liq = pair.liquidity.usd;
+        const [searchRes, profilesRes] = await Promise.all([
+          fetch(`https://api.dexscreener.com/latest/dex/search?q=solana`),
+          fetch(`https://api.dexscreener.com/token-profiles/latest/v1`)
+        ]);
 
-            let existing = marketCoins.find(c => c.symbol === sym || c.address.toLowerCase() === addr.toLowerCase());
-            if (existing) {
-              existing.price = price;
-              existing.change24h = change;
-              existing.liquidity = liq;
-            } else {
-              marketCoins.push({ symbol: sym, address: addr, price: price, change24h: change, liquidity: liq });
+        if (searchRes.ok) {
+          const searchData = await searchRes.json();
+          if (searchData && searchData.pairs) {
+            const solPairs = searchData.pairs.filter(p => p.chainId === 'solana' && p.priceUsd && p.liquidity && p.liquidity.usd > 15000).slice(0, 25);
+            
+            let fetchedCoins = [];
+            solPairs.forEach(pair => {
+              if (!pair.baseToken || !pair.baseToken.symbol || !pair.priceUsd) return;
+              const sym = pair.baseToken.symbol.toUpperCase();
+              const addr = pair.baseToken.address;
+              const price = parseFloat(pair.priceUsd);
+              const change = pair.priceChange && pair.priceChange.h24 !== undefined ? parseFloat(pair.priceChange.h24) : 0;
+              const liq = pair.liquidity.usd;
+
+              fetchedCoins.push({ symbol: sym, address: addr, price: price, change24h: change, liquidity: liq });
+            });
+
+            if (fetchedCoins.length > 0) {
+              marketCoins = fetchedCoins;
             }
-          });
-
-          const announcer = agentDefs.find(a => a.id === 'announcer');
-          const randomCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-          const broadcastMsg = `Directory scan: Tracking ${marketCoins.length} on-chain assets. Featured: ${randomCoin.symbol} at ${fmtPrice(randomCoin.price)}.`;
-          
-          state.councilFeed.unshift({ 
-            sender: announcer.name, 
-            text: broadcastMsg, 
-            color: announcer.color, 
-            time: new Date().toLocaleTimeString() 
-          });
-          state.councilFeed = state.councilFeed.slice(0, 30);
-
-          renderAll();
+          }
         }
+
+        if (profilesRes.ok) {
+          const profilesData = await profilesRes.json();
+          if (Array.isArray(profilesData) && profilesData.length > 0) {
+            const latest = profilesData[0];
+            if (latest && latest.description) {
+              whaleNewsFeed.unshift({
+                title: `Profile Update: ${latest.chainId ? latest.chainId.toUpperCase() : 'SOL'} Asset`,
+                desc: latest.description.substring(0, 140) + '...',
+                time: new Date().toLocaleTimeString()
+              });
+              whaleNewsFeed = whaleNewsFeed.slice(0, 20);
+            }
+          }
+        }
+
+        renderAll();
       } catch (err) {
-        console.warn("DEX Screener directory search skipped, using current cache.", err);
+        console.warn("DEX Screener fetch warning:", err);
       }
     }
 
@@ -603,6 +617,8 @@
 
     function runTradingLoop() {
       try {
+        if (marketCoins.length === 0) return;
+
         const now = Date.now();
         if (state.lastTradeTime && (now - state.lastTradeTime < 15000)) {
           return;
@@ -629,7 +645,7 @@
         }
 
         const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
-        // Pick freely from the dynamically browsed token directory
+        // Pick randomly from the newly fetched dynamic directory
         const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
         if (!coin || coin.price <= 0) return;
 
@@ -697,7 +713,7 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `Browsed directory match found. Allocated 20% block into ${coin.symbol}.` :
+          `Discovered new trending asset. Allocated 20% block into ${coin.symbol}.` :
           `Profit target hit on ${coin.symbol}. Position closed with P&L: ${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ 
@@ -789,6 +805,16 @@
           }
         }
 
+        const newsContainer = document.getElementById('whale-news-container');
+        if (newsContainer) {
+          newsContainer.innerHTML = whaleNewsFeed.map(n => `
+            <div class="feed-item" style="border-left-color: var(--cyan);">
+              <div class="feed-sender" style="color: var(--cyan);">${n.title} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${n.time}</span></div>
+              <div class="feed-text">${n.desc}</div>
+            </div>
+          `).join('');
+        }
+
         const warContainer = document.getElementById('war-room-container');
         if (warContainer) {
           warContainer.innerHTML = agentDefs.map(a => `
@@ -816,7 +842,7 @@
         const feedContainer = document.getElementById('council-feed-container');
         if (feedContainer) {
           feedContainer.innerHTML = state.councilFeed.map(f => `
-            <div class="feed-item" style="border-left-color: ${f.color};">
+            <div class="feed-item" style="border-left-color: f.color;">
               <div class="feed-sender" style="color: ${f.color};">${f.sender} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${f.time || ''}</span></div>
               <div class="feed-text">"${f.text}"</div>
             </div>
