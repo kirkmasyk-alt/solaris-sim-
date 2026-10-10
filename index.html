@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.6</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.7</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -314,7 +314,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Token boost discovery engine active.</div>
+        <div style="color: var(--green);">[00:01] Dynamic color-coded P&L engine online.</div>
       </div>
     </div>
 
@@ -340,7 +340,7 @@
           <div>ASSET</div>
           <div>HOLDING</div>
           <div>AVG COST</div>
-          <div>MKT VALUE</div>
+          <div>P&L / VALUE</div>
         </div>
         <div id="positions-list"></div>
       </div>
@@ -394,7 +394,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'WHALE_EYE', text: 'Token boost feed online. Randomized multi-asset selection active.', color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'WHALE_EYE', text: 'Color-coded P&L engine online. Tracking up/down metrics.', color: '#38bdf8', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -656,7 +656,6 @@
         }
 
         const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
-        // Fully randomized selection across the active boost directory
         const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
         if (!coin || coin.price <= 0) return;
 
@@ -750,7 +749,10 @@
         let netWorth = state.cash + state.vault + portfolioVal;
 
         const nw = document.getElementById('net-worth');
-        if (nw) nw.textContent = fmtCurrency(netWorth);
+        if (nw) {
+          nw.textContent = fmtCurrency(netWorth);
+          nw.className = `net-worth-value ${netWorth >= 100 ? 'green' : 'red'}`;
+        }
 
         const cb = document.getElementById('cash-balance');
         if (cb) cb.textContent = fmtCurrency(state.cash);
@@ -804,12 +806,13 @@
               let qty = state.positions[sym];
               let cost = state.costBasis[sym] || coin.price;
               let mktVal = qty * coin.price;
+              let positionPnl = mktVal - (qty * cost);
               return `
                 <div class="position-row">
                   <strong style="color: var(--cyan);">${sym}</strong>
                   <span>${qty > 1000 ? qty.toLocaleString('en-US', {maximumFractionDigits: 0}) : qty.toFixed(2)}</span>
                   <span>${fmtPrice(cost)}</span>
-                  <span style="color: var(--green);">${fmtCurrency(mktVal)}</span>
+                  <span style="color: ${positionPnl >= 0 ? 'var(--green)' : 'var(--red)'};">${fmtCurrency(mktVal)}</span>
                 </div>
               `;
             }).join('');
