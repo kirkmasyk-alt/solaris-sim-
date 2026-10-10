@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.5</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.6</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -295,7 +295,7 @@
     </div>
 
     <div class="panel" style="padding: 6px 12px; display: flex; justify-content: space-between; font-size: 10px;">
-      <span>SCAN POOLS: <strong id="scanned-count" style="color: var(--cyan);">5 ACTIVE</strong></span>
+      <span>BOOST POOLS: <strong id="scanned-count" style="color: var(--cyan);">0 ACTIVE</strong></span>
       <span>SWEEP: <strong style="color: var(--purple);" id="sweep-display">20% TO VAULT</strong></span>
     </div>
 
@@ -314,7 +314,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Autonomous execution engine active with resilient directory fallback.</div>
+        <div style="color: var(--green);">[00:01] Token boost discovery engine active.</div>
       </div>
     </div>
 
@@ -327,8 +327,8 @@
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & BREAKING DISPATCHES</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // WIRE ACTIVE</div>
-          <div class="feed-text">Streaming live token profile updates and DEX Screener feeds...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // SCANNING BOOSTS</div>
+          <div class="feed-text">Querying DEX Screener token boosts for live market dispatches...</div>
         </div>
       </div>
     </div>
@@ -348,8 +348,8 @@
 
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
-      <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">DEX SCREENER SEARCH API</strong></div>
-      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--cyan);">ONLINE [LIVE]</strong></div>
+      <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">DEX SCREENER BOOSTS API</strong></div>
+      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--cyan);">ONLINE [FILTERED]</strong></div>
       <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
@@ -366,17 +366,12 @@
   </div>
 
   <script>
-    // Resilient directory initialized with baseline core tokens and expanded dynamically via DEX search
     let marketCoins = [
-      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 2.5, liquidity: 1450000 },
-      { symbol: 'BONK', address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', price: 0.000025, change24h: 1.2, liquidity: 850000 },
-      { symbol: 'JTO', address: 'jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL', price: 2.50, change24h: -0.5, liquidity: 620000 },
-      { symbol: 'RAY', address: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R', price: 2.10, change24h: 3.1, liquidity: 910000 },
-      { symbol: 'WIF', address: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm', price: 1.80, change24h: 0.8, liquidity: 1100000 }
+      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 2.5, liquidity: 1450000 }
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Whale Watcher wire monitoring DEX Screener live token profiles.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Whale Watcher wire monitoring DEX Screener token boosts.', time: '00:00' }
     ];
 
     const agentDefs = [
@@ -399,7 +394,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'WHALE_EYE', text: 'Resilient discovery engine online. Scanning Solana liquidity pairs.', color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'WHALE_EYE', text: 'Token boost feed online. Randomized multi-asset selection active.', color: '#38bdf8', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -440,33 +435,41 @@
 
     async function fetchLiveMarketPrices() {
       try {
-        const [searchRes, profilesRes] = await Promise.all([
-          fetch(`https://api.dexscreener.com/latest/dex/search?q=solana`),
+        const [boostsRes, profilesRes] = await Promise.all([
+          fetch(`https://api.dexscreener.com/token-boosts/latest/v1`),
           fetch(`https://api.dexscreener.com/token-profiles/latest/v1`)
         ]);
 
-        if (searchRes.ok) {
-          const searchData = await searchRes.json();
-          if (searchData && searchData.pairs) {
-            const solPairs = searchData.pairs.filter(p => p.chainId === 'solana' && p.priceUsd && p.liquidity && p.liquidity.usd > 15000).slice(0, 25);
-            
-            solPairs.forEach(pair => {
-              if (!pair.baseToken || !pair.baseToken.symbol || !pair.priceUsd) return;
-              const sym = pair.baseToken.symbol.toUpperCase();
-              const addr = pair.baseToken.address;
-              const price = parseFloat(pair.priceUsd);
-              const change = pair.priceChange && pair.priceChange.h24 !== undefined ? parseFloat(pair.priceChange.h24) : 0;
-              const liq = pair.liquidity.usd;
-
-              let existing = marketCoins.find(c => c.symbol === sym || c.address.toLowerCase() === addr.toLowerCase());
-              if (existing) {
-                existing.price = price;
-                existing.change24h = change;
-                existing.liquidity = liq;
-              } else {
-                marketCoins.push({ symbol: sym, address: addr, price: price, change24h: change, liquidity: liq });
+        if (boostsRes.ok) {
+          const boostsData = await boostsRes.json();
+          if (Array.isArray(boostsData)) {
+            const solBoosts = boostsData.filter(b => b.chainId === 'solana' && b.tokenAddress).slice(0, 20);
+            if (solBoosts.length > 0) {
+              let fetched = [];
+              for (let b of solBoosts) {
+                try {
+                  const pairRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${b.tokenAddress}`);
+                  if (pairRes.ok) {
+                    const pairData = await pairRes.json();
+                    if (pairData && pairData.pairs && pairData.pairs.length > 0) {
+                      const p = pairData.pairs[0];
+                      if (p.baseToken && p.priceUsd) {
+                        fetched.push({
+                          symbol: p.baseToken.symbol.toUpperCase(),
+                          address: b.tokenAddress,
+                          price: parseFloat(p.priceUsd),
+                          change24h: p.priceChange && p.priceChange.h24 !== undefined ? parseFloat(p.priceChange.h24) : 1.0,
+                          liquidity: p.liquidity && p.liquidity.usd ? p.liquidity.usd : 50000
+                        });
+                      }
+                    }
+                  }
+                } catch(e) {}
               }
-            });
+              if (fetched.length > 0) {
+                marketCoins = fetched;
+              }
+            }
           }
         }
 
@@ -474,10 +477,10 @@
           const profilesData = await profilesRes.json();
           if (Array.isArray(profilesData) && profilesData.length > 0) {
             const latest = profilesData[0];
-            if (latest && latest.description) {
+            if (latest && latest.description && latest.description.length > 15 && !latest.description.includes('$')) {
               whaleNewsFeed.unshift({
-                title: `Profile Update: ${latest.chainId ? latest.chainId.toUpperCase() : 'SOL'} Asset`,
-                desc: latest.description.substring(0, 140) + '...',
+                title: `Dispatch: ${latest.chainId ? latest.chainId.toUpperCase() : 'SOL'} Asset`,
+                desc: latest.description.substring(0, 120) + '...',
                 time: new Date().toLocaleTimeString()
               });
               whaleNewsFeed = whaleNewsFeed.slice(0, 20);
@@ -487,7 +490,7 @@
 
         renderAll();
       } catch (err) {
-        console.warn("DEX Screener fetch warning:", err);
+        console.warn("DEX Screener boost fetch warning:", err);
       }
     }
 
@@ -653,6 +656,7 @@
         }
 
         const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
+        // Fully randomized selection across the active boost directory
         const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
         if (!coin || coin.price <= 0) return;
 
@@ -720,7 +724,7 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `Directory scan match. Allocated 20% block into ${coin.symbol}.` :
+          `Boost directory target acquired. Allocated 20% block into ${coin.symbol}.` :
           `Profit target hit on ${coin.symbol}. Position closed with P&L: ${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ 
