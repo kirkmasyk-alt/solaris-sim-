@@ -258,7 +258,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V11.1</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V11.2</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -497,7 +497,7 @@
       if (isFetching) return;
       isFetching = true;
       try {
-        const keywords = ['pump', 'ai', 'dog', 'sol'];
+        const keywords = ['pump', 'ai', 'dog', 'sol', 'cat', 'pepe', 'inu', 'moon', 'trump', 'baby', 'meme', 'coin'];
 
         // Addresses of tokens we currently hold (so they always get live prices)
         const heldAddrs = Object.keys(state.positions)
@@ -505,8 +505,10 @@
           .map(sym => state.addresses[sym]);
 
         // All requests run in parallel; any single failure is tolerated
-        const [profilesData, ...searchResults] = await Promise.all([
+        const [profilesData, boostsLatest, boostsTop, ...searchResults] = await Promise.all([
           safeJson(`https://api.dexscreener.com/token-profiles/latest/v1`),
+          safeJson(`https://api.dexscreener.com/token-boosts/latest/v1`),
+          safeJson(`https://api.dexscreener.com/token-boosts/top/v1`),
           ...keywords.map(k => safeJson(`https://api.dexscreener.com/latest/dex/search?q=${k}`))
         ]);
 
@@ -521,7 +523,7 @@
           if (!(price > 0)) return;
           const sym = p.baseToken.symbol.toUpperCase();
           if (IGNORED_SYMBOLS.includes(sym)) return;
-          if (!isHeld && operationalMode === 'SNIPER' && liq > 150000) return;
+          if (!isHeld && operationalMode === 'SNIPER' && liq > 300000) return;
 
           const existing = poolMap.get(sym);
           if (existing && existing.liquidity >= liq) return;
@@ -541,18 +543,23 @@
         });
 
         // 2) Latest token profiles: look up REAL prices in a single batched request
-        if (Array.isArray(profilesData)) {
-          const profileAddrs = profilesData
-            .filter(p => p.chainId === 'solana' && p.tokenAddress)
-            .slice(0, 30)
-            .map(p => p.tokenAddress);
-          if (profileAddrs.length > 0) {
-            const profPairs = await safeJson(`https://api.dexscreener.com/latest/dex/tokens/${profileAddrs.join(',')}`);
-            if (profPairs && Array.isArray(profPairs.pairs)) {
-              profPairs.pairs.forEach(p => consider(p, 'PROFILE', false));
-            }
+        const addrSet = new Set();
+        [profilesData, boostsLatest, boostsTop].forEach(list => {
+          if (Array.isArray(list)) {
+            list.forEach(p => {
+              if (p && p.chainId === 'solana' && p.tokenAddress) addrSet.add(p.tokenAddress);
+            });
           }
-        }
+        });
+        const discoveryAddrs = Array.from(addrSet).slice(0, 120);
+        const chunks = [];
+        for (let i = 0; i < discoveryAddrs.length; i += 30) chunks.push(discoveryAddrs.slice(i, i + 30));
+        const chunkResults = await Promise.all(
+          chunks.map(c => safeJson(`https://api.dexscreener.com/latest/dex/tokens/${c.join(',')}`))
+        );
+        chunkResults.forEach(data => {
+          if (data && Array.isArray(data.pairs)) data.pairs.forEach(p => consider(p, 'PROFILE', false));
+        });
 
         // 3) Held positions: fetch by exact address and override any same-ticker collision
         if (heldAddrs.length > 0) {
