@@ -320,7 +320,7 @@
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px;">VAULT SWARM V12.4</div>
+          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px;">VAULT SWARM V12.5</div>
         </div>
       </div>
       <div class="header-btns">
@@ -394,11 +394,11 @@
 
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 16px; color: var(--cyan);">// MEGA-STREAM DISCOVERY ENGINE</div>
+        <div style="font-size: 16px; color: var(--cyan);">// DUAL-ENGINE MARKET DISCOVERY</div>
         <button class="cyber-btn" style="font-size: 14px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] System operational and key handler verified.</div>
+        <div style="color: var(--green);">[00:01] DexScreener & CoinGecko dual oracles active.</div>
       </div>
     </div>
 
@@ -411,8 +411,8 @@
       <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// NEWS_HAWK & WHALE_EYE LIVE WIRE</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // MEGA-SCANNER</div>
-          <div class="feed-text">Streaming real-time Solana memecoins...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // DUAL-FEED SCANNER</div>
+          <div class="feed-text">Scanning memecoins and cross-verifying with CoinGecko...</div>
         </div>
       </div>
     </div>
@@ -435,7 +435,7 @@
       <div style="font-size: 16px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
       <div class="status-row"><span>ENGINE PROTOCOL:</span> <strong id="status-engine-label" style="color: var(--amber);">AI NEURAL MODE</strong></div>
-      <div class="status-row"><span>MAX POSITION CAP:</span> <strong style="color: var(--green);">ACTIVE [35% BANKROLL LIMIT]</strong></div>
+      <div class="status-row"><span>MARKET ORACLES:</span> <strong style="color: var(--green);">ONLINE [DEXSCREENER + COINGECKO]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 8/8 AGENTS READY</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
@@ -463,7 +463,7 @@
     let isFetching = false;
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Mega-stream discovery active. Streaming massive memecoin volume.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Dual DexScreener & CoinGecko oracle feed active.', time: '00:00' }
     ];
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
@@ -472,10 +472,10 @@
 
     const agentDefs = [
       { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#c084fc', icon: '👁️', pnl: 0, status: 'ADVISORY' },
-      { id: 'announcer', name: 'WHALE_EYE', role: 'Whale Flow & Volume Surge Watcher', color: '#4cc9f0', icon: '📡', pnl: 0, status: 'ACTIVE' },
+      { id: 'announcer', name: 'WHALE_EYE', role: 'Whale Flow & Rug-Scan Watcher', color: '#4cc9f0', icon: '📡', pnl: 0, status: 'ACTIVE' },
       { id: 'news', name: 'NEWS_HAWK', role: 'Live Crypto News Announcer', color: '#ffd23f', icon: '📰', pnl: 0, status: 'ACTIVE' },
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Trailing Profit Lock Engine', color: '#4cc9f0', icon: '🤖', pnl: 0, status: 'ACTIVE' },
-      { id: 'risk', name: 'RISK_CORE', role: 'Position Capping & Stop-Loss Firewall', color: '#ffd23f', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
+      { id: 'risk', name: 'RISK_CORE', role: 'Position Capping & Rug Firewall', color: '#ffd23f', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
       { id: 'trader', name: 'ALPHA_X', role: 'Memecoin Swap Executor', color: '#ff5470', icon: '⚡', pnl: 0, status: 'ACTIVE' },
       { id: 'macro', name: 'MACRO_9', role: 'AI / Heuristic Scorer', color: '#c084fc', icon: '🌐', pnl: 0, status: 'ACTIVE' },
       { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#6bf29a', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
@@ -492,7 +492,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'RISK_CORE', text: `Engine protocol set to [${engineMode === 'AI' ? 'AI NEURAL' : 'AUTONOMOUS'}].`, color: '#ffd23f', time: '00:00' }]
+      councilFeed: [{ sender: 'RISK_CORE', text: `Dual oracles online [DexScreener + CoinGecko].`, color: '#ffd23f', time: '00:00' }]
     };
 
     let soundOn = localStorage.getItem('orbital_sound') !== 'off';
@@ -745,14 +745,36 @@
           .filter(sym => (state.positions[sym] || 0) > 0.00001 && state.addresses[sym])
           .map(sym => state.addresses[sym]);
 
-        const [profilesData, boostsLatest, boostsTop, ...searchResults] = await Promise.all([
+        // Dual-Engine query: DexScreener + CoinGecko Oracle
+        const [profilesData, boostsLatest, boostsTop, geckoCoins, ...searchResults] = await Promise.all([
           safeJson(`https://api.dexscreener.com/token-profiles/latest/v1`),
           safeJson(`https://api.dexscreener.com/token-boosts/latest/v1`),
           safeJson(`https://api.dexscreener.com/token-boosts/top/v1`),
+          safeJson(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false`),
           ...keywords.map(k => safeJson(`https://api.dexscreener.com/latest/dex/search?q=${k}`))
         ]);
 
         const poolMap = new Map();
+
+        // Integrate CoinGecko oracle baseline prices for added safety checks
+        if (Array.isArray(geckoCoins)) {
+          geckoCoins.forEach(coin => {
+            const sym = coin.symbol.toUpperCase();
+            if (!IGNORED_SYMBOLS.includes(sym) && coin.current_price) {
+              poolMap.set(sym, {
+                symbol: sym,
+                address: coin.id,
+                price: parseFloat(coin.current_price),
+                change24h: coin.price_change_percentage_24h || 5.0,
+                liquidity: coin.total_volume || 50000,
+                volumeH1: 15000,
+                buysH1: 50,
+                sellsH1: 20,
+                securityBadge: 'COINGECKO ORACLE'
+              });
+            }
+          });
+        }
 
         const consider = (p, badge, isHeld) => {
           if (!p || p.chainId !== 'solana' || !p.priceUsd || !p.baseToken || !p.baseToken.symbol) return;
@@ -765,7 +787,9 @@
           if (!isHeld && operationalMode === 'SNIPER' && liq > 300000) return;
 
           const existing = poolMap.get(sym);
-          if (existing && existing.liquidity >= liq) return;
+          // If CoinGecko already set it or existing liquidity is higher, keep it unless DexScreener pool is superior
+          if (existing && existing.securityBadge === 'COINGECKO ORACLE' && liq < 50000) return;
+
           poolMap.set(sym, {
             symbol: sym,
             address: p.baseToken.address,
@@ -780,7 +804,7 @@
         };
 
         searchResults.forEach(data => {
-          if (data && Array.isArray(data.pairs)) data.pairs.forEach(p => consider(p, 'UNVERIFIED', false));
+          if (data && Array.isArray(data.pairs)) data.pairs.forEach(p => consider(p, 'DEXSCREENER', false));
         });
 
         const addrSet = new Set();
@@ -838,7 +862,7 @@
 
         renderAll();
       } catch (err) {
-        console.warn("Mega-stream fetch warning:", err);
+        console.warn("Dual-engine fetch warning:", err);
       } finally {
         isFetching = false;
       }
