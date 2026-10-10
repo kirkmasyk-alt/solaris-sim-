@@ -296,7 +296,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V14.7</div>
+          <div class="logo-sub">PAPER TRADING // V14.8</div>
         </div>
       </div>
       <div class="header-btns">
@@ -1056,7 +1056,6 @@ function openPosition(coin) {
   const addr = coin.address;
   if (state.positions[addr] > 0 || state.cash <= CFG.minCash || isArchived(coin)) return false;
 
-  // Enforce Dual-Track Allocation Check
   const stable = isStable(coin);
   const held = heldAddrs();
   const stableHeldCount = held.filter(a => {
@@ -1064,7 +1063,7 @@ function openPosition(coin) {
     return sym === 'SOL' || sym === 'WSOL';
   }).length;
 
-  if (stable && stableHeldCount >= 2) return; // Cap stable reserves to 2 concurrent holdings
+  if (stable && stableHeldCount >= 2) return;
 
   const wanted = state.cash * (stable ? 0.30 : (state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct));
   const spend = Math.min(wanted, coin.liquidity * CFG.maxSpendPctOfLiq);
@@ -1117,7 +1116,6 @@ function runExits() {
     const launch = state.mode === 'LAUNCH';
     const L = CFG.launch;
     
-    // Stable assets get wider stop losses and patient profit targets
     const stopLimit = stable ? -12.0 : (launch ? L.stopPct : CFG.stopLossPct);
     const profitLimit = stable ? 20.0 : CFG.takeProfitPct;
 
@@ -1316,13 +1314,44 @@ async function promptApiKey() {
 }
 
 async function freshWipe() {
-  const r = await openDialog({ title: 'WIPE EVERYTHING?', message: 'Resets bankroll, vault, positions and history. Your Gemini key is kept.', okText: 'WIPE', danger: true });
+  const r = await openDialog({
+    title: 'WIPE & RESET TREASURY',
+    message: 'Resets vault, positions, and trade history. Enter your new starting bankroll:',
+    inputs: [{ id: 'startFund', label: 'Starting Bankroll ($)', value: '100.00', inputmode: 'decimal' }],
+    okText: 'WIPE & START',
+    danger: true
+  });
   if (!r) return;
+  const newBankroll = num(r.values.startFund);
+  if (newBankroll === null || newBankroll < 0) return;
+
   const apiKey = localStorage.getItem('gemini_api_key');
   try {
     Object.keys(localStorage).forEach(k => { if (k.startsWith('solaris_') || k.startsWith('orbital_')) localStorage.removeItem(k); });
     if (apiKey) localStorage.setItem('gemini_api_key', apiKey);
   } catch (e) { /* ignore */ }
+
+  state.cash = newBankroll;
+  state.vault = 0;
+  state.realizedPnl = 0;
+  state.fees = 0;
+  state.txCount = 0;
+  state.positions = {};
+  state.costBasis = {};
+  state.symbols = {};
+  state.entryTimes = {};
+  state.peaks = {};
+  state.tiers = {};
+  state.archive = {};
+  state.stats = {};
+  state.ledger = {};
+  state.tradePnl = {};
+  state.entryFeat = {};
+  state.entryCost = {};
+  state.journal = [];
+  state.overrides = {};
+  saveState();
+
   location.reload();
 }
 
