@@ -161,7 +161,7 @@ body::after {
 .stat-value.amber { color: var(--amber); }
 .stat-value.purple { color: var(--purple); }
 
-.nav-tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
+.nav-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
 .tab-btn {
   background: #1a0f40;
   border: 2px solid var(--outline);
@@ -279,6 +279,8 @@ body::after {
 .dialog-msg { white-space: pre-line; }
 #war-room-container { max-height: 460px; }
 
+.audit-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+
 </style>
 </head>
 <body>
@@ -348,6 +350,7 @@ body::after {
       <button class="tab-btn" data-tab="positions">Positions</button>
       <button class="tab-btn" data-tab="status">Status</button>
       <button class="tab-btn" data-tab="warroom">War Room</button>
+      <button class="tab-btn" id="tab-btn-audit" data-tab="audit">Audit</button>
     </div>
 
     <div id="tab-hub" class="tab-pane active panel">
@@ -402,6 +405,21 @@ body::after {
       <div id="war-room-container"></div>
     </div>
 
+    <div id="tab-audit" class="tab-pane panel">
+      <div class="pane-title">// AUDITOR-7 // SYSTEM INSPECTOR</div>
+      <div id="audit-head"></div>
+      <div class="audit-btns">
+        <button class="cyber-btn" onclick="runAuditNow()">RUN AUDIT</button>
+        <button class="cyber-btn accent" onclick="copyReport()">COPY REPORT</button>
+        <button class="cyber-btn purple" onclick="askAuditor()">ASK AI</button>
+        <button class="cyber-btn danger" onclick="resetOverrides()">RESET RULES</button>
+      </div>
+      <div id="audit-status" class="scene-caption"></div>
+      <div class="terminal-box" id="audit-findings" style="height: 300px;"></div>
+      <div class="pane-title">// AUDITOR ANSWER</div>
+      <div class="terminal-box" id="audit-answer" style="height: 220px;"></div>
+    </div>
+
   </div>
   <div id="dialog-overlay" class="dialog-overlay"><div id="dialog-box" class="dialog-box" role="dialog" aria-modal="true"></div></div>
   <script>
@@ -428,6 +446,9 @@ const CFG = {
   minTxnsH1: 40,
   minBuyRatio: 0.5,
   topPicks: 5,
+  maxOpenPositions: 6,     // never hold more than this many positions
+  minLiquidity: 8000,      // GROWTH/SNIPER skip pools thinner than this
+  skipClones: true,        // skip a coin if a deeper pool uses the same ticker
   minAgeMin: 15,           // GROWTH/SNIPER ignore pools younger than this (launch-minute rugs)
   launch: {                // LAUNCH mode: buy right as a pool gets liquidity
     maxMc: 5000,           // only coins at or under this market cap
@@ -448,6 +469,33 @@ const CFG = {
   councilBlockMs: 5 * 60 * 1000,
   geminiModel: 'gemini-3.5-flash'   // Google retires models often: check ai.google.dev/gemini-api/docs/deprecations
 };
+
+const CFG_DEFAULTS = JSON.parse(JSON.stringify(CFG));
+
+// Parameters the Auditor is allowed to change (with safe bounds).
+const TUNABLE = {
+  takeProfitPct: { min: 1, max: 30 },
+  stopLossPct: { min: -30, max: -1 },
+  entryPct: { min: 0.02, max: 0.3 },
+  maxSpendPctOfLiq: { min: 0.002, max: 0.05 },
+  maxOpenPositions: { min: 1, max: 20 },
+  minLiquidity: { min: 0, max: 200000 },
+  minVolumeH1: { min: 1000, max: 200000 },
+  minTurnover: { min: 0.02, max: 3 },
+  minTxnsH1: { min: 5, max: 500 },
+  minBuyRatio: { min: 0.4, max: 0.8 },
+  minAgeMin: { min: 0, max: 180 },
+  scanEveryMs: { min: 10000, max: 120000, reload: true }
+};
+
+// Diagnostics shared with the Auditor
+const diag = { hotZero: 0, geminiErr: 0, geminiMsg: '' };
+const errorBuf = [];
+const logBuf = [];
+let auditResult = [];
+let auditAnswer = { text: '', props: [] };
+let symbolTop = {};
+const auditSeen = {};
 
 const HOUR = 60 * 60 * 1000;
 const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR };
@@ -485,7 +533,7 @@ function defaultState() {
     archive: {},
     realizedPnl: 0, fees: 0, txCount: 0,
     mode: 'GROWTH', decision: 'COUNCIL', sound: true,
-    stats: {}, ledger: {}, tradePnl: {}, entryFeat: {}, entryCost: {}, journal: []
+    stats: {}, ledger: {}, tradePnl: {}, entryFeat: {}, entryCost: {}, journal: [], overrides: {}
   };
 }
 
@@ -511,6 +559,7 @@ function saveState() {
 }
 
 const state = loadState();
+Object.keys(state.overrides || {}).forEach(k => { if (TUNABLE[k] && isFinite(state.overrides[k])) CFG[k] = state.overrides[k]; });
 const market = new Map();          // address -> coin
 const councilFeed = [];
 const whaleFeed = [];
@@ -556,6 +605,8 @@ async function safeJson(url) {
 }
 
 function log(msg) {
+  logBuf.push(`[${clock()}] ${msg}`);
+  if (logBuf.length > 80) logBuf.shift();
   const box = $('system-log');
   if (!box) return;
   const line = document.createElement('div');
@@ -678,6 +729,7 @@ function isFresh(c) { return c && Date.now() - c.seenAt < CFG.staleDataMs; }
 function isActive(c) {
   if (c.ageMin !== null && c.ageMin !== undefined && c.ageMin < CFG.minAgeMin) return false;
   const tx = c.buysH1 + c.sellsH1;
+  if (c.liquidity < CFG.minLiquidity) return false;
   if (c.volumeH1 < CFG.minVolumeH1) return false;
   if (c.volumeH1 / c.liquidity < CFG.minTurnover) return false;
   if (tx < CFG.minTxnsH1) return false;
@@ -699,7 +751,7 @@ function isLaunchCandidate(c) {
   return tx >= L.minTxns && c.buysH1 / tx >= L.minBuyRatio;
 }
 
-function isBuyable(c) { return state.mode === 'LAUNCH' ? isLaunchCandidate(c) : (isActive(c) && modeAllows(c)); }
+function isBuyable(c) { return state.mode === 'LAUNCH' ? isLaunchCandidate(c) : (isActive(c) && modeAllows(c) && !(CFG.skipClones && isClone(c))); }
 
 function entryScore(c) {
   if (state.mode === 'LAUNCH') return c.buysH1 * (c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1));
@@ -715,6 +767,11 @@ function classifyDipOrDump(c) {
     if (buyRatio >= 0.50 && turnover >= 0.15) return 'HEALTHY DIP';
   }
   return 'STABLE';
+}
+
+function isClone(c) {
+  const t = symbolTop[c.symbol];
+  return !!t && t.address !== c.address && t.liquidity > c.liquidity;
 }
 
 function heldAddrs() { return Object.keys(state.positions).filter(a => state.positions[a] > 0.00001); }
@@ -769,12 +826,15 @@ async function scanMarket() {
       }
     }
 
+    symbolTop = {};
+    market.forEach(c => { const t = symbolTop[c.symbol]; if (!t || c.liquidity > t.liquidity) symbolTop[c.symbol] = c; });
     lastScan = { seen: market.size, ok: req - fail, req };
     feedStatus = fail === req ? 'OFFLINE' : `ONLINE [${lastScan.ok}/${req}]`;
     scanCount++;
     bump('announcer', 'scans');
 
     const hot = hotCoins();
+    diag.hotZero = hot.length ? 0 : diag.hotZero + 1;
     announceHot(hot);
     if (scanCount === 1 || scanCount % 4 === 0) {
       log(`[SCAN] ${market.size} seen, ${hot.length} hot [${hot.map(c => c.symbol).join(', ') || 'None'}] | feeds ok ${lastScan.ok}/${req}`);
@@ -783,6 +843,7 @@ async function scanMarket() {
     console.warn('Scan error:', err);
   } finally {
     scanning = false;
+    try { runAudit(); } catch (e) { console.error('Audit error:', e); }
     renderAll();
     runTradingLoop();   // always trade on the data we just fetched, not on stale prices
   }
@@ -1088,7 +1149,7 @@ async function askCouncil(c) {
 }
 
 async function considerEntry() {
-  if (state.cash <= CFG.minCash || councilBusy) return;
+  if (state.cash <= CFG.minCash || councilBusy || heldAddrs().length >= CFG.maxOpenPositions) return;
   const now = Date.now();
   const candidates = Array.from(market.values()).filter(c =>
     isFresh(c) && !(state.positions[c.address] > 0) && !(proposalBlock[c.address] > now) && isBuyable(c) && !isArchived(c)
@@ -1118,6 +1179,7 @@ async function considerEntry() {
       bump('boss', v.approve ? 'approved' : 'vetoed');
       if (!v.approve) { proposalBlock[pick.address] = Date.now() + CFG.councilBlockMs; renderAll(); return; }
     } catch (e) {
+      diag.geminiErr++; diag.geminiMsg = e.message;
       log(`[COUNCIL] Gemini unavailable (${e.message}); falling back to AUTO for this entry`);
     } finally {
       councilBusy = false;
@@ -1344,6 +1406,9 @@ function renderNow() {
     if (activeTab === 'news') renderNewsTab();
     if (activeTab === 'status') { renderProtocol(); renderLessons(); }
     if (activeTab === 'warroom') renderWarRoomCards();
+    if (activeTab === 'audit') renderAudit();
+    const nBad = auditResult.filter(f => f.sev === 'bad').length, nWarn = auditResult.filter(f => f.sev === 'warn').length;
+    setText('tab-btn-audit', nBad ? `Audit ${nBad}!` : nWarn ? `Audit ${nWarn}` : 'Audit');
   } catch (e) { console.error('Render error:', e); }
 }
 
@@ -1427,6 +1492,7 @@ function renderProtocol() {
     `Volume 1h ≥ ${fmtCurrency(CFG.minVolumeH1)}`,
     `Turnover (vol/liquidity) ≥ ${CFG.minTurnover}`,
     `Txns 1h ≥ ${CFG.minTxnsH1}, buy ratio ≥ ${Math.round(CFG.minBuyRatio * 100)}%, pool age ≥ ${CFG.minAgeMin} min`,
+    `Liquidity ≥ ${fmtCurrency(CFG.minLiquidity)}, max ${CFG.maxOpenPositions} open, copycat tickers skipped`,
     `Entry: ${Math.round(CFG.entryPct * 100)}% of bankroll, random pick from top ${CFG.topPicks}`,
     `Stop-loss ${CFG.stopLossPct}% | ${state.mode === 'SNIPER' ? 'Tiers: 40% at +3.5%, 35% at +15%, runner trails 15%' : `Take-profit +${CFG.takeProfitPct}%`}`,
     `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ${(CFG.baseSlippage * 100).toFixed(1)}%+ slippage per side`
@@ -1608,6 +1674,24 @@ const CHARS = {
     dots(g, [[24, 9], [24, 10], [23, 11], [23, 12]], '#8a1c24');
   },
 
+  // Inspector: wild white hair, round glasses, lab coat and red tie
+  auditor(g) {
+    const coat = ramp('#e6ebf5'), skin = ramp('#e2b48c'), hair = ramp('#d8dce8');
+    torso(g, coat);
+    rect(g, 14, 28, 8, 2, '#ffffff'); rect(g, 17, 29, 2, 10, '#c22b3a'); put(g, 17, 29, '#e8505e');
+    rect(g, 13, 29, 1, 11, coat.lo); rect(g, 22, 29, 1, 11, coat.lo);
+    rect(g, 6, 33, 6, 5, coat.lo); dots(g, [[7, 32], [9, 32], [11, 32]], '#2a6bd6'); dots(g, [[8, 32]], '#c22b3a');
+    rect(g, 15, 22, 6, 6, skin.lo);
+    blob(g, 18, 15, 8, 9, skin);
+    blob(g, 18, 8, 10, 5, hair, undefined, 10);
+    [[8, 5], [11, 2], [15, 1], [19, 1], [23, 2], [26, 5]].forEach(p => rect(g, p[0], p[1], 3, 4, hair.base));
+    dots(g, [[8, 5], [11, 2], [15, 1], [19, 1], [23, 2]], hair.hi);
+    [13, 23].forEach(x => { blob(g, x, 15, 3.8, 3.6, ramp('#2a2a3a')); blob(g, x, 15, 2.8, 2.6, ramp('#bfe8ff')); put(g, x, 15, '#10202a'); put(g, x - 1, 14, '#ffffff'); });
+    rect(g, 16, 14, 4, 1, '#2a2a3a');
+    dots(g, [[18, 17], [18, 18]], skin.lo);
+    rect(g, 16, 21, 4, 1, '#7a3a2a'); dots(g, [[15, 20], [20, 20]], '#7a3a2a');
+  },
+
   // Wizard: tall star hat, glowing eyes, long white beard
   macro(g) {
     const robe = ramp('#6b32c4'), skin = ramp('#e6c8ae'), beard = ramp('#e4e4f0'), gold = '#f3c33a';
@@ -1773,6 +1857,316 @@ function initScene() {
   });
 }
 
+/* ============================== AUDITOR-7 ============================== */
+function pushErr(msg) {
+  errorBuf.unshift({ t: clock(), msg: String(msg).slice(0, 160) });
+  if (errorBuf.length > 20) errorBuf.pop();
+}
+window.addEventListener('error', e => pushErr(e.message));
+window.addEventListener('unhandledrejection', e => pushErr('Promise: ' + ((e.reason && e.reason.message) || e.reason)));
+const _consoleError = console.error;
+console.error = function () { pushErr(Array.prototype.slice.call(arguments).map(String).join(' ')); _consoleError.apply(console, arguments); };
+
+function auditNote(text) {
+  councilFeed.unshift({ sender: 'AUDITOR-7', text, color: '#39ff88', time: new Date().toLocaleTimeString() });
+  if (councilFeed.length > 40) councilFeed.pop();
+}
+
+function journalStats(rows) {
+  const n = rows.length;
+  const wins = rows.filter(j => j.win), losses = rows.filter(j => !j.win);
+  const sum = a => a.reduce((x, j) => x + j.pct, 0);
+  const tags = {};
+  rows.forEach(j => { tags[j.tag] = (tags[j.tag] || 0) + 1; });
+  const stops = rows.filter(j => j.tag === 'STOP-LOSS CUT');
+  return {
+    n, winRate: n ? wins.length / n : 0,
+    avgWin: wins.length ? sum(wins) / wins.length : 0,
+    avgLoss: losses.length ? sum(losses) / losses.length : 0,
+    expectancy: n ? sum(rows) / n : 0,
+    profitFactor: losses.length && sum(losses) !== 0 ? sum(wins) / Math.abs(sum(losses)) : null,
+    tags, nStops: stops.length, avgStop: stops.length ? sum(stops) / stops.length : null
+  };
+}
+
+function runAudit() {
+  const F = [];
+  const add = (sev, id, title, detail, fix) => {
+    const ok = fix && TUNABLE[fix.key] && CFG[fix.key] !== fix.value;
+    F.push({ sev, id, title, detail, fix: ok ? fix : null });
+  };
+  const p = portfolioValue();
+  const net = state.cash + state.vault + p.value;
+  const held = heldAddrs();
+  const rows = state.journal.filter(j => j.mode === state.mode);
+  const js = journalStats(rows);
+  const cost2 = 2 * (CFG.feeRate + CFG.baseSlippage) * 100;   // round-trip cost % (before price impact)
+  const hasKey = (localStorage.getItem('gemini_api_key') || '').length > 5;
+
+  // Feeds
+  if (lastScan.req) {
+    const r = lastScan.ok / lastScan.req;
+    const slow = CFG.scanEveryMs < 30000 ? { key: 'scanEveryMs', value: 30000 } : null;
+    if (r < 0.5) add('bad', 'feeds', 'Market feeds failing', `${lastScan.ok}/${lastScan.req} requests succeeded. Prices go stale and exits pause.`, slow);
+    else if (r < 0.85) add('warn', 'feeds', 'Some market feeds failing', `${lastScan.ok}/${lastScan.req} OK. This is usually rate limiting; scanning less often helps.`, slow);
+    else add('ok', 'feeds', 'Market feeds healthy', `${lastScan.ok}/${lastScan.req} requests OK.`);
+  }
+  if (newsStatus.indexOf('LIVE') !== 0) add('warn', 'news', 'News feed offline', 'Headlines are not loading. This does not affect trading.');
+
+  // Prices and state
+  const stale = held.filter(a => !isFresh(market.get(a)));
+  if (stale.length) add('bad', 'stale', 'Open positions without a live price', `${stale.map(a => state.symbols[a] || '?').join(', ')}: stops and exits are paused for these.`);
+  if (state.cash <= CFG.minCash) add('bad', 'frozen', 'Bankroll below the trading minimum', `Cash ${fmtCurrency(state.cash)} is at or under ${fmtCurrency(CFG.minCash)}, so no new trades open. Vault holds ${fmtCurrency(state.vault)}; use VAULT to move money back.`);
+  if (net > 0 && p.value / net > 0.7) add('warn', 'exposure', 'High exposure', `${Math.round(100 * p.value / net)}% of net worth is sitting in open positions.`);
+  if (held.length >= CFG.maxOpenPositions) add('info', 'maxopen', 'At the open-position limit', `${held.length}/${CFG.maxOpenPositions} positions open, so new entries wait.`);
+
+  // Strategy math: can the targets beat the trading costs?
+  if (state.mode === 'GROWTH' || state.mode === 'SNIPER') {
+    const tp = state.mode === 'GROWTH' ? CFG.takeProfitPct : 3.5, sl = Math.abs(CFG.stopLossPct);
+    const netWin = tp - cost2, netLoss = sl + cost2;
+    if (netWin <= 0) {
+      add('bad', 'breakeven', 'Target is smaller than trading costs', `Round-trip costs are about ${cost2.toFixed(1)}%, but the first target is only +${tp}%. Every win loses money.`, state.mode === 'GROWTH' ? { key: 'takeProfitPct', value: Math.min(30, Math.ceil(cost2 + sl)) } : null);
+    } else {
+      const be = netLoss / (netWin + netLoss);
+      if (be > 0.6) {
+        const tpFix = Math.min(30, Math.round(((sl + cost2) / 0.55 - sl) * 2) / 2);
+        add(be > 0.75 ? 'bad' : 'warn', 'breakeven', 'Targets too small for trading costs',
+          `Costs are about ${cost2.toFixed(1)}% per round trip. With a +${tp}% target and a -${sl}% stop you need ${Math.round(be * 100)}% winners just to break even.${js.n >= 10 ? ` Your actual win rate: ${Math.round(js.winRate * 100)}%.` : ''} A bigger target lowers the bar but hits less often.`,
+          state.mode === 'GROWTH' ? { key: 'takeProfitPct', value: tpFix } : null);
+      } else add('ok', 'breakeven', 'Targets clear the trading costs', `Break-even win rate is about ${Math.round(be * 100)}%.`);
+    }
+  }
+
+  // Results from the journal
+  if (js.n >= 10) {
+    const pf = js.profitFactor === null ? 'n/a' : js.profitFactor.toFixed(2);
+    const line = `${js.n} ${state.mode} trades: ${Math.round(js.winRate * 100)}% wins, avg win ${js.avgWin.toFixed(1)}%, avg loss ${js.avgLoss.toFixed(1)}%, ${js.expectancy.toFixed(2)}% per trade, profit factor ${pf}.`;
+    add(js.expectancy < 0 ? 'bad' : 'ok', 'expect', js.expectancy < 0 ? 'Strategy loses money per trade' : 'Strategy is profitable per trade', line);
+    const stopShare = (js.tags['STOP-LOSS CUT'] || 0) / js.n;
+    if (stopShare > 0.6) add('warn', 'stopshare', 'Most trades end at the stop', `${Math.round(stopShare * 100)}% of exits are stop-losses. Entries are weak, or the stop is tighter than normal price noise.`);
+  } else {
+    add('info', 'sample', 'Too few trades to judge results', `${js.n}/10 ${state.mode} trades in the journal.`);
+  }
+  if (js.nStops >= 3) {
+    const cfgStop = state.mode === 'LAUNCH' ? CFG.launch.stopPct : CFG.stopLossPct;
+    const expected = cfgStop - (state.mode === 'LAUNCH' ? 2 * (CFG.feeRate + CFG.launch.baseSlippage) * 100 : cost2);
+    if (js.avgStop < expected * 1.5) {
+      add('bad', 'gaps', 'Stops fill far below their level', `Stops average ${js.avgStop.toFixed(1)}% against about ${expected.toFixed(1)}% expected. Price falls through the stop between scans (rugs and thin pools). Deeper pools help.`, { key: 'minLiquidity', value: Math.max(CFG.minLiquidity, 15000) });
+    }
+  }
+  if (state.fees > 0 && state.txCount >= 10) add('info', 'fees', 'Fees paid', `${fmtCurrency(state.fees)} over ${state.txCount} fills, about ${fmtCurrency(state.fees / state.txCount)} each.`);
+
+  // Integrity
+  const bad = [];
+  held.forEach(a => {
+    const n = state.symbols[a] || a.slice(0, 6);
+    if (!(state.costBasis[a] > 0)) bad.push(`${n} has no cost basis`);
+    if (!state.symbols[a]) bad.push(`${n} has no symbol`);
+    if (!state.entryTimes[a]) bad.push(`${n} has no entry time`);
+  });
+  Object.keys(state.costBasis).forEach(a => { if (!(state.positions[a] > 0)) bad.push(`orphan cost basis ${a.slice(0, 6)}`); });
+  [state.cash, state.vault, state.realizedPnl, state.fees].forEach(v => { if (!isFinite(v)) bad.push('non-numeric balance'); });
+  if (state.cash < 0) bad.push('negative cash');
+  if (bad.length) add('bad', 'integrity', 'State inconsistencies', bad.slice(0, 6).join('; '));
+  else add('ok', 'integrity', 'State is consistent', 'Balances, costs and positions line up.');
+
+  // Clone tickers
+  const counts = {};
+  held.forEach(a => { const sy = state.symbols[a]; if (sy) counts[sy] = (counts[sy] || 0) + 1; });
+  Object.values(state.archive).forEach(e => { if (e.symbol) counts[e.symbol] = (counts[e.symbol] || 0) + 1; });
+  const dup = Object.keys(counts).filter(sy => counts[sy] > 1);
+  if (dup.length) add('warn', 'clones', 'Repeated tickers (likely copycats)', `${dup.slice(0, 8).join(', ')} appear more than once across holdings and the bench. Different tokens can share a name, and copycats are often scams.${CFG.skipClones ? ' Copycat skipping is on.' : ''}`);
+
+  // Filters and council
+  if (diag.hotZero >= 5 && market.size > 30) {
+    add('warn', 'starved', 'No coins pass the buy filters', `${diag.hotZero} scans in a row with ${market.size} coins seen. The filters may be too strict for ${state.mode}.`, CFG.minTurnover > 0.1 ? { key: 'minTurnover', value: Math.max(0.05, +(CFG.minTurnover * 0.67).toFixed(2)) } : null);
+  }
+  if (state.decision === 'COUNCIL') {
+    if (!hasKey) add('info', 'council', 'COUNCIL has no Gemini key', 'It behaves like AUTO until you add a key (KEY button).');
+    else if (diag.geminiErr > 0) add('warn', 'council', 'Gemini council errors', `${diag.geminiErr} failures. Last: ${diag.geminiMsg}. Entries fall back to AUTO.`);
+  }
+  if (errorBuf.length) add('bad', 'errors', 'Code errors this session', errorBuf.slice(0, 3).map(e => `${e.t} ${e.msg}`).join(' | '));
+  const ov = Object.keys(state.overrides || {});
+  if (ov.length) add('info', 'overrides', 'Active rule changes', ov.map(k => `${k}=${state.overrides[k]}`).join(', '));
+
+  const order = { bad: 0, warn: 1, info: 2, ok: 3 };
+  F.sort((a, b) => order[a.sev] - order[b.sev]);
+  F.filter(f => f.sev === 'bad' && !auditSeen[f.id]).forEach(f => { auditSeen[f.id] = true; auditNote(`PROBLEM: ${f.title}. ${f.detail}`); });
+  Object.keys(auditSeen).forEach(id => { if (!F.some(f => f.id === id && f.sev === 'bad')) delete auditSeen[id]; });
+  auditResult = F;
+  return F;
+}
+
+function applyOverride(key, value) {
+  const t = TUNABLE[key], v = Number(value);
+  if (!t || !isFinite(v) || v < t.min || v > t.max) return false;
+  CFG[key] = v;
+  state.overrides[key] = v;
+  saveState();
+  const msg = `Rule changed: ${key} = ${v}${t.reload ? ' (reload the page to apply)' : ''}`;
+  log('[AUDITOR] ' + msg);
+  auditNote(msg);
+  runAudit();
+  renderAll();
+  return true;
+}
+
+function resetOverrides() {
+  Object.keys(state.overrides).forEach(k => { CFG[k] = CFG_DEFAULTS[k]; });
+  state.overrides = {};
+  saveState();
+  log('[AUDITOR] All rule changes reset to defaults');
+  runAudit();
+  renderAll();
+}
+
+function runAuditNow() { runAudit(); setAuditStatus(`Audit done: ${auditResult.filter(f => f.sev === 'bad').length} problems, ${auditResult.filter(f => f.sev === 'warn').length} warnings.`); renderAll(); }
+function setAuditStatus(t) { setText('audit-status', t); }
+
+function buildReport() {
+  const p = portfolioValue(), net = state.cash + state.vault + p.value;
+  const rows = state.journal.filter(j => j.mode === state.mode);
+  const js = journalStats(rows);
+  const L = [];
+  L.push(`ORBITAL AUDIT REPORT ${new Date().toISOString()}`);
+  L.push(`Mode ${state.mode} | Decisions ${state.decision} | Net $${net.toFixed(2)} | Cash $${state.cash.toFixed(2)} | Vault $${state.vault.toFixed(2)} | Realized $${state.realizedPnl.toFixed(2)} | Fees $${state.fees.toFixed(2)} | Fills ${state.txCount}`);
+  L.push(`Feeds ${lastScan.ok}/${lastScan.req} | News ${newsStatus} | Coins seen ${market.size} | Hot ${hotCoins().length} | Scans with zero hot coins in a row ${diag.hotZero}`);
+  L.push(`CONFIG ${JSON.stringify(CFG)}`);
+  L.push(`OVERRIDES ${JSON.stringify(state.overrides)}`);
+  L.push(`TRADES (${state.mode}, ${js.n} in journal): win ${(js.winRate * 100).toFixed(0)}% | avg win ${js.avgWin.toFixed(2)}% | avg loss ${js.avgLoss.toFixed(2)}% | expectancy ${js.expectancy.toFixed(2)}%/trade | profit factor ${js.profitFactor === null ? 'n/a' : js.profitFactor.toFixed(2)} | exits ${JSON.stringify(js.tags)} | avg stop fill ${js.avgStop === null ? 'n/a' : js.avgStop.toFixed(1) + '%'}`);
+  Object.keys(DIM_NAMES).forEach(dim => {
+    const g = {};
+    rows.forEach(j => { (g[j.b[dim]] = g[j.b[dim]] || []).push(j); });
+    const parts = Object.keys(g).map(b => { const a = g[b]; return `${b} n${a.length} win${Math.round(100 * a.filter(j => j.win).length / a.length)}% avg${(a.reduce((x, j) => x + j.pct, 0) / a.length).toFixed(1)}%`; });
+    if (parts.length) L.push(`BY ${DIM_NAMES[dim].toUpperCase()}: ${parts.join(' | ')}`);
+  });
+  L.push(`OPEN POSITIONS (${heldAddrs().length}):`);
+  heldAddrs().forEach(a => {
+    const c = market.get(a), cost = state.positions[a] * state.costBasis[a];
+    L.push(`  ${state.symbols[a]} held ${Math.round((Date.now() - (state.entryTimes[a] || Date.now())) / 60000)}m | cost $${cost.toFixed(2)} | pnl $${(exitValue(a) - cost).toFixed(2)} | liq ${c ? Math.round(c.liquidity) : '?'} | tier ${state.tiers[a] || 0}`);
+  });
+  L.push('FINDINGS:');
+  auditResult.forEach(f => L.push(`  [${f.sev.toUpperCase()}] ${f.title}: ${f.detail}`));
+  L.push('RECENT ERRORS: ' + (errorBuf.length ? errorBuf.slice(0, 8).map(e => `${e.t} ${e.msg}`).join(' || ') : 'none'));
+  L.push('RECENT LOG:');
+  logBuf.slice(-40).forEach(x => L.push('  ' + x));
+  return L.join('\n');
+}
+
+async function copyReport() {
+  runAudit();
+  const text = buildReport();
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e2) { ok = false; }
+  }
+  if (ok) setAuditStatus('Report copied. Paste it into your chat with Claude.');
+  else { setAuditStatus('Copy was blocked. The report is shown below: long-press to select it.'); auditAnswer = { text, props: [] }; renderAudit(); }
+}
+
+function parseProposals(text) {
+  const props = [], keep = [];
+  String(text).split('\n').forEach(line => {
+    const m = line.match(/^\s*PROPOSAL\s+(\{.*\})\s*$/);
+    if (!m) { keep.push(line); return; }
+    try {
+      const o = JSON.parse(m[1]), t = TUNABLE[o.key], v = Number(o.value);
+      if (t && isFinite(v) && v >= t.min && v <= t.max) props.push({ key: o.key, value: v, why: String(o.why || '').slice(0, 160) });
+    } catch (e) { /* ignore malformed proposal */ }
+  });
+  return { text: keep.join('\n').trim(), props };
+}
+
+async function callAuditor(question) {
+  const key = localStorage.getItem('gemini_api_key');
+  runAudit();
+  const allowed = Object.keys(TUNABLE).join(', ');
+  const prompt = 'You are AUDITOR-7, the system inspector for a PAPER-TRADING Solana memecoin dashboard (all money is simulated). ' +
+    'Using only the report below, (1) list the biggest problems with evidence from the numbers, and (2) propose concrete rule changes. Be concise, under 250 words, plain text. ' +
+    'For every parameter change you propose, add a line exactly like: PROPOSAL {"key":"takeProfitPct","value":5,"why":"short reason"}. ' +
+    `Allowed keys: ${allowed}. If a fix needs a code change instead of a parameter, describe it in plain text and do not add a PROPOSAL line.\n\n` +
+    `QUESTION: ${question}\n\nREPORT:\n${buildReport()}`;
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CFG.geminiModel}:generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3 } }),
+    signal: AbortSignal.timeout(30000)
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  const parts = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+  const text = parts.map(x => x.text || '').join('');
+  if (!text) throw new Error('empty answer');
+  return parseProposals(text);
+}
+
+async function askAuditor() {
+  if ((localStorage.getItem('gemini_api_key') || '').length < 6) { setAuditStatus('Add a Gemini key first (KEY button), or use COPY REPORT.'); return; }
+  const r = await openDialog({
+    title: 'ASK AUDITOR-7',
+    message: 'It reads the full report: config, trades, open positions, errors and logs.',
+    inputs: [{ id: 'q', label: 'Question', value: 'What are the biggest problems and what rules should I change?' }],
+    okText: 'ASK'
+  });
+  if (!r) return;
+  setAuditStatus('Auditor is analyzing...');
+  try {
+    auditAnswer = await callAuditor(r.values.q || 'What are the biggest problems?');
+    setAuditStatus('Done. Review any proposals before applying.');
+  } catch (e) {
+    setAuditStatus('Gemini error: ' + e.message);
+  }
+  renderAudit();
+}
+
+function renderAudit() {
+  const nBad = auditResult.filter(f => f.sev === 'bad').length, nWarn = auditResult.filter(f => f.sev === 'warn').length, nOk = auditResult.filter(f => f.sev === 'ok').length;
+  const head = $('audit-head');
+  if (head) {
+    const say = nBad ? `${nBad} problem${nBad > 1 ? 's' : ''} need attention, ${nWarn} warning${nWarn === 1 ? '' : 's'}.` : nWarn ? `No critical problems. ${nWarn} warning${nWarn === 1 ? '' : 's'}.` : 'All checks passing.';
+    head.innerHTML = `<div class="agent-card" style="border-color: #39ff88; cursor: default;">
+      <img class="agent-portrait" alt="" src="${portraitUrl('auditor')}" style="border-color: #39ff88;">
+      <div class="agent-body">
+        <div class="agent-name" style="color: #39ff88;">AUDITOR-7</div>
+        <div class="agent-role">System Inspector</div>
+        <div class="agent-chips">
+          <div class="chip"><span>Problems</span><strong>${nBad}</strong></div>
+          <div class="chip"><span>Warnings</span><strong>${nWarn}</strong></div>
+          <div class="chip"><span>Passing</span><strong>${nOk}</strong></div>
+        </div>
+        <div class="agent-speech">"${escapeHtml(say)}"</div>
+      </div></div>`;
+  }
+  const col = { bad: 'var(--red)', warn: 'var(--amber)', info: 'var(--cyan)', ok: 'var(--green)' };
+  const tag = { bad: 'PROBLEM', warn: 'WARNING', info: 'NOTE', ok: 'OK' };
+  const box = $('audit-findings');
+  if (box) {
+    box.innerHTML = auditResult.map((f, i) => `
+      <div class="feed-item" style="border-left-color: ${col[f.sev]};">
+        <div class="feed-sender" style="color: ${col[f.sev]};">${tag[f.sev]} // ${escapeHtml(f.title)}</div>
+        <div class="feed-text">${escapeHtml(f.detail)}</div>
+        ${f.fix ? `<button class="cyber-btn accent" style="margin-top: 6px;" data-fix="${i}">APPLY: ${escapeHtml(f.fix.key)} = ${escapeHtml(f.fix.value)}</button>` : ''}
+      </div>`).join('') || '<div class="empty-note">No audit yet. Waiting for the first scan.</div>';
+  }
+  const ans = $('audit-answer');
+  if (ans) {
+    const props = auditAnswer.props.map((pr, i) => `
+      <div class="feed-item" style="border-left-color: var(--purple);">
+        <div class="feed-text">Proposal: ${escapeHtml(pr.key)} = ${escapeHtml(pr.value)}${pr.why ? ' (' + escapeHtml(pr.why) + ')' : ''}</div>
+        <button class="cyber-btn accent" style="margin-top: 6px;" data-prop="${i}">APPLY</button>
+      </div>`).join('');
+    ans.innerHTML = auditAnswer.text
+      ? `<div class="feed-text" style="white-space: pre-wrap;">${escapeHtml(auditAnswer.text)}</div>${props}`
+      : '<div class="empty-note">Tap ASK AI for an analysis, or COPY REPORT to paste it into your chat with Claude.</div>';
+  }
+}
+
 /* ============================== BOOT ============================== */
 window.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
@@ -1787,6 +2181,20 @@ window.addEventListener('DOMContentLoaded', () => {
     playSfx(b.classList.contains('tab-btn') ? 'tab' : 'click');
   });
   initScene();
+  const af = $('audit-findings');
+  if (af) af.addEventListener('click', e => {
+    const b = e.target.closest('[data-fix]');
+    if (!b) return;
+    const f = auditResult[parseInt(b.dataset.fix, 10)];
+    if (f && f.fix) applyOverride(f.fix.key, f.fix.value);
+  });
+  const aa = $('audit-answer');
+  if (aa) aa.addEventListener('click', e => {
+    const b = e.target.closest('[data-prop]');
+    if (!b) return;
+    const pr = auditAnswer.props[parseInt(b.dataset.prop, 10)];
+    if (pr && applyOverride(pr.key, pr.value)) { b.textContent = 'APPLIED'; b.disabled = true; }
+  });
   AGENTS.forEach(a => { const l = state.ledger[a.id]; if (l && l[0]) a.says = l[0].text; });
   const wr = $('war-room-container');
   if (wr) wr.addEventListener('click', e => { const c = e.target.closest('[data-agent]'); if (c) openAgentDialog(parseInt(c.dataset.agent, 10)); });
