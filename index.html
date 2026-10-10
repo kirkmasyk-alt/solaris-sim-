@@ -320,7 +320,7 @@
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px;">VAULT SWARM V12.2</div>
+          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px;">VAULT SWARM V12.3</div>
         </div>
       </div>
       <div class="header-btns">
@@ -342,7 +342,7 @@
       </div>
     </div>
 
-    <!-- ENGINE SWITCHER BANNER (AI vs AUTONOMOUS RULE-BASED) -->
+    <!-- ENGINE SWITCHER BANNER -->
     <div class="panel" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;">
       <span style="font-size: 15px; color: var(--text-dim);">ENGINE PROTOCOL:</span>
       <div style="display: flex; gap: 4px;">
@@ -398,7 +398,7 @@
         <button class="cyber-btn" style="font-size: 14px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Mega-stream discovery active. Engine switch online.</div>
+        <div style="color: var(--green);">[00:01] System operational and buttons verified.</div>
       </div>
     </div>
 
@@ -467,7 +467,7 @@
     ];
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
-    let engineMode = localStorage.getItem('solaris_engine') || 'AI'; // 'AI' or 'AUTO'
+    let engineMode = localStorage.getItem('solaris_engine') || 'AI';
     let peakPrices = loadJSON('solaris_peak_prices', {});
 
     const agentDefs = [
