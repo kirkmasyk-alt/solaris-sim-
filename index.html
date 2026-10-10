@@ -402,6 +402,7 @@ const CFG = {
   minTxnsH1: 40,
   minBuyRatio: 0.5,
   topPicks: 5,
+  minAgeMin: 15,           // ignore pools younger than this (launch-minute rugs)
   sniperMaxLiq: 300000,
   councilBlockMs: 5 * 60 * 1000,
   geminiModel: 'gemini-2.0-flash'   // change if Google retires this model name
@@ -409,7 +410,6 @@ const CFG = {
 
 const HOUR = 60 * 60 * 1000;
 const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR };
-const KEYWORDS = ['pump', 'ai', 'dog', 'sol', 'cat', 'pepe', 'inu', 'moon', 'trump', 'baby', 'meme', 'coin', 'bonk', 'wif'];
 const IGNORED_SYMBOLS = ['SOL', 'USDC', 'USDT', 'WSOL'];
 const STORE_KEY = 'orbital_state_v2';
 
@@ -578,6 +578,30 @@ function toCoin(p) {
     change5m: pc.m5 || 0, change1h: pc.h1 || 0, change24h: pc.h24 || 0,
     volumeH1: (p.volume && p.volume.h1) || 0,
     buysH1: tx.buys || 0, sellsH1: tx.sells || 0,
+    ageMin: p.pairCreatedAt ? (Date.now() - p.pairCreatedAt) / 60000 : null,
+    seenAt: Date.now()
+  };
+}
+
+// GeckoTerminal pool (JSON:API format) -> coin
+function toCoinGT(p) {
+  const a = p && p.attributes;
+  const baseId = p && p.relationships && p.relationships.base_token && p.relationships.base_token.data && p.relationships.base_token.data.id;
+  if (!a || !baseId) return null;
+  const address = String(baseId).replace(/^solana_/, '');
+  const price = parseFloat(a.base_token_price_usd);
+  const liquidity = parseFloat(a.reserve_in_usd);
+  const symbol = cleanSymbol(String(a.name || '').split(' / ')[0]);
+  if (!address || !(price > 0) || !(liquidity > 0) || !symbol || IGNORED_SYMBOLS.includes(symbol)) return null;
+  const pc = a.price_change_percentage || {}, vol = a.volume_usd || {};
+  const tx = (a.transactions && a.transactions.h1) || {};
+  const created = a.pool_created_at ? Date.parse(a.pool_created_at) : NaN;
+  return {
+    address, symbol, price, liquidity,
+    change5m: parseFloat(pc.m5) || 0, change1h: parseFloat(pc.h1) || 0, change24h: parseFloat(pc.h24) || 0,
+    volumeH1: parseFloat(vol.h1) || 0,
+    buysH1: tx.buys || 0, sellsH1: tx.sells || 0,
+    ageMin: isNaN(created) ? null : (Date.now() - created) / 60000,
     seenAt: Date.now()
   };
 }
@@ -586,6 +610,7 @@ function modeAllows(c) { return state.mode !== 'SNIPER' || c.liquidity <= CFG.sn
 function isFresh(c) { return c && Date.now() - c.seenAt < CFG.staleDataMs; }
 
 function isActive(c) {
+  if (c.ageMin !== null && c.ageMin !== undefined && c.ageMin < CFG.minAgeMin) return false;
   const tx = c.buysH1 + c.sellsH1;
   if (c.volumeH1 < CFG.minVolumeH1) return false;
   if (c.volumeH1 / c.liquidity < CFG.minTurnover) return false;
@@ -620,25 +645,38 @@ async function scanMarket() {
   const getJson = async url => { req++; const d = await safeJson(url); if (d === null) fail++; return d; };
 
   try {
-    const held = heldAddrs();
-    const chunks = [];
-    for (let i = 0; i < held.length; i += 30) chunks.push(held.slice(i, i + 30));
+    const GT = 'https://api.geckoterminal.com/api/v2/networks/solana';
+    const DS = 'https://api.dexscreener.com';
 
-    // Discovery searches + a direct lookup for everything we hold, so held coins never lose their price.
-    const [searches, heldData] = await Promise.all([
-      Promise.all(KEYWORDS.map(k => getJson(`https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(k)}`))),
-      Promise.all(chunks.map(c => getJson(`https://api.dexscreener.com/tokens/v1/solana/${c.join(',')}`)))
+    // Stat-based discovery: what is trending, brand new, and trading the most right now.
+    const [gtPools, boosts, profiles] = await Promise.all([
+      Promise.all([
+        getJson(`${GT}/trending_pools?page=1`),
+        getJson(`${GT}/new_pools?page=1`),
+        getJson(`${GT}/pools?page=1&sort=h24_volume_usd_desc`),
+        getJson(`${GT}/pools?page=1&sort=h24_tx_count_desc`)
+      ]),
+      getJson(`${DS}/token-boosts/latest/v1`),
+      getJson(`${DS}/token-profiles/latest/v1`)
     ]);
 
+    // DexScreener boosts/profiles only give token addresses, so look those up for full stats.
+    const addrs = new Set(heldAddrs());   // always include holdings so they keep a live price
+    [boosts, profiles].forEach(list => {
+      if (Array.isArray(list)) list.forEach(t => { if (t && t.chainId === 'solana' && t.tokenAddress) addrs.add(t.tokenAddress); });
+    });
+    const all = Array.from(addrs), chunks = [];
+    for (let i = 0; i < all.length; i += 30) chunks.push(all.slice(i, i + 30));
+    const lookups = await Promise.all(chunks.map(c => getJson(`${DS}/tokens/v1/solana/${c.join(',')}`)));
+
     const fresh = new Map();
-    const take = p => {
-      const c = toCoin(p);
+    const put = c => {
       if (!c) return;
       const prev = fresh.get(c.address);
       if (!prev || prev.liquidity < c.liquidity) fresh.set(c.address, c);
     };
-    searches.forEach(d => { if (d && Array.isArray(d.pairs)) d.pairs.forEach(take); });
-    heldData.forEach(d => { if (Array.isArray(d)) d.forEach(take); });
+    gtPools.forEach(d => { if (d && Array.isArray(d.data)) d.data.forEach(p => put(toCoinGT(p))); });
+    lookups.forEach(d => { if (Array.isArray(d)) d.forEach(p => put(toCoin(p))); });
 
     if (fresh.size > 0) {
       const now = Date.now();
