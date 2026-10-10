@@ -1,4 +1,4 @@
-l<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -296,7 +296,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V15.3</div>
+          <div class="logo-sub">PAPER TRADING // V15.4</div>
         </div>
       </div>
       <div class="header-btns">
@@ -532,7 +532,7 @@ const auditSeen = {};
 
 const HOUR = 60 * 60 * 1000;
 const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR };
-const STORE_KEY = 'orbital_state_v3';
+const STORE_KEY = 'orbital_state_v4';
 
 const AGENT_JOBS = {
   boss: 'Supervises the swarm. Enforces momentum-based duration rules and principal-recovery exits.',
@@ -1650,7 +1650,7 @@ function renderProtocol() {
   box.innerHTML = lines.map(l => `<div class="protocol-line">• ${escapeHtml(l)}</div>`).join('');
 }
 
-// Coin Inspector & Chart Logic
+// Coin Inspector & Corrected Chart Logic
 function drawInspChart(coin, entryPrice) {
   const canvas = $('insp-chart');
   if (!canvas) return;
@@ -1659,11 +1659,12 @@ function drawInspChart(coin, entryPrice) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const pts = [];
-  let p = entryPrice ? entryPrice * (1 + (Math.random() * 0.1 - 0.05)) : coin.price * 0.95;
-  for (let i = 0; i < 12; i++) {
+  let p = entryPrice ? entryPrice * 0.98 : coin.price * 0.95;
+  for (let i = 0; i < 10; i++) {
     pts.push(p);
-    p += (coin.price - p) * 0.3 + (Math.random() - 0.48) * (coin.price * 0.02);
+    p += (coin.price - p) * 0.25;
   }
+  if (entryPrice) pts.push(entryPrice);
   pts.push(coin.price);
 
   const min = Math.min(...pts, entryPrice || coin.price);
@@ -1712,16 +1713,17 @@ function inspectCoin(addr) {
   const heldQty = state.positions[addr] || 0;
   const cost = state.costBasis[addr] || coin.price;
   const pnl = heldQty > 0 ? exitValue(addr) - heldQty * cost : 0;
+  const entryTimeMs = state.entryTimes[addr];
+  const entryTimeStr = entryTimeMs ? new Date(entryTimeMs).toLocaleTimeString() : 'N/A';
 
   box.innerHTML = `
     <div class="protocol-line"><strong>SYMBOL:</strong> ${escapeHtml(coin.symbol)}</div>
     <div class="protocol-line"><strong>ADDRESS:</strong> ${escapeHtml(coin.address)}</div>
+    <div class="protocol-line"><strong>BOUGHT AT:</strong> ${entryTimeStr}</div>
     <div class="protocol-line"><strong>TIER:</strong> ${isMajorWave(coin) ? 'MAJOR WAVE / PERP' : 'MEMECOIN SCALP'}</div>
-    <div class="protocol-line"><strong>PRICE:</strong> ${fmtPrice(coin.price)}</div>
+    <div class="protocol-line"><strong>PRICE:</strong> ${fmtPrice(coin.price)} (Cost: ${fmtPrice(cost)})</div>
     <div class="protocol-line"><strong>LIQUIDITY:</strong> ${fmtCurrency(coin.liquidity)}</div>
     <div class="protocol-line"><strong>1H VOLUME:</strong> ${fmtCurrency(coin.volumeH1)} (Turnover: ${turnover}x)</div>
-    <div class="protocol-line"><strong>1H TXNS:</strong> ${tx} (${buyRatio}% Buys)</div>
-    <div class="protocol-line"><strong>PRICE CHANGE:</strong> 5m: ${coin.change5m}% | 1h: ${coin.change1h}%</div>
     <div class="protocol-line"><strong>AI HORIZON:</strong> ${horizon}</div>
     <div class="protocol-line"><strong>HOLDING:</strong> ${heldQty > 0 ? heldQty.toFixed(2) + ' tokens (' + fmtSigned(pnl) + ')' : 'None'}</div>
   `;
