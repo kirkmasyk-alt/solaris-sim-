@@ -296,7 +296,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V15</div>
+          <div class="logo-sub">PAPER TRADING // V16</div>
         </div>
       </div>
       <div class="header-btns">
@@ -341,6 +341,9 @@ body::after {
       <div class="stat-box"><div class="stat-label">Hot (Buyable)</div><div class="stat-value green" id="hot-count">0</div></div>
       <div class="stat-box"><div class="stat-label">Benched</div><div class="stat-value amber" id="benched-count">0</div></div>
       <div class="stat-box"><div class="stat-label">Feeds Online</div><div class="stat-value purple" id="feeds-count">--</div></div>
+      <div class="stat-box"><div class="stat-label">Trades Logged</div><div class="stat-value" id="learn-trades">0</div></div>
+      <div class="stat-box"><div class="stat-label">Learned Rules</div><div class="stat-value amber" id="learn-rules">0</div></div>
+      <div class="stat-box"><div class="stat-label">Win Rate</div><div class="stat-value green" id="win-rate">--</div></div>
     </div>
 
     <div class="nav-tabs" role="tablist">
@@ -355,14 +358,14 @@ body::after {
 
     <div id="tab-hub" class="tab-pane active panel">
       <div class="pane-head">
-        <div class="pane-title">// DISCOVERY ENGINE LOG</div>
+        <div class="pane-title">// ENGINE LOG (SCANS, FEEDS, SYSTEM)</div>
         <button class="cyber-btn" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box log" id="system-log"></div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div class="pane-title">// AI SWARM AUDIT &amp; EXECUTION LOG</div>
+      <div class="pane-title">// COUNCIL ROOM (REPORTS &amp; DECISIONS)</div>
       <div class="terminal-box" id="council-feed-container"></div>
     </div>
 
@@ -373,13 +376,17 @@ body::after {
 
     <div id="tab-positions" class="tab-pane panel">
       <div class="pane-title">// OPEN HOLDINGS &amp; MANUAL LIQUIDATION</div>
-      <div class="terminal-box" id="positions-container">
+      <div class="terminal-box" id="positions-container" style="height: 420px;">
         <div class="position-row position-header">
           <div>ASSET</div><div>HOLDING</div><div>AVG COST</div><div>P&amp;L ($)</div><div>ACTION</div>
         </div>
         <div id="positions-list"></div>
         <div class="section-title">// ARCHIVE (LOSERS &amp; FLAT COINS ONLY)</div>
         <div id="archive-list"></div>
+        <div class="section-title">// NET WORTH HISTORY</div>
+        <canvas id="history-canvas" width="320" height="110" style="width: 100%; height: auto; image-rendering: pixelated; background: #07010f; border: 2px solid #2a1a66;"></canvas>
+        <div class="section-title">// TRADE LEDGER</div>
+        <div id="trade-ledger"></div>
       </div>
     </div>
 
@@ -392,6 +399,13 @@ body::after {
       <div class="status-row"><span>MAX POSITION CAP:</span> <strong id="status-cap" style="color: var(--green);">20% OF BANKROLL</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
+      <div class="pane-title" style="margin-top: 8px;">// FEED HEALTH</div>
+      <div id="feed-box"></div>
+      <div class="pane-title" style="margin-top: 8px;">// BACKUP</div>
+      <div class="audit-btns">
+        <button class="cyber-btn accent" onclick="exportData()">EXPORT DATA</button>
+        <button class="cyber-btn danger" onclick="importData()">IMPORT DATA</button>
+      </div>
       <div class="pane-title" style="margin-top: 8px;">// BUY PROTOCOL</div>
       <div id="protocol-box"></div>
       <div class="pane-title" style="margin-top: 8px;">// LEARNED RULES</div>
@@ -439,8 +453,9 @@ const CFG = {
   staleExitMs: 2 * 60 * 60 * 1000,
   scanEveryMs: 20000,
   newsEveryMs: 120000,
-  recentKeepMs: 90000,     // keep coins that dropped out of search results this long
-  staleDataMs: 60000,      // never trade on a price older than this
+  recentKeepMs: 200000,    // keep coins that dropped out of the rotating discovery lists this long
+  staleDataMs: 150000,     // candidates older than this are ignored (a fresh quote is fetched again before every buy)
+  exitStaleMs: 60000,      // exits pause if a held coin's price is older than this
   minVolumeH1: 10000,
   minTurnover: 0.15,
   minTxnsH1: 40,
@@ -533,7 +548,8 @@ function defaultState() {
     archive: {},
     realizedPnl: 0, fees: 0, txCount: 0,
     mode: 'GROWTH', decision: 'COUNCIL', sound: true,
-    stats: {}, ledger: {}, tradePnl: {}, entryFeat: {}, entryCost: {}, journal: [], overrides: {}
+    stats: {}, ledger: {}, tradePnl: {}, entryFeat: {}, entryCost: {}, journal: [], overrides: {},
+    trades: [], history: [], lastSnap: 0
   };
 }
 
@@ -623,7 +639,7 @@ function bump(id, key, amt) {
 }
 function stat(id, key) { return (state.stats[id] && state.stats[id][key]) || 0; }
 
-function agentSay(id, text) {
+function agentSay(id, text, opts) {
   const a = AGENTS.find(x => x.id === id);
   if (!a) return;
   a.says = text;
@@ -631,8 +647,14 @@ function agentSay(id, text) {
   const led = state.ledger[id] || (state.ledger[id] = []);
   led.unshift({ t: new Date().toLocaleTimeString(), text });
   if (led.length > 12) led.pop();
+  if (opts && opts.quiet) return;   // fills and sweeps go to the Trade Ledger instead
   councilFeed.unshift({ sender: a.name, text, color: a.color, time: new Date().toLocaleTimeString() });
-  if (councilFeed.length > 40) councilFeed.pop();
+  if (councilFeed.length > 80) councilFeed.pop();
+}
+
+function logTrade(kind, text, pnl) {
+  state.trades.unshift({ t: Date.now(), kind, text, pnl: pnl === undefined ? null : pnl });
+  if (state.trades.length > 80) state.trades.pop();
 }
 
 /* ============================== SOUND ============================== */
@@ -775,30 +797,68 @@ function isClone(c) {
   return !!t && t.address !== c.address && t.liquidity > c.liquidity;
 }
 
+/* ---- Feed manager: per-feed health, rate-limit backoff, fresh quotes ---- */
+const FEEDS = {};
+let scanReq = 0, scanFail = 0, gtRot = 0;
+async function feedJson(name, url) {
+  const f = FEEDS[name] || (FEEDS[name] = { ok: 0, fail: 0, code: 0, msg: '', until: 0 });
+  const now = Date.now();
+  if (f.until > now) return null;                       // cooling down after a rate limit or outage
+  scanReq++;
+  try {
+    const res = await fetch(url);
+    f.code = res.status;
+    if (res.status === 429) { f.fail++; scanFail++; f.msg = 'rate limited'; f.until = now + 60000; return null; }
+    if (!res.ok) { f.fail++; scanFail++; f.msg = 'HTTP ' + res.status; return null; }
+    const d = await res.json();
+    f.ok++; f.msg = 'ok';
+    return d;
+  } catch (e) {
+    f.fail++; scanFail++; f.code = 0; f.msg = 'blocked or offline'; f.until = now + 15000;
+    return null;
+  }
+}
+function failingFeeds() {
+  return Object.keys(FEEDS).filter(k => FEEDS[k].msg && FEEDS[k].msg !== 'ok').map(k => `${k} (${FEEDS[k].msg}${FEEDS[k].code ? ' ' + FEEDS[k].code : ''})`);
+}
+
+// A fresh single-coin quote, fetched right before a buy so we never trade on an old price.
+async function refreshQuote(addr) {
+  const d = await feedJson('ds-quote', `https://api.dexscreener.com/tokens/v1/solana/${addr}`);
+  if (!Array.isArray(d)) return null;
+  let best = null;
+  d.forEach(p => { const c = toCoin(p); if (c && c.address === addr && (!best || c.liquidity > best.liquidity)) best = c; });
+  if (best) market.set(addr, best);
+  return best;
+}
+
 function heldAddrs() { return Object.keys(state.positions).filter(a => state.positions[a] > 0.00001); }
 function hotCoins() { return Array.from(market.values()).filter(c => isFresh(c) && isBuyable(c)); }
 
 async function scanMarket() {
   if (scanning) return;
   scanning = true;
-  let req = 0, fail = 0;
-  const getJson = async url => { req++; const d = await safeJson(url); if (d === null) fail++; return d; };
+  scanReq = 0; scanFail = 0;
+  const getJson = (name, url) => feedJson(name, url);
 
   try {
     const GT = 'https://api.geckoterminal.com/api/v2/networks/solana';
     const DS = 'https://api.dexscreener.com';
 
-    // Stat-based discovery: what is trending, brand new, and trading the most right now.
+    // Discovery rotates through the GeckoTerminal lists (2 per scan) so we stay under its rate limit.
+    const GT_LIST = [
+      ['gt-trending', `${GT}/trending_pools?page=1`],
+      ['gt-new-1', `${GT}/new_pools?page=1`],
+      ['gt-new-2', `${GT}/new_pools?page=2`],
+      ['gt-volume', `${GT}/pools?page=1&sort=h24_volume_usd_desc`],
+      ['gt-txcount', `${GT}/pools?page=1&sort=h24_tx_count_desc`]
+    ];
+    const gtPick = [0, 1].map(k => GT_LIST[(gtRot + k) % GT_LIST.length]);
+    gtRot = (gtRot + 2) % GT_LIST.length;
     const [gtPools, boosts, profiles] = await Promise.all([
-      Promise.all([
-        getJson(`${GT}/trending_pools?page=1`),
-        getJson(`${GT}/new_pools?page=1`),
-        getJson(`${GT}/new_pools?page=2`),
-        getJson(`${GT}/pools?page=1&sort=h24_volume_usd_desc`),
-        getJson(`${GT}/pools?page=1&sort=h24_tx_count_desc`)
-      ]),
-      getJson(`${DS}/token-boosts/latest/v1`),
-      getJson(`${DS}/token-profiles/latest/v1`)
+      Promise.all(gtPick.map(x => getJson(x[0], x[1]))),
+      getJson('ds-boosts', `${DS}/token-boosts/latest/v1`),
+      getJson('ds-profiles', `${DS}/token-profiles/latest/v1`)
     ]);
 
     // DexScreener boosts/profiles only give token addresses, so look those up for full stats.
@@ -806,9 +866,9 @@ async function scanMarket() {
     [boosts, profiles].forEach(list => {
       if (Array.isArray(list)) list.forEach(t => { if (t && t.chainId === 'solana' && t.tokenAddress) addrs.add(t.tokenAddress); });
     });
-    const all = Array.from(addrs), chunks = [];
+    const all = Array.from(addrs).slice(0, 90), chunks = [];
     for (let i = 0; i < all.length; i += 30) chunks.push(all.slice(i, i + 30));
-    const lookups = await Promise.all(chunks.map(c => getJson(`${DS}/tokens/v1/solana/${c.join(',')}`)));
+    const lookups = await Promise.all(chunks.map(c => getJson('ds-lookup', `${DS}/tokens/v1/solana/${c.join(',')}`)));
 
     const fresh = new Map();
     const put = c => {
@@ -827,10 +887,21 @@ async function scanMarket() {
       }
     }
 
+    // Held coins that still lack a recent quote get a direct price lookup from a second source.
+    let backups = 0;
+    for (const a of heldAddrs()) {
+      const c = market.get(a);
+      if (c && Date.now() - c.seenAt < CFG.exitStaleMs - 15000) continue;
+      if (backups++ >= 3) break;
+      const d = await getJson('gt-token', `${GT}/tokens/${a}`);
+      const px = d && d.data && d.data.attributes ? parseFloat(d.data.attributes.price_usd) : NaN;
+      if (c && px > 0) { c.price = px; c.seenAt = Date.now(); }
+    }
+
     symbolTop = {};
     market.forEach(c => { const t = symbolTop[c.symbol]; if (!t || c.liquidity > t.liquidity) symbolTop[c.symbol] = c; });
-    lastScan = { seen: market.size, ok: req - fail, req };
-    feedStatus = fail === req ? 'OFFLINE' : `ONLINE [${lastScan.ok}/${req}]`;
+    lastScan = { seen: market.size, ok: scanReq - scanFail, req: scanReq };
+    feedStatus = lastScan.req === 0 ? 'PAUSED (RATE LIMIT)' : (scanFail === scanReq ? 'OFFLINE' : `ONLINE [${lastScan.ok}/${lastScan.req}]`);
     scanCount++;
     bump('announcer', 'scans');
 
@@ -838,13 +909,14 @@ async function scanMarket() {
     diag.hotZero = hot.length ? 0 : diag.hotZero + 1;
     announceHot(hot);
     if (scanCount === 1 || scanCount % 4 === 0) {
-      log(`[SCAN] ${market.size} seen, ${hot.length} hot [${hot.map(c => c.symbol).join(', ') || 'None'}] | feeds ok ${lastScan.ok}/${req}`);
+      log(`[SCAN] ${market.size} seen, ${hot.length} hot [${hot.map(c => c.symbol).join(', ') || 'None'}] | feeds ok ${lastScan.ok}/${lastScan.req}`);
     }
   } catch (err) {
     console.warn('Scan error:', err);
   } finally {
     scanning = false;
     try { runAudit(); } catch (e) { console.error('Audit error:', e); }
+    try { snapshotNet(); } catch (e) { console.error('Snapshot error:', e); }
     renderAll();
     runTradingLoop();   // always trade on the data we just fetched, not on stale prices
   }
@@ -933,7 +1005,7 @@ function sellTokens(addr, coin, qty) {
     bump('cfo', 'swept', sweep); bump('cfo', 'sweeps');
     state.cash += net - sweep;
     state.vault += sweep;
-    agentSay('cfo', `Swept ${fmtCurrency(sweep)} of profit into the vault.`);
+    agentSay('cfo', `Swept ${fmtCurrency(sweep)} of profit into the vault.`, { quiet: true });
   } else {
     state.cash += net;
   }
@@ -1024,8 +1096,8 @@ function closePosition(addr, coin, tag, msg) {
   archiveCoin(addr, tag, pnl);
   clearPosition(addr);
   playSfx(pnl >= 0 ? 'win' : 'loss');
-  log(`[${tag}] ${msg} ${sym} | P&L: ${fmtSigned(pnl)}`);
-  agentSay(tag === 'STOP-LOSS CUT' ? 'risk' : 'trader', `${tag}: ${sym} closed for ${fmtSigned(pnl)}.`);
+  logTrade(tag, `${msg} ${sym}`, pnl);
+  agentSay(tag === 'STOP-LOSS CUT' ? 'risk' : 'trader', `${tag}: ${sym} closed for ${fmtSigned(pnl)}.`, { quiet: true });
   saveState();
   renderAll();
 }
@@ -1058,8 +1130,8 @@ function openPosition(coin) {
   state.fees += fee;
   state.txCount += 1;
   playSfx('buy');
-  log(`[BUY] ALPHA_X entered ${coin.symbol} | Cost: ${fmtCurrency(spend)}`);
-  agentSay('trader', `Entered ${coin.symbol} with ${fmtCurrency(spend)}.`);
+  logTrade('BUY', `Entered ${coin.symbol} for ${fmtCurrency(spend)}`);
+  agentSay('trader', `Entered ${coin.symbol} with ${fmtCurrency(spend)}.`, { quiet: true });
   saveState();
   renderAll();
   return true;
@@ -1070,7 +1142,7 @@ function runExits() {
   for (const addr of heldAddrs()) {
     const coin = market.get(addr);
     const sym = state.symbols[addr] || '?';
-    if (!isFresh(coin)) {   // no live price: do nothing rather than act on a guess
+    if (!(coin && Date.now() - coin.seenAt < CFG.exitStaleMs)) {   // no live price: do nothing rather than act on a guess
       if (!noFeedWarned.has(addr)) { noFeedWarned.add(addr); log(`[WARN] No live price for ${sym}; exits paused until feed returns`); }
       continue;
     }
@@ -1092,14 +1164,14 @@ function runExits() {
         const q = state.positions[addr] * 0.5;
         const pnl = sellTokens(addr, coin, q);
         state.positions[addr] -= q; state.tiers[addr] = 1;
-        playSfx('win'); log(`[LAUNCH TIER 1] Sold 50% of ${sym}, cost recovered | P&L: ${fmtSigned(pnl)}`);
+        playSfx('win'); logTrade('TIER 1', `Sold 50% of ${sym}, cost recovered`, pnl);
         saveState(); continue;
       }
       if (gain >= L.tier2Pct && tier < 2) {
         const q = state.positions[addr] * 0.5;
         const pnl = sellTokens(addr, coin, q);
         state.positions[addr] -= q; state.tiers[addr] = 2;
-        playSfx('win'); log(`[LAUNCH TIER 2] Sold half the rest of ${sym} | P&L: ${fmtSigned(pnl)}`);
+        playSfx('win'); logTrade('TIER 2', `Sold half the rest of ${sym}`, pnl);
         saveState(); continue;
       }
       if (tier >= 1 && drop >= L.trailPct && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Trailing stop hit on'); continue; }
@@ -1108,14 +1180,14 @@ function runExits() {
         const q = state.positions[addr] * 0.40;
         const pnl = sellTokens(addr, coin, q);
         state.positions[addr] -= q; state.tiers[addr] = 1;
-        playSfx('win'); log(`[SNIPER TIER 1] Secured 40% of ${sym} | P&L: ${fmtSigned(pnl)}`);
+        playSfx('win'); logTrade('TIER 1', `Secured 40% of ${sym}`, pnl);
         saveState(); continue;
       }
       if (gain >= 15 && tier < 2) {
         const q = state.positions[addr] * 0.5833;   // 35% of the original position
         const pnl = sellTokens(addr, coin, q);
         state.positions[addr] -= q; state.tiers[addr] = 2;
-        playSfx('win'); log(`[SNIPER TIER 2] Secured 35% of ${sym} | P&L: ${fmtSigned(pnl)}`);
+        playSfx('win'); logTrade('TIER 2', `Secured 35% of ${sym}`, pnl);
         saveState(); continue;
       }
       if (tier >= 1 && drop >= 15 && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Locked remaining runner on'); continue; }
@@ -1130,11 +1202,108 @@ function runExits() {
   }
 }
 
-async function askCouncil(c) {
+/* ============================== DESK + COUNCIL ============================== */
+/* Scouts (WHALE_EYE, NEWS_HAWK, MACRO_9) file reports, the checkers (KIRKTRON, RISK_CORE, ROBBIEBOT)
+   review them, and ORCHESTRATOR-1 picks which coin to buy. Same rulebook in COUNCIL and AUTO:
+   every voter returns +1 / 0 / -1, RISK_CORE can veto, and a coin needs a total of +2 to be bought. */
+const DESK = {
+  flowYes: 0.58, flowNeutral: 0.50,      // WHALE_EYE: share of 1h trades that are buys
+  newsMood: 3,                           // NEWS_HAWK: bullish minus bearish headlines
+  momYes: 62, momNo: 40,                 // MACRO_9: momentum score
+  chaseHard: 80, chaseSoft: 40, thinMomentum: 50,   // KIRKTRON: late-entry and weak-momentum checks
+  parabolic: 150,                        // RISK_CORE: veto if up this % in 1h
+  minCashLeft: 8,                        // ROBBIEBOT: cash that must stay free
+  approve: 2, gapMs: 1500, retryMs: 60000, afterBuyMs: 20000, candidates: 5, maxRunPct: 4
+};
+const NEWS_POS = /\b(surge\w*|soar\w*|rall(y|ies)|jump\w*|gain\w*|record|approv\w*|adopt\w*|bull\w*|rises?|breakout|launch\w*|partnership)\b/i;
+const NEWS_NEG = /\b(crash\w*|plunge\w*|hack\w*|exploit\w*|ban|banned|lawsuit|fraud|scam|dump\w*|liquidat\w*|rug|probe|arrest\w*|bear\w*|sell-?off|drops?|falls?|slump\w*)\b/i;
+let nextCouncilAt = 0;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const sgn = v => (v > 0 ? '+' : '') + v;
+const voteWord = v => (v > 0 ? 'YES' : (v < 0 ? 'NO' : 'NEUTRAL'));
+const signedPct = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+
+function flowReport(c) {                 // WHALE_EYE
+  const b = c.buysH1, sl = c.sellsH1, tx = Math.max(1, b + sl), ratio = b / tx;
+  return { b, s: sl, ratio, turn: c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0, v: ratio >= DESK.flowYes ? 1 : (ratio >= DESK.flowNeutral ? 0 : -1) };
+}
+
+function newsReport(c) {                 // NEWS_HAWK
+  const safe = c.symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = c.symbol.length >= 3 ? new RegExp('\\b' + safe + '\\b', 'i') : null;
+  const out = { mentions: [], pos: 0, neg: 0, total: liveNews.length, v: 0 };
+  liveNews.forEach(n => {
+    const t = n.title || '', p = NEWS_POS.test(t), q = NEWS_NEG.test(t);
+    if (p && !q) out.pos++;
+    if (q && !p) out.neg++;
+    if (re && re.test(t)) out.mentions.push({ title: t, v: (p && !q) ? 1 : ((q && !p) ? -1 : 0) });
+  });
+  if (out.total === 0) out.v = 0;
+  else if (out.mentions.length) out.v = out.mentions[0].v;
+  else { const mood = out.pos - out.neg; out.v = mood >= DESK.newsMood ? 1 : (mood <= -DESK.newsMood ? -1 : 0); }
+  return out;
+}
+
+function momentumReport(c, fv, nv) {     // MACRO_9 (reads WHALE_EYE's flow and NEWS_HAWK's mood)
+  let score = 50 + clamp(c.change5m, -5, 5) * 4 + clamp(c.change1h, -20, 20) + fv * 10 + nv * 8 + Math.min(20, activityScore(c) * 40);
+  score = Math.round(clamp(score, 0, 100));
+  return { score, h1: c.change1h, m5: c.change5m, v: score >= DESK.momYes ? 1 : (score < DESK.momNo ? -1 : 0) };
+}
+
+function planReport(mom) {               // KIRKTRON 9001
+  if (state.mode !== 'LAUNCH') {
+    if (mom.h1 > DESK.chaseHard) return { v: -1, why: 'chase' };
+    if (mom.h1 > DESK.chaseSoft) return { v: 0, why: 'late' };
+  }
+  if (mom.score < DESK.thinMomentum) return { v: 0, why: 'thin' };
+  return { v: 1, why: '' };
+}
+
+function riskReport(c, spend, sum, flow, mom, avoid) {   // RISK_CORE (reads everyone, can veto)
+  const openN = heldAddrs().length, reasons = [];
+  const minLiq = state.mode === 'LAUNCH' ? CFG.launch.minLiq : CFG.minLiquidity;
+  if (c.liquidity < minLiq) reasons.push(`liquidity ${fmtCurrency(c.liquidity)} is under ${fmtCurrency(minLiq)}`);
+  if (openN >= CFG.maxOpenPositions) reasons.push(`all ${CFG.maxOpenPositions} position slots are full`);
+  if (state.mode !== 'LAUNCH' && mom.h1 > DESK.parabolic) reasons.push(`price is parabolic (${signedPct(mom.h1)} in 1h)`);
+  if (flow.v < 0 && mom.score < DESK.thinMomentum) reasons.push('sellers lead and momentum is weak');
+  const lesson = lessonFor(c, avoid);
+  if (lesson) reasons.push(`learned rule: avoid ${DIM_NAMES[lesson.dim]} ${lesson.bucket} (${Math.round(lesson.win * 100)}% wins over ${lesson.n} trades)`);
+  const veto = reasons.length > 0;
+  return { v: veto ? -1 : (sum >= 1 ? 1 : 0), veto, reasons, openN, share: c.liquidity > 0 ? spend / c.liquidity * 100 : 100 };
+}
+
+function cashReport(spend) {             // ROBBIEBOT 9000
+  const left = state.cash - spend;
+  return { left, v: left >= DESK.minCashLeft ? 1 : 0 };
+}
+
+function scoreCandidate(c, avoid) {
+  const wanted = state.cash * (state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct);
+  const spend = Math.min(wanted, c.liquidity * CFG.maxSpendPctOfLiq);
+  const flow = flowReport(c), news = newsReport(c), mom = momentumReport(c, flow.v, news.v), plan = planReport(mom);
+  const risk = riskReport(c, spend, flow.v + news.v + mom.v + plan.v, flow, mom, avoid), cash = cashReport(spend);
+  const total = flow.v + news.v + mom.v + plan.v + risk.v + cash.v;
+  return { c, spend, flow, news, mom, plan, risk, cash, total, veto: risk.veto, approved: total >= DESK.approve && !risk.veto && spend >= 1 };
+}
+
+function exitPlanText() {
+  if (state.mode === 'LAUNCH') { const L = CFG.launch; return `stop ${L.stopPct}%, half out at +${L.tier1Pct}%, half the rest at +${L.tier2Pct}%, runner trails ${L.trailPct}%`; }
+  if (state.mode === 'SNIPER') return `stop ${CFG.stopLossPct}%, 40% out at +3.5%, 35% at +15%, runner trails 15%`;
+  return `take profit +${CFG.takeProfitPct}%, stop ${CFG.stopLossPct}%`;
+}
+
+async function askCouncilPick(rs) {
   const key = localStorage.getItem('gemini_api_key');
-  const prompt = 'You are a risk council for a PAPER-TRADING Solana memecoin simulator. Decide whether to open a position. ' +
-    'Reply ONLY with JSON: {"approve": boolean, "reason": string under 140 characters}.\nData: ' +
-    JSON.stringify({ symbol: c.symbol, priceUsd: c.price, liquidityUsd: c.liquidity, volume1hUsd: c.volumeH1, buys1h: c.buysH1, sells1h: c.sellsH1, change5mPct: c.change5m, change1hPct: c.change1h, change24hPct: c.change24h, marketCapUsd: c.marketCap, ageMinutes: c.ageMin === null ? null : Math.round(c.ageMin), trend: classifyDipOrDump(c), mode: state.mode });
+  const data = rs.map(r => ({
+    symbol: r.c.symbol, priceUsd: r.c.price, liquidityUsd: Math.round(r.c.liquidity), volume1hUsd: Math.round(r.c.volumeH1),
+    buys1h: r.c.buysH1, sells1h: r.c.sellsH1, change5mPct: r.c.change5m, change1hPct: r.c.change1h, marketCapUsd: r.c.marketCap,
+    ageMinutes: r.c.ageMin === null ? null : Math.round(r.c.ageMin), trend: classifyDipOrDump(r.c),
+    reports: { flowVote: r.flow.v, newsVote: r.news.v, momentumScore: r.mom.score, planVote: r.plan.v, riskVote: r.risk.v, cashVote: r.cash.v, total: r.total }
+  }));
+  const prompt = 'You are the council chair for a PAPER-TRADING Solana memecoin simulator (no real money). Scout agents already scored these candidates. ' +
+    'Pick the single best one to buy, or null if none is worth it. Reply ONLY with JSON: {"pick": string or null, "reason": string under 140 characters}. ' +
+    'pick must be exactly one of the given symbols.\nMode: ' + state.mode + '\nCandidates: ' + JSON.stringify(data);
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CFG.geminiModel}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
@@ -1142,55 +1311,92 @@ async function askCouncil(c) {
     signal: AbortSignal.timeout(10000)
   });
   if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  const parts = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
-  const text = parts.map(p => p.text || '').join('');
-  const out = JSON.parse(text);
-  return { approve: out.approve === true, reason: String(out.reason || '').slice(0, 140) };
+  const j = await res.json();
+  const parts = (j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
+  const out = JSON.parse(parts.map(p => p.text || '').join(''));
+  const pick = (typeof out.pick === 'string' && rs.some(r => r.c.symbol === out.pick)) ? out.pick : null;
+  return { pick, reason: String(out.reason || '').slice(0, 140) };
+}
+
+async function holdCouncil(cands) {
+  const meeting = state.decision === 'COUNCIL';
+  const hasKey = (localStorage.getItem('gemini_api_key') || '').length > 5;
+  const avoid = computeLessons().avoid;
+  const scored = cands.map(c => scoreCandidate(c, avoid));
+  const ranked = scored.slice().sort((a, b) => (b.approved - a.approved) || (b.total - a.total) || (entryScore(b.c) - entryScore(a.c)));
+  const top = ranked.slice(0, 3);
+  const names = list => list.map(r => r.c.symbol).join(', ');
+  const say = async (id, text) => { agentSay(id, text); renderAll(); if (meeting) await sleep(DESK.gapMs); };
+  let chosen = ranked.find(r => r.approved) || null;
+
+  if (meeting) {
+    await say('trader', `Desk is open with ${scored.length} candidate${scored.length === 1 ? '' : 's'}: ${names(ranked)}. Scouts, report.`);
+    await say('announcer', top.map(r => `${r.c.symbol}: ${Math.round(r.flow.ratio * 100)}% buys (${r.flow.b} vs ${r.flow.s}), ${Math.round(r.flow.turn * 100)}% turnover, ${fmtCurrency(r.c.volumeH1)} 1h volume`).join(' | ') + `. Flow votes: ${top.map(r => sgn(r.flow.v)).join(' ')}.`);
+    const named = top.filter(r => r.news.mentions.length);
+    const first = top[0].news;
+    await say('news', named.length
+      ? `Headline alert: "${named[0].news.mentions[0].title.slice(0, 70)}" names ${named[0].c.symbol}. Reads ${named[0].news.v > 0 ? 'bullish' : (named[0].news.v < 0 ? 'bearish' : 'neutral')}.`
+      : (first.total ? `No headlines name ${names(top)}. Wire mood: ${first.pos} bullish vs ${first.neg} bearish of ${first.total}.` : 'The news wire is offline, nothing to report.'));
+    await say('macro', `Blending WHALE_EYE's flow and NEWS_HAWK's mood with price action. Momentum: ${top.map(r => `${r.c.symbol} ${r.mom.score}/100 (${signedPct(r.mom.h1)} 1h)`).join(', ')}.`);
+    const warn = top.filter(r => r.plan.why);
+    await say('finance', `Exit plan: ${exitPlanText()}; flat positions are benched after ${Math.round(CFG.staleExitMs / 60000)} min. Fees are about ${(2 * CFG.feeRate * 100).toFixed(1)}% round trip.` + (warn.length ? ` Flags: ${warn.map(r => `${r.c.symbol} ${r.plan.why === 'chase' ? 'is a chase' : (r.plan.why === 'late' ? 'is a late entry' : 'has thin momentum')}`).join(', ')}.` : ''));
+    await say('risk', `Read WHALE_EYE's flow and MACRO_9's momentum. ` + top.map(r => r.risk.veto ? `${r.c.symbol} VETO (${r.risk.reasons[0]})` : `${r.c.symbol} clear (${r.risk.openN}/${CFG.maxOpenPositions} slots, ${r.risk.share.toFixed(2)}% of pool)`).join(' | ') + '.');
+    await say('cfo', `Bankroll ${fmtCurrency(state.cash)}, vault ${fmtCurrency(state.vault)}. An entry of about ${fmtCurrency(top[0].spend)} leaves ${fmtCurrency(top[0].cash.left)} free. I sweep ${state.sweepPct}% of any profit to the vault.`);
+    await say('boss', `Tally: ${top.map(r => `${r.c.symbol} ${sgn(r.total)}${r.veto ? ' (vetoed)' : ''}`).join(', ')}. ` + (chosen ? `Leading: ${chosen.c.symbol}.` : `Nothing clears +${DESK.approve} without a veto.`));
+  } else {
+    const b = ranked[0];
+    agentSay('boss', chosen
+      ? `AUTO desk: ${chosen.c.symbol} wins at ${sgn(chosen.total)} (flow ${sgn(chosen.flow.v)}, news ${sgn(chosen.news.v)}, momentum ${sgn(chosen.mom.v)}, plan ${sgn(chosen.plan.v)}, risk ${sgn(chosen.risk.v)}, cash ${sgn(chosen.cash.v)}).`
+      : `AUTO desk: nothing passes. Best was ${b.c.symbol} at ${sgn(b.total)}${b.veto ? ` (veto: ${b.risk.reasons[0]})` : ''}.`);
+    renderAll();
+  }
+
+  // COUNCIL mode with a Gemini key: the AI chair makes the final pick among the coins the desk approved.
+  if (meeting && hasKey && chosen) {
+    const shortlist = ranked.filter(r => r.approved).slice(0, 3);
+    try {
+      await say('boss', `Asking Gemini to choose between ${names(shortlist)}...`);
+      const v = await askCouncilPick(shortlist);
+      chosen = v.pick ? shortlist.find(r => r.c.symbol === v.pick) : null;
+      await say('boss', chosen ? `Gemini picks ${chosen.c.symbol}. ${v.reason}` : `Gemini passes on all of them. ${v.reason}`);
+    } catch (e) {
+      diag.geminiErr++; diag.geminiMsg = e.message;
+      log(`[COUNCIL] Gemini unavailable (${e.message}); using the desk's own pick`);
+    }
+  }
+
+  // Everything not bought sits out for a while so the next meeting looks at fresh coins.
+  scored.forEach(r => { if (r !== chosen) proposalBlock[r.c.address] = Date.now() + CFG.councilBlockMs; });
+  if (!chosen) { bump('boss', 'vetoed'); nextCouncilAt = Date.now() + DESK.retryMs; return; }
+
+  // Final check: a fresh live quote, and the price must not have run away since the reports.
+  const fresh = await refreshQuote(chosen.c.address);
+  let why = '';
+  if (!fresh) why = 'no live quote available';
+  else if ((fresh.price - chosen.c.price) / chosen.c.price * 100 > DESK.maxRunPct) why = `price already ran ${signedPct((fresh.price - chosen.c.price) / chosen.c.price * 100)} since the reports`;
+  else if (!isBuyable(fresh) || isArchived(fresh)) why = 'it no longer passes the buy filters';
+  if (why) {
+    await say('trader', `Order for ${chosen.c.symbol} dropped: ${why}.`);
+    proposalBlock[chosen.c.address] = Date.now() + CFG.councilBlockMs;
+    nextCouncilAt = Date.now() + DESK.retryMs;
+    return;
+  }
+  bump('boss', 'approved');
+  if (openPosition(fresh)) await say('trader', `Order sent for ${chosen.c.symbol} on a ${sgn(chosen.total)} vote. The fill is in the Trade Ledger.`);
+  nextCouncilAt = Date.now() + DESK.afterBuyMs;
 }
 
 async function considerEntry() {
-  if (state.cash <= CFG.minCash || councilBusy || heldAddrs().length >= CFG.maxOpenPositions) return;
+  if (state.cash <= CFG.minCash || councilBusy || heldAddrs().length >= CFG.maxOpenPositions || Date.now() < nextCouncilAt) return;
   const now = Date.now();
   const candidates = Array.from(market.values()).filter(c =>
     isFresh(c) && !(state.positions[c.address] > 0) && !(proposalBlock[c.address] > now) && isBuyable(c) && !isArchived(c)
-  ).sort((a, b) => entryScore(b) - entryScore(a));
+  ).sort((a, b) => entryScore(b) - entryScore(a)).slice(0, DESK.candidates);
   if (!candidates.length) return;
-
-  // Learned rules: skip coins that match a pattern our own journal shows loses money.
-  const avoid = computeLessons().avoid;
-  const allowed = candidates.filter(c => !lessonFor(c, avoid));
-  const first = candidates.find(c => lessonFor(c, avoid));
-  if (first && !lessonSeen[first.address]) {
-    lessonSeen[first.address] = true;
-    const l = lessonFor(first, avoid);
-    bump('boss', 'vetoed');
-    agentSay('boss', `Skipped ${first.symbol}: learned rule says avoid ${DIM_NAMES[l.dim]} ${l.bucket} (${Math.round(l.win * 100)}% wins over ${l.n} trades).`);
-  }
-  if (!allowed.length) return;
-
-  const pick = allowed[Math.floor(Math.random() * Math.min(allowed.length, CFG.topPicks))];
-  const hasKey = (localStorage.getItem('gemini_api_key') || '').length > 5;
-
-  if (state.decision === 'COUNCIL' && hasKey) {
-    councilBusy = true;
-    try {
-      const v = await askCouncil(pick);
-      agentSay('boss', `${pick.symbol}: ${v.approve ? 'APPROVED' : 'VETOED'}. ${v.reason}`);
-      bump('boss', v.approve ? 'approved' : 'vetoed');
-      if (!v.approve) { proposalBlock[pick.address] = Date.now() + CFG.councilBlockMs; renderAll(); return; }
-    } catch (e) {
-      diag.geminiErr++; diag.geminiMsg = e.message;
-      log(`[COUNCIL] Gemini unavailable (${e.message}); falling back to AUTO for this entry`);
-    } finally {
-      councilBusy = false;
-    }
-    const fresh = market.get(pick.address);   // price may have moved while we waited
-    if (!isFresh(fresh)) return;
-    openPosition(fresh);
-    return;
-  }
-  openPosition(pick);
+  councilBusy = true;
+  try { await holdCouncil(candidates); }
+  catch (e) { console.error('Council error:', e); nextCouncilAt = Date.now() + DESK.retryMs; }
+  finally { councilBusy = false; renderAll(); }
 }
 
 function runTradingLoop() {
@@ -1238,9 +1444,9 @@ function openDialog(opts) {
     const fields = {};
     (opts.inputs || []).forEach(inp => {
       add('label', 'dialog-label', inp.label);
-      const i = document.createElement('input');
+      const i = document.createElement(inp.multiline ? 'textarea' : 'input');
       i.className = 'dialog-input';
-      i.type = 'text';
+      if (inp.multiline) { i.rows = 7; i.style.fontSize = '13px'; } else i.type = 'text';
       i.value = inp.value === undefined ? '' : inp.value;
       if (inp.inputmode) i.setAttribute('inputmode', inp.inputmode);
       i.setAttribute('autocomplete', 'off');
@@ -1386,6 +1592,10 @@ function renderNow() {
     setText('hot-count', String(hotCoins().length));
     setText('benched-count', String(Object.values(state.archive).filter(e => e.until > Date.now()).length));
     setText('feeds-count', lastScan.req ? `${lastScan.ok}/${lastScan.req}` : '--');
+    const LS = computeLessons(), JS = journalStats(state.journal.filter(j => j.mode === state.mode));
+    setText('learn-trades', String(LS.n));
+    setText('learn-rules', String(LS.avoid.length + LS.favor.length));
+    setText('win-rate', JS.n ? Math.round(JS.winRate * 100) + '%' : '--');
     setText('status-mode-label', `${state.mode} MODE`);
     setText('status-decision', state.decision);
     setText('status-feed', feedStatus);
@@ -1406,7 +1616,7 @@ function renderNow() {
     if (activeTab === 'positions') renderPositions();
     if (activeTab === 'council') renderCouncil();
     if (activeTab === 'news') renderNewsTab();
-    if (activeTab === 'status') { renderProtocol(); renderLessons(); }
+    if (activeTab === 'status') { renderProtocol(); renderLessons(); renderFeedHealth(); }
     if (activeTab === 'warroom') renderWarRoomCards();
     if (activeTab === 'audit') renderAudit();
     const nBad = auditResult.filter(f => f.sev === 'bad').length, nWarn = auditResult.filter(f => f.sev === 'warn').length;
@@ -1442,6 +1652,92 @@ function renderPositions() {
         <span>${escapeHtml(e.reason)}</span><span>${fmtSigned(e.pnl)}</span><span>${mins}m</span></div>`;
     }).join('') : '<div class="empty-note">NOTHING BENCHED</div>';
   }
+  drawHistory();
+  renderLedger();
+}
+
+function snapshotNet() {
+  const now = Date.now();
+  if (now - (state.lastSnap || 0) < 5 * 60 * 1000) return;
+  const p = portfolioValue();
+  state.history.push({ t: now, net: +(state.cash + state.vault + p.value).toFixed(2) });
+  if (state.history.length > 600) state.history.shift();
+  state.lastSnap = now;
+  saveState();
+}
+
+function drawHistory() {
+  const cv = $('history-canvas');
+  const g = cv && cv.getContext('2d');
+  if (!g) return;
+  const W = cv.width, H = cv.height, h = state.history;
+  g.fillStyle = '#07010f'; g.fillRect(0, 0, W, H);
+  g.font = '8px "Press Start 2P", monospace'; g.textBaseline = 'top';
+  if (h.length < 2) { g.fillStyle = '#8a7fb8'; g.fillText('COLLECTING DATA...', 8, H / 2 - 4); return; }
+  const vals = h.map(x => x.net).concat([CFG.startBankroll]);
+  let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+  if (hi - lo < 1) { hi += 0.5; lo -= 0.5; }
+  const pad = 12, X = i => pad + (W - pad * 2) * i / (h.length - 1), Y = v => H - 16 - (H - 32) * (v - lo) / (hi - lo);
+  g.fillStyle = '#2a1a66';
+  for (let x = pad; x < W - pad; x += 6) g.fillRect(x, Math.round(Y(CFG.startBankroll)), 3, 1);
+  const up = h[h.length - 1].net >= CFG.startBankroll;
+  g.strokeStyle = up ? '#39ff88' : '#ff3b5c'; g.lineWidth = 2; g.beginPath();
+  h.forEach((pt, i) => { if (i) g.lineTo(X(i), Y(pt.net)); else g.moveTo(X(i), Y(pt.net)); });
+  g.stroke();
+  g.fillStyle = '#8a7fb8';
+  g.fillText('$' + hi.toFixed(0), 4, 2);
+  g.fillText('$' + lo.toFixed(0), 4, H - 11);
+  const span = (h[h.length - 1].t - h[0].t) / 3600000;
+  g.fillText((span < 1 ? Math.round(span * 60) + 'M' : span.toFixed(1) + 'H'), W - 44, H - 11);
+}
+
+function renderLedger() {
+  const box = $('trade-ledger');
+  if (!box) return;
+  box.innerHTML = state.trades.length ? state.trades.slice(0, 40).map(t => {
+    const d = new Date(t.t), hhmm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const pnl = t.pnl === null ? '' : `<span style="color: ${t.pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${fmtSigned(t.pnl)}</span>`;
+    return `<div class="position-row" style="grid-template-columns: 0.7fr 2.4fr 1fr;"><span>${hhmm}</span><span style="text-align: left;">${escapeHtml(t.kind)} ${escapeHtml(t.text)}</span>${pnl || '<span></span>'}</div>`;
+  }).join('') : '<div class="empty-note">NO TRADES YET</div>';
+}
+
+function renderFeedHealth() {
+  const box = $('feed-box');
+  if (!box) return;
+  const names = Object.keys(FEEDS);
+  box.innerHTML = names.length ? names.map(n => {
+    const f = FEEDS[n], ok = f.msg === 'ok', paused = f.until > Date.now();
+    return `<div class="status-row"><span>${escapeHtml(n)}</span><strong style="color: ${ok ? 'var(--green)' : 'var(--red)'};">${paused ? 'PAUSED ' : ''}${escapeHtml(f.msg || '--')}${f.code ? ' [' + f.code + ']' : ''} ${f.ok}/${f.ok + f.fail}</strong></div>`;
+  }).join('') : '<div class="protocol-line">No requests yet.</div>';
+}
+
+async function exportData() {
+  const payload = JSON.stringify({ app: 'orbital-hq', v: 2, savedAt: new Date().toISOString(), state });
+  let copied = false;
+  try { await navigator.clipboard.writeText(payload); copied = true; } catch (e) { copied = false; }
+  await openDialog({
+    title: 'EXPORT DATA',
+    message: copied ? 'Copied to your clipboard. Paste it somewhere safe, like the Notes app.' : 'Copy was blocked. Long-press the box, select all and copy.',
+    inputs: [{ id: 'd', label: 'Backup', value: payload, multiline: true }],
+    okText: 'DONE', noCancel: true
+  });
+}
+
+async function importData() {
+  const r = await openDialog({
+    title: 'IMPORT DATA',
+    message: 'Paste a backup. This REPLACES all current data.',
+    inputs: [{ id: 'd', label: 'Backup', value: '', multiline: true }],
+    okText: 'IMPORT', danger: true
+  });
+  if (!r) return;
+  try {
+    const o = JSON.parse(r.values.d.trim());
+    const st = o && o.state;
+    if (!st || typeof st.cash !== 'number' || typeof st.positions !== 'object') throw new Error('not a valid backup');
+    localStorage.setItem(STORE_KEY, JSON.stringify(st));
+    location.reload();
+  } catch (e) { log('[BACKUP] Import failed: ' + e.message); setAuditStatus('Import failed: ' + e.message); }
 }
 
 function renderCouncil() {
@@ -2100,14 +2396,14 @@ function runAudit() {
   if (lastScan.req) {
     const r = lastScan.ok / lastScan.req;
     const slow = CFG.scanEveryMs < 30000 ? { key: 'scanEveryMs', value: 30000 } : null;
-    if (r < 0.5) add('bad', 'feeds', 'Market feeds failing', `${lastScan.ok}/${lastScan.req} requests succeeded. Prices go stale and exits pause.`, slow);
-    else if (r < 0.85) add('warn', 'feeds', 'Some market feeds failing', `${lastScan.ok}/${lastScan.req} OK. This is usually rate limiting; scanning less often helps.`, slow);
+    if (r < 0.5) add('bad', 'feeds', 'Market feeds failing', `${lastScan.ok}/${lastScan.req} requests succeeded. Prices go stale and exits pause. Failing: ${failingFeeds().join(', ') || 'none right now'}.`, slow);
+    else if (r < 0.85) add('warn', 'feeds', 'Some market feeds failing', `${lastScan.ok}/${lastScan.req} OK. This is usually rate limiting; scanning less often helps. Failing: ${failingFeeds().join(', ') || 'none right now'}.`, slow);
     else add('ok', 'feeds', 'Market feeds healthy', `${lastScan.ok}/${lastScan.req} requests OK.`);
   }
   if (newsStatus.indexOf('LIVE') !== 0) add('warn', 'news', 'News feed offline', 'Headlines are not loading. This does not affect trading.');
 
   // Prices and state
-  const stale = held.filter(a => !isFresh(market.get(a)));
+  const stale = held.filter(a => { const c = market.get(a); return !(c && Date.now() - c.seenAt < CFG.exitStaleMs); });
   if (stale.length) add('bad', 'stale', 'Open positions without a live price', `${stale.map(a => state.symbols[a] || '?').join(', ')}: stops and exits are paused for these.`);
   if (state.cash <= CFG.minCash) add('bad', 'frozen', 'Bankroll below the trading minimum', `Cash ${fmtCurrency(state.cash)} is at or under ${fmtCurrency(CFG.minCash)}, so no new trades open. Vault holds ${fmtCurrency(state.vault)}; use VAULT to move money back.`);
   if (net > 0 && p.value / net > 0.7) add('warn', 'exposure', 'High exposure', `${Math.round(100 * p.value / net)}% of net worth is sitting in open positions.`);
