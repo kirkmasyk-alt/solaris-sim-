@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.0</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V8.1</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -313,7 +313,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Patient risk management matrix active. Dip buffers enabled.</div>
+        <div style="color: var(--green);">[00:01] Advisory Risk mode online. Positions protected from auto-liquidation.</div>
       </div>
     </div>
 
@@ -338,7 +338,7 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>MARKET DATA ENDPOINT:</span> <strong style="color: var(--green);">DEX SCREENER API v1</strong></div>
-      <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong id="boss-status-label" style="color: var(--purple);">ORCHESTRATOR-1 [STANDBY]</strong></div>
+      <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong id="boss-status-label" style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
       <div class="status-row"><span>TOTAL TRANSACTIONS:</span> <strong style="color: var(--cyan);" id="status-tx-count">0 EXECUTED</strong></div>
@@ -363,7 +363,7 @@
     ];
 
     const agentDefs = [
-      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Chief Risk Officer', color: '#a855f7', icon: '👁️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'STANDBY' },
+      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Chief Risk Officer (Advisory)', color: '#a855f7', icon: '👁️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ADVISORY' },
       { id: 'announcer', name: 'WHALE_EYE', role: 'DEX Screener Announcer', color: '#38bdf8', icon: '📡', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Portfolio Manager', color: '#38bdf8', icon: '🤖', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
       { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', color: '#f59e0b', icon: '🛡️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
@@ -382,7 +382,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'WHALE_EYE', text: 'DEX Screener link stable. Monitoring dip recovery buffers.', color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'ORCHESTRATOR-1', text: 'Advisory mode engaged. Positions retain full recovery window.', color: '#a855f7', time: '00:00' }]
     };
 
     let savedStats = JSON.parse(localStorage.getItem('solaris_agent_stats')) || {};
@@ -521,7 +521,7 @@
       state.vault = 0;
       state.positions = { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 };
       state.costBasis = { SOL: 0, BONK: 0, JTO: 0, RAY: 0, WIF: 0 };
-      agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = (a.id === 'boss' ? 'STANDBY' : 'ACTIVE'); });
+      agentDefs.forEach(a => { a.pnl = 0; a.minPnl = 0; a.hrPnl = 0; a.dayPnl = 0; a.wkPnl = 0; a.status = (a.id === 'boss' ? 'ADVISORY' : 'ACTIVE'); });
       saveState();
       addSystemLog(`[CONFIG] Treasury reset to clean baseline.`);
       renderAll();
@@ -597,53 +597,12 @@
           return;
         }
 
-        const boss = agentDefs.find(a => a.id === 'boss');
-        
-        // PATIENT RISK MANAGEMENT: Only intervene if a position dips past -4% or cumulative realized loss is severe. 
-        // This stops the Boss Bot from panic-selling normal dip entries before they can recover upwards.
-        let severeDrawdown = false;
-        marketCoins.forEach(c => {
-          let qty = state.positions[c.symbol] || 0;
-          let cost = state.costBasis[c.symbol] || c.price;
-          if (qty > 0.00001 && cost > 0) {
-            let dropPct = ((c.price - cost) / cost) * 100;
-            if (dropPct <= -4.0) {
-              severeDrawdown = true;
-            }
-          }
-        });
-
-        if (severeDrawdown) {
-          boss.status = 'INTERVENING';
-          marketCoins.forEach(c => {
-            let qty = state.positions[c.symbol] || 0;
-            if (qty > 0.00001) {
-              let gross = qty * c.price;
-              let fee = gross * 0.003;
-              state.cash += (gross - fee);
-              let loss = (gross - fee) - (qty * (state.costBasis[c.symbol] || c.price));
-              state.realizedPnl += loss;
-              state.totalFeesPaid += fee;
-              state.positions[c.symbol] = 0;
-              state.costBasis[c.symbol] = 0;
-            }
-          });
-
-          const alertMsg = `CIRCUIT BREAKER: Severe stop-loss triggered (-4% threshold breached). Positions cut to protect capital.`;
-          state.councilFeed.unshift({ sender: boss.name, text: alertMsg, color: boss.color, time: new Date().toLocaleTimeString() });
-          addSystemLog(`[BOSS BOT] Stop-loss executed: Cut bleeding positions.`);
-          saveState();
-          renderAll();
-          return;
-        } else {
-          boss.status = 'STANDBY';
-        }
-
+        // Vault liquidity backstop if cash dips low
         if (state.cash < 15.0 && state.vault >= 25.0) {
           let tranche = 25.0;
           state.vault -= tranche;
           state.cash += tranche;
-          boss.status = 'INTERVENING';
+          const boss = agentDefs.find(a => a.id === 'boss');
           state.councilFeed.unshift({ sender: boss.name, text: `Vault Tranche Release: Transferred ${fmtCurrency(tranche)} from Main Vault to bankroll.`, color: boss.color, time: new Date().toLocaleTimeString() });
           addSystemLog(`[BOSS BOT] Released ${fmtCurrency(tranche)} Main Vault tranche.`);
           saveState();
@@ -674,7 +633,7 @@
         let originalCostBasisValue = curHold * avgCost;
         let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPositionValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
 
-        // Hold positions until they secure at least a +2% profit target
+        // Sell only when profit target (+2%) is hit organically, or on random patience checks
         if (curHold > 0.00001 && (unrealizedGainPct >= 2.0 || Math.random() > 0.85)) {
           let sellTokens = curHold;
           let gross = sellTokens * coin.price;
@@ -729,7 +688,7 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `Smart-entry dip buy executed for ${coin.symbol}. Allowing room to recover.` :
+          `Allocating 20% block into ${coin.symbol}. Position holding for upward recovery.` :
           `Profit target hit on ${coin.symbol}. Position closed with P&L: ${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ 
@@ -778,8 +737,8 @@
         const bossObj = agentDefs.find(a => a.id === 'boss');
         const bossLabel = document.getElementById('boss-status-label');
         if (bossLabel && bossObj) {
-          bossLabel.textContent = `ORCHESTRATOR-1 [${bossObj.status}]`;
-          bossLabel.style.color = bossObj.status === 'INTERVENING' ? 'var(--red)' : 'var(--purple)';
+          bossLabel.textContent = `ORCHESTRATOR-1 [ADVISORY]`;
+          bossLabel.style.color = "var(--purple)";
         }
 
         const pnl = document.getElementById('realized-pnl');
@@ -823,7 +782,7 @@
                 <div style="flex-grow: 1;">
                   <div style="display: flex; justify-content: space-between;">
                     <strong style="color: ${a.color}; font-size: 11px;">${a.name}</strong>
-                    <span style="font-size: 9px; color: ${a.status === 'ACTIVE' || a.status === 'STANDBY' ? 'var(--green)' : 'var(--red)'};">[${a.status}]</span>
+                    <span style="font-size: 9px; color: var(--green);">[${a.status}]</span>
                   </div>
                   <div style="font-size: 9px; color: var(--text-dim);">${a.role}</div>
                 </div>
