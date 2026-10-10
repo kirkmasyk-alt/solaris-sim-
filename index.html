@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.6</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.7</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -272,7 +272,7 @@
       <span style="font-size: 10px; color: var(--text-dim);">OPERATIONAL MODE:</span>
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
-        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (CAPPED DIPS)</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (NO SOL FALLBACK)</button>
       </div>
     </div>
 
@@ -319,11 +319,11 @@
 
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 11px; color: var(--cyan);">// CAPPED ACCUMULATION STREAM</div>
+        <div style="font-size: 11px; color: var(--cyan);">// PURE MEMECOIN DISCOVERY STREAM</div>
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Max position size caps & manual sell buttons active.</div>
+        <div style="color: var(--green);">[00:01] SOL fallback completely purged. Memecoin-only mode active.</div>
       </div>
     </div>
 
@@ -336,8 +336,8 @@
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // MONITOR</div>
-          <div class="feed-text">Position caps enforced. Manual sell override ready...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // MEMECOIN SCANNER</div>
+          <div class="feed-text">Scanning exclusively for newly deployed tokens...</div>
         </div>
       </div>
     </div>
@@ -359,10 +359,10 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
+      <div class="status-row"><span>SOL FALLBACK:</span> <strong style="color: var(--red);">PURGED [MEMECOINS ONLY]</strong></div>
       <div class="status-row"><span>MAX POSITION CAP:</span> <strong style="color: var(--green);">ACTIVE [35% BANKROLL LIMIT]</strong></div>
-      <div class="status-row"><span>MANUAL OVERRIDE:</span> <strong style="color: var(--green);">ACTIVE [POSITION SELL BUTTONS]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 CAPPED TRADERS</strong></div>
+      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 MEMECOIN TRADERS</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
 
@@ -373,12 +373,11 @@
   </div>
 
   <script>
-    let marketCoins = [
-      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 3.5, liquidity: 1500000, securityBadge: 'CORE' }
-    ];
+    // Completely empty starting array - no fallback SOL allowed!
+    let marketCoins = [];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Position caps and manual sell buttons active.', time: '00:00' }
+      { title: 'System Initialized', desc: 'SOL fallback purged. Bots will only trade discovered memecoins.', time: '00:00' }
     ];
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
@@ -386,10 +385,10 @@
 
     const agentDefs = [
       { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#a855f7', icon: '👁️', pnl: 0, status: 'ADVISORY' },
-      { id: 'announcer', name: 'WHALE_EYE', role: 'Multi-Source Fresh Deployment Scanner', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
+      { id: 'announcer', name: 'WHALE_EYE', role: 'Multi-Source Memecoin Scanner', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Trailing Profit Lock Engine', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
       { id: 'risk', name: 'RISK_CORE', role: 'Position Capping & Stop-Loss Firewall', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
-      { id: 'trader', name: 'ALPHA_X', role: 'Verified Secure Swap Executor', color: '#ef4444', icon: '⚡', pnl: 0, status: 'ACTIVE' },
+      { id: 'trader', name: 'ALPHA_X', role: 'Memecoin Swap Executor', color: '#ef4444', icon: '⚡', pnl: 0, status: 'ACTIVE' },
       { id: 'macro', name: 'MACRO_9', role: 'AI Momentum & Winner Scorer', color: '#a855f7', icon: '🌐', pnl: 0, status: 'ACTIVE' },
       { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#22c55e', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
     ];
@@ -404,13 +403,14 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'RISK_CORE', text: `Position capping active [${operationalMode}]. Manual sell buttons enabled.`, color: '#f59e0b', time: '00:00' }]
+      councilFeed: [{ sender: 'RISK_CORE', text: `Memecoin-only mode active [${operationalMode}]. SOL fallback eliminated.`, color: '#f59e0b', time: '00:00' }]
     };
 
     function setTradingMode(mode) {
       operationalMode = mode;
       localStorage.setItem('solaris_mode', mode);
       addSystemLog(`[MODE LOCKED] User set operational mode to: ${mode}`);
+      fetchLiveMarketPrices();
       renderAll();
     }
 
@@ -471,23 +471,28 @@
 
         let fetched = [];
         if (searchData && searchData.pairs) {
-          let solPairs = searchData.pairs.filter(p => p.chainId === 'solana' && p.priceUsd && p.liquidity && p.liquidity.usd > 5000);
+          // Explicitly filter out SOL and major wrapped tokens so only memecoins are traded
+          let solPairs = searchData.pairs.filter(p => {
+            if (!p.chainId || p.chainId !== 'solana' || !p.priceUsd || !p.liquidity || !p.baseToken) return false;
+            let sym = p.baseToken.symbol.toUpperCase();
+            return sym !== 'SOL' && sym !== 'USDC' && sym !== 'USDT' && sym !== 'WSOL';
+          });
+
           if (operationalMode === 'SNIPER') {
-            solPairs = solPairs.filter(p => p.liquidity.usd <= 150000).slice(0, 20);
+            solPairs = solPairs.filter(p => p.liquidity.usd <= 150000).slice(0, 25);
           } else {
-            solPairs = solPairs.slice(0, 20);
+            solPairs = solPairs.slice(0, 25);
           }
+
           solPairs.forEach(p => {
-            if (p.baseToken && p.priceUsd) {
-              fetched.push({
-                symbol: p.baseToken.symbol.toUpperCase(),
-                address: p.baseToken.address,
-                price: parseFloat(p.priceUsd),
-                change24h: p.priceChange?.h24 || 5.0,
-                liquidity: p.liquidity.usd,
-                securityBadge: operationalMode === 'SNIPER' ? 'SECURE [0-1M]' : 'VERIFIED'
-              });
-            }
+            fetched.push({
+              symbol: p.baseToken.symbol.toUpperCase(),
+              address: p.baseToken.address,
+              price: parseFloat(p.priceUsd),
+              change24h: p.priceChange?.h24 || 5.0,
+              liquidity: p.liquidity.usd,
+              securityBadge: operationalMode === 'SNIPER' ? 'SECURE [0-1M]' : 'VERIFIED'
+            });
           });
         }
 
@@ -497,7 +502,7 @@
 
         renderAll();
       } catch (err) {
-        console.warn("Stable fetch warning:", err);
+        console.warn("Memecoin fetch warning:", err);
       }
     }
 
@@ -612,7 +617,7 @@
         portfolioVal += (state.positions[sym] || 0) * coin.price;
       });
       let net = state.cash + state.vault + portfolioVal;
-      const brief = `CAPPED TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
+      const brief = `MEMECOIN TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
       state.councilFeed.unshift({ sender: 'RISK_CORE', text: brief, color: '#f59e0b', time: new Date().toLocaleTimeString() });
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
       renderAll();
@@ -687,7 +692,6 @@
           }
         }
 
-        // Pick a target coin (preventing single-asset over-accumulation by capping individual position size at 35% of net worth)
         let targetCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
         if (!targetCoin || targetCoin.price <= 0) return;
 
@@ -695,7 +699,6 @@
         let currentPosValue = curHold * targetCoin.price;
         let totalNetWorthEst = state.cash + state.vault + currentPosValue;
 
-        // If this coin already makes up more than 35% of net worth, skip adding to it to avoid over-concentration!
         if (currentPosValue > totalNetWorthEst * 0.35) {
           return;
         }
@@ -756,7 +759,7 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `[${operationalMode}] Swarm executed entry into ${targetCoin.symbol}.` :
+          `[${operationalMode}] Swarm executed entry into memecoin ${targetCoin.symbol}.` :
           `[${operationalMode}] Target closed on ${targetCoin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ sender: 'ALPHA_X', text: councilText, color: '#38bdf8', time: new Date().toLocaleTimeString() });
@@ -886,7 +889,7 @@
         const feedContainer = document.getElementById('council-feed-container');
         if (feedContainer) {
           feedContainer.innerHTML = state.councilFeed.map(f => `
-            <div class="feed-item" style="border-left-color: ${f.color};">
+            <div class="feed-item" style="border-left-color: f.color;">
               <div class="feed-sender" style="color: ${f.color};">${f.sender} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${f.time || ''}</span></div>
               <div class="feed-text">"${f.text}"</div>
             </div>
