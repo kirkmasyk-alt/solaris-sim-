@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -237,8 +237,9 @@ body::after {
   border-bottom: 2px solid #2a1a66;
   align-items: center;
   text-align: center;
+  cursor: pointer;
 }
-.position-header { color: var(--amber); border-bottom: 2px solid var(--border-color); padding-bottom: 4px; }
+.position-header { color: var(--amber); border-bottom: 2px solid var(--border-color); padding-bottom: 4px; cursor: default; }
 .empty-note { text-align: center; color: var(--text-dim); padding: 16px; }
 .section-title { font-size: 15px; color: var(--amber); margin: 10px 0 4px; border-bottom: 2px solid var(--border-color); }
 
@@ -262,7 +263,7 @@ body::after {
 
 .dialog-overlay { position: fixed; inset: 0; background: rgba(5,0,15,0.85); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
 .dialog-overlay.open { display: flex; }
-.dialog-box { width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; background: var(--panel-bg); border: 4px solid var(--outline); box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422, 0 0 0 2px var(--cyan); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.dialog-box { width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; background: var(--panel-bg); border: 4px solid var(--outline); box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422, 0 0 0 2px var(--cyan); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
 .dialog-title { font-family: var(--pixel); font-size: 11px; color: var(--cyan); text-shadow: 2px 2px 0 var(--border-color); line-height: 1.4; }
 .dialog-msg { font-size: 16px; color: var(--text-dim); }
 .dialog-label { font-size: 15px; color: var(--text-dim); }
@@ -278,7 +279,6 @@ body::after {
 .chip strong { display: block; color: var(--text-main); font-size: 15px; word-break: break-all; }
 .dialog-msg { white-space: pre-line; }
 #war-room-container { max-height: 460px; }
-
 .audit-btns { display: flex; gap: 4px; flex-wrap: wrap; }
 
 </style>
@@ -296,7 +296,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V15.2</div>
+          <div class="logo-sub">PAPER TRADING // V15.3</div>
         </div>
       </div>
       <div class="header-btns">
@@ -373,7 +373,7 @@ body::after {
     </div>
 
     <div id="tab-positions" class="tab-pane panel">
-      <div class="pane-title">// OPEN HOLDINGS &amp; MANUAL LIQUIDATION</div>
+      <div class="pane-title">// OPEN HOLDINGS (TAP FOR DEEP INSPECT)</div>
       <div class="terminal-box" id="positions-container">
         <div class="position-row position-header">
           <div>ASSET</div><div>HOLDING</div><div>AVG COST</div><div>P&amp;L ($)</div><div>ACTION</div>
@@ -387,7 +387,7 @@ body::after {
     <div id="tab-ledger" class="tab-pane panel">
       <div class="pane-title">// COMPLETED TRANSACTION LEDGER</div>
       <div class="terminal-box" id="ledger-container" style="height: 320px;">
-        <div class="position-row position-header" style="grid-template-columns: 1fr 1.2fr 1fr 1fr;">
+        <div class="position-row position-header" style="grid-template-columns: 1fr 1.2fr 1fr 1fr; cursor: default;">
           <div>TIME</div><div>ASSET</div><div>TRIGGER</div><div>P&amp;L ($)</div>
         </div>
         <div id="ledger-list"></div>
@@ -433,7 +433,27 @@ body::after {
     </div>
 
   </div>
+
+  <!-- Dialog Overlay -->
   <div id="dialog-overlay" class="dialog-overlay"><div id="dialog-box" class="dialog-box" role="dialog" aria-modal="true"></div></div>
+
+  <!-- Coin Inspector Modal -->
+  <div id="inspector-overlay" class="dialog-overlay">
+    <div id="inspector-box" class="dialog-box" role="dialog" aria-modal="true">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+        <img id="insp-logo" alt="" src="" style="width: 32px; height: 32px; image-rendering: pixelated; border-radius: 4px; display: none; background: #2a1a66;" />
+        <div class="dialog-title" id="insp-title" style="margin-bottom: 0;">// COIN DEEP INSPECT</div>
+      </div>
+      <div class="terminal-box" id="insp-content" style="height: 160px; font-size: 14px;"></div>
+      <div style="background: #07010f; border: 2px solid var(--outline); padding: 4px; text-align: center;">
+        <canvas id="insp-chart" width="400" height="110" style="width: 100%; height: 100px; image-rendering: pixelated; display: block;"></canvas>
+      </div>
+      <div class="dialog-btns" style="margin-top: 6px;">
+        <button class="cyber-btn accent" onclick="closeInspector()">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
   <script>
 'use strict';
 /* ORBITAL // HQ — paper-trading dashboard. Everything here is simulated; no real funds move. */
@@ -512,8 +532,7 @@ const auditSeen = {};
 
 const HOUR = 60 * 60 * 1000;
 const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR };
-const IGNORED_SYMBOLS = ['USDC', 'USDT'];
-const STORE_KEY = 'orbital_state_v2';
+const STORE_KEY = 'orbital_state_v3';
 
 const AGENT_JOBS = {
   boss: 'Supervises the swarm. Enforces momentum-based duration rules and principal-recovery exits.',
@@ -543,7 +562,7 @@ function defaultState() {
     positions: {}, costBasis: {}, symbols: {}, entryTimes: {}, peaks: {}, tiers: {},
     archive: {}, realizedPnl: 0, fees: 0, txCount: 0,
     mode: 'GROWTH', decision: 'COUNCIL', sound: true,
-    stats: {}, ledger: {}, tradePnl: {}, entryFeat: {}, entryCost: {}, journal: [], overrides: {}
+    stats: {}, ledger: {}, tradePnl: {}, entryFeat: {}, entryCost: {}, runnerRecovered: {}, journal: [], overrides: {}
   };
 }
 
@@ -750,12 +769,10 @@ function isActive(c) {
   return true;
 }
 
-// MACRO_9: Dynamic Duration Analyzer (Decides if coin is minute scalp or multi-day hold)
 function determineHoldHorizon(c) {
   const turnover = c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0;
   const tx = Math.max(1, c.buysH1 + c.sellsH1);
   const buyRatio = c.buysH1 / tx;
-  
   if (isMajorWave(c)) return 'MULTI-DAY WAVE';
   if (turnover > 1.5 && buyRatio > 0.65) return 'MOMENTUM SURGE (Hours)';
   if (turnover > 0.5) return 'QUICK SCALP (Minutes)';
@@ -801,7 +818,7 @@ function classifyDipOrDump(c) {
 
 function isClone(c) {
   const t = symbolTop[c.symbol];
-  return !!t && t.address !== c.address && t.liquidity > t.liquidity;
+  return !!t && t.address !== c.address && t.liquidity > c.liquidity;
 }
 
 function heldAddrs() { return Object.keys(state.positions).filter(a => state.positions[a] > 0.00001); }
@@ -978,10 +995,7 @@ function forceClearStalePositions() {
   let clearedCount = 0;
   held.forEach(addr => {
     const coin = market.get(addr);
-    if (!isFresh(coin)) {
-      clearPosition(addr);
-      clearedCount++;
-    }
+    if (!isFresh(coin)) { clearPosition(addr); clearedCount++; }
   });
   saveState();
   renderAll();
@@ -1092,10 +1106,7 @@ function openPosition(coin) {
 
   const major = isMajorWave(coin);
   const held = heldAddrs();
-  const majorHeldCount = held.filter(a => {
-    const sym = state.symbols[a];
-    return sym === 'SOL' || sym === 'WSOL';
-  }).length;
+  const majorHeldCount = held.filter(a => state.symbols[a] === 'SOL' || state.symbols[a] === 'WSOL').length;
 
   if (major && majorHeldCount >= 2) return;
 
@@ -1116,7 +1127,7 @@ function openPosition(coin) {
   state.entryFeat[addr] = featOf(coin);
   state.entryCost[addr] = spend;
   state.tradePnl[addr] = 0;
-  state.runnerRecovered[addr] = false; // Tracks if initial cost + profit has been recovered
+  state.runnerRecovered[addr] = false;
   bump('trader', 'entries'); bump('macro', 'picks');
   state.fees += fee;
   state.txCount += 1;
@@ -1159,11 +1170,9 @@ function runExits() {
 
     if (gain <= stopLimit) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
 
-    // PRINCIPAL-RECOVERY & FREE RUNNER LOGIC:
-    // When a trade hits +10% gain (or +$1.00 profit), sell enough of the position to recover 100% of the initial cost + profit, letting the rest ride as a free runner!
+    // Principal Recovery & Free Runner Execution (+8% gain trigger)
     if (!state.runnerRecovered[addr] && gain >= 8.0) {
       const initialCost = state.entryCost[addr] || (totalCurrentValue / (1 + gain / 100));
-      // Sell exact quantity equal to initial cost + desired profit target, leaving a free runner bag
       const sellFraction = Math.min(0.85, initialCost / totalCurrentValue);
       const qtyToSell = state.positions[addr] * sellFraction;
       
@@ -1179,7 +1188,6 @@ function runExits() {
       }
     }
 
-    // Trailing stop-loss for free runner bags or standard exits
     if (state.runnerRecovered[addr] && drop >= 12.0 && !healthyDip) {
       closePosition(addr, coin, 'RUNNER EXIT', 'Free runner trailing stop hit on');
       continue;
@@ -1227,7 +1235,6 @@ function runExits() {
       continue;
     }
 
-    // Dynamic Horizon Stale Exit: Scalps close quickly in minutes, while multi-hour/multi-day waves stay patient
     const maxHoldTime = horizon === 'QUICK SCALP (Minutes)' ? 30 * 60 * 1000 : (horizon === 'MOMENTUM SURGE (Hours)' ? 6 * 60 * 60 * 1000 : CFG.staleExitMs);
     if (!major && !state.runnerRecovered[addr] && now - (state.entryTimes[addr] || now) > maxHoldTime && gain < 2.0) {
       closePosition(addr, coin, 'STALE EXIT', `Horizon (${horizon}) time elapsed, closed`);
@@ -1550,14 +1557,14 @@ function renderPositions() {
       const coin = market.get(a);
       const qty = state.positions[a], cost = state.costBasis[a];
       const pnl = exitValue(a) - qty * cost;
-      return `<div class="position-row">
+      return `<div class="position-row" onclick="inspectCoin('${escapeHtml(a)}')">
         <strong style="color: var(--cyan);">${escapeHtml(state.symbols[a] || '?')}</strong>
         <span>${qty > 1000 ? Math.round(qty).toLocaleString() : qty.toFixed(2)}</span>
         <span>${fmtPrice(cost)}</span>
         <span style="color: ${pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${fmtSigned(pnl)}</span>
-        <button class="cyber-btn danger" data-sell="${escapeHtml(a)}">SELL</button>
+        <button class="cyber-btn danger" onclick="event.stopPropagation(); manualSellPosition('${escapeHtml(a)}')">SELL</button>
       </div>`;
-    }).join('') : '<div class="empty-note">NO ACTIVE POSITIONS HELD</div>';
+    }).join('') : '<div class="empty-note">NO ACTIVE POSITIONS HELD (TAP ANY FOR INSPECT)</div>';
   }
   const arch = $('archive-list');
   if (arch) {
@@ -1565,7 +1572,7 @@ function renderPositions() {
     const rows = Object.entries(state.archive).filter(([, e]) => e.until > now);
     arch.innerHTML = rows.length ? rows.map(([a, e]) => {
       const mins = Math.max(1, Math.round((e.until - now) / 60000));
-      return `<div class="position-row" style="grid-template-columns: 1fr 1.4fr 1fr 1fr;">
+      return `<div class="position-row" style="grid-template-columns: 1fr 1.4fr 1fr 1fr; cursor: default;" onclick="inspectCoin('${escapeHtml(a)}')">
         <strong style="color: var(--amber);">${escapeHtml(e.symbol)}</strong>
         <span>${escapeHtml(e.reason)}</span><span>${fmtSigned(e.pnl)}</span><span>${mins}m</span></div>`;
     }).join('') : '<div class="empty-note">NOTHING BENCHED</div>';
@@ -1577,7 +1584,7 @@ function renderLedger() {
   if (!list) return;
   const history = state.journal || [];
   list.innerHTML = history.length ? history.slice().reverse().map(j => `
-    <div class="position-row" style="grid-template-columns: 1fr 1.2fr 1fr 1fr; font-size: 13px;">
+    <div class="position-row" style="grid-template-columns: 1fr 1.2fr 1fr 1fr; font-size: 13px; cursor: default;">
       <span style="color: var(--text-dim);">${escapeHtml(j.time || '12:00')}</span>
       <strong style="color: var(--cyan);">${escapeHtml(j.symbol || 'ASSET')}</strong>
       <span>${escapeHtml(j.tag)}</span>
@@ -1641,6 +1648,90 @@ function renderProtocol() {
     `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ${(CFG.baseSlippage * 100).toFixed(1)}%+ slippage per side`
   ];
   box.innerHTML = lines.map(l => `<div class="protocol-line">• ${escapeHtml(l)}</div>`).join('');
+}
+
+// Coin Inspector & Chart Logic
+function drawInspChart(coin, entryPrice) {
+  const canvas = $('insp-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#07010f';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const pts = [];
+  let p = entryPrice ? entryPrice * (1 + (Math.random() * 0.1 - 0.05)) : coin.price * 0.95;
+  for (let i = 0; i < 12; i++) {
+    pts.push(p);
+    p += (coin.price - p) * 0.3 + (Math.random() - 0.48) * (coin.price * 0.02);
+  }
+  pts.push(coin.price);
+
+  const min = Math.min(...pts, entryPrice || coin.price);
+  const max = Math.max(...pts, entryPrice || coin.price);
+  const range = max - min || 1;
+  const w = canvas.width, h = canvas.height;
+
+  ctx.strokeStyle = '#00f0ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  pts.forEach((val, idx) => {
+    const x = (idx / (pts.length - 1)) * (w - 20) + 10;
+    const y = h - 15 - ((val - min) / range) * (h - 30);
+    if (idx === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  if (entryPrice && entryPrice > 0) {
+    const ey = h - 15 - ((entryPrice - min) / range) * (h - 30);
+    ctx.strokeStyle = '#ff3b5c';
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(10, ey); ctx.lineTo(w - 10, ey); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#ff3b5c';
+    ctx.font = '12px VT323';
+    ctx.fillText(`ENTRY: ${fmtPrice(entryPrice)}`, 14, ey - 4);
+  }
+}
+
+function inspectCoin(addr) {
+  const coin = market.get(addr);
+  const box = $('insp-content');
+  const logoEl = $('insp-logo');
+  if (!coin || !box) return;
+
+  if (logoEl) {
+    logoEl.src = `https://cdn.dexscreener.com/token-images/solana/${coin.address}`;
+    logoEl.style.display = 'block';
+    logoEl.onerror = () => { logoEl.style.display = 'none'; };
+  }
+
+  const tx = Math.max(1, coin.buysH1 + coin.sellsH1);
+  const buyRatio = Math.round(100 * coin.buysH1 / tx);
+  const turnover = coin.liquidity > 0 ? (coin.volumeH1 / coin.liquidity).toFixed(2) : '0';
+  const horizon = determineHoldHorizon(coin);
+  const heldQty = state.positions[addr] || 0;
+  const cost = state.costBasis[addr] || coin.price;
+  const pnl = heldQty > 0 ? exitValue(addr) - heldQty * cost : 0;
+
+  box.innerHTML = `
+    <div class="protocol-line"><strong>SYMBOL:</strong> ${escapeHtml(coin.symbol)}</div>
+    <div class="protocol-line"><strong>ADDRESS:</strong> ${escapeHtml(coin.address)}</div>
+    <div class="protocol-line"><strong>TIER:</strong> ${isMajorWave(coin) ? 'MAJOR WAVE / PERP' : 'MEMECOIN SCALP'}</div>
+    <div class="protocol-line"><strong>PRICE:</strong> ${fmtPrice(coin.price)}</div>
+    <div class="protocol-line"><strong>LIQUIDITY:</strong> ${fmtCurrency(coin.liquidity)}</div>
+    <div class="protocol-line"><strong>1H VOLUME:</strong> ${fmtCurrency(coin.volumeH1)} (Turnover: ${turnover}x)</div>
+    <div class="protocol-line"><strong>1H TXNS:</strong> ${tx} (${buyRatio}% Buys)</div>
+    <div class="protocol-line"><strong>PRICE CHANGE:</strong> 5m: ${coin.change5m}% | 1h: ${coin.change1h}%</div>
+    <div class="protocol-line"><strong>AI HORIZON:</strong> ${horizon}</div>
+    <div class="protocol-line"><strong>HOLDING:</strong> ${heldQty > 0 ? heldQty.toFixed(2) + ' tokens (' + fmtSigned(pnl) + ')' : 'None'}</div>
+  `;
+
+  drawInspChart(coin, heldQty > 0 ? cost : null);
+  $('inspector-overlay').classList.add('open');
+}
+
+function closeInspector() {
+  $('inspector-overlay').classList.remove('open');
 }
 
 const SW = 36, SH = 40;
@@ -1987,11 +2078,6 @@ window.addEventListener('unhandledrejection', e => pushErr('Promise: ' + ((e.rea
 const _consoleError = console.error;
 console.error = function () { pushErr(Array.prototype.slice.call(arguments).map(String).join(' ')); _consoleError.apply(console, arguments); };
 
-function auditNote(text) {
-  councilFeed.unshift({ sender: 'AUDITOR-7', text, color: '#39ff88', time: new Date().toLocaleTimeString() });
-  if (councilFeed.length > 40) councilFeed.pop();
-}
-
 function journalStats(rows) {
   const n = rows.length;
   const wins = rows.filter(j => j.win), losses = rows.filter(j => !j.win);
@@ -2021,7 +2107,6 @@ function runAudit() {
   const rows = state.journal.filter(j => j.mode === state.mode);
   const js = journalStats(rows);
   const cost2 = 2 * (CFG.feeRate + CFG.baseSlippage) * 100;
-  const hasKey = (localStorage.getItem('gemini_api_key') || '').length > 5;
 
   if (lastScan.req) {
     const r = lastScan.ok / lastScan.req;
@@ -2052,7 +2137,6 @@ function runAudit() {
   }
 
   if (js.n >= 10) {
-    const pf = js.profitFactor === null ? 'n/a' : js.profitFactor.toFixed(2);
     add(js.expectancy < 0 ? 'bad' : 'ok', 'expect', js.expectancy < 0 ? 'Strategy loses money' : 'Strategy is profitable', `${js.n} trades: win rate ${Math.round(js.winRate * 100)}%, expectancy ${js.expectancy.toFixed(2)}%/trade.`);
   }
 
