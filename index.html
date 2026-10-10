@@ -340,7 +340,7 @@
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap;">VAULT SWARM V13.0</div>
+          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap;">VAULT SWARM V13.1</div>
         </div>
       </div>
       <div class="header-btns">
@@ -446,7 +446,7 @@
       <div style="font-size: 16px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
       <div class="status-row"><span>DISCOVERY FEED:</span> <strong style="color: var(--green);">ONLINE [MEGA-STREAM + LIVE PROFILES]</strong></div>
-      <div class="status-row"><span>MAX POSITION CAP:</span> <strong style="color: var(--green);">ACTIVE [35% BANKROLL LIMIT]</strong></div>
+      <div class="status-row"><span>MAX POSITION CAP:</span> <strong style="color: var(--green);">ACTIVE [20% BANKROLL PER ENTRY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 8/8 MEGA-STREAM AGENTS</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
@@ -500,14 +500,23 @@
       sweepPct: parseFloat(localStorage.getItem('solaris_sweep_pct')) || 20,
       positions: loadJSON('solaris_positions', {}),
       costBasis: loadJSON('solaris_cost_basis', {}),
-      // NEW: remembers each held token's contract address so held coins keep getting live prices
+      // remembers each held token's contract address so held coins keep getting live prices
       addresses: loadJSON('solaris_addresses', {}),
+      // NEW: when each position was opened (for the stale-hold exit)
+      entryTimes: loadJSON('solaris_entry_times', {}),
+      // NEW: when each coin was last sold (blocks instant rebuys)
+      cooldowns: loadJSON('solaris_cooldowns', {}),
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
       councilFeed: [{ sender: 'RISK_CORE', text: `Mega-stream active [${operationalMode}]. Massive pool indexing enabled.`, color: '#f9f871', time: '00:00' }]
     };
+
+    // ---- TRADING RULES (tune these) ----
+    const REBUY_COOLDOWN_MS = 30 * 60 * 1000;  // wait before buying a sold coin again
+    const MAX_HOLD_MS = 20 * 60 * 1000;        // flat positions older than this get closed
+    const STALE_BAND_PCT = 1.5;                // "flat" = within +/- this % of cost
 
     // ---- 8-BIT SOUND EFFECTS (synthesized with Web Audio, no audio files) ----
     let soundOn = localStorage.getItem('orbital_sound') !== 'off';
@@ -594,7 +603,9 @@
       delete state.positions[sym];
       delete state.costBasis[sym];
       delete state.addresses[sym];
+      delete state.entryTimes[sym];
       delete peakPrices[sym];
+      state.cooldowns[sym] = Date.now();
 
       state.cash += netReturn;
       state.realizedPnl += pnlDelta;
@@ -917,6 +928,8 @@
       localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
       localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
       localStorage.setItem('solaris_addresses', JSON.stringify(state.addresses));
+      localStorage.setItem('solaris_entry_times', JSON.stringify(state.entryTimes));
+      localStorage.setItem('solaris_cooldowns', JSON.stringify(state.cooldowns));
       localStorage.setItem('solaris_peak_prices', JSON.stringify(peakPrices));
       localStorage.setItem('solaris_last_trade', state.lastTradeTime);
     }
@@ -939,6 +952,8 @@
       state.positions = {};
       state.costBasis = {};
       state.addresses = {};
+      state.entryTimes = {};
+      state.cooldowns = {};
       peakPrices = {};
       saveState();
       addSystemLog(`[CONFIG] Treasury reset to clean baseline.`);
@@ -1004,6 +1019,50 @@
       renderAll();
     }
 
+    // Closes a whole position at the live price: applies fee, profit sweep, cooldown, logs, saves.
+    function closePosition(sym, coin, tag, msg) {
+      const qty = state.positions[sym];
+      if (!qty || qty <= 0) return;
+      const cost = state.costBasis[sym] || coin.price;
+      const gross = qty * coin.price;
+      const fee = gross * 0.003;
+      const netReturn = gross - fee;
+      const pnlDelta = netReturn - qty * cost;
+
+      delete state.positions[sym];
+      delete state.costBasis[sym];
+      delete state.addresses[sym];
+      delete state.entryTimes[sym];
+      delete peakPrices[sym];
+      state.cooldowns[sym] = Date.now();
+
+      if (pnlDelta > 0 && state.sweepPct > 0) {
+        const sweep = pnlDelta * (state.sweepPct / 100);
+        state.cash += netReturn - sweep;
+        state.vault += sweep;
+        agentSpeak('cfo', 'SWEEP!');
+      } else {
+        state.cash += netReturn;
+      }
+
+      state.realizedPnl += pnlDelta;
+      state.totalFeesPaid += fee;
+      state.txCount += 1;
+      state.lastTradeTime = Date.now();
+
+      playSfx(pnlDelta >= 0 ? 'win' : 'loss');
+      addSystemLog(`[${tag}] ${msg} ${sym} | P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
+      state.councilFeed.unshift({
+        sender: 'ALPHA_X',
+        text: `[${operationalMode}] ${tag} on ${sym} | P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`,
+        color: '#00f0ff',
+        time: new Date().toLocaleTimeString()
+      });
+      state.councilFeed = state.councilFeed.slice(0, 30);
+      saveState();
+      renderAll();
+    }
+
     function runTradingLoop() {
       try {
         if (marketCoins.length === 0) return;
@@ -1014,142 +1073,83 @@
           return;
         }
 
-        let activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
+        // ---- EXITS: every held coin is checked on every tick ----
+        const targetProfit = operationalMode === 'SNIPER' ? 5.0 : 2.5;
+        const activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
 
-        for (let sym of activeSymbols) {
-          let coin = marketCoins.find(c => c.symbol === sym);
+        for (const sym of activeSymbols) {
+          const coin = marketCoins.find(c => c.symbol === sym);
           if (!coin) continue;
 
-          let qty = state.positions[sym];
-          let cost = state.costBasis[sym] || coin.price;
-          let gainPct = ((coin.price - cost) / cost) * 100;
+          const cost = state.costBasis[sym] || coin.price;
+          const gainPct = ((coin.price - cost) / cost) * 100;
 
           if (!peakPrices[sym] || coin.price > peakPrices[sym]) {
             peakPrices[sym] = coin.price;
           }
+          const peakPrice = peakPrices[sym];
+          const peakGainPct = ((peakPrice - cost) / cost) * 100;
+          const dropFromPeakPct = peakPrice > 0 ? ((peakPrice - coin.price) / peakPrice) * 100 : 0;
 
-          let peakPrice = peakPrices[sym];
-          let peakGainPct = ((peakPrice - cost) / cost) * 100;
-          let dropFromPeakPct = peakPrice > 0 ? ((peakPrice - coin.price) / peakPrice) * 100 : 0;
+          // positions opened before this update have no timestamp: start their clock now
+          if (!state.entryTimes[sym]) state.entryTimes[sym] = now;
+          const heldMs = now - state.entryTimes[sym];
 
           if (gainPct <= -2.5) {
-            let gross = qty * coin.price;
-            let fee = gross * 0.003;
-            let netReturn = gross - fee;
-            let pnlDelta = netReturn - (qty * cost);
-
-            delete state.positions[sym];
-            delete state.costBasis[sym];
-            delete state.addresses[sym];
-            delete peakPrices[sym];
-            state.cash += netReturn;
-            state.realizedPnl += pnlDelta;
-            state.totalFeesPaid += fee;
-            state.txCount += 1;
-
-            playSfx('loss'); addSystemLog(`[STOP-LOSS CUT] RISK_CORE cut ${sym} at ${gainPct.toFixed(1)}% | P&L: ${fmtCurrency(pnlDelta)}`);
-            saveState();
-            renderAll();
+            closePosition(sym, coin, 'STOP-LOSS CUT', `RISK_CORE cut at ${gainPct.toFixed(1)}%:`);
             return;
           }
-
+          if (gainPct >= targetProfit) {
+            closePosition(sym, coin, 'FULL TAKE-PROFIT', 'Target secured on');
+            return;
+          }
           if (peakGainPct >= 10.0 && dropFromPeakPct >= 25.0) {
-            let gross = qty * coin.price;
-            let fee = gross * 0.003;
-            let netReturn = gross - fee;
-            let pnlDelta = netReturn - (qty * cost);
-
-            delete state.positions[sym];
-            delete state.costBasis[sym];
-            delete state.addresses[sym];
-            delete peakPrices[sym];
-            state.cash += netReturn;
-            state.realizedPnl += pnlDelta;
-            state.totalFeesPaid += fee;
-            state.txCount += 1;
-
-            playSfx(pnlDelta >= 0 ? 'win' : 'loss'); addSystemLog(`[TRAILING LOCK] KIRKTRON 9001 secured peak profits on ${sym}! P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
-            saveState();
-            renderAll();
+            closePosition(sym, coin, 'TRAILING LOCK', 'KIRKTRON 9001 secured peak profits on');
+            return;
+          }
+          if (heldMs >= MAX_HOLD_MS && Math.abs(gainPct) < STALE_BAND_PCT) {
+            closePosition(sym, coin, 'STALE EXIT', 'No movement, freeing cash from');
             return;
           }
         }
 
-        let targetCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-        if (!targetCoin || targetCoin.price <= 0) return;
+        // ---- ENTRY: only coins we don't hold and haven't just sold ----
+        if (state.cash <= 20.0) return;
 
-        let curHold = state.positions[targetCoin.symbol] || 0;
-        let currentPosValue = curHold * targetCoin.price;
-        let totalNetWorthEst = state.cash + state.vault + currentPosValue;
+        const candidates = marketCoins.filter(c =>
+          c.price > 0 &&
+          !((state.positions[c.symbol] || 0) > 0.00001) &&
+          (now - (state.cooldowns[c.symbol] || 0)) > REBUY_COOLDOWN_MS
+        );
+        if (candidates.length === 0) return;
 
-        if (currentPosValue > totalNetWorthEst * 0.35) {
-          return;
-        }
+        const targetCoin = candidates[Math.floor(Math.random() * candidates.length)];
+        const spend = state.cash * 0.20;
+        const fee = spend * 0.003;
+        const netSpend = spend - fee;
+        state.cash -= spend;
 
-        let action = 'buy';
-        let pnlDelta = 0;
-        let fee = 0;
-        const avgCost = state.costBasis[targetCoin.symbol] || targetCoin.price;
-        let originalCostBasisValue = curHold * avgCost;
-        let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPosValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
-        let targetProfit = operationalMode === 'SNIPER' ? 5.0 : 2.5;
+        const tokens = netSpend / targetCoin.price;
+        state.costBasis[targetCoin.symbol] = targetCoin.price;
+        state.positions[targetCoin.symbol] = tokens;
+        state.entryTimes[targetCoin.symbol] = now;
+        if (targetCoin.address) state.addresses[targetCoin.symbol] = targetCoin.address;
+        peakPrices[targetCoin.symbol] = targetCoin.price;
 
-        if (curHold > 0.00001 && unrealizedGainPct >= targetProfit) {
-          let sellTokens = curHold;
-          let gross = sellTokens * targetCoin.price;
-          fee = gross * 0.003;
-          let netReturn = gross - fee;
+        state.totalFeesPaid += fee;
+        state.txCount += 1;
+        state.lastTradeTime = now;
 
-          pnlDelta = netReturn - originalCostBasisValue;
-          delete state.positions[targetCoin.symbol];
-          delete state.costBasis[targetCoin.symbol];
-          delete state.addresses[targetCoin.symbol];
-          delete peakPrices[targetCoin.symbol];
-
-          if (pnlDelta > 0 && state.sweepPct > 0) {
-            let sweepAmount = pnlDelta * (state.sweepPct / 100);
-            state.cash += (netReturn - sweepAmount);
-            state.vault += sweepAmount;
-            agentSpeak('cfo', 'SWEEP!');
-          } else {
-            state.cash += netReturn;
-          }
-
-          state.realizedPnl += pnlDelta;
-          state.totalFeesPaid += fee;
-          state.txCount += 1;
-
-          playSfx('win'); addSystemLog(`[FULL TAKE-PROFIT] Target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
-          action = 'sell';
-        } else if (state.cash > 20.0 && curHold === 0) {
-          let spend = state.cash * 0.20;
-          fee = spend * 0.003;
-          let netSpend = spend - fee;
-          state.cash -= spend;
-
-          let tokens = netSpend / targetCoin.price;
-          state.costBasis[targetCoin.symbol] = targetCoin.price;
-          state.positions[targetCoin.symbol] = tokens;
-          if (targetCoin.address) state.addresses[targetCoin.symbol] = targetCoin.address;
-          peakPrices[targetCoin.symbol] = targetCoin.price;
-
-          state.totalFeesPaid += fee;
-          state.txCount += 1;
-          playSfx('buy'); addSystemLog(`[NEW ENTRY] ALPHA_X bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
-          action = 'buy';
-        } else {
-          return;
-        }
-
-        state.lastTradeTime = Date.now();
-        saveState();
-
-        let councilText = action === 'buy' ?
-          `[${operationalMode}] Swarm executed entry into memecoin ${targetCoin.symbol}.` :
-          `[${operationalMode}] Target closed on ${targetCoin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
-
-        state.councilFeed.unshift({ sender: 'ALPHA_X', text: councilText, color: '#00f0ff', time: new Date().toLocaleTimeString() });
+        playSfx('buy');
+        addSystemLog(`[NEW ENTRY] ALPHA_X bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
+        state.councilFeed.unshift({
+          sender: 'ALPHA_X',
+          text: `[${operationalMode}] Swarm executed entry into memecoin ${targetCoin.symbol}.`,
+          color: '#00f0ff',
+          time: new Date().toLocaleTimeString()
+        });
         state.councilFeed = state.councilFeed.slice(0, 30);
+        saveState();
         renderAll();
       } catch (err) {
         console.error("Loop error:", err);
