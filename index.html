@@ -204,7 +204,6 @@
       border: 1px solid var(--border-color);
       padding: 8px;
       margin-bottom: 6px;
-      cursor: pointer;
     }
     .agent-header {
       display: flex;
@@ -235,7 +234,7 @@
 
     .position-row {
       display: grid;
-      grid-template-columns: 1fr 1.2fr 1fr 1.2fr;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
       font-size: 9px;
       padding: 6px;
       background: rgba(0, 0, 0, 0.4);
@@ -257,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V9.2</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V9.4</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -324,7 +323,7 @@
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Modular operational modes & custom agent roles initialized.</div>
+        <div style="color: var(--green);">[00:01] Capital rotation and specialized bot specialties online.</div>
       </div>
     </div>
 
@@ -337,20 +336,20 @@
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE & SNIPER ALERTS</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // SNIPER WIRE</div>
-          <div class="feed-text">Scanning new memecoin launches and high-velocity boosts...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // WIRE ACTIVE</div>
+          <div class="feed-text">Streaming verified boost signals for autonomous execution...</div>
         </div>
       </div>
     </div>
 
     <div id="tab-positions" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// OPEN HOLDINGS & LEDGER AUDIT</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// OPEN HOLDINGS & INDIVIDUAL P&L AUDIT</div>
       <div class="terminal-box" style="height: 240px; padding: 4px;" id="positions-container">
         <div class="position-row position-header">
           <div>ASSET</div>
           <div>HOLDING</div>
           <div>AVG COST</div>
-          <div>P&L / VALUE</div>
+          <div>P&L ($)</div>
         </div>
         <div id="positions-list"></div>
       </div>
@@ -359,16 +358,16 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
-      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--green);">ONLINE [SNIPER READY]</strong></div>
+      <div class="status-row"><span>WHALE WATCHER WIRE:</span> <strong style="color: var(--green);">ONLINE [AUTO-ROTATE]</strong></div>
       <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>DEX FEE TRACKER:</span> <strong style="color: var(--amber);" id="status-fees">$0.00 CUMULATIVE</strong></div>
-      <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 7/7 UNITS OPERATIONAL</strong></div>
+      <div class="status-row"><span>AI AGENT SWARM:</span> <strong style="color: var(--green);">● 7/7 SPECIALIZED UNITS</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
 
     <div id="tab-warroom" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (CLICK AGENT TO RECONFIGURE ROLE)</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (SPECIALIZED AGENT SPECIALTIES)</div>
       <div id="war-room-container" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
     </div>
   </div>
@@ -379,19 +378,20 @@
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Sniper Mode ready. Click any bot in the War Room to customize its role.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Capital rotation protocol active. Bots will balance holdings to keep cash flowing.', time: '00:00' }
     ];
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
 
-    let agentDefs = JSON.parse(localStorage.getItem('solaris_agents')) || [
-      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Chief Risk Officer (Advisory)', color: '#a855f7', icon: '👁️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ADVISORY' },
-      { id: 'announcer', name: 'WHALE_EYE', role: 'DEX Screener Announcer', color: '#38bdf8', icon: '📡', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
-      { id: 'finance', name: 'KIRKTRON 9001', role: 'Portfolio Manager', color: '#38bdf8', icon: '🤖', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
-      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control', color: '#f59e0b', icon: '🛡️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
-      { id: 'trader', name: 'ALPHA_X', role: 'Execution Matrix', color: '#ef4444', icon: '⚡', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
-      { id: 'macro', name: 'MACRO_9', role: 'Strategy Planner', color: '#a855f7', icon: '🌐', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' },
-      { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Capital Authority', color: '#22c55e', icon: '🏛️', pnl: 0, minPnl: 0, hrPnl: 0, dayPnl: 0, wkPnl: 0, status: 'ACTIVE' }
+    // Permanent optimized agent specialties
+    const agentDefs = [
+      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Chief Risk Officer (Advisory & Tranches)', color: '#a855f7', icon: '👁️', pnl: 0, status: 'ADVISORY' },
+      { id: 'announcer', name: 'WHALE_EYE', role: 'DEX Screener Announcer & Signal Feed', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
+      { id: 'finance', name: 'KIRKTRON 9001', role: 'Portfolio Manager (Exit Gates & Sizing)', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
+      { id: 'risk', name: 'RISK_CORE', role: 'Exposure Control & Position Limits', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
+      { id: 'trader', name: 'ALPHA_X', role: 'Momentum Sniper & Execution Matrix', color: '#ef4444', icon: '⚡', pnl: 0, status: 'ACTIVE' },
+      { id: 'macro', name: 'MACRO_9', role: 'Trend Strategist & Depth Evaluator', color: '#a855f7', icon: '🌐', pnl: 0, status: 'ACTIVE' },
+      { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Capital Authority & Vault Sweeper', color: '#22c55e', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
     ];
 
     let state = {
@@ -404,7 +404,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'WHALE_EYE', text: `Mode active: ${operationalMode}. Ready for execution.`, color: '#38bdf8', time: '00:00' }]
+      councilFeed: [{ sender: 'WHALE_EYE', text: `Mode active: ${operationalMode}. Capital rotation ready.`, color: '#38bdf8', time: '00:00' }]
     };
 
     function setTradingMode(mode) {
@@ -412,18 +412,6 @@
       localStorage.setItem('solaris_mode', mode);
       addSystemLog(`[MODE] Switched operational mode to: ${mode}`);
       renderAll();
-    }
-
-    function inspectAgent(id) {
-      const a = agentDefs.find(x => x.id === id);
-      if (!a) return;
-      const newRole = prompt(`RECONFIGURE AGENT: ${a.name}\nEnter new role/objective description:`, a.role);
-      if (newRole !== null && newRole.trim() !== '') {
-        a.role = newRole.trim();
-        localStorage.setItem('solaris_agents', JSON.stringify(agentDefs));
-        addSystemLog(`[CONFIG] Agent ${a.name} reconfigured to: ${a.role}`);
-        renderAll();
-      }
     }
 
     function fmtCurrency(val) {
@@ -462,7 +450,6 @@
 
         let fetched = [];
         if (operationalMode === 'SNIPER' && data && data.pairs) {
-          // Sniper mode: Filter for brand-new or low-liquidity volatile memecoins
           const snipePairs = data.pairs.filter(p => p.chainId === 'solana' && p.priceUsd && p.liquidity && p.liquidity.usd < 100000).slice(0, 25);
           snipePairs.forEach(p => {
             if (p.baseToken && p.priceUsd) {
@@ -597,7 +584,7 @@
             if (val > 0 && state.cash >= val) {
               state.cash -= val;
               state.vault += val;
-              addSystemLog(`[VAULT] Transferred ${fmtCurrency(val)} from Bot Bankroll to Main Vault.`);
+              addSystemLog(`[VAULT] Transferred ${fmtCurrency(val)} to Main Vault.`);
             } else if (val < 0 && state.vault >= Math.abs(val)) {
               state.vault -= Math.abs(val);
               state.cash += Math.abs(val);
@@ -638,10 +625,36 @@
         if (marketCoins.length === 0) return;
 
         const now = Date.now();
-        // Sniper mode executes faster than growth mode
-        const cooldown = operationalMode === 'SNIPER' ? 6000 : 15000;
+        const cooldown = operationalMode === 'SNIPER' ? 5000 : 12000;
         if (state.lastTradeTime && (now - state.lastTradeTime < cooldown)) {
           return;
+        }
+
+        // Capital rotation check: If bankroll is low (<$15) and we hold positions, free up liquidity by selling the oldest bag
+        let activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
+        if (state.cash < 15.0 && activeSymbols.length > 0) {
+          let symToRotate = activeSymbols[0];
+          let coin = marketCoins.find(c => c.symbol === symToRotate);
+          if (coin) {
+            let qty = state.positions[symToRotate];
+            let gross = qty * coin.price;
+            let fee = gross * 0.003;
+            let netReturn = gross - fee;
+            let cost = state.costBasis[symToRotate] || coin.price;
+            let pnlDelta = netReturn - (qty * cost);
+
+            state.cash += netReturn;
+            state.realizedPnl += pnlDelta;
+            state.totalFeesPaid += fee;
+            state.txCount += 1;
+            delete state.positions[symToRotate];
+            delete state.costBasis[symToRotate];
+
+            addSystemLog(`[ROTATION] Rotated out of ${symToRotate} to replenish active bankroll. P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
+            saveState();
+            renderAll();
+            return;
+          }
         }
 
         if (state.cash < 15.0 && state.vault >= 25.0) {
@@ -671,9 +684,7 @@
         let currentPositionValue = curHold * coin.price;
         let originalCostBasisValue = curHold * avgCost;
         let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPositionValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
-
-        // Sniper mode aims for higher targets (5%), growth mode aims for 2%
-        let targetProfit = operationalMode === 'SNIPER' ? 5.0 : 2.0;
+        let targetProfit = operationalMode === 'SNIPER' ? 4.0 : 2.0;
 
         if (curHold > 0.00001 && unrealizedGainPct >= targetProfit) {
           let sellTokens = curHold;
@@ -700,8 +711,8 @@
           agent.pnl += pnlDelta;
           addSystemLog(`[EXEC] ${agent.name} SELL ${coin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
           action = 'sell';
-        } else if (state.cash > 15.0 && curHold === 0) {
-          let spend = operationalMode === 'SNIPER' ? state.cash * 0.30 : state.cash * 0.20;
+        } else if (state.cash > 20.0 && curHold === 0) {
+          let spend = operationalMode === 'SNIPER' ? state.cash * 0.25 : state.cash * 0.20;
           fee = spend * 0.003;
           let netSpend = spend - fee;
           state.cash -= spend;
@@ -712,7 +723,7 @@
 
           state.totalFeesPaid += fee;
           state.txCount += 1;
-          addSystemLog(`[EXEC] ${agent.name} SNIPE/BUY ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${coin.symbol} | Cost: $${spend.toFixed(2)}`);
+          addSystemLog(`[EXEC] ${agent.name} BUY ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${coin.symbol} | Cost: $${spend.toFixed(2)}`);
           action = 'buy';
         } else {
           return;
@@ -722,7 +733,7 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `[${operationalMode}] Target acquired. Allocated block into memecoin ${coin.symbol}.` :
+          `[${operationalMode}] Target acquired. Allocated block into ${coin.symbol}.` :
           `[${operationalMode}] Profit target secured on ${coin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ sender: agent.name, text: councilText, color: agent.color, time: new Date().toLocaleTimeString() });
@@ -801,13 +812,13 @@
               let qty = state.positions[sym];
               let cost = state.costBasis[sym] || coin.price;
               let mktVal = qty * coin.price;
-              let positionPnl = mktVal - (qty * cost);
+              let coinPnl = mktVal - (qty * cost);
               return `
                 <div class="position-row">
                   <strong style="color: var(--cyan);">${sym}</strong>
                   <span>${qty > 1000 ? Math.round(qty).toLocaleString() : qty.toFixed(2)}</span>
                   <span>${fmtPrice(cost)}</span>
-                  <span style="color: ${positionPnl >= 0 ? 'var(--green)' : 'var(--red)'};">${fmtCurrency(mktVal)}</span>
+                  <span style="color: ${coinPnl >= 0 ? 'var(--green)' : 'var(--red)'};">${coinPnl >= 0 ? '+' : ''}${fmtCurrency(coinPnl)}</span>
                 </div>
               `;
             }).join('');
@@ -827,7 +838,7 @@
         const warContainer = document.getElementById('war-room-container');
         if (warContainer) {
           warContainer.innerHTML = agentDefs.map(a => `
-            <div class="agent-card" style="border-color: ${a.color};" onclick="inspectAgent('${a.id}')">
+            <div class="agent-card" style="border-color: ${a.color};">
               <div class="agent-header">
                 <div class="robot-head" style="border-color: ${a.color}; color: ${a.color};">${a.icon}</div>
                 <div style="flex-grow: 1;">
@@ -851,7 +862,7 @@
         const feedContainer = document.getElementById('council-feed-container');
         if (feedContainer) {
           feedContainer.innerHTML = state.councilFeed.map(f => `
-            <div class="feed-item" style="border-left-color: ${f.color};">
+            <div class="feed-item" style="border-left-color: f.color;">
               <div class="feed-sender" style="color: ${f.color};">${f.sender} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${f.time || ''}</span></div>
               <div class="feed-text">"${f.text}"</div>
             </div>
