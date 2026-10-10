@@ -25,9 +25,7 @@
     }
 
     * {
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0;
+      box-sizing: border-box; margin: 0; padding: 0;
       font-family: var(--body);
       -webkit-font-smoothing: none;
     }
@@ -39,11 +37,10 @@
         linear-gradient(90deg, rgba(255,43,214,0.06) 1px, transparent 1px);
       background-size: 24px 24px, 24px 24px;
       color: var(--text-main);
-      font-size: 18px;
+      font-size: 16px;
       padding: 10px 14px 14px 10px;
       display: flex;
       justify-content: center;
-      min-height: 100vh;
     }
 
     body::after {
@@ -70,271 +67,237 @@
       padding: 12px;
     }
 
-    /* TOP STATS BAR */
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      font-family: var(--pixel);
-      font-size: 11px;
-      color: var(--text-dim);
-      padding: 2px 4px;
-    }
-    .top-bar .time { color: var(--text-main); }
-    .top-bar .mode { color: var(--cyan); }
-
-    /* HEADER */
     .header-panel {
       border-color: var(--border-color);
       text-align: center;
-      padding: 10px;
-    }
-    .networth-title {
-      font-size: 13px;
-      color: var(--text-dim);
-      letter-spacing: 1px;
-      margin-bottom: 4px;
-      font-family: var(--pixel);
-    }
-    .networth-amount {
-      font-family: var(--pixel);
-      font-size: 28px;
-      color: var(--green);
-      text-shadow: 2px 2px 0 #05000f;
     }
 
-    /* GRID MATRIX */
-    .grid-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-    }
-    .grid-box {
-      background: rgba(5, 0, 15, 0.4);
-      border: 2px solid #251254;
-      padding: 6px 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .grid-label {
+    .header-title {
+      font-family: var(--pixel);
       font-size: 12px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      font-weight: bold;
+      color: var(--cyan);
+      margin-bottom: 4px;
     }
-    .grid-value {
-      font-family: var(--pixel);
-      font-size: 11px;
-      color: var(--amber);
-    }
-    .grid-value.green { color: var(--green); }
-    .grid-value.red { color: var(--red); }
-    .grid-value.purple { color: var(--purple); }
-    .grid-value.cyan { color: var(--cyan); }
 
-    /* MENU NAVIGATION BUTTONS */
-    .menu-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-    }
-    .menu-btn {
-      background: #1c0d3f;
-      border: 2px solid var(--outline);
-      color: var(--text-dim);
+    .header-subtitle {
       font-family: var(--pixel);
       font-size: 10px;
-      padding: 8px 0;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: 2px 2px 0 var(--outline);
-    }
-    .menu-btn.active {
-      background: var(--cyan);
-      color: var(--outline);
-      border-color: var(--outline);
-      box-shadow: none;
-      transform: translate(2px, 2px);
-    }
-
-    /* LEDGER SECTION */
-    .ledger-title {
-      font-family: var(--pixel);
-      font-size: 11px;
-      color: var(--cyan);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .ledger-table-container {
-      background: #05000f;
-      border: 2px solid #251254;
-      height: 220px;
-      overflow-y: auto;
-    }
-    .ledger-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-    }
-    .ledger-table tr {
-      border-bottom: 1px solid rgba(37, 18, 84, 0.4);
-    }
-    .ledger-table td {
-      padding: 6px 8px;
-      vertical-align: middle;
-    }
-    .td-time { color: var(--text-dim); width: 75px; }
-    .td-coin { color: var(--cyan); font-weight: bold; width: 85px; }
-    .td-type { color: var(--text-main); }
-    .td-pnl { text-align: right; font-weight: bold; width: 80px; }
-    .td-pnl.red { color: var(--red); }
-    .td-pnl.green { color: var(--green); }
-
-    /* FOOTER ENGINE LOGS */
-    .engine-title {
-      font-family: var(--pixel);
-      font-size: 9px;
-      color: var(--purple);
-      margin-bottom: 4px;
-    }
-    .engine-terminal {
-      background: #03000a;
-      border: 1px solid #1a0b36;
-      padding: 6px 8px;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      color: var(--text-dim);
-      height: 55px;
-      overflow-y: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-    }
-    .engine-line { color: var(--green); }
-
-    /* ACTION CONTROLS */
-    .control-panel {
-      display: flex;
-      gap: 10px;
-      margin-top: -4px;
-    }
-    .ctrl-btn {
-      flex: 1;
-      font-family: var(--pixel);
-      font-size: 11px;
-      padding: 10px 0;
-      border: 3px solid var(--outline);
-      box-shadow: 3px 3px 0 var(--outline);
-      cursor: pointer;
       color: var(--text-main);
     }
-    .ctrl-btn:active {
+
+    .row-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      gap: 6px;
+    }
+    .row-label { font-size: 15px; color: var(--text-dim); text-transform: uppercase; }
+    .row-value { font-family: var(--pixel); font-size: 11px; color: var(--amber); }
+    .row-value.green { color: var(--green); }
+    .row-value.red { color: var(--red); }
+
+    .terminal-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .terminal-title {
+      font-size: 13px;
+      color: var(--text-dim);
+      padding-left: 4px;
+    }
+
+    .terminal-screen {
+      background: #05000f;
+      border: 2px solid #251254;
+      padding: 10px;
+      height: 150px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: var(--green);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .btn-panel {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      flex: 1;
+      background: #251254;
+      border: 3px solid var(--outline);
+      color: var(--text-main);
+      font-family: var(--pixel);
+      font-size: 10px;
+      padding: 12px 0;
+      cursor: pointer;
+      box-shadow: 3px 3px 0 var(--outline);
+    }
+
+    button:active {
       transform: translate(2px, 2px);
       box-shadow: 1px 1px 0 var(--outline);
     }
-    #run-btn { background: #0c3621; border-color: var(--green); color: var(--green); }
-    #halt-btn { background: #3d0c1b; border-color: var(--red); color: var(--red); }
+
+    button#start-btn { border-color: var(--green); color: var(--green); }
+    button#stop-btn { border-color: var(--red); color: var(--red); }
   </style>
 </head>
 <body>
 
   <div class="container">
     
-    <!-- TOP META BAR -->
-    <div class="top-bar">
-      <div>DECISIONS: <span class="time" id="top-time">16:24:00</span></div>
-      <div class="mode" id="bot-mode">AUTO (AI LEARNING)</div>
-    </div>
-    
-    <!-- MAIN TOTAL TREASURY VALUE HEADER -->
+    <!-- HEADER -->
     <div class="panel header-panel">
-      <div class="networth-title">TOTAL TREASURY NET WORTH</div>
-      <div class="networth-amount" id="networth-val">$785.75</div>
+      <div class="header-title">ORBITAL // HQ</div>
+      <div class="header-subtitle">AUTONOMOUS CRYPTO TREASURY AI</div>
     </div>
 
-    <!-- METRICS GRID MATRIX -->
-    <div class="panel grid-container">
-      <div class="grid-box">
-        <span class="grid-label">Realized P&L</span>
-        <span class="grid-value red" id="realized-val">-$210.79</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Unrealized P&L</span>
-        <span class="grid-value green" id="unrealized-val">+$3.88</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Total Fees</span>
-        <span class="grid-value" id="fees-val">$13.09</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Bot Bankroll</span>
-        <span class="grid-value" id="bankroll-val">$462.36</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Main Vault</span>
-        <span class="grid-value purple" id="vault-val">$6.90</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Coins Seen</span>
-        <span class="grid-value cyan" id="seen-val">30</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Hot (Buyable)</span>
-        <span class="grid-value green" id="hot-val">8</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Benched</span>
-        <span class="grid-value" id="benched-val">2</span>
-      </div>
-      <div class="grid-box">
-        <span class="grid-label">Feeds Online</span>
-        <span class="grid-value purple" id="feeds-val">4/9</span>
-      </div>
-    </div>
-
-    <!-- NAVIGATION TABS -->
-    <div class="menu-grid">
-      <div class="menu-btn">HUB</div>
-      <div class="menu-btn">COUNCIL</div>
-      <div class="menu-btn">NEWS</div>
-      <div class="menu-btn">POSITIONS</div>
-      <div class="menu-btn active">LEDGER</div>
-      <div class="menu-btn">STATUS</div>
-      <div class="menu-btn">WAR ROOM</div>
-      <div class="menu-btn">AUDIT 2!</div>
-    </div>
-
-    <!-- COMPLETED TRANSACTION LEDGER -->
+    <!-- METRICS ROW PANEL -->
     <div class="panel">
-      <div class="ledger-title">// COMPLETED TRANSACTION LEDGER</div>
-      <div class="ledger-table-container">
-        <table class="ledger-table" id="ledger-body">
-          <!-- Live entries push directly here -->
-          <tr>
-            <td class="td-time">16:23:31</td>
-            <td class="td-coin">UZICAT</td>
-            <td class="td-type">STOP-LOSS CUT</td>
-            <td class="td-pnl red">-$7.38</td>
-          </tr>
-          <tr>
-            <td class="td-time">16:13:40</td>
-            <td class="td-coin">FRANK</td>
-            <td class="td-type">STOP-LOSS CUT</td>
-            <td class="td-pnl red">-$5.74</td>
-          </tr>
-          <tr>
-            <td class="td-time">16:09:45</td>
-            <td class="td-coin">UZICAT</td>
-            <td class="td-type">STOP-LOSS CUT</td>
-            <td class="td-pnl red">-$38.13</td>
-          </tr>
-          <tr>
-            <td class="td-time">16:08:04</td>
-            <td class="td-coin">CYBERINU</td>
-            <td class="td-type">STOP-LOSS CUT</td>
-            <td class="td-pnl red">-$23.20</td>
-          </tr>
-          <tr>
+      <div class="row-panel">
+        <span class="row-label">TRAINING CYCLE (EPISODE):</span>
+        <span id="cycle-val" class="row-value">0</span>
+      </div>
+      <div class="row-panel">
+        <span class="row-label">CURRENT PRICE STATE:</span>
+        <span id="state-val" class="row-value">NORMAL_UP</span>
+      </div>
+      <div class="row-panel">
+        <span class="row-label">LAST AI ACTION:</span>
+        <span id="action-val" class="row-value">HOLD</span>
+      </div>
+      <div class="row-panel">
+        <span class="row-label">WIN / LOSS REWARD:</span>
+        <span id="reward-val" class="row-value">0</span>
+      </div>
+      <div class="row-panel">
+        <span class="row-label">TOTAL TREASURY VALUE:</span>
+        <span id="balance-val" class="row-value green">$1,000.00</span>
+      </div>
+    </div>
+
+    <!-- AI TERMINAL LOGS -->
+    <div class="panel terminal-panel">
+      <div class="terminal-title">> LEARNING ENGINE OUTPUT</div>
+      <div id="terminal" class="terminal-screen">
+        <div>[SYSTEM] AI initialized. Press START RUN to begin optimization loop...</div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="btn-panel">
+      <button id="start-btn" onclick="startTraining()">START RUN</button>
+      <button id="stop-btn" onclick="stopTraining()">HALT</button>
+    </div>
+
+  </div>
+
+  <!-- COMPACT ADVANCED INTELLIGENCE ENGINE -->
+  <script>
+    // Asset options to log variety in tracking updates
+    const TOKENS = ["UZICAT", "CYBERINU", "QOMPUTE", "FRANK", "QT", "LLM"];
+    
+    // Multi-tier drawdown bands preventing instant stop-loss cuts
+    const STATES = ["NORMAL_UP", "MINOR_DRAWDOWN", "CRITICAL_ZONE", "FREE_FALL"];
+    const ACTIONS = ["HOLD", "STOP_LOSS_CUT"];
+
+    // The optimization memory matrix
+    let qTable = {
+      "NORMAL_UP":       { "HOLD": 10,  "STOP_LOSS_CUT": -50 },
+      "MINOR_DRAWDOWN":  { "HOLD": 5,   "STOP_LOSS_CUT": -20 },
+      "CRITICAL_ZONE":   { "HOLD": -5,  "STOP_LOSS_CUT": -5  },
+      "FREE_FALL":       { "HOLD": -80, "STOP_LOSS_CUT": 30  }
+    };
+
+    let learningRate = 0.25;
+    let discountFactor = 0.80;
+    let explorationRate = 0.40;
+
+    let treasuryBalance = 1000.00;
+    let currentCycle = 0;
+    let trainingInterval = null;
+
+    const terminalEl = document.getElementById("terminal");
+
+    function logToTerminal(text) {
+      const line = document.createElement("div");
+      line.innerText = text;
+      terminalEl.appendChild(line);
+      terminalEl.scrollTop = terminalEl.scrollHeight;
+    }
+
+    function executeTrainingStep() {
+      currentCycle++;
+      document.getElementById("cycle-val").innerText = currentCycle;
+
+      // Cycle environment between localized risk exposure steps
+      const currentState = STATES[Math.floor(Math.random() * STATES.length)];
+      const targetToken = TOKENS[Math.floor(Math.random() * TOKENS.length)];
+      document.getElementById("state-val").innerText = currentState;
+
+      // Policy decision calculations
+      let chosenAction = "";
+      if (Math.random() < explorationRate) {
+        chosenAction = ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
+      } else {
+        chosenAction = qTable[currentState]["HOLD"] >= qTable[currentState]["STOP_LOSS_CUT"] ? "HOLD" : "STOP_LOSS_CUT";
+      }
+      document.getElementById("action-val").innerText = chosenAction;
+
+      const isRecovery = Math.random() > 0.45; // Simulated market reaction
+      let reward = 0;
+      let balanceChange = 0;
+
+      // Handle win/loss mechanics inside critical drawdown ranges
+      if (currentState === "CRITICAL_ZONE") {
+        if (chosenAction === "HOLD") {
+          reward = isRecovery ? 150 : -120;
+          balanceChange = isRecovery ? (Math.random() * 25) : -(Math.random() * 30);
+        } else {
+          reward = isRecovery ? -180 : 110; // Punish panic cutting positions right before a recovery bounce
+          balanceChange = -(Math.random() * 8);
+        }
+      } else if (currentState === "FREE_FALL") {
+        if (chosenAction === "STOP_LOSS_CUT") {
+          reward = 130; // Highly reward cut strategies during a full break
+          balanceChange = -(Math.random() * 12);
+        } else {
+          reward = -200; // Punish holding complete zero steps
+          balanceChange = -(Math.random() * 80);
+        }
+      } else {
+        reward = chosenAction === "HOLD" ? 15 : -10;
+        balanceChange = chosenAction === "HOLD" ? (Math.random() * 5) : -(Math.random() * 2);
+      }
+
+      // Process and save changes back into the brain matrix (Bellman correction)
+      let nextState = STATES[Math.floor(Math.random() * STATES.length)];
+      let maxFutureReward = Math.max(qTable[nextState]["HOLD"], qTable[nextState]["STOP_LOSS_CUT"]);
+      let currentQ = qTable[currentState][chosenAction];
+      
+      qTable[currentState][chosenAction] = currentQ + learningRate * (reward + (discountFactor * maxFutureReward) - currentQ);
+
+      // Render calculations back out to interface indicators
+      treasuryBalance += balanceChange;
+      const balEl = document.getElementById("balance-val");
+      balEl.innerText = `$${treasuryBalance.toFixed(2)}`;
+      balEl.className = treasuryBalance >= 1000 ? "row-value green" : "row-value red";
+
+      const rewEl = document.getElementById("reward-val");
+      rewEl.innerText = reward >= 0 ? `+${reward} (WIN)` : `${reward} (LOSS)`;
+      rewEl.className = reward >= 0 ? "row-value green" : "row-value red";
+
+      logToTerminal(`[EPISODE ${currentCycle}] ${targetToken} ${currentState} -> Picked ${chosenAction} (${reward >= 0 ? 'WIN' : 'LOSS'})`);
+
+      if (explorationRate > 0.05) explorationRate -= 0.005;
+    }
+
+    function startTraining() {
+      if (!trainingInterval) {
