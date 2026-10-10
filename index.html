@@ -45,7 +45,6 @@
       justify-content: center;
     }
 
-    /* faint CRT scanlines; never blocks taps */
     body::after {
       content: '';
       position: fixed;
@@ -321,7 +320,7 @@
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px;">VAULT SWARM V12.1</div>
+          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px;">VAULT SWARM V12.2</div>
         </div>
       </div>
       <div class="header-btns">
@@ -339,7 +338,16 @@
       <span style="font-size: 15px; color: var(--text-dim);">OPERATIONAL MODE:</span>
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
-        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (MEGA-STREAM)</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER</button>
+      </div>
+    </div>
+
+    <!-- ENGINE SWITCHER BANNER (AI vs AUTONOMOUS RULE-BASED) -->
+    <div class="panel" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;">
+      <span style="font-size: 15px; color: var(--text-dim);">ENGINE PROTOCOL:</span>
+      <div style="display: flex; gap: 4px;">
+        <button id="btn-engine-ai" class="cyber-btn" onclick="setEngineMode('AI')">🧠 AI NEURAL</button>
+        <button id="btn-engine-auto" class="cyber-btn" onclick="setEngineMode('AUTO')">⚙️ AUTONOMOUS</button>
       </div>
     </div>
 
@@ -390,12 +398,12 @@
         <button class="cyber-btn" style="font-size: 14px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Multi-endpoint mega-stream discovery active.</div>
+        <div style="color: var(--green);">[00:01] Mega-stream discovery active. Engine switch online.</div>
       </div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & EXECUTION LOG</div>
+      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// AI & AUTONOMOUS SWARM LOG</div>
       <div class="terminal-box" style="height: 240px;" id="council-feed-container"></div>
     </div>
 
@@ -426,10 +434,10 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 16px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
-      <div class="status-row"><span>DISCOVERY FEED:</span> <strong style="color: var(--green);">ONLINE [MEGA-STREAM + LIVE PROFILES]</strong></div>
+      <div class="status-row"><span>ENGINE PROTOCOL:</span> <strong id="status-engine-label" style="color: var(--amber);">AI NEURAL MODE</strong></div>
       <div class="status-row"><span>MAX POSITION CAP:</span> <strong style="color: var(--green);">ACTIVE [35% BANKROLL LIMIT]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 8/8 MEGA-STREAM AGENTS</strong></div>
+      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 8/8 AGENTS READY</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
 
@@ -440,7 +448,6 @@
   </div>
 
   <script>
-    // Safe localStorage JSON reader: a corrupted value can never crash startup
     function loadJSON(key, fallback) {
       try {
         const raw = localStorage.getItem(key);
@@ -460,6 +467,7 @@
     ];
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
+    let engineMode = localStorage.getItem('solaris_engine') || 'AI'; // 'AI' or 'AUTO'
     let peakPrices = loadJSON('solaris_peak_prices', {});
 
     const agentDefs = [
@@ -469,7 +477,7 @@
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Trailing Profit Lock Engine', color: '#4cc9f0', icon: '🤖', pnl: 0, status: 'ACTIVE' },
       { id: 'risk', name: 'RISK_CORE', role: 'Position Capping & Stop-Loss Firewall', color: '#ffd23f', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
       { id: 'trader', name: 'ALPHA_X', role: 'Memecoin Swap Executor', color: '#ff5470', icon: '⚡', pnl: 0, status: 'ACTIVE' },
-      { id: 'macro', name: 'MACRO_9', role: 'AI Momentum & Winner Scorer', color: '#c084fc', icon: '🌐', pnl: 0, status: 'ACTIVE' },
+      { id: 'macro', name: 'MACRO_9', role: 'AI / Heuristic Scorer', color: '#c084fc', icon: '🌐', pnl: 0, status: 'ACTIVE' },
       { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#6bf29a', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
     ];
 
@@ -479,16 +487,14 @@
       sweepPct: parseFloat(localStorage.getItem('solaris_sweep_pct')) || 20,
       positions: loadJSON('solaris_positions', {}),
       costBasis: loadJSON('solaris_cost_basis', {}),
-      // NEW: remembers each held token's contract address so held coins keep getting live prices
       addresses: loadJSON('solaris_addresses', {}),
       realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'RISK_CORE', text: `Mega-stream active [${operationalMode}]. Massive pool indexing enabled.`, color: '#ffd23f', time: '00:00' }]
+      councilFeed: [{ sender: 'RISK_CORE', text: `Engine protocol set to [${engineMode === 'AI' ? 'AI NEURAL' : 'AUTONOMOUS'}].`, color: '#ffd23f', time: '00:00' }]
     };
 
-    // ---- 8-BIT SOUND EFFECTS (synthesized with Web Audio, no audio files) ----
     let soundOn = localStorage.getItem('orbital_sound') !== 'off';
     let audioCtx = null;
 
@@ -552,8 +558,15 @@
     function setTradingMode(mode) {
       operationalMode = mode;
       localStorage.setItem('solaris_mode', mode);
-      addSystemLog(`[MODE LOCKED] User set operational mode to: ${mode}`);
+      addSystemLog(`[MODE LOCKED] Operational mode: ${mode}`);
       fetchLiveMarketPrices();
+      renderAll();
+    }
+
+    function setEngineMode(mode) {
+      engineMode = mode;
+      localStorage.setItem('solaris_engine', mode);
+      addSystemLog(`[PROTOCOL SWITCH] Engine set to: ${mode === 'AI' ? 'AI NEURAL' : 'AUTONOMOUS RULE-BASED'}`);
       renderAll();
     }
 
@@ -578,7 +591,8 @@
       state.totalFeesPaid += fee;
       state.txCount += 1;
 
-      playSfx(pnlDelta >= 0 ? 'win' : 'loss'); addSystemLog(`[MANUAL OVERRIDE] Liquidated ${sym}! Realized P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
+      playSfx(pnlDelta >= 0 ? 'win' : 'loss');
+      addSystemLog(`[MANUAL OVERRIDE] Liquidated ${sym}! P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
       saveState();
       renderAll();
     }
@@ -603,11 +617,10 @@
     function addSystemLog(msg) {
       const logBox = document.getElementById('system-log');
       if (!logBox) return;
-      logBox.innerHTML += `<div>[${new Date().toTimeString().split(' ')[0]}] ${msg}</div>`;
+      logBox.innerHTML += `<div>[${new Date().toTimeString().split(' ')[0]}]${msg}</div>`;
       logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // A failed request returns null instead of breaking the whole scan
     async function safeJson(url) {
       try {
         const res = await fetch(url);
@@ -618,7 +631,6 @@
       }
     }
 
-    // ---- LIVE CRYPTO NEWS (CryptoCompare public news API) ----
     let liveNews = [];
     let newsStatus = 'CONNECTING';
     const seenNews = new Set();
@@ -644,34 +656,17 @@
       };
     }
 
-    // Source 1: RSS feeds converted to JSON by rss2json (CORS-friendly, no key)
     async function newsFromRss2Json(name, feedUrl) {
       const data = await safeJson(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`);
       if (!data || data.status !== 'ok' || !Array.isArray(data.items)) return [];
       return data.items.slice(0, 10).map(i => toNewsItem(name, i.title, i.link, i.pubDate));
     }
 
-    // Source 2: CryptoCompare public news API
     async function newsFromCryptoCompare() {
       const data = await safeJson('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
       if (!data || !Array.isArray(data.Data)) return [];
       return data.Data.slice(0, 15).map(n =>
         toNewsItem((n.source_info && n.source_info.name) || n.source || 'NEWS', n.title, n.url, (n.published_on || 0) * 1000));
-    }
-
-    // Source 3: raw RSS through a public CORS proxy, parsed in the browser
-    async function newsFromProxy(name, feedUrl) {
-      try {
-        const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`);
-        if (!res.ok) return [];
-        const doc = new DOMParser().parseFromString(await res.text(), 'text/xml');
-        return Array.from(doc.querySelectorAll('item')).slice(0, 10).map(i => {
-          const g = tag => { const el = i.querySelector(tag); return el ? el.textContent : ''; };
-          return toNewsItem(name, g('title'), g('link').trim(), g('pubDate'));
-        });
-      } catch (e) {
-        return [];
-      }
     }
 
     async function fetchLiveNews() {
@@ -690,17 +685,12 @@
         items = await newsFromCryptoCompare();
         if (items.length > 0) via = 'CRYPTOCOMPARE';
       }
-      if (items.length === 0) {
-        items = await newsFromProxy('COINTELEGRAPH', 'https://cointelegraph.com/rss');
-        if (items.length > 0) via = 'PROXY';
-      }
 
       if (items.length > 0) {
         items.sort((a, b) => b.ts - a.ts);
         liveNews = items.slice(0, 15);
         newsStatus = 'LIVE [' + via + ']';
 
-        // NEWS_HAWK: announce only headlines we haven't seen yet
         const fresh = liveNews.filter(n => !seenNews.has(n.title));
         liveNews.forEach(n => seenNews.add(n.title));
         const toAnnounce = (newsBootstrapped ? fresh.slice(0, 5) : fresh.slice(0, 2)).reverse();
@@ -709,7 +699,7 @@
         toAnnounce.forEach(n => {
           state.councilFeed.unshift({
             sender: 'NEWS_HAWK',
-            text: `${escapeHtml(n.source)}: ${escapeHtml(n.title)}`,
+            text: `${escapeHtml(n.source)}:${escapeHtml(n.title)}`,
             color: '#ffd23f',
             time: new Date().toLocaleTimeString()
           });
@@ -728,13 +718,10 @@
       isFetching = true;
       try {
         const keywords = ['pump', 'ai', 'dog', 'sol', 'cat', 'pepe', 'inu', 'moon', 'trump', 'baby', 'meme', 'coin'];
-
-        // Addresses of tokens we currently hold (so they always get live prices)
         const heldAddrs = Object.keys(state.positions)
           .filter(sym => (state.positions[sym] || 0) > 0.00001 && state.addresses[sym])
           .map(sym => state.addresses[sym]);
 
-        // All requests run in parallel; any single failure is tolerated
         const [profilesData, boostsLatest, boostsTop, ...searchResults] = await Promise.all([
           safeJson(`https://api.dexscreener.com/token-profiles/latest/v1`),
           safeJson(`https://api.dexscreener.com/token-boosts/latest/v1`),
@@ -742,7 +729,6 @@
           ...keywords.map(k => safeJson(`https://api.dexscreener.com/latest/dex/search?q=${k}`))
         ]);
 
-        // One entry per ticker; if tickers collide, keep the most liquid pool
         const poolMap = new Map();
 
         const consider = (p, badge, isHeld) => {
@@ -770,12 +756,10 @@
           });
         };
 
-        // 1) Keyword search results
         searchResults.forEach(data => {
           if (data && Array.isArray(data.pairs)) data.pairs.forEach(p => consider(p, 'UNVERIFIED', false));
         });
 
-        // 2) Latest token profiles: look up REAL prices in a single batched request
         const addrSet = new Set();
         [profilesData, boostsLatest, boostsTop].forEach(list => {
           if (Array.isArray(list)) {
@@ -794,7 +778,6 @@
           if (data && Array.isArray(data.pairs)) data.pairs.forEach(p => consider(p, 'PROFILE', false));
         });
 
-        // 3) Held positions: fetch by exact address and override any same-ticker collision
         if (heldAddrs.length > 0) {
           const heldData = await safeJson(`https://api.dexscreener.com/latest/dex/tokens/${heldAddrs.slice(0, 30).join(',')}`);
           if (heldData && Array.isArray(heldData.pairs)) {
@@ -830,153 +813,12 @@
           marketCoins = fetched;
         }
 
-        // WHALE_EYE: flag pools with unusually heavy 1h volume relative to liquidity
-        const nowTs = Date.now();
-        let whaleFired = false;
-        marketCoins
-          .filter(c => (c.volumeH1 || 0) >= 25000 && c.liquidity > 0 && (c.volumeH1 / c.liquidity) >= 0.5)
-          .sort((a, b) => b.volumeH1 - a.volumeH1)
-          .slice(0, 3)
-          .forEach(c => {
-            if (nowTs - (whaleSeen[c.symbol] || 0) < 30 * 60 * 1000) return;
-            whaleSeen[c.symbol] = nowTs;
-            whaleFired = true;
-            const buys = c.buysH1 || 0, sells = c.sellsH1 || 0;
-            const bias = buys > sells * 1.3 ? 'BUY PRESSURE' : (sells > buys * 1.3 ? 'SELL PRESSURE' : 'MIXED FLOW');
-            whaleNewsFeed.unshift({
-              title: `🐋 WHALE_EYE: ${c.symbol}`,
-              desc: `1h volume ${fmtCurrency(c.volumeH1)} on ${fmtCurrency(c.liquidity)} liquidity | ${buys} buys / ${sells} sells | ${bias}`,
-              time: new Date().toLocaleTimeString()
-            });
-          });
-        if (whaleFired) playSfx('whale');
-        whaleNewsFeed = whaleNewsFeed.slice(0, 20);
-
         renderAll();
       } catch (err) {
         console.warn("Mega-stream fetch warning:", err);
       } finally {
         isFetching = false;
       }
-    }
-
-    function promptApiKey() {
-      const key = prompt("Enter your Gemini API key:", localStorage.getItem('gemini_api_key') || '');
-      if (key !== null) {
-        localStorage.setItem('gemini_api_key', key.trim());
-        updateKeyStatus();
-        addSystemLog(`[CONFIG] Gemini API Key successfully configured.`);
-      }
-    }
-
-    function updateKeyStatus() {
-      const k = localStorage.getItem('gemini_api_key');
-      const el = document.getElementById('key-status');
-      if (el) {
-        if (k && k.length > 5) {
-          el.textContent = "● CONFIGURED";
-          el.style.color = "var(--green)";
-        } else {
-          el.textContent = "● NOT CONFIGURED";
-          el.style.color = "var(--text-dim)";
-        }
-      }
-    }
-
-    function saveState() {
-      localStorage.setItem('solaris_cash', state.cash);
-      localStorage.setItem('solaris_vault', state.vault);
-      localStorage.setItem('solaris_sweep_pct', state.sweepPct);
-      localStorage.setItem('solaris_pnl', state.realizedPnl);
-      localStorage.setItem('solaris_fees', state.totalFeesPaid);
-      localStorage.setItem('solaris_tx_count', state.txCount);
-      localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
-      localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
-      localStorage.setItem('solaris_addresses', JSON.stringify(state.addresses));
-      localStorage.setItem('solaris_peak_prices', JSON.stringify(peakPrices));
-      localStorage.setItem('solaris_last_trade', state.lastTradeTime);
-    }
-
-    function freshWipe() {
-      if (confirm("Reset all bots, positions, bankrolls, and vault balances to zero/baseline while preserving your API key?")) {
-        const apiKey = localStorage.getItem('gemini_api_key');
-        localStorage.clear();
-        if (apiKey) localStorage.setItem('gemini_api_key', apiKey);
-        location.reload();
-      }
-    }
-
-    function resetPnlOnly() {
-      state.realizedPnl = 0;
-      state.totalFeesPaid = 0;
-      state.txCount = 0;
-      state.cash = 100;
-      state.vault = 0;
-      state.positions = {};
-      state.costBasis = {};
-      state.addresses = {};
-      peakPrices = {};
-      saveState();
-      addSystemLog(`[CONFIG] Treasury reset to clean baseline.`);
-      renderAll();
-    }
-
-    function adjustFunds() {
-      const input = prompt("Enter new Active Bot Bankroll amount ($):", state.cash);
-      if (input !== null) {
-        const amt = parseFloat(input);
-        if (!isNaN(amt) && amt >= 0) {
-          state.cash = amt;
-          saveState();
-          renderAll();
-        }
-      }
-    }
-
-    function configureVault() {
-      const choice = prompt(`MAIN VAULT MANAGEMENT:\n- Vault Balance: ${fmtCurrency(state.vault)}\n- Profit Sweep Rate: ${state.sweepPct}%\n\nEnter '1' to transfer funds between Vault & Bankroll\nEnter '2' to change Profit Sweep %`, '1');
-      if (choice === '1') {
-        const transferAmt = prompt(`Transfer amount (+ to Vault, - to Bankroll):`, '0');
-        if (transferAmt !== null) {
-          const val = parseFloat(transferAmt);
-          if (!isNaN(val)) {
-            if (val > 0 && state.cash >= val) {
-              state.cash -= val;
-              state.vault += val;
-              addSystemLog(`[VAULT] Transferred ${fmtCurrency(val)} to Main Vault.`);
-            } else if (val < 0 && state.vault >= Math.abs(val)) {
-              state.vault -= Math.abs(val);
-              state.cash += Math.abs(val);
-              addSystemLog(`[VAULT] Tranche released.`);
-            }
-            saveState();
-            renderAll();
-          }
-        }
-      } else if (choice === '2') {
-        const newPct = prompt(`Enter new profit sweep percentage (0 to 100):`, state.sweepPct);
-        if (newPct !== null) {
-          const p = parseFloat(newPct);
-          if (!isNaN(p) && p >= 0 && p <= 100) {
-            state.sweepPct = p;
-            saveState();
-            renderAll();
-          }
-        }
-      }
-    }
-
-    function requestBriefing() {
-      let portfolioVal = 0;
-      Object.keys(state.positions).forEach(sym => {
-        let coin = marketCoins.find(c => c.symbol === sym) || { price: state.costBasis[sym] || 1 };
-        portfolioVal += (state.positions[sym] || 0) * coin.price;
-      });
-      let net = state.cash + state.vault + portfolioVal;
-      const brief = `MEGA-STREAM TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
-      state.councilFeed.unshift({ sender: 'RISK_CORE', text: brief, color: '#ffd23f', time: new Date().toLocaleTimeString() });
-      switchTab('council', document.querySelectorAll('.tab-btn')[1]);
-      renderAll();
     }
 
     function runTradingLoop() {
@@ -1022,7 +864,8 @@
             state.totalFeesPaid += fee;
             state.txCount += 1;
 
-            playSfx('loss'); addSystemLog(`[STOP-LOSS CUT] RISK_CORE cut ${sym} at ${gainPct.toFixed(1)}% | P&L: ${fmtCurrency(pnlDelta)}`);
+            playSfx('loss');
+            addSystemLog(`[STOP-LOSS CUT] RISK_CORE cut ${sym} at ${gainPct.toFixed(1)}% | P&L: ${fmtCurrency(pnlDelta)}`);
             saveState();
             renderAll();
             return;
@@ -1043,7 +886,8 @@
             state.totalFeesPaid += fee;
             state.txCount += 1;
 
-            playSfx(pnlDelta >= 0 ? 'win' : 'loss'); addSystemLog(`[TRAILING LOCK] KIRKTRON 9001 secured peak profits on ${sym}! P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
+            playSfx(pnlDelta >= 0 ? 'win' : 'loss');
+            addSystemLog(`[TRAILING LOCK] KIRKTRON 9001 secured peak profits on ${sym}! P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
             saveState();
             renderAll();
             return;
@@ -1093,7 +937,8 @@
           state.totalFeesPaid += fee;
           state.txCount += 1;
 
-          playSfx('win'); addSystemLog(`[FULL TAKE-PROFIT] Target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
+          playSfx('win');
+          addSystemLog(`[FULL TAKE-PROFIT] Target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
           action = 'sell';
         } else if (state.cash > 20.0 && curHold === 0) {
           let spend = state.cash * 0.20;
@@ -1109,7 +954,9 @@
 
           state.totalFeesPaid += fee;
           state.txCount += 1;
-          playSfx('buy'); addSystemLog(`[NEW ENTRY] ALPHA_X bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
+          playSfx('buy');
+          const prefix = engineMode === 'AI' ? '[AI NEURAL] ALPHA_X' : '[AUTONOMOUS] RULE-BASED BOT';
+          addSystemLog(`${prefix} bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
           action = 'buy';
         } else {
           return;
@@ -1119,10 +966,10 @@
         saveState();
 
         let councilText = action === 'buy' ?
-          `[${operationalMode}] Swarm executed entry into memecoin ${targetCoin.symbol}.` :
-          `[${operationalMode}] Target closed on ${targetCoin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
+          `[${operationalMode} / ${engineMode}] Swarm executed entry into memecoin ${targetCoin.symbol}.` :
+          `[${operationalMode} / ${engineMode}] Target closed on ${targetCoin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
 
-        state.councilFeed.unshift({ sender: 'ALPHA_X', text: councilText, color: '#4cc9f0', time: new Date().toLocaleTimeString() });
+        state.councilFeed.unshift({ sender: engineMode === 'AI' ? 'ALPHA_X' : 'RISK_CORE', text: councilText, color: '#4cc9f0', time: new Date().toLocaleTimeString() });
         state.councilFeed = state.councilFeed.slice(0, 30);
         renderAll();
       } catch (err) {
@@ -1177,11 +1024,21 @@
         const modeLabel = document.getElementById('status-mode-label');
         if (modeLabel) modeLabel.textContent = `${operationalMode} MODE`;
 
+        const engineLabel = document.getElementById('status-engine-label');
+        if (engineLabel) engineLabel.textContent = engineMode === 'AI' ? 'AI NEURAL MODE' : 'AUTONOMOUS RULE-BASED';
+
         const btnGrowth = document.getElementById('btn-mode-growth');
         const btnSniper = document.getElementById('btn-mode-sniper');
         if (btnGrowth && btnSniper) {
           btnGrowth.className = `cyber-btn ${operationalMode === 'GROWTH' ? 'active-mode' : ''}`;
           btnSniper.className = `cyber-btn ${operationalMode === 'SNIPER' ? 'active-mode' : ''}`;
+        }
+
+        const btnAi = document.getElementById('btn-engine-ai');
+        const btnAuto = document.getElementById('btn-engine-auto');
+        if (btnAi && btnAuto) {
+          btnAi.className = `cyber-btn ${engineMode === 'AI' ? 'active-mode' : ''}`;
+          btnAuto.className = `cyber-btn ${engineMode === 'AUTO' ? 'active-mode' : ''}`;
         }
 
         const pnl = document.getElementById('realized-pnl');
@@ -1281,7 +1138,6 @@
     window.addEventListener('DOMContentLoaded', () => {
       updateKeyStatus();
       updateSoundBtn();
-      // browsers only allow audio after a tap, so wake the audio engine on any tap
       document.addEventListener('pointerdown', () => { if (soundOn) getAudio(); });
       document.addEventListener('click', e => {
         const b = e.target.closest ? e.target.closest('.cyber-btn, .tab-btn') : null;
