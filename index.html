@@ -525,6 +525,31 @@
       'FULL TAKE-PROFIT': 2 * HOUR,
       'MANUAL': 1 * HOUR
     };
+    // ---- ACTIVITY FILTER: only buy coins that are actually trading and moving ----
+    const MIN_VOLUME_H1 = 10000;     // $ traded in the last hour
+    const MIN_TURNOVER = 0.15;       // 1h volume / liquidity
+    const MIN_TXNS_H1 = 40;          // buys + sells in the last hour
+    const MIN_BUY_RATIO = 0.5;       // buys / (buys + sells)
+    const MIN_CHANGE_5M = 0;         // % price change over 5 min (not dropping right now)
+    const MIN_CHANGE_1H = 0;         // % price change over 1 hour
+    const TOP_PICKS = 5;             // choose randomly among the N most active
+
+    function isActive(c) {
+      const buys = c.buysH1 || 0, sells = c.sellsH1 || 0, tx = buys + sells;
+      if ((c.volumeH1 || 0) < MIN_VOLUME_H1) return false;
+      if (!(c.liquidity > 0) || c.volumeH1 / c.liquidity < MIN_TURNOVER) return false;
+      if (tx < MIN_TXNS_H1) return false;
+      if (buys / tx < MIN_BUY_RATIO) return false;
+      if ((c.change5m || 0) < MIN_CHANGE_5M) return false;
+      if ((c.change1h || 0) < MIN_CHANGE_1H) return false;
+      return true;
+    }
+
+    function activityScore(c) {
+      const buys = c.buysH1 || 0, sells = c.sellsH1 || 0, tx = Math.max(1, buys + sells);
+      return (c.volumeH1 / c.liquidity) * (buys / tx) * (1 + Math.max(0, c.change1h || 0) / 50);
+    }
+
     const REPEAT_STALE_LIMIT = 2;              // this many stale exits = long ban
     const REPEAT_BAN_MS = 7 * 24 * HOUR;
     const MAX_HOLD_MS = 20 * 60 * 1000;        // flat positions older than this get closed
@@ -775,7 +800,8 @@
       if (isFetching) return;
       isFetching = true;
       try {
-        const keywords = ['pump', 'ai', 'dog', 'sol', 'cat', 'pepe', 'inu', 'moon', 'trump', 'baby', 'meme', 'coin'];
+        const keywords = ['pump', 'ai', 'dog', 'sol', 'cat', 'pepe', 'inu', 'moon', 'trump', 'baby', 'meme', 'coin',
+                          'bonk', 'wif', 'frog', 'elon', 'agent', 'gork', 'doge', 'king'];
 
         // Addresses of tokens we currently hold (so they always get live prices)
         const heldAddrs = Object.keys(state.positions)
@@ -811,6 +837,8 @@
             price: price,
             change24h: (p.priceChange && p.priceChange.h24 !== undefined) ? p.priceChange.h24 : 0,
             liquidity: liq,
+            change1h: (p.priceChange && p.priceChange.h1 !== undefined) ? p.priceChange.h1 : 0,
+            change5m: (p.priceChange && p.priceChange.m5 !== undefined) ? p.priceChange.m5 : 0,
             volumeH1: (p.volume && p.volume.h1) ? p.volume.h1 : 0,
             buysH1: (p.txns && p.txns.h1 && p.txns.h1.buys) ? p.txns.h1.buys : 0,
             sellsH1: (p.txns && p.txns.h1 && p.txns.h1.sells) ? p.txns.h1.sells : 0,
@@ -1160,9 +1188,17 @@
           !((state.positions[c.symbol] || 0) > 0.00001) &&
           !isArchived(c)
         );
-        if (candidates.length === 0) return;
+        const active = candidates.filter(isActive).sort((a, b) => activityScore(b) - activityScore(a));
+        if (active.length === 0) {
+          if (now - (window.lastNoActiveLog || 0) > 60000) {
+            window.lastNoActiveLog = now;
+            addSystemLog(`[SCAN] No coin passes the activity filter right now (${candidates.length} candidates). Waiting.`);
+          }
+          return;
+        }
 
-        const targetCoin = candidates[Math.floor(Math.random() * candidates.length)];
+        const pool = active.slice(0, TOP_PICKS);
+        const targetCoin = pool[Math.floor(Math.random() * pool.length)];
         const spend = state.cash * 0.20;
         const fee = spend * 0.003;
         const netSpend = spend - fee;
@@ -1180,10 +1216,10 @@
         state.lastTradeTime = now;
 
         playSfx('buy');
-        addSystemLog(`[NEW ENTRY] ALPHA_X bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
+        addSystemLog(`[NEW ENTRY] ALPHA_X bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)} | 1h vol ${fmtCurrency(targetCoin.volumeH1 || 0)} | ${targetCoin.buysH1}B/${targetCoin.sellsH1}S`);
         state.councilFeed.unshift({
           sender: 'ALPHA_X',
-          text: `[${operationalMode}] Swarm executed entry into memecoin ${targetCoin.symbol}.`,
+          text: `[${operationalMode}] Swarm executed entry into active memecoin ${targetCoin.symbol}.`,
           color: '#00f0ff',
           time: new Date().toLocaleTimeString()
         });
@@ -1238,7 +1274,7 @@
         if (tf) tf.textContent = fmtCurrency(state.totalFeesPaid);
 
         const scannedEl = document.getElementById('scanned-count');
-        if (scannedEl) scannedEl.textContent = `${marketCoins.length} ACTIVE`;
+        if (scannedEl) scannedEl.textContent = `${marketCoins.filter(isActive).length} HOT / ${marketCoins.length}`;
 
         const modeLabel = document.getElementById('status-mode-label');
         if (modeLabel) modeLabel.textContent = `${operationalMode} MODE`;
