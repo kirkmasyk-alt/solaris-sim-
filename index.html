@@ -296,7 +296,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V14.4</div>
+          <div class="logo-sub">PAPER TRADING // V14.5</div>
         </div>
       </div>
       <div class="header-btns">
@@ -435,8 +435,8 @@ const CFG = {
   minCash: 5,
   feeRate: 0.003,
   baseSlippage: 0.005,
-  stopLossPct: -3.5,
-  takeProfitPct: 7.0,
+  stopLossPct: -3.0,
+  takeProfitPct: 12.0,
   staleExitMs: 2 * 60 * 60 * 1000,
   scanEveryMs: 35000,
   newsEveryMs: 120000,
@@ -1910,6 +1910,17 @@ function runAudit() {
     const pf = js.profitFactor === null ? 'n/a' : js.profitFactor.toFixed(2);
     add(js.expectancy < 0 ? 'bad' : 'ok', 'expect', js.expectancy < 0 ? 'Strategy loses money' : 'Strategy is profitable', `${js.n} trades: win rate ${Math.round(js.winRate * 100)}%, expectancy ${js.expectancy.toFixed(2)}%/trade.`);
   }
+
+  // AUTONOMOUS LIVE FIX AUTHORITY FOR AUDITOR-7
+  F.forEach(f => {
+    if (f.sev === 'bad' && f.fix) {
+      const key = f.fix.key, val = f.fix.value;
+      if (CFG[key] !== val && !state.overrides[key]) {
+        applyOverride(key, val);
+        log(`[AUTONOMOUS AUDITOR] Auto-fixed ${key} -> ${val} due to: ${f.title}`);
+      }
+    }
+  });
 
   auditResult = F;
   return F;
