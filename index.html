@@ -340,7 +340,7 @@
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap;">VAULT SWARM V13.3</div>
+          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap;">VAULT SWARM V13.4</div>
         </div>
       </div>
       <div class="header-btns">
@@ -398,8 +398,20 @@
         <div class="stat-value purple" id="vault-balance">$0.00</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Active Pools</div>
-        <div class="stat-value cyan" id="scanned-count">0 ACTIVE</div>
+        <div class="stat-label">Coins Seen</div>
+        <div class="stat-value cyan" id="scanned-count">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Hot (Buyable)</div>
+        <div class="stat-value green" id="hot-count">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Benched</div>
+        <div class="stat-value amber" id="benched-count">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Feeds Online</div>
+        <div class="stat-value purple" id="feeds-count">--</div>
       </div>
     </div>
 
@@ -692,7 +704,8 @@
     function addSystemLog(msg) {
       const logBox = document.getElementById('system-log');
       if (!logBox) return;
-      logBox.innerHTML += `<div>[${new Date().toTimeString().split(' ')[0]}] ${msg}</div>`;
+      logBox.insertAdjacentHTML('beforeend', `<div>[${new Date().toTimeString().split(' ')[0]}] ${msg}</div>`);
+      while (logBox.children.length > 150) logBox.removeChild(logBox.firstChild);
       logBox.scrollTop = logBox.scrollHeight;
     }
 
@@ -811,13 +824,32 @@
     }
 
     const IGNORED_SYMBOLS = ['SOL', 'USDC', 'USDT', 'WSOL'];
+    const RECENT_KEEP_MS = 90 * 1000;   // a coin missed by one scan stays in the pool this long (smooths flaky feeds)
+    let scanReq = 0, scanFail = 0, scanCount = 0;
+    let lastScan = { seen: 0, ok: 0, req: 0 };
+
+    // fetch wrapper that counts how many feed requests worked
+    async function dexJson(url) {
+      scanReq++;
+      const data = await safeJson(url);
+      if (data === null) scanFail++;
+      return data;
+    }
+
+    // SNIPER mode only trades small pools (the pool is still SEEN, it just isn't bought)
+    function modeAllows(c) {
+      return operationalMode !== 'SNIPER' || c.liquidity <= 300000;
+    }
 
     async function fetchLiveMarketPrices() {
       if (isFetching) return;
       isFetching = true;
+      scanReq = 0; scanFail = 0;
       try {
         const keywords = ['pump', 'ai', 'dog', 'sol', 'cat', 'pepe', 'inu', 'moon', 'trump', 'baby', 'meme', 'coin',
-                          'bonk', 'wif', 'frog', 'elon', 'agent', 'gork', 'doge', 'king'];
+                          'bonk', 'wif', 'frog', 'elon', 'agent', 'gork', 'doge', 'king', 'shib', 'fart', 'rocket', 'gold',
+                          'bull', 'bear', 'cash', 'fire', 'ghost', 'alien', 'robot', 'punk', 'panda', 'monkey', 'duck', 'fish',
+                          'goat', 'wojak', 'chad', 'degen', 'based', 'turbo', 'hamster', 'wolf', 'bird', 'ape', 'sigma', 'mini'];
 
         // Addresses of tokens we currently hold (so they always get live prices)
         const heldAddrs = Object.keys(state.positions)
@@ -825,11 +857,13 @@
           .map(sym => state.addresses[sym]);
 
         // All requests run in parallel; any single failure is tolerated
-        const [profilesData, boostsLatest, boostsTop, ...searchResults] = await Promise.all([
-          safeJson(`https://api.dexscreener.com/token-profiles/latest/v1`),
-          safeJson(`https://api.dexscreener.com/token-boosts/latest/v1`),
-          safeJson(`https://api.dexscreener.com/token-boosts/top/v1`),
-          ...keywords.map(k => safeJson(`https://api.dexscreener.com/latest/dex/search?q=${k}`))
+        const [profilesData, boostsLatest, boostsTop, takeovers, adsLatest, ...searchResults] = await Promise.all([
+          dexJson(`https://api.dexscreener.com/token-profiles/latest/v1`),
+          dexJson(`https://api.dexscreener.com/token-boosts/latest/v1`),
+          dexJson(`https://api.dexscreener.com/token-boosts/top/v1`),
+          dexJson(`https://api.dexscreener.com/community-takeovers/latest/v1`),
+          dexJson(`https://api.dexscreener.com/ads/latest/v1`),
+          ...keywords.map(k => dexJson(`https://api.dexscreener.com/latest/dex/search?q=${k}`))
         ]);
 
         // One entry per ticker; if tickers collide, keep the most liquid pool
@@ -843,7 +877,6 @@
           if (!(price > 0)) return;
           const sym = p.baseToken.symbol.toUpperCase().replace(/[<>&"'`\\]/g, '').slice(0, 20);
           if (!sym || IGNORED_SYMBOLS.includes(sym)) return;
-          if (!isHeld && operationalMode === 'SNIPER' && liq > 300000) return;
 
           const existing = poolMap.get(sym);
           if (existing && existing.liquidity >= liq) return;
@@ -869,18 +902,18 @@
 
         // 2) Latest token profiles: look up REAL prices in a single batched request
         const addrSet = new Set();
-        [profilesData, boostsLatest, boostsTop].forEach(list => {
+        [profilesData, boostsLatest, boostsTop, takeovers, adsLatest].forEach(list => {
           if (Array.isArray(list)) {
             list.forEach(p => {
               if (p && p.chainId === 'solana' && p.tokenAddress) addrSet.add(p.tokenAddress);
             });
           }
         });
-        const discoveryAddrs = Array.from(addrSet).slice(0, 120);
+        const discoveryAddrs = Array.from(addrSet).slice(0, 300);
         const chunks = [];
         for (let i = 0; i < discoveryAddrs.length; i += 30) chunks.push(discoveryAddrs.slice(i, i + 30));
         const chunkResults = await Promise.all(
-          chunks.map(c => safeJson(`https://api.dexscreener.com/latest/dex/tokens/${c.join(',')}`))
+          chunks.map(c => dexJson(`https://api.dexscreener.com/latest/dex/tokens/${c.join(',')}`))
         );
         chunkResults.forEach(data => {
           if (data && Array.isArray(data.pairs)) data.pairs.forEach(p => consider(p, 'PROFILE', false));
@@ -888,7 +921,7 @@
 
         // 3) Held positions: fetch by exact address and override any same-ticker collision
         if (heldAddrs.length > 0) {
-          const heldData = await safeJson(`https://api.dexscreener.com/latest/dex/tokens/${heldAddrs.slice(0, 30).join(',')}`);
+          const heldData = await dexJson(`https://api.dexscreener.com/latest/dex/tokens/${heldAddrs.slice(0, 30).join(',')}`);
           if (heldData && Array.isArray(heldData.pairs)) {
             const bestByAddr = {};
             heldData.pairs.forEach(p => {
@@ -918,8 +951,16 @@
         }
 
         const fetched = Array.from(poolMap.values());
+        const nowSeen = Date.now();
+        fetched.forEach(c => { c.seenAt = nowSeen; });
         if (fetched.length > 0) {
-          marketCoins = fetched;
+          const carried = marketCoins.filter(c => !poolMap.has(c.symbol) && nowSeen - (c.seenAt || 0) < RECENT_KEEP_MS);
+          marketCoins = fetched.concat(carried);
+        }
+        lastScan = { seen: marketCoins.length, ok: scanReq - scanFail, req: scanReq };
+        scanCount++;
+        if (scanCount === 1 || scanCount % 4 === 0) {
+          addSystemLog(`[SCAN] ${marketCoins.length} coins seen, ${marketCoins.filter(c => isActive(c) && modeAllows(c)).length} hot | feeds ok ${lastScan.ok}/${lastScan.req}`);
         }
 
         // WHALE_EYE: flag pools with unusually heavy 1h volume relative to liquidity
@@ -1520,6 +1561,7 @@
           c.price > 0 &&
           !((state.positions[c.symbol] || 0) > 0.00001) &&
           !isArchived(c) &&
+          modeAllows(c) &&
           (now - (proposalBlock[c.symbol] || 0)) > REJECT_BLOCK_MS
         );
         const active = candidates.filter(isActive).sort((a, b) => activityScore(b) - activityScore(a));
@@ -1582,7 +1624,19 @@
         if (tf) tf.textContent = fmtCurrency(state.totalFeesPaid);
 
         const scannedEl = document.getElementById('scanned-count');
-        if (scannedEl) scannedEl.textContent = `${marketCoins.filter(isActive).length} HOT / ${marketCoins.length}`;
+        if (scannedEl) scannedEl.textContent = String(marketCoins.length);
+        const hotEl = document.getElementById('hot-count');
+        if (hotEl) hotEl.textContent = String(marketCoins.filter(c => isActive(c) && modeAllows(c)).length);
+        const benchedEl = document.getElementById('benched-count');
+        if (benchedEl) {
+          const nb = Date.now();
+          benchedEl.textContent = String(Object.values(state.archive).filter(e => e.until > nb).length);
+        }
+        const feedsEl = document.getElementById('feeds-count');
+        if (feedsEl) {
+          feedsEl.textContent = lastScan.req ? `${lastScan.ok}/${lastScan.req}` : '--';
+          feedsEl.className = 'stat-value ' + (lastScan.req && lastScan.ok / lastScan.req < 0.7 ? 'red' : 'purple');
+        }
 
         const modeLabel = document.getElementById('status-mode-label');
         if (modeLabel) modeLabel.textContent = `${operationalMode} MODE`;
