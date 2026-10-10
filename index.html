@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.1</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.2</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -272,7 +272,7 @@
       <span style="font-size: 10px; color: var(--text-dim);">OPERATIONAL MODE:</span>
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
-        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (0-1M LOCKED)</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (PARTIAL SCALING)</button>
       </div>
     </div>
 
@@ -319,25 +319,25 @@
 
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 11px; color: var(--cyan);">// LOCKED-MODE EXECUTION STREAM</div>
+        <div style="font-size: 11px; color: var(--cyan);">// PARTIAL SCALING & WINNER ACCUMULATION STREAM</div>
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Mode lock state successfully initialized.</div>
+        <div style="color: var(--green);">[00:01] 25% partial profit taking & winner dip-buying online.</div>
       </div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & POOL SCANNER</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & SCALING LOG</div>
       <div class="terminal-box" style="height: 240px;" id="council-feed-container"></div>
     </div>
 
     <div id="tab-news" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE (0-1 MIN POOLS)</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // LOCKED SCANNER</div>
-          <div class="feed-text">Monitoring live market pools according to user mode selection...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // SCALING WATCHER</div>
+          <div class="feed-text">Monitoring momentum breakouts and scaling triggers...</div>
         </div>
       </div>
     </div>
@@ -358,15 +358,15 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
-      <div class="status-row"><span>MODE SWITCHER STATE:</span> <strong style="color: var(--green);">LOCKED [USER CONTROLLED]</strong></div>
-      <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
+      <div class="status-row"><span>PARTIAL PROFIT LOCK:</span> <strong style="color: var(--green);">ACTIVE [25% SCALES]</strong></div>
+      <div class="status-row"><span>WINNER DIP-BUYING:</span> <strong style="color: var(--purple);">ACTIVE [MOMENTUM ACCUMULATION]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 SECURE TRADERS</strong></div>
+      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 SCALING TRADERS</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
     </div>
 
     <div id="tab-warroom" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (SECURE AI AGENTS)</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (SCALING AI AGENTS)</div>
       <div id="war-room-container" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
     </div>
   </div>
@@ -377,19 +377,18 @@
     ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'Mode switch lock active. Your selected mode will remain fixed.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Partial scaling and winner dip-buying active. Bots will lock 25% profits on pumps.', time: '00:00' }
     ];
 
-    // Explicitly read mode from storage once, never letting background refreshes overwrite it
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
 
     const agentDefs = [
       { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#a855f7', icon: '👁️', pnl: 0, status: 'ADVISORY' },
       { id: 'announcer', name: 'WHALE_EYE', role: 'Multi-Source Fresh Deployment Scanner', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
-      { id: 'finance', name: 'KIRKTRON 9001', role: 'Profit Gate (+2% / +5% Target Enforcer)', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
-      { id: 'risk', name: 'RISK_CORE', role: 'Security Firewall & Stale Bag Exit', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
+      { id: 'finance', name: 'KIRKTRON 9001', role: 'Partial Scaler (25% Profit Lock Engine)', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
+      { id: 'risk', name: 'RISK_CORE', role: 'Winner Dip-Buyer & Security Firewall', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
       { id: 'trader', name: 'ALPHA_X', role: 'Verified Secure Swap Executor', color: '#ef4444', icon: '⚡', pnl: 0, status: 'ACTIVE' },
-      { id: 'macro', name: 'MACRO_9', role: 'AI Coin Picker & Safety Scorer', color: '#a855f7', icon: '🌐', pnl: 0, status: 'ACTIVE' },
+      { id: 'macro', name: 'MACRO_9', role: 'AI Momentum & Winner Scorer', color: '#a855f7', icon: '🌐', pnl: 0, status: 'ACTIVE' },
       { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper (20% Profit Lock)', color: '#22c55e', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
     ];
 
@@ -403,7 +402,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'RISK_CORE', text: `Mode locked to [${operationalMode}]. Ready.`, color: '#f59e0b', time: '00:00' }]
+      councilFeed: [{ sender: 'KIRKTRON 9001', text: `Partial scaling engine active [${operationalMode}]. Locking 25% profits on pumps.`, color: '#38bdf8', time: '00:00' }]
     };
 
     function setTradingMode(mode) {
@@ -505,7 +504,7 @@
 
         const targetCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
         whaleNewsFeed.unshift({
-          title: `MULTI-SCAN [${operationalMode}]: ${targetCoin.symbol}`,
+          title: `SCALING SCAN [${operationalMode}]: ${targetCoin.symbol}`,
           desc: `Active Pools: ${marketCoins.length} | Status: ${targetCoin.securityBadge} | Price: ${fmtPrice(targetCoin.price)}`,
           time: new Date().toLocaleTimeString()
         });
@@ -513,7 +512,7 @@
 
         renderAll();
       } catch (err) {
-        console.warn("Multi-source fetch warning:", err);
+        console.warn("Scaling fetch warning:", err);
       }
     }
 
@@ -626,8 +625,8 @@
         if (coin) portfolioVal += (state.positions[sym] || 0) * coin.price;
       });
       let net = state.cash + state.vault + portfolioVal;
-      const brief = `MULTI-SCAN TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
-      state.councilFeed.unshift({ sender: 'RISK_CORE', text: brief, color: '#f59e0b', time: new Date().toLocaleTimeString() });
+      const brief = `SCALING TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
+      state.councilFeed.unshift({ sender: 'KIRKTRON 9001', text: brief, color: '#38bdf8', time: new Date().toLocaleTimeString() });
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
       renderAll();
     }
@@ -642,70 +641,69 @@
           return;
         }
 
+        // Check for existing winning positions to see if we should scale out 25% or buy a dip
         let activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
-        if (state.cash < 15.0 && activeSymbols.length > 0) {
-          let symToRotate = activeSymbols[0];
-          let coin = marketCoins.find(c => c.symbol === symToRotate);
+        
+        for (let sym of activeSymbols) {
+          let coin = marketCoins.find(c => c.symbol === sym);
           if (coin) {
-            let qty = state.positions[symToRotate];
-            let gross = qty * coin.price;
-            let fee = gross * 0.003;
-            let netReturn = gross - fee;
-            let cost = state.costBasis[symToRotate] || coin.price;
-            let pnlDelta = netReturn - (qty * cost);
+            let qty = state.positions[sym];
+            let cost = state.costBasis[sym] || coin.price;
+            let mktVal = qty * coin.price;
+            let gainPct = ((coin.price - cost) / cost) * 100;
 
-            state.cash += netReturn;
-            state.realizedPnl += pnlDelta;
-            state.totalFeesPaid += fee;
-            state.txCount += 1;
-            delete state.positions[symToRotate];
-            delete state.costBasis[symToRotate];
+            // PARTIAL SCALING: If a coin pumps over +15%, sell 25% of the holding to lock profits while staying in the game
+            if (gainPct >= 15.0 && qty > 10) {
+              let scaleQty = qty * 0.25;
+              let gross = scaleQty * coin.price;
+              let fee = gross * 0.003;
+              let netReturn = gross - fee;
+              let pnlDelta = netReturn - (scaleQty * cost);
 
-            addSystemLog(`[ROTATION] Rotated out of ${symToRotate} securely. P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
-            saveState();
-            renderAll();
-            return;
+              state.positions[sym] -= scaleQty;
+              state.cash += netReturn;
+              state.realizedPnl += pnlDelta;
+              state.totalFeesPaid += fee;
+              state.txCount += 1;
+
+              addSystemLog(`[PARTIAL SCALE] KIRKTRON 9001 locked 25% profits on ${sym}! Sold ${Math.round(scaleQty).toLocaleString()} tokens | P&L: +${fmtCurrency(pnlDelta)}`);
+              saveState();
+              renderAll();
+              return;
+            }
           }
         }
 
-        if (state.cash < 15.0 && state.vault >= 25.0) {
-          let tranche = 25.0;
-          state.vault -= tranche;
-          state.cash += tranche;
-          const boss = agentDefs.find(a => a.id === 'boss');
-          state.councilFeed.unshift({ sender: boss.name, text: `Vault Tranche Release: Transferred ${fmtCurrency(tranche)} to bankroll.`, color: boss.color, time: new Date().toLocaleTimeString() });
-          saveState();
-          renderAll();
-          return;
-        }
+        // WINNER ACCUMULATION: If we already hold a winning coin, give it priority for a dip-buy add-on
+        let winningSymbol = activeSymbols.find(sym => {
+          let coin = marketCoins.find(c => c.symbol === sym);
+          let cost = state.costBasis[sym] || 1;
+          return coin && coin.price > cost;
+        });
 
-        const activeAgents = agentDefs.filter(a => a.id !== 'boss' && a.id !== 'announcer' && a.status === 'ACTIVE');
-        if (activeAgents.length === 0) return;
-
-        const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
-        const coin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-        if (!coin || coin.price <= 0) return;
+        let targetCoin = winningSymbol ? marketCoins.find(c => c.symbol === winningSymbol) : marketCoins[Math.floor(Math.random() * marketCoins.length)];
+        if (!targetCoin || targetCoin.price <= 0) return;
 
         let action = 'buy';
         let pnlDelta = 0;
         let fee = 0;
-        const curHold = state.positions[coin.symbol] || 0;
-        const avgCost = state.costBasis[coin.symbol] || coin.price;
+        const curHold = state.positions[targetCoin.symbol] || 0;
+        const avgCost = state.costBasis[targetCoin.symbol] || targetCoin.price;
 
-        let currentPositionValue = curHold * coin.price;
+        let currentPositionValue = curHold * targetCoin.price;
         let originalCostBasisValue = curHold * avgCost;
         let unrealizedGainPct = originalCostBasisValue > 0 ? ((currentPositionValue - originalCostBasisValue) / originalCostBasisValue) * 100 : 0;
-        let targetProfit = operationalMode === 'SNIPER' ? 5.0 : 2.5;
+        let targetProfit = operationalMode === 'SNIPER' ? 6.0 : 3.0;
 
         if (curHold > 0.00001 && unrealizedGainPct >= targetProfit) {
           let sellTokens = curHold;
-          let gross = sellTokens * coin.price;
+          let gross = sellTokens * targetCoin.price;
           fee = gross * 0.003;
           let netReturn = gross - fee;
 
           pnlDelta = netReturn - originalCostBasisValue;
-          delete state.positions[coin.symbol];
-          delete state.costBasis[coin.symbol];
+          delete state.positions[targetCoin.symbol];
+          delete state.costBasis[targetCoin.symbol];
 
           if (pnlDelta > 0 && state.sweepPct > 0) {
             let sweepAmount = pnlDelta * (state.sweepPct / 100);
@@ -719,22 +717,28 @@
           state.totalFeesPaid += fee;
           state.txCount += 1;
 
-          agent.pnl += pnlDelta;
-          addSystemLog(`[SECURE EXEC] ${agent.name} SELL ${coin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
+          addSystemLog(`[FULL EXIT] Profit target secured on ${targetCoin.symbol} | P&L: +${fmtCurrency(pnlDelta)}`);
           action = 'sell';
-        } else if (state.cash > 20.0 && curHold === 0) {
-          let spend = operationalMode === 'SNIPER' ? state.cash * 0.25 : state.cash * 0.20;
+        } else if (state.cash > 20.0) {
+          let spend = state.cash * 0.20;
           fee = spend * 0.003;
           let netSpend = spend - fee;
           state.cash -= spend;
           
-          let tokens = netSpend / coin.price;
-          state.costBasis[coin.symbol] = coin.price;
-          state.positions[coin.symbol] = tokens;
+          let tokens = netSpend / targetCoin.price;
+          if (curHold > 0) {
+            // Average down / add to winner
+            state.costBasis[targetCoin.symbol] = (avgCost + targetCoin.price) / 2;
+            state.positions[targetCoin.symbol] += tokens;
+            addSystemLog(`[DIP ACCUMULATION] RISK_CORE added to winning position ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
+          } else {
+            state.costBasis[targetCoin.symbol] = targetCoin.price;
+            state.positions[targetCoin.symbol] = tokens;
+            addSystemLog(`[NEW ENTRY] ALPHA_X bought ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${targetCoin.symbol} | Cost: $${spend.toFixed(2)}`);
+          }
 
           state.totalFeesPaid += fee;
           state.txCount += 1;
-          addSystemLog(`[SECURE EXEC] ${agent.name} BUY ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${coin.symbol} [${operationalMode}] | Cost: $${spend.toFixed(2)}`);
           action = 'buy';
         } else {
           return;
@@ -744,10 +748,10 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `[${operationalMode}] Multi-scan verified. Allocated block into token ${coin.symbol}.` :
-          `[${operationalMode}] Profit target secured on ${coin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
+          `[${operationalMode}] Swarm executed momentum allocation into ${targetCoin.symbol}.` :
+          `[${operationalMode}] Target closed on ${targetCoin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
 
-        state.councilFeed.unshift({ sender: agent.name, text: councilText, color: agent.color, time: new Date().toLocaleTimeString() });
+        state.councilFeed.unshift({ sender: winningSymbol ? 'RISK_CORE' : 'ALPHA_X', text: councilText, color: '#38bdf8', time: new Date().toLocaleTimeString() });
         state.councilFeed = state.councilFeed.slice(0, 30);
         renderAll();
       } catch (err) {
