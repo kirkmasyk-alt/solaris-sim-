@@ -258,6 +258,16 @@ body::after {
   .cyber-btn:active { transform: none; }
 }
 
+.dialog-overlay { position: fixed; inset: 0; background: rgba(5,0,15,0.85); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+.dialog-overlay.open { display: flex; }
+.dialog-box { width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; background: var(--panel-bg); border: 4px solid var(--outline); box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422, 0 0 0 2px var(--cyan); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.dialog-title { font-family: var(--pixel); font-size: 11px; color: var(--cyan); text-shadow: 2px 2px 0 var(--border-color); line-height: 1.4; }
+.dialog-msg { font-size: 16px; color: var(--text-dim); }
+.dialog-label { font-size: 15px; color: var(--text-dim); }
+.dialog-input { width: 100%; background: #07010f; border: 3px solid var(--outline); box-shadow: inset 2px 2px 0 #2a1a66; color: var(--text-main); font-size: 18px; padding: 8px; }
+.dialog-input:focus-visible { outline: 2px dashed var(--amber); outline-offset: 2px; }
+.dialog-btns { display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px; }
+
 </style>
 </head>
 <body>
@@ -379,6 +389,7 @@ body::after {
     </div>
 
   </div>
+  <div id="dialog-overlay" class="dialog-overlay"><div id="dialog-box" class="dialog-box" role="dialog" aria-modal="true"></div></div>
   <script>
 'use strict';
 /* ORBITAL // HQ — paper-trading dashboard. Everything here is simulated; no real funds move. */
@@ -549,6 +560,8 @@ function tone(freq, delay, dur, type, vol) {
   osc.start(t); osc.stop(t + dur + 0.02);
 }
 const SFX = {
+  click() { tone(880, 0, 0.04, 'square', 0.04); },
+  tab()   { tone(660, 0, 0.05, 'square', 0.04); tone(990, 0.05, 0.05, 'square', 0.04); },
   buy()  { tone(988, 0, 0.07, 'square', 0.05); tone(1319, 0.07, 0.14, 'square', 0.05); },
   win()  { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.08, 0.12, 'square', 0.05)); },
   loss() { [392, 330, 262, 196].forEach((f, i) => tone(f, i * 0.1, 0.14, 'triangle', 0.08)); },
@@ -959,17 +972,74 @@ function setDecisionMode(mode) {
   renderAll();
 }
 
-function promptApiKey() {
-  const key = prompt('Enter your Gemini API key (stored only in this browser):', localStorage.getItem('gemini_api_key') || '');
-  if (key !== null) {
-    if (key.trim()) localStorage.setItem('gemini_api_key', key.trim());
-    else localStorage.removeItem('gemini_api_key');
-    renderAll();
-  }
+// In-page dialog. iOS Safari often blocks prompt()/confirm(), so we don't use them.
+// Resolves { action, values } on OK (or an extra button), or null on cancel.
+function openDialog(opts) {
+  return new Promise(resolve => {
+    const overlay = $('dialog-overlay'), box = $('dialog-box');
+    if (!overlay || !box) { resolve(null); return; }
+    box.textContent = '';
+    const add = (tag, cls, text) => {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      box.appendChild(e);
+      return e;
+    };
+    add('div', 'dialog-title', opts.title);
+    if (opts.message) add('div', 'dialog-msg', opts.message);
+    const fields = {};
+    (opts.inputs || []).forEach(inp => {
+      add('label', 'dialog-label', inp.label);
+      const i = document.createElement('input');
+      i.className = 'dialog-input';
+      i.type = 'text';
+      i.value = inp.value === undefined ? '' : inp.value;
+      if (inp.inputmode) i.setAttribute('inputmode', inp.inputmode);
+      i.setAttribute('autocomplete', 'off');
+      i.setAttribute('autocapitalize', 'off');
+      i.setAttribute('spellcheck', 'false');
+      box.appendChild(i);
+      fields[inp.id] = i;
+    });
+    const row = add('div', 'dialog-btns');
+    const close = () => overlay.classList.remove('open');
+    const mk = (text, cls, fn) => {
+      const b = document.createElement('button');
+      b.className = 'cyber-btn ' + cls;
+      b.textContent = text;
+      b.addEventListener('click', fn);
+      row.appendChild(b);
+    };
+    mk(opts.cancelText || 'CANCEL', '', () => { close(); resolve(null); });
+    mk(opts.okText || 'OK', opts.danger ? 'danger' : 'accent', () => {
+      close();
+      const values = {};
+      Object.keys(fields).forEach(k => { values[k] = fields[k].value; });
+      resolve({ action: 'ok', values });
+    });
+    overlay.classList.add('open');
+  });
 }
 
-function freshWipe() {
-  if (!confirm('Reset all bots, positions, and bankroll?')) return;
+function num(v) { const n = parseFloat(String(v).replace(/[$,\s]/g, '')); return isNaN(n) ? null : n; }
+
+async function promptApiKey() {
+  const r = await openDialog({
+    title: 'GEMINI API KEY',
+    message: 'Stored only in this browser. Leave empty to remove it.',
+    inputs: [{ id: 'key', label: 'API key', value: localStorage.getItem('gemini_api_key') || '' }],
+    okText: 'SAVE'
+  });
+  if (!r) return;
+  const key = r.values.key.trim();
+  if (key) localStorage.setItem('gemini_api_key', key); else localStorage.removeItem('gemini_api_key');
+  renderAll();
+}
+
+async function freshWipe() {
+  const r = await openDialog({ title: 'WIPE EVERYTHING?', message: 'Resets bankroll, vault, positions and history. Your Gemini key is kept.', okText: 'WIPE', danger: true });
+  if (!r) return;
   const apiKey = localStorage.getItem('gemini_api_key');
   try {
     Object.keys(localStorage).forEach(k => { if (k.startsWith('solaris_') || k.startsWith('orbital_')) localStorage.removeItem(k); });
@@ -978,26 +1048,35 @@ function freshWipe() {
   location.reload();
 }
 
-function adjustFunds() {
-  const input = prompt('Enter new Active Bot Bankroll amount ($):', state.cash.toFixed(2));
-  if (input === null) return;
-  const amt = parseFloat(input);
-  if (!isNaN(amt) && amt >= 0) { state.cash = amt; saveState(); renderAll(); }
+async function adjustFunds() {
+  const r = await openDialog({
+    title: 'SET BANKROLL',
+    message: 'Sets the active bot bankroll (paper money).',
+    inputs: [{ id: 'amt', label: 'Bankroll ($)', value: state.cash.toFixed(2), inputmode: 'decimal' }],
+    okText: 'SET'
+  });
+  if (!r) return;
+  const amt = num(r.values.amt);
+  if (amt !== null && amt >= 0) { state.cash = amt; saveState(); renderAll(); }
 }
 
-function configureVault() {
-  const choice = prompt(`VAULT:\n- Balance: ${fmtCurrency(state.vault)}\n- Sweep Rate: ${state.sweepPct}%\nEnter '1' to transfer, '2' to change rate`, '1');
-  if (choice === '1') {
-    const val = parseFloat(prompt('Transfer amount (+ to Vault, - to Bankroll):', '0'));
-    if (isNaN(val)) return;
-    if (val > 0 && state.cash >= val) { state.cash -= val; state.vault += val; }
-    else if (val < 0 && state.vault >= -val) { state.vault += val; state.cash -= val; }
-    else return;
-    saveState(); renderAll();
-  } else if (choice === '2') {
-    const p = parseFloat(prompt('Enter new profit sweep percentage (0 to 100):', state.sweepPct));
-    if (!isNaN(p) && p >= 0 && p <= 100) { state.sweepPct = p; saveState(); renderAll(); }
-  }
+async function configureVault() {
+  const r = await openDialog({
+    title: 'VAULT',
+    message: `Vault ${fmtCurrency(state.vault)} | Bankroll ${fmtCurrency(state.cash)} | Sweep ${state.sweepPct}% of profit`,
+    inputs: [
+      { id: 'toVault', label: 'Move to vault ($)', value: '0', inputmode: 'decimal' },
+      { id: 'toCash', label: 'Move to bankroll ($)', value: '0', inputmode: 'decimal' },
+      { id: 'pct', label: 'Profit sweep % (0-100)', value: String(state.sweepPct), inputmode: 'decimal' }
+    ],
+    okText: 'SAVE'
+  });
+  if (!r) return;
+  const toVault = num(r.values.toVault) || 0, toCash = num(r.values.toCash) || 0, pct = num(r.values.pct);
+  if (toVault > 0 && state.cash >= toVault) { state.cash -= toVault; state.vault += toVault; }
+  if (toCash > 0 && state.vault >= toCash) { state.vault -= toCash; state.cash += toCash; }
+  if (pct !== null && pct >= 0 && pct <= 100) state.sweepPct = pct;
+  saveState(); renderAll();
 }
 
 function portfolioValue() {
@@ -1218,6 +1297,11 @@ window.addEventListener('DOMContentLoaded', () => {
   if (posBox) posBox.addEventListener('click', e => {
     const btn = e.target.closest('[data-sell]');
     if (btn) manualSellPosition(btn.dataset.sell);
+  });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    playSfx(b.classList.contains('tab-btn') ? 'tab' : 'click');
   });
   initScene();
   agentSay('risk', `Scanner online [${state.mode}]. Paper trading only.`);
