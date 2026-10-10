@@ -8,329 +8,263 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg-color: #0a0118;
-      --panel-bg: #150a30;
-      --outline: #05000f;
-      --border-color: #ff2bd6;
-      --cyan: #00f0ff;
-      --green: #39ff88;
-      --red: #ff3b5c;
-      --amber: #f9f871;
-      --purple: #b45cff;
-      --text-main: #e9f7ff;
-      --text-dim: #8a7fb8;
-      --pixel: 'Press Start 2P', 'Courier New', monospace;
-      --body: 'VT323', 'Courier New', monospace;
-    }
+:root {
+  --bg-color: #0a0118;
+  --panel-bg: #150a30;
+  --outline: #05000f;
+  --border-color: #ff2bd6;
+  --cyan: #00f0ff;
+  --green: #39ff88;
+  --red: #ff3b5c;
+  --amber: #f9f871;
+  --purple: #b45cff;
+  --text-main: #e9f7ff;
+  --text-dim: #8a7fb8;
+  --pixel: 'Press Start 2P', 'Courier New', monospace;
+  --body: 'VT323', 'Courier New', monospace;
+}
 
-    * {
-      box-sizing: border-box; margin: 0; padding: 0;
-      font-family: var(--body);
-      -webkit-font-smoothing: none;
-    }
+* {
+  box-sizing: border-box; margin: 0; padding: 0;
+  font-family: var(--body);
+  -webkit-font-smoothing: none;
+}
 
-    body {
-      background-color: var(--bg-color);
-      background-image:
-        linear-gradient(rgba(0,240,255,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,43,214,0.06) 1px, transparent 1px);
-      background-size: 24px 24px, 24px 24px;
-      background-position: 0 0, 0 0;
-      color: var(--text-main);
-      font-size: 16px;
-      padding: 10px 14px 14px 10px;
-      display: flex;
-      justify-content: center;
-    }
+body {
+  background-color: var(--bg-color);
+  background-image:
+    linear-gradient(rgba(0,240,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,43,214,0.06) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px;
+  color: var(--text-main);
+  font-size: 16px;
+  padding: 10px 14px 14px 10px;
+  display: flex;
+  justify-content: center;
+}
 
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 50;
-      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.14) 0px, rgba(0,0,0,0.14) 1px, transparent 1px, transparent 3px);
-    }
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.14) 0px, rgba(0,0,0,0.14) 1px, transparent 1px, transparent 3px);
+}
 
-    .container {
-      width: 100%;
-      max-width: 480px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
+.container {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 
-    .panel {
-      background: var(--panel-bg);
-      border: 4px solid var(--outline);
-      box-shadow:
-        inset 2px 2px 0 #3a1d78,
-        inset -2px -2px 0 #0d0422,
-        4px 4px 0 var(--outline);
-      padding: 12px;
-    }
+.panel {
+  background: var(--panel-bg);
+  border: 4px solid var(--outline);
+  box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422, 4px 4px 0 var(--outline);
+  padding: 12px;
+}
 
-    .header {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 12px;
-    }
+.row-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+}
+.row-label { font-size: 15px; color: var(--text-dim); }
+.row-btns { display: flex; gap: 4px; }
 
-    .planet { image-rendering: pixelated; flex-shrink: 0; }
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.planet { image-rendering: pixelated; flex-shrink: 0; }
+.logo {
+  font-family: var(--pixel);
+  font-size: 12px;
+  color: var(--cyan);
+  text-shadow: 2px 2px 0 var(--border-color);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.logo-sub { font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap; }
 
-    .logo {
-      font-family: var(--pixel);
-      font-size: 12px;
-      color: var(--cyan);
-      letter-spacing: 0;
-      text-shadow: 2px 2px 0 var(--border-color);
-      line-height: 1.3;
-      white-space: nowrap;
-    }
+.header-btns {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 1 1 200px;
+}
 
-    .header-btns {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      flex: 1 1 200px;
-    }
+.cyber-btn {
+  --btn-bg: #12306b; --btn-hi: #00b8d4; --btn-lo: #081a40; --btn-fg: #ffffff;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 2px solid var(--outline);
+  box-shadow: inset 2px 2px 0 var(--btn-hi), inset -2px -2px 0 var(--btn-lo);
+  font-size: 15px;
+  line-height: 1;
+  padding: 6px 8px;
+  min-height: 30px;
+  cursor: pointer;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.45);
+}
+.cyber-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: inset 2px 2px 0 var(--btn-lo), inset -2px -2px 0 var(--btn-hi);
+}
+.cyber-btn:focus-visible, .tab-btn:focus-visible { outline: 2px dashed var(--amber); outline-offset: 2px; }
+.cyber-btn.danger { --btn-bg: #c2185b; --btn-hi: #ff5c9d; --btn-lo: #6a0a33; }
+.cyber-btn.accent { --btn-bg: #d4c400; --btn-hi: #fffb9a; --btn-lo: #7a7000; --btn-fg: #1a1700; text-shadow: none; }
+.cyber-btn.purple { --btn-bg: #6a2bd9; --btn-hi: #b58cff; --btn-lo: #35127a; }
+.cyber-btn.active-mode { --btn-bg: #00f0ff; --btn-hi: #b8fbff; --btn-lo: #0096a3; --btn-fg: #001014; text-shadow: none; }
 
-    .cyber-btn {
-      --btn-bg: #12306b; --btn-hi: #00b8d4; --btn-lo: #081a40; --btn-fg: #ffffff;
-      font-family: var(--body);
-      background: var(--btn-bg);
-      color: var(--btn-fg);
-      border: 2px solid var(--outline);
-      box-shadow: inset 2px 2px 0 var(--btn-hi), inset -2px -2px 0 var(--btn-lo);
-      font-size: 15px;
-      line-height: 1;
-      padding: 5px 7px;
-      cursor: pointer;
-      text-shadow: 1px 1px 0 rgba(0,0,0,0.45);
-    }
-    .cyber-btn:active {
-      transform: translate(1px, 1px);
-      box-shadow: inset 2px 2px 0 var(--btn-lo), inset -2px -2px 0 var(--btn-hi);
-    }
-    .cyber-btn:focus-visible, .tab-btn:focus-visible { outline: 2px dashed var(--amber); outline-offset: 2px; }
-    .cyber-btn.danger { --btn-bg: #c2185b; --btn-hi: #ff5c9d; --btn-lo: #6a0a33; }
-    .cyber-btn.accent { --btn-bg: #d4c400; --btn-hi: #fffb9a; --btn-lo: #7a7000; --btn-fg: #1a1700; text-shadow: none; }
-    .cyber-btn.purple { --btn-bg: #6a2bd9; --btn-hi: #b58cff; --btn-lo: #35127a; }
-    .cyber-btn.active-mode { --btn-bg: #00f0ff; --btn-hi: #b8fbff; --btn-lo: #0096a3; --btn-fg: #001014; text-shadow: none; }
+.net-worth-banner {
+  background: #07010f;
+  border: 4px solid var(--outline);
+  box-shadow: inset 0 0 0 3px var(--border-color), 0 0 14px rgba(255,43,214,0.35), 4px 4px 0 var(--outline);
+  padding: 16px 12px 18px;
+  text-align: center;
+}
+.net-worth-label { font-size: 16px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; }
+.net-worth-value {
+  font-family: var(--pixel);
+  font-size: 22px;
+  color: var(--cyan);
+  margin-top: 10px;
+  text-shadow: 3px 3px 0 var(--outline), 0 0 10px rgba(0,240,255,0.5);
+}
+.net-worth-value.green { color: var(--green); }
+.net-worth-value.red { color: var(--red); }
 
-    .net-worth-banner {
-      background: #07010f;
-      border: 4px solid var(--outline);
-      box-shadow: inset 0 0 0 3px var(--border-color), 0 0 14px rgba(255,43,214,0.35), 4px 4px 0 var(--outline);
-      padding: 16px 12px 18px;
-      text-align: center;
-    }
-    .net-worth-label {
-      font-size: 16px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
-    .net-worth-value {
-      font-family: var(--pixel);
-      font-size: 22px;
-      color: var(--cyan);
-      margin-top: 10px;
-      text-shadow: 3px 3px 0 var(--outline), 0 0 10px rgba(0,240,255,0.5);
-    }
-    .net-worth-value.green { color: var(--green); }
-    .net-worth-value.red { color: var(--red); }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stat-box {
+  background: #07010f;
+  border: 3px solid var(--outline);
+  box-shadow: inset 2px 2px 0 #2a1a66, 3px 3px 0 var(--outline);
+  padding: 8px;
+}
+.stat-label { font-size: 14px; color: var(--text-dim); text-transform: uppercase; line-height: 1.1; }
+.stat-value { font-family: var(--pixel); font-size: 10px; color: var(--cyan); margin-top: 8px; line-height: 1.4; word-break: break-all; }
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+.stat-value.amber { color: var(--amber); }
+.stat-value.purple { color: var(--purple); }
 
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
+.nav-tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
+.tab-btn {
+  background: #1a0f40;
+  border: 2px solid var(--outline);
+  box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422;
+  color: var(--text-dim);
+  font-size: 14px;
+  padding: 9px 0;
+  text-align: center;
+  cursor: pointer;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.tab-btn.active { background: var(--cyan); color: #001014; box-shadow: inset 2px 2px 0 #b8fbff, inset -2px -2px 0 #0096a3; }
 
-    .stat-box {
-      background: #07010f;
-      border: 3px solid var(--outline);
-      box-shadow: inset 2px 2px 0 #2a1a66, 3px 3px 0 var(--outline);
-      padding: 8px;
-      position: relative;
-    }
+.tab-pane { display: none; flex-direction: column; gap: 8px; }
+.tab-pane.active { display: flex; }
+.pane-title { font-size: 16px; color: var(--cyan); margin-bottom: 4px; }
+.pane-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 
-    .stat-label {
-      font-size: 14px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      line-height: 1.1;
-    }
+.terminal-box {
+  background: #07010f;
+  border: 3px solid var(--outline);
+  box-shadow: inset 2px 2px 0 #2a1a66;
+  padding: 8px;
+  height: 240px;
+  overflow-y: auto;
+  font-size: 16px;
+  line-height: 1.15;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.terminal-box.log { height: 220px; gap: 2px; }
+.log-line { color: var(--green); }
 
-    .stat-value {
-      font-family: var(--pixel);
-      font-size: 10px;
-      color: var(--cyan);
-      margin-top: 8px;
-      line-height: 1.4;
-      word-break: break-all;
-    }
-    .stat-value.green { color: var(--green); }
-    .stat-value.red { color: var(--red); }
-    .stat-value.amber { color: var(--amber); }
-    .stat-value.purple { color: var(--purple); }
+.feed-item { padding: 6px 8px; border-left: 4px solid var(--cyan); background: rgba(255,255,255,0.04); }
+.feed-sender { font-size: 15px; margin-bottom: 2px; letter-spacing: 1px; }
+.feed-time { font-size: 14px; color: var(--text-dim); }
+.feed-text { color: var(--text-main); font-size: 16px; }
+.feed-text a { color: var(--text-main); text-decoration: underline; }
 
-    .nav-tabs {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 3px;
-    }
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 15px;
+  padding: 6px 8px;
+  background: #07010f;
+  border: 2px solid var(--outline);
+  box-shadow: inset 2px 2px 0 #2a1a66;
+  margin-bottom: 4px;
+  align-items: center;
+}
+.protocol-line { font-size: 15px; color: var(--text-main); padding: 2px 0; }
 
-    .tab-btn {
-      font-family: var(--body);
-      background: #1a0f40;
-      border: 2px solid var(--outline);
-      box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422;
-      color: var(--text-dim);
-      font-size: 14px;
-      padding: 7px 0;
-      text-align: center;
-      cursor: pointer;
-      text-transform: uppercase;
-      line-height: 1;
-    }
+.agent-card {
+  background: #07010f;
+  border: 3px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  padding: 8px;
+}
+.agent-name { font-size: 16px; }
+.agent-role { font-size: 14px; color: var(--text-dim); }
+.agent-speech { font-size: 15px; margin-top: 4px; color: var(--text-main); }
 
-    .tab-btn.active {
-      background: var(--cyan);
-      color: #001014;
-      box-shadow: inset 2px 2px 0 #b8fbff, inset -2px -2px 0 #0096a3;
-    }
+.position-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 0.8fr;
+  gap: 2px;
+  font-size: 14px;
+  padding: 6px 2px;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 2px solid #2a1a66;
+  align-items: center;
+  text-align: center;
+}
+.position-header { color: var(--amber); border-bottom: 2px solid var(--border-color); padding-bottom: 4px; }
+.empty-note { text-align: center; color: var(--text-dim); padding: 16px; }
+.section-title { font-size: 15px; color: var(--amber); margin: 10px 0 4px; border-bottom: 2px solid var(--border-color); }
 
-    .tab-pane {
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .tab-pane.active {
-      display: flex;
-    }
+#orbital-table {
+  width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+  border: 3px solid var(--outline);
+  box-shadow: 0 0 0 2px var(--cyan), 0 0 16px rgba(0,240,255,0.35);
+  cursor: pointer;
+  touch-action: manipulation;
+  background: #07010f;
+}
+.scene-caption { font-size: 16px; color: var(--text-dim); min-height: 20px; padding: 0 2px 4px; }
+#war-room-container { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
 
-    .terminal-box {
-      background: #07010f;
-      border: 3px solid var(--outline);
-      box-shadow: inset 2px 2px 0 #2a1a66;
-      padding: 8px;
-      height: 220px;
-      overflow-y: auto;
-      font-size: 16px;
-      line-height: 1.15;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+@media (prefers-reduced-motion: reduce) {
+  .cyber-btn:active { transform: none; }
+}
 
-    .feed-item {
-      padding: 6px 8px;
-      border-left: 4px solid var(--cyan);
-      background: rgba(255, 255, 255, 0.04);
-    }
-    .feed-sender {
-      font-size: 15px;
-      margin-bottom: 2px;
-      letter-spacing: 1px;
-    }
-    .feed-text {
-      color: var(--text-main);
-      font-size: 16px;
-    }
-
-    .status-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      font-size: 15px;
-      padding: 6px 8px;
-      background: #07010f;
-      border: 2px solid var(--outline);
-      box-shadow: inset 2px 2px 0 #2a1a66;
-      margin-bottom: 4px;
-      align-items: center;
-    }
-
-    .agent-card {
-      background: #07010f;
-      border: 3px solid var(--outline);
-      box-shadow: 3px 3px 0 var(--outline);
-      padding: 8px;
-      margin-bottom: 8px;
-    }
-    .agent-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .robot-head {
-      width: 32px;
-      height: 32px;
-      border: 3px solid;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      background: #150a30;
-      flex-shrink: 0;
-    }
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 2px;
-      margin-top: 6px;
-      font-size: 14px;
-      background: #150a30;
-      padding: 4px;
-      border: 2px solid var(--outline);
-      text-align: center;
-    }
-
-    .position-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr 0.8fr;
-      font-size: 14px;
-      padding: 6px 2px;
-      background: rgba(255, 255, 255, 0.04);
-      border-bottom: 2px solid #2a1a66;
-      align-items: center;
-      text-align: center;
-    }
-    #orbital-table {
-      width: 100%;
-      height: auto;
-      display: block;
-      image-rendering: pixelated;
-      border: 3px solid var(--outline);
-      box-shadow: 0 0 0 2px var(--cyan), 0 0 16px rgba(0,240,255,0.35);
-      cursor: pointer;
-      touch-action: manipulation;
-      background: #07010f;
-    }
-    .scene-caption {
-      font-size: 16px;
-      color: var(--text-dim);
-      min-height: 20px;
-      padding: 0 2px 4px;
-    }
-    .position-header {
-      color: var(--amber);
-      border-bottom: 2px solid var(--border-color);
-      padding-bottom: 4px;
-    }
-  </style>
+</style>
 </head>
 <body>
-
   <div class="container">
+
     <div class="panel header">
-      <div style="display:flex;align-items:center;gap:10px;">
+      <div class="brand">
         <svg class="planet" width="30" height="30" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">
           <g fill="#00f0ff"><rect x="4" y="2" width="4" height="1"/><rect x="3" y="3" width="6" height="1"/><rect x="2" y="4" width="8" height="4"/><rect x="3" y="8" width="6" height="1"/><rect x="4" y="9" width="4" height="1"/></g>
           <g fill="#2a7fc0"><rect x="6" y="6" width="4" height="2"/><rect x="5" y="8" width="4" height="1"/></g>
@@ -339,7 +273,7 @@
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div style="font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap;">VAULT SWARM V13.9</div>
+          <div class="logo-sub">PAPER TRADING // V14</div>
         </div>
       </div>
       <div class="header-btns">
@@ -352,19 +286,17 @@
       </div>
     </div>
 
-    <!-- MODE SWITCHER BANNER -->
-    <div class="panel" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;">
-      <span style="font-size: 15px; color: var(--text-dim);">OPERATIONAL MODE:</span>
-      <div style="display: flex; gap: 4px;">
+    <div class="panel row-panel">
+      <span class="row-label">OPERATIONAL MODE:</span>
+      <div class="row-btns">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
-        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (TIERED LADDER)</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER</button>
       </div>
     </div>
 
-    <!-- DECISION MODE -->
-    <div class="panel" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;">
-      <span style="font-size: 15px; color: var(--text-dim);">DECISIONS:</span>
-      <div style="display: flex; gap: 4px;">
+    <div class="panel row-panel">
+      <span class="row-label">DECISIONS:</span>
+      <div class="row-btns">
         <button id="btn-dec-council" class="cyber-btn" onclick="setDecisionMode('COUNCIL')">COUNCIL</button>
         <button id="btn-dec-auto" class="cyber-btn" onclick="setDecisionMode('AUTO')">⚙ AUTO (NO AI)</button>
       </div>
@@ -376,773 +308,876 @@
     </div>
 
     <div class="stats-grid">
-      <div class="stat-box">
-        <div class="stat-label">Realized P&L</div>
-        <div class="stat-value green" id="realized-pnl">+$0.00</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Unrealized P&L</div>
-        <div class="stat-value green" id="unrealized-pnl">+$0.00</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Total Fees Paid</div>
-        <div class="stat-value amber" id="total-fees">$0.00</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Bot Bankroll</div>
-        <div class="stat-value amber" id="cash-balance">$100.00</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Main Vault</div>
-        <div class="stat-value purple" id="vault-balance">$0.00</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Coins Seen</div>
-        <div class="stat-value cyan" id="scanned-count">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Hot (Buyable)</div>
-        <div class="stat-value green" id="hot-count">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Benched</div>
-        <div class="stat-value amber" id="benched-count">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Feeds Online</div>
-        <div class="stat-value purple" id="feeds-count">--</div>
-      </div>
+      <div class="stat-box"><div class="stat-label">Realized P&amp;L</div><div class="stat-value green" id="realized-pnl">+$0.00</div></div>
+      <div class="stat-box"><div class="stat-label">Unrealized P&amp;L</div><div class="stat-value green" id="unrealized-pnl">+$0.00</div></div>
+      <div class="stat-box"><div class="stat-label">Total Fees Paid</div><div class="stat-value amber" id="total-fees">$0.00</div></div>
+      <div class="stat-box"><div class="stat-label">Bot Bankroll</div><div class="stat-value amber" id="cash-balance">$100.00</div></div>
+      <div class="stat-box"><div class="stat-label">Main Vault</div><div class="stat-value purple" id="vault-balance">$0.00</div></div>
+      <div class="stat-box"><div class="stat-label">Coins Seen</div><div class="stat-value" id="scanned-count">0</div></div>
+      <div class="stat-box"><div class="stat-label">Hot (Buyable)</div><div class="stat-value green" id="hot-count">0</div></div>
+      <div class="stat-box"><div class="stat-label">Benched</div><div class="stat-value amber" id="benched-count">0</div></div>
+      <div class="stat-box"><div class="stat-label">Feeds Online</div><div class="stat-value purple" id="feeds-count">--</div></div>
     </div>
 
-    <div class="nav-tabs">
-      <button class="tab-btn active" onclick="switchTab('hub', this)">Hub</button>
-      <button class="tab-btn" onclick="switchTab('council', this)">Council</button>
-      <button class="tab-btn" onclick="switchTab('news', this)">News</button>
-      <button class="tab-btn" onclick="switchTab('positions', this)">Positions</button>
-      <button class="tab-btn" onclick="switchTab('status', this)">Status</button>
-      <button class="tab-btn" onclick="switchTab('warroom', this)">War Room</button>
+    <div class="nav-tabs" role="tablist">
+      <button class="tab-btn active" data-tab="hub">Hub</button>
+      <button class="tab-btn" data-tab="council">Council</button>
+      <button class="tab-btn" data-tab="news">News</button>
+      <button class="tab-btn" data-tab="positions">Positions</button>
+      <button class="tab-btn" data-tab="status">Status</button>
+      <button class="tab-btn" data-tab="warroom">War Room</button>
     </div>
 
     <div id="tab-hub" class="tab-pane active panel">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 16px; color: var(--cyan);">// MEGA-STREAM DISCOVERY ENGINE</div>
-        <button class="cyber-btn" style="font-size: 14px;" onclick="requestBriefing()">SUMMARY</button>
+      <div class="pane-head">
+        <div class="pane-title">// DISCOVERY ENGINE LOG</div>
+        <button class="cyber-btn" onclick="requestBriefing()">SUMMARY</button>
       </div>
-      <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] Multi-endpoint mega-stream discovery active.</div>
-      </div>
+      <div class="terminal-box log" id="system-log"></div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & EXECUTION LOG</div>
-      <div class="terminal-box" style="height: 240px;" id="council-feed-container"></div>
+      <div class="pane-title">// AI SWARM AUDIT &amp; EXECUTION LOG</div>
+      <div class="terminal-box" id="council-feed-container"></div>
     </div>
 
     <div id="tab-news" class="tab-pane panel">
-      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// NEWS_HAWK & WHALE_EYE LIVE WIRE</div>
-      <div class="terminal-box" style="height: 240px;" id="whale-news-container">
-        <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // MEGA-SCANNER</div>
-          <div class="feed-text">Streaming real-time Solana memecoins...</div>
-        </div>
-      </div>
+      <div class="pane-title">// NEWS_HAWK &amp; WHALE_EYE LIVE WIRE</div>
+      <div class="terminal-box" id="whale-news-container"></div>
     </div>
 
     <div id="tab-positions" class="tab-pane panel">
-      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// OPEN HOLDINGS & MANUAL LIQUIDATION</div>
-      <div class="terminal-box" style="height: 240px; padding: 4px;" id="positions-container">
+      <div class="pane-title">// OPEN HOLDINGS &amp; MANUAL LIQUIDATION</div>
+      <div class="terminal-box" id="positions-container">
         <div class="position-row position-header">
-          <div>ASSET</div>
-          <div>HOLDING</div>
-          <div>AVG COST</div>
-          <div>P&L ($)</div>
-          <div>ACTION</div>
+          <div>ASSET</div><div>HOLDING</div><div>AVG COST</div><div>P&amp;L ($)</div><div>ACTION</div>
         </div>
         <div id="positions-list"></div>
-        <div style="font-size: 15px; color: var(--amber); margin: 10px 0 4px; border-bottom: 2px solid var(--border-color);">// ARCHIVE (LOSERS &amp; FLAT COINS ONLY)</div>
+        <div class="section-title">// ARCHIVE (LOSERS &amp; FLAT COINS ONLY)</div>
         <div id="archive-list"></div>
       </div>
     </div>
 
     <div id="tab-status" class="tab-pane panel">
-      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
+      <div class="pane-title">// SYSTEM CONNECTION &amp; SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
       <div class="status-row"><span>DECISION MODE:</span> <strong id="status-decision" style="color: var(--cyan);">COUNCIL</strong></div>
-      <div class="status-row"><span>DISCOVERY FEED:</span> <strong style="color: var(--green);">ONLINE [MEGA-STREAM + LIVE PROFILES]</strong></div>
-      <div class="status-row"><span>MAX POSITION CAP:</span> <strong style="color: var(--green);">ACTIVE [20% BANKROLL PER ENTRY]</strong></div>
+      <div class="status-row"><span>MARKET FEED:</span> <strong id="status-feed" style="color: var(--text-dim);">CONNECTING</strong></div>
+      <div class="status-row"><span>NEWS FEED:</span> <strong id="status-news" style="color: var(--text-dim);">CONNECTING</strong></div>
+      <div class="status-row"><span>MAX POSITION CAP:</span> <strong style="color: var(--green);">20% OF BANKROLL</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 8/8 MEGA-STREAM AGENTS</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
-      <div style="font-size: 16px; color: var(--cyan); margin: 8px 0 4px;">// BUY PROTOCOL</div>
+      <div class="pane-title" style="margin-top: 8px;">// BUY PROTOCOL</div>
       <div id="protocol-box"></div>
     </div>
 
     <div id="tab-warroom" class="tab-pane panel">
-      <div style="font-size: 16px; color: var(--cyan); margin-bottom: 4px;">// WAR ROOM (CONTROL AI AGENTS)</div>
-      <canvas id="orbital-table" width="256" height="168" role="img" aria-label="Animated pixel scene"></canvas>
+      <div class="pane-title">// WAR ROOM</div>
+      <canvas id="orbital-table" width="256" height="168" role="img" aria-label="Animated pixel scene of the eight trading agents around a table"></canvas>
       <div id="scene-caption" class="scene-caption">Tap an agent to see who they are.</div>
-      <div id="war-room-container" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
+      <div id="war-room-container"></div>
     </div>
+
   </div>
-
   <script>
-    function loadJSON(key, fallback) {
-      try {
-        const raw = localStorage.getItem(key);
-        if (!raw) return fallback;
-        const parsed = JSON.parse(raw);
-        return (parsed && typeof parsed === 'object') ? parsed : fallback;
-      } catch (e) {
-        return fallback;
-      }
+'use strict';
+/* ORBITAL // HQ — paper-trading dashboard. Everything here is simulated; no real funds move. */
+
+/* ============================== CONFIG ============================== */
+const CFG = {
+  startBankroll: 100,
+  entryPct: 0.20,
+  minCash: 20,
+  feeRate: 0.003,          // swap fee per side
+  baseSlippage: 0.005,     // 0.5% per side, plus price impact (trade size / pool liquidity)
+  stopLossPct: -2.5,
+  takeProfitPct: 2.5,      // GROWTH mode
+  staleExitMs: 2 * 60 * 60 * 1000,
+  scanEveryMs: 20000,
+  newsEveryMs: 120000,
+  recentKeepMs: 90000,     // keep coins that dropped out of search results this long
+  staleDataMs: 60000,      // never trade on a price older than this
+  minVolumeH1: 10000,
+  minTurnover: 0.15,
+  minTxnsH1: 40,
+  minBuyRatio: 0.5,
+  topPicks: 5,
+  sniperMaxLiq: 300000,
+  councilBlockMs: 5 * 60 * 1000,
+  geminiModel: 'gemini-2.0-flash'   // change if Google retires this model name
+};
+
+const HOUR = 60 * 60 * 1000;
+const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR };
+const KEYWORDS = ['pump', 'ai', 'dog', 'sol', 'cat', 'pepe', 'inu', 'moon', 'trump', 'baby', 'meme', 'coin', 'bonk', 'wif'];
+const IGNORED_SYMBOLS = ['SOL', 'USDC', 'USDT', 'WSOL'];
+const STORE_KEY = 'orbital_state_v2';
+
+const AGENTS = [
+  { id: 'boss',      name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor',     color: '#ff2bd6' },
+  { id: 'announcer', name: 'WHALE_EYE',      role: 'Whale Flow Watcher',      color: '#00f0ff' },
+  { id: 'news',      name: 'NEWS_HAWK',      role: 'Live News Announcer',     color: '#f9f871' },
+  { id: 'finance',   name: 'KIRKTRON 9001',  role: 'Opportunity Cost Engine', color: '#4d8bff' },
+  { id: 'risk',      name: 'RISK_CORE',      role: 'Stop-Loss Firewall',      color: '#ff9a3c' },
+  { id: 'trader',    name: 'ALPHA_X',        role: 'Swap Executor',           color: '#ff3b5c' },
+  { id: 'macro',     name: 'MACRO_9',        role: 'Momentum Scorer',         color: '#b45cff' },
+  { id: 'cfo',       name: 'ROBBIEBOT 9000', role: 'Vault Sweeper',           color: '#39ff88' }
+].map(a => Object.assign(a, { says: 'Standing by.' }));
+
+/* ============================== STATE ============================== */
+/* All per-token data is keyed by token ADDRESS (tickers collide constantly on memecoins). */
+function defaultState() {
+  return {
+    cash: CFG.startBankroll, vault: 0, sweepPct: 20,
+    positions: {}, costBasis: {}, symbols: {}, entryTimes: {}, peaks: {}, tiers: {},
+    archive: {},
+    realizedPnl: 0, fees: 0, txCount: 0,
+    mode: 'GROWTH', decision: 'COUNCIL', sound: true
+  };
+}
+
+function loadState() {
+  const s = defaultState();
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') Object.assign(s, parsed);
     }
+  } catch (e) { /* corrupt or blocked storage: start fresh */ }
+  const now = Date.now();
+  Object.keys(s.archive).forEach(a => {
+    const e = s.archive[a];
+    if (!e || e.until <= now || (e.pnl || 0) > 0) delete s.archive[a];
+  });
+  return s;
+}
 
-    let marketCoins = [];
-    let isFetching = false;
-    let whaleNewsFeed = [{ title: 'System Initialized', desc: 'Mega-stream discovery active.', time: '00:00' }];
-    let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
-    let peakPrices = loadJSON('solaris_peak_prices', {});
-    let sniperTierState = loadJSON('solaris_sniper_tiers', {});
+function saveState() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* storage full or blocked */ }
+}
 
-    const agentDefs = [
-      { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor', color: '#ff2bd6', icon: '👁️', pnl: 0, status: 'ADVISORY' },
-      { id: 'announcer', name: 'WHALE_EYE', role: 'Whale Flow Watcher', color: '#00f0ff', icon: '📡', pnl: 0, status: 'ACTIVE' },
-      { id: 'news', name: 'NEWS_HAWK', role: 'Live News Announcer', color: '#f9f871', icon: '📰', pnl: 0, status: 'ACTIVE' },
-      { id: 'finance', name: 'KIRKTRON 9001', role: 'Opportunity Cost Engine', color: '#4d8bff', icon: '🤖', pnl: 0, status: 'ACTIVE' },
-      { id: 'risk', name: 'RISK_CORE', role: 'Stop-Loss Firewall', color: '#ff9a3c', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
-      { id: 'trader', name: 'ALPHA_X', role: 'Swap Executor', color: '#ff3b5c', icon: '⚡', pnl: 0, status: 'ACTIVE' },
-      { id: 'macro', name: 'MACRO_9', role: 'Momentum Scorer', color: '#b45cff', icon: '🌐', pnl: 0, status: 'ACTIVE' },
-      { id: 'cfo', name: 'ROBBIEBOT 9000', role: 'Vault Sweeper', color: '#39ff88', icon: '🏛️', pnl: 0, status: 'ACTIVE' }
-    ];
+const state = loadState();
+const market = new Map();          // address -> coin
+const councilFeed = [];
+const whaleFeed = [];
+const whaleSeen = {};
+let liveNews = [];
+let newsStatus = 'CONNECTING';
+let feedStatus = 'CONNECTING';
+let lastScan = { seen: 0, ok: 0, req: 0 };
+let scanCount = 0;
+let scanning = false;
+let councilBusy = false;
+const proposalBlock = {};
+const noFeedWarned = new Set();
+const seenNews = new Set();
+let newsBootstrapped = false;
+let activeTab = 'hub';
 
-    let state = {
-      cash: parseFloat(localStorage.getItem('solaris_cash')) || 100,
-      vault: parseFloat(localStorage.getItem('solaris_vault')) || 0,
-      sweepPct: parseFloat(localStorage.getItem('solaris_sweep_pct')) || 20,
-      positions: loadJSON('solaris_positions', {}),
-      costBasis: loadJSON('solaris_cost_basis', {}),
-      addresses: loadJSON('solaris_addresses', {}),
-      entryTimes: loadJSON('solaris_entry_times', {}),
-      archive: loadJSON('solaris_archive', {}),
-      realizedPnl: parseFloat(localStorage.getItem('solaris_pnl')) || 0,
-      totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
-      txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
-      lastTradeTime: 0,
-      councilFeed: [{ sender: 'RISK_CORE', text: `Mega-stream active [${operationalMode}].`, color: '#f9f871', time: '00:00' }]
+/* ============================== HELPERS ============================== */
+const $ = id => document.getElementById(id);
+function setText(id, v) { const el = $(id); if (el) el.textContent = v; }
+
+function escapeHtml(str) {
+  return String(str === undefined || str === null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function fmtCurrency(v) { return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtSigned(v) { return (v >= 0 ? '+' : '-') + fmtCurrency(Math.abs(v)); }
+function fmtPrice(v) {
+  if (!(v > 0)) return '$0';
+  if (v >= 0.01) return '$' + v.toFixed(2);
+  return '$' + v.toFixed(Math.min(12, 2 - Math.floor(Math.log10(v))));
+}
+function clock() { return new Date().toTimeString().split(' ')[0]; }
+
+async function safeJson(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) { return null; }
+}
+
+function log(msg) {
+  const box = $('system-log');
+  if (!box) return;
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.textContent = `[${clock()}] ${msg}`;
+  box.appendChild(line);
+  while (box.children.length > 150) box.removeChild(box.firstChild);
+  box.scrollTop = box.scrollHeight;
+}
+
+function agentSay(id, text) {
+  const a = AGENTS.find(x => x.id === id);
+  if (!a) return;
+  a.says = text;
+  councilFeed.unshift({ sender: a.name, text, color: a.color, time: new Date().toLocaleTimeString() });
+  if (councilFeed.length > 40) councilFeed.pop();
+}
+
+/* ============================== SOUND ============================== */
+let audioCtx = null;
+function getAudio() {
+  if (!state.sound) return null;
+  try {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  } catch (e) { return null; }
+}
+function tone(freq, delay, dur, type, vol) {
+  const ctx = getAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime + delay;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'square';
+  osc.frequency.setValueAtTime(freq, t);
+  gain.gain.setValueAtTime(vol || 0.05, t);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(t); osc.stop(t + dur + 0.02);
+}
+const SFX = {
+  buy()  { tone(988, 0, 0.07, 'square', 0.05); tone(1319, 0.07, 0.14, 'square', 0.05); },
+  win()  { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.08, 0.12, 'square', 0.05)); },
+  loss() { [392, 330, 262, 196].forEach((f, i) => tone(f, i * 0.1, 0.14, 'triangle', 0.08)); },
+  news() { tone(1568, 0, 0.06, 'square', 0.04); tone(1319, 0.08, 0.1, 'square', 0.04); }
+};
+function playSfx(name) { try { if (SFX[name]) SFX[name](); } catch (e) { /* audio is optional */ } }
+function toggleSound() {
+  state.sound = !state.sound;
+  saveState();
+  renderAll();
+  if (state.sound) { getAudio(); SFX.news(); }
+}
+
+/* ============================== MARKET LOGIC ============================== */
+function cleanSymbol(s) { return String(s || '').toUpperCase().replace(/[<>&"'`\\]/g, '').slice(0, 20); }
+
+function toCoin(p) {
+  if (!p || p.chainId !== 'solana' || !p.priceUsd || !p.baseToken || !p.baseToken.address) return null;
+  const liquidity = (p.liquidity && p.liquidity.usd) || 0;
+  const price = parseFloat(p.priceUsd);
+  if (!(liquidity > 0) || !(price > 0)) return null;
+  const symbol = cleanSymbol(p.baseToken.symbol);
+  if (!symbol || IGNORED_SYMBOLS.includes(symbol)) return null;
+  const pc = p.priceChange || {}, tx = (p.txns && p.txns.h1) || {};
+  return {
+    address: p.baseToken.address, symbol, price, liquidity,
+    change5m: pc.m5 || 0, change1h: pc.h1 || 0, change24h: pc.h24 || 0,
+    volumeH1: (p.volume && p.volume.h1) || 0,
+    buysH1: tx.buys || 0, sellsH1: tx.sells || 0,
+    seenAt: Date.now()
+  };
+}
+
+function modeAllows(c) { return state.mode !== 'SNIPER' || c.liquidity <= CFG.sniperMaxLiq; }
+function isFresh(c) { return c && Date.now() - c.seenAt < CFG.staleDataMs; }
+
+function isActive(c) {
+  const tx = c.buysH1 + c.sellsH1;
+  if (c.volumeH1 < CFG.minVolumeH1) return false;
+  if (c.volumeH1 / c.liquidity < CFG.minTurnover) return false;
+  if (tx < CFG.minTxnsH1) return false;
+  if (c.buysH1 / tx < CFG.minBuyRatio) return false;
+  return true;
+}
+
+function activityScore(c) {
+  const tx = Math.max(1, c.buysH1 + c.sellsH1);
+  return (c.volumeH1 / c.liquidity) * (c.buysH1 / tx) * (1 + Math.max(0, c.change1h) / 50);
+}
+
+function classifyDipOrDump(c) {
+  const tx = Math.max(1, c.buysH1 + c.sellsH1);
+  const buyRatio = c.buysH1 / tx;
+  const turnover = c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0;
+  if (c.change5m < 0) {
+    if (buyRatio < 0.45 || turnover < 0.1) return 'DUMP';
+    if (buyRatio >= 0.50 && turnover >= 0.15) return 'HEALTHY DIP';
+  }
+  return 'STABLE';
+}
+
+function heldAddrs() { return Object.keys(state.positions).filter(a => state.positions[a] > 0.00001); }
+function hotCoins() { return Array.from(market.values()).filter(c => isFresh(c) && isActive(c) && modeAllows(c)); }
+
+async function scanMarket() {
+  if (scanning) return;
+  scanning = true;
+  let req = 0, fail = 0;
+  const getJson = async url => { req++; const d = await safeJson(url); if (d === null) fail++; return d; };
+
+  try {
+    const held = heldAddrs();
+    const chunks = [];
+    for (let i = 0; i < held.length; i += 30) chunks.push(held.slice(i, i + 30));
+
+    // Discovery searches + a direct lookup for everything we hold, so held coins never lose their price.
+    const [searches, heldData] = await Promise.all([
+      Promise.all(KEYWORDS.map(k => getJson(`https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(k)}`))),
+      Promise.all(chunks.map(c => getJson(`https://api.dexscreener.com/tokens/v1/solana/${c.join(',')}`)))
+    ]);
+
+    const fresh = new Map();
+    const take = p => {
+      const c = toCoin(p);
+      if (!c) return;
+      const prev = fresh.get(c.address);
+      if (!prev || prev.liquidity < c.liquidity) fresh.set(c.address, c);
     };
+    searches.forEach(d => { if (d && Array.isArray(d.pairs)) d.pairs.forEach(take); });
+    heldData.forEach(d => { if (Array.isArray(d)) d.forEach(take); });
 
-    Object.keys(state.archive).forEach(k => { if ((state.archive[k].pnl || 0) > 0) delete state.archive[k]; });
-    localStorage.setItem('solaris_archive', JSON.stringify(state.archive));
-
-    const HOUR = 60 * 60 * 1000;
-    const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'TRAILING LOCK': 4 * HOUR, 'FULL TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR };
-    const MIN_VOLUME_H1 = 10000;
-    const MIN_TURNOVER = 0.15;
-    const MIN_TXNS_H1 = 40;
-    const MIN_BUY_RATIO = 0.5;
-    const TOP_PICKS = 5;
-
-    function isActive(c) {
-      const buys = c.buysH1 || 0, sells = c.sellsH1 || 0, tx = buys + sells;
-      if ((c.volumeH1 || 0) < MIN_VOLUME_H1) return false;
-      if (!(c.liquidity > 0) || c.volumeH1 / c.liquidity < MIN_TURNOVER) return false;
-      if (tx < MIN_TXNS_H1) return false;
-      if (buys / tx < MIN_BUY_RATIO) return false;
-      return true;
-    }
-
-    function activityScore(c) {
-      const buys = c.buysH1 || 0, sells = c.sellsH1 || 0, tx = Math.max(1, buys + sells);
-      return (c.volumeH1 / c.liquidity) * (buys / tx) * (1 + Math.max(0, c.change1h || 0) / 50);
-    }
-
-    // Dip vs Dump Intelligence Classifier
-    function classifyDipOrDump(coin) {
-      const buys = coin.buysH1 || 0, sells = coin.sellsH1 || 0;
-      const totalTx = Math.max(1, buys + sells);
-      const buyRatio = buys / totalTx;
-      const turnover = coin.liquidity > 0 ? (coin.volumeH1 / coin.liquidity) : 0;
-      if ((coin.change5m || 0) < 0) {
-        if (buyRatio < 0.45 || turnover < 0.1) return 'DUMP';
-        if (buyRatio >= 0.50 && turnover >= 0.15) return 'HEALTHY DIP';
-      }
-      return 'STABLE';
-    }
-
-    let soundOn = localStorage.getItem('orbital_sound') !== 'off';
-    let audioCtx = null;
-
-    function getAudio() {
-      if (!soundOn) return null;
-      try {
-        if (!audioCtx) {
-          const AC = window.AudioContext || window.webkitAudioContext;
-          if (!AC) return null;
-          audioCtx = new AC();
-        }
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        return audioCtx;
-      } catch (e) { return null; }
-    }
-
-    function tone(freq, delay, dur, type, vol) {
-      const ctx = getAudio();
-      if (!ctx) return;
-      const t = ctx.currentTime + delay;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = type || 'square';
-      osc.frequency.setValueAtTime(freq, t);
-      gain.gain.setValueAtTime(vol || 0.05, t);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + dur + 0.02);
-    }
-
-    const SFX = {
-      click() { tone(880, 0, 0.04, 'square', 0.04); },
-      tab()   { tone(660, 0, 0.05, 'square', 0.04); tone(990, 0.05, 0.05, 'square', 0.04); },
-      buy()   { tone(988, 0, 0.07, 'square', 0.05); tone(1319, 0.07, 0.14, 'square', 0.05); },
-      win()   { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.08, 0.12, 'square', 0.05)); },
-      loss()  { [392, 330, 262, 196].forEach((f, i) => tone(f, i * 0.1, 0.14, 'triangle', 0.08)); },
-      whale() { tone(110, 0, 0.3, 'triangle', 0.1); tone(165, 0.14, 0.34, 'triangle', 0.09); },
-      news()  { tone(1568, 0, 0.06, 'square', 0.04); tone(1319, 0.08, 0.1, 'square', 0.04); }
-    };
-
-    function playSfx(name) { try { if (SFX[name]) SFX[name](); } catch (e) {} }
-
-    function updateSoundBtn() {
-      const b = document.getElementById('btn-sound');
-      if (b) b.textContent = soundOn ? 'SND ON' : 'SND OFF';
-    }
-
-    function toggleSound() {
-      soundOn = !soundOn;
-      localStorage.setItem('orbital_sound', soundOn ? 'on' : 'off');
-      updateSoundBtn();
-      if (soundOn) { getAudio(); SFX.news(); }
-    }
-
-    function setTradingMode(mode) {
-      operationalMode = mode;
-      localStorage.setItem('solaris_mode', mode);
-      addSystemLog(`[MODE LOCKED] Operational mode: ${mode}`);
-      fetchLiveMarketPrices();
-      renderAll();
-    }
-
-    function manualSellPosition(sym) {
-      let qty = state.positions[sym];
-      if (!qty || qty <= 0) return;
-      let coin = marketCoins.find(c => c.symbol === sym) || { price: state.costBasis[sym] || 1 };
-      let addr = state.addresses[sym] || coin.address || '';
-      let cost = state.costBasis[sym] || coin.price;
-      let gross = qty * coin.price;
-      let fee = gross * 0.003;
-      let netReturn = gross - fee;
-      let pnlDelta = netReturn - (qty * cost);
-
-      delete state.positions[sym];
-      delete state.costBasis[sym];
-      delete state.addresses[sym];
-      delete state.entryTimes[sym];
-      delete peakPrices[sym];
-      delete sniperTierState[sym];
-      archiveCoin(sym, addr, 'MANUAL', pnlDelta);
-
-      state.cash += netReturn;
-      state.realizedPnl += pnlDelta;
-      state.totalFeesPaid += fee;
-      state.txCount += 1;
-
-      playSfx(pnlDelta >= 0 ? 'win' : 'loss');
-      addSystemLog(`[MANUAL] Liquidated ${sym} | P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
-      saveState();
-      renderAll();
-    }
-
-    function fmtCurrency(val) { return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-    function fmtPrice(val) { return val < 0.01 ? '$' + val.toFixed(6) : '$' + val.toFixed(2); }
-
-    function switchTab(tabId, btnElement) {
-      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      const target = document.getElementById('tab-' + tabId);
-      if (target) target.classList.add('active');
-      if (btnElement) btnElement.classList.add('active');
-      renderAll();
-      if (tabId === 'warroom' && typeof sceneFrame === 'function') sceneFrame();
-    }
-
-    function addSystemLog(msg) {
-      const logBox = document.getElementById('system-log');
-      if (!logBox) return;
-      logBox.insertAdjacentHTML('beforeend', `<div>[${new Date().toTimeString().split(' ')[0]}]${msg}</div>`);
-      while (logBox.children.length > 150) logBox.removeChild(logBox.firstChild);
-      logBox.scrollTop = logBox.scrollHeight;
-    }
-
-    async function safeJson(url) {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) return null;
-        return await res.json();
-      } catch (e) { return null; }
-    }
-
-    let liveNews = [];
-    let newsStatus = 'CONNECTING';
-    const seenNews = new Set();
-    let newsBootstrapped = false;
-    const whaleSeen = {};
-
-    function escapeHtml(str) {
-      return String(str === undefined || str === null ? '' : str)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
-    async function fetchLiveNews() {
-      const data = await safeJson('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
-      if (data && Array.isArray(data.Data)) {
-        liveNews = data.Data.slice(0, 15).map(n => ({
-          title: n.title,
-          source: (n.source_info && n.source_info.name) || n.source || 'NEWS',
-          ts: (n.published_on || 0) * 1000,
-          time: new Date((n.published_on || 0) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          url: n.url || ''
-        }));
-        newsStatus = 'LIVE [CRYPTOCOMPARE]';
-      } else {
-        newsStatus = 'OFFLINE';
-      }
-      renderAll();
-    }
-
-    const IGNORED_SYMBOLS = ['SOL', 'USDC', 'USDT', 'WSOL'];
-    const RECENT_KEEP_MS = 90 * 1000;
-    let scanReq = 0, scanFail = 0, scanCount = 0;
-    let lastScan = { seen: 0, ok: 0, req: 0 };
-
-    async function dexJson(url) {
-      scanReq++;
-      const data = await safeJson(url);
-      if (data === null) scanFail++;
-      return data;
-    }
-
-    function modeAllows(c) { return operationalMode !== 'SNIPER' || c.liquidity <= 300000; }
-
-    async function fetchLiveMarketPrices() {
-      if (isFetching) return;
-      isFetching = true;
-      scanReq = 0; scanFail = 0;
-      try {
-        const keywords = ['pump', 'ai', 'dog', 'sol', 'cat', 'pepe', 'inu', 'moon', 'trump', 'baby', 'meme', 'coin', 'bonk', 'wif'];
-        const heldAddrs = Object.keys(state.positions)
-          .filter(sym => (state.positions[sym] || 0) > 0.00001 && state.addresses[sym])
-          .map(sym => state.addresses[sym]);
-
-        const [profilesData, ...searchResults] = await Promise.all([
-          dexJson(`https://api.dexscreener.com/token-profiles/latest/v1`),
-          ...keywords.map(k => dexJson(`https://api.dexscreener.com/latest/dex/search?q=${k}`))
-        ]);
-
-        const poolMap = new Map();
-        const consider = (p, badge) => {
-          if (!p || p.chainId !== 'solana' || !p.priceUsd || !p.baseToken || !p.baseToken.symbol) return;
-          const liq = p.liquidity && p.liquidity.usd ? p.liquidity.usd : 0;
-          if (liq <= 0) return;
-          const price = parseFloat(p.priceUsd);
-          if (!(price > 0)) return;
-          const sym = p.baseToken.symbol.toUpperCase().replace(/[<>&"'`\\]/g, '').slice(0, 20);
-          if (!sym || IGNORED_SYMBOLS.includes(sym)) return;
-
-          const existing = poolMap.get(sym);
-          if (existing && existing.liquidity >= liq) return;
-          poolMap.set(sym, {
-            symbol: sym,
-            address: p.baseToken.address,
-            price: price,
-            change24h: (p.priceChange && p.priceChange.h24 !== undefined) ? p.priceChange.h24 : 0,
-            liquidity: liq,
-            change1h: (p.priceChange && p.priceChange.h1 !== undefined) ? p.priceChange.h1 : 0,
-            change5m: (p.priceChange && p.priceChange.m5 !== undefined) ? p.priceChange.m5 : 0,
-            volumeH1: (p.volume && p.volume.h1) ? p.volume.h1 : 0,
-            buysH1: (p.txns && p.txns.h1 && p.txns.h1.buys) ? p.txns.h1.buys : 0,
-            sellsH1: (p.txns && p.txns.h1 && p.txns.h1.sells) ? p.txns.h1.sells : 0,
-            securityBadge: badge
-          });
-        };
-
-        searchResults.forEach(data => {
-          if (data && Array.isArray(data.pairs)) data.pairs.forEach(p => consider(p, 'UNVERIFIED'));
-        });
-
-        const fetched = Array.from(poolMap.values());
-        const nowSeen = Date.now();
-        fetched.forEach(c => { c.seenAt = nowSeen; });
-        if (fetched.length > 0) {
-          const carried = marketCoins.filter(c => !poolMap.has(c.symbol) && nowSeen - (c.seenAt || 0) < RECENT_KEEP_MS);
-          marketCoins = fetched.concat(carried);
-        }
-        lastScan = { seen: marketCoins.length, ok: scanReq - scanFail, req: scanReq };
-        scanCount++;
-
-        // Log hot coins by name directly here!
-        if (scanCount === 1 || scanCount % 4 === 0) {
-          const hotCoins = marketCoins.filter(c => isActive(c) && modeAllows(c));
-          const hotNames = hotCoins.map(c => c.symbol).join(', ') || 'None';
-          addSystemLog(`[SCAN] ${marketCoins.length} seen, ${hotCoins.length} hot [${hotNames}] | feeds ok ${lastScan.ok}/${lastScan.req}`);
-        }
-        renderAll();
-      } catch (err) {
-        console.warn("Fetch warning:", err);
-      } finally {
-        isFetching = false;
-      }
-    }
-
-    function promptApiKey() {
-      const key = prompt("Enter your Gemini API key:", localStorage.getItem('gemini_api_key') || '');
-      if (key !== null) {
-        localStorage.setItem('gemini_api_key', key.trim());
-        updateKeyStatus();
-      }
-    }
-
-    function updateKeyStatus() {
-      const k = localStorage.getItem('gemini_api_key');
-      const el = document.getElementById('key-status');
-      if (el) {
-        if (k && k.length > 5) { el.textContent = "● CONFIGURED"; el.style.color = "var(--green)"; }
-        else { el.textContent = "● NOT CONFIGURED"; el.style.color = "var(--text-dim)"; }
-      }
-    }
-
-    function saveState() {
-      localStorage.setItem('solaris_cash', state.cash);
-      localStorage.setItem('solaris_vault', state.vault);
-      localStorage.setItem('solaris_sweep_pct', state.sweepPct);
-      localStorage.setItem('solaris_pnl', state.realizedPnl);
-      localStorage.setItem('solaris_fees', state.totalFeesPaid);
-      localStorage.setItem('solaris_tx_count', state.txCount);
-      localStorage.setItem('solaris_positions', JSON.stringify(state.positions));
-      localStorage.setItem('solaris_cost_basis', JSON.stringify(state.costBasis));
-      localStorage.setItem('solaris_addresses', JSON.stringify(state.addresses));
-      localStorage.setItem('solaris_entry_times', JSON.stringify(state.entryTimes));
-      localStorage.setItem('solaris_archive', JSON.stringify(state.archive));
-      localStorage.setItem('solaris_peak_prices', JSON.stringify(peakPrices));
-      localStorage.setItem('solaris_sniper_tiers', JSON.stringify(sniperTierState));
-    }
-
-    function freshWipe() {
-      if (confirm("Reset all bots, positions, and bankroll?")) {
-        const apiKey = localStorage.getItem('gemini_api_key');
-        localStorage.clear();
-        if (apiKey) localStorage.setItem('gemini_api_key', apiKey);
-        location.reload();
-      }
-    }
-
-    function adjustFunds() {
-      const input = prompt("Enter new Active Bot Bankroll amount ($):", state.cash);
-      if (input !== null) {
-        const amt = parseFloat(input);
-        if (!isNaN(amt) && amt >= 0) { state.cash = amt; saveState(); renderAll(); }
-      }
-    }
-
-    function configureVault() {
-      const choice = prompt(`VAULT:\n- Balance: ${fmtCurrency(state.vault)}\n- Sweep Rate: ${state.sweepPct}%\nEnter '1' to transfer, '2' to change rate`, '1');
-      if (choice === '1') {
-        const val = parseFloat(prompt(`Transfer amount (+ to Vault, - to Bankroll):`, '0'));
-        if (!isNaN(val)) {
-          if (val > 0 && state.cash >= val) { state.cash -= val; state.vault += val; }
-          else if (val < 0 && state.vault >= Math.abs(val)) { state.vault -= Math.abs(val); state.cash += Math.abs(val); }
-          saveState(); renderAll();
-        }
-      } else if (choice === '2') {
-        const p = parseFloat(prompt(`Enter new profit sweep percentage (0 to 100):`, state.sweepPct));
-        if (!isNaN(p) && p >= 0 && p <= 100) { state.sweepPct = p; saveState(); renderAll(); }
-      }
-    }
-
-    function requestBriefing() {
-      let portfolioVal = 0;
-      Object.keys(state.positions).forEach(sym => {
-        let coin = marketCoins.find(c => c.symbol === sym) || { price: state.costBasis[sym] || 1 };
-        portfolioVal += (state.positions[sym] || 0) * coin.price;
-      });
-      let net = state.cash + state.vault + portfolioVal;
-      state.councilFeed.unshift({ sender: 'RISK_CORE', text: `Telemetry [${operationalMode}]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}`, color: '#f9f871', time: new Date().toLocaleTimeString() });
-      switchTab('council', document.querySelectorAll('.tab-btn')[1]);
-      renderAll();
-    }
-
-    function archiveCoin(sym, address, tag, pnl) {
-      if (pnl > 0) { delete state.archive[sym]; return; }
+    if (fresh.size > 0) {
       const now = Date.now();
-      Object.keys(state.archive).forEach(k => { if (state.archive[k].until <= now) delete state.archive[k]; });
-      state.archive[sym] = { address: address || '', reason: tag, pnl: pnl, until: now + (ARCHIVE_MS[tag] || 6 * HOUR) };
-    }
-
-    // Continuous Bench Scanner with early pump unbenching
-    function isArchived(coin) {
-      const now = Date.now();
-      const entry = state.archive[coin.symbol] || Object.values(state.archive).find(e => e.address && coin.address && e.address === coin.address);
-      if (entry && entry.until > now) {
-        if ((coin.change1h || 0) > 4.0 || (coin.change5m || 0) > 1.5) {
-          delete state.archive[coin.symbol];
-          Object.keys(state.archive).forEach(k => { if (state.archive[k].address === coin.address) delete state.archive[k]; });
-          saveState();
-          addSystemLog(`[PUMP UNBENCH] ${coin.symbol} unbenched due to pump momentum!`);
-          return false;
-        }
-        return true;
+      fresh.forEach((c, a) => market.set(a, c));
+      for (const [a, c] of market) {
+        if (!fresh.has(a) && now - c.seenAt > CFG.recentKeepMs && !(state.positions[a] > 0)) market.delete(a);
       }
-      return false;
     }
 
-    function closePosition(sym, coin, tag, msg) {
-      const qty = state.positions[sym];
-      if (!qty || qty <= 0) return;
-      const addr = state.addresses[sym] || coin.address || '';
-      const cost = state.costBasis[sym] || coin.price;
-      const gross = qty * coin.price;
-      const fee = gross * 0.003;
-      const netReturn = gross - fee;
-      const pnlDelta = netReturn - qty * cost;
+    lastScan = { seen: market.size, ok: req - fail, req };
+    feedStatus = fail === req ? 'OFFLINE' : `ONLINE [${lastScan.ok}/${req}]`;
+    scanCount++;
 
-      delete state.positions[sym];
-      delete state.costBasis[sym];
-      delete state.addresses[sym];
-      delete state.entryTimes[sym];
-      delete peakPrices[sym];
-      delete sniperTierState[sym];
-      archiveCoin(sym, addr, tag, pnlDelta);
+    const hot = hotCoins();
+    announceHot(hot);
+    if (scanCount === 1 || scanCount % 4 === 0) {
+      log(`[SCAN] ${market.size} seen, ${hot.length} hot [${hot.map(c => c.symbol).join(', ') || 'None'}] | feeds ok ${lastScan.ok}/${req}`);
+    }
+  } catch (err) {
+    console.warn('Scan error:', err);
+  } finally {
+    scanning = false;
+    renderAll();
+    runTradingLoop();   // always trade on the data we just fetched, not on stale prices
+  }
+}
 
-      if (pnlDelta > 0 && state.sweepPct > 0) {
-        const sweep = pnlDelta * (state.sweepPct / 100);
-        state.cash += netReturn - sweep;
-        state.vault += sweep;
-      } else {
-        state.cash += netReturn;
+function announceHot(hot) {
+  const now = Date.now();
+  hot.forEach(c => {
+    if (whaleSeen[c.address] && now - whaleSeen[c.address] < 30 * 60 * 1000) return;
+    whaleSeen[c.address] = now;
+    const ratio = Math.round(100 * c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1));
+    whaleFeed.unshift({ title: `${c.symbol} heating up`, desc: `$${Math.round(c.volumeH1).toLocaleString()} 1h volume, ${ratio}% buys, liquidity ${fmtCurrency(c.liquidity)}`, time: new Date().toLocaleTimeString() });
+    if (whaleFeed.length > 30) whaleFeed.pop();
+  });
+}
+
+async function fetchLiveNews() {
+  const data = await safeJson('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
+  if (data && Array.isArray(data.Data)) {
+    liveNews = data.Data.slice(0, 15).map(n => ({
+      id: n.id || n.url,
+      title: n.title,
+      source: (n.source_info && n.source_info.name) || n.source || 'NEWS',
+      time: new Date((n.published_on || 0) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      url: /^https?:\/\//.test(n.url || '') ? n.url : ''
+    }));
+    newsStatus = 'LIVE [CRYPTOCOMPARE]';
+    const unseen = liveNews.filter(n => !seenNews.has(n.id));
+    unseen.forEach(n => seenNews.add(n.id));
+    if (newsBootstrapped && unseen.length) { agentSay('news', unseen[0].title); playSfx('news'); }
+    newsBootstrapped = true;
+  } else {
+    newsStatus = 'OFFLINE';
+  }
+  renderAll();
+}
+
+/* ============================== TRADING ============================== */
+function slippage(usd, liquidity) { return CFG.baseSlippage + Math.min(0.05, usd / Math.max(1, liquidity)); }
+
+function isArchived(coin) {
+  const e = state.archive[coin.address];
+  if (!e || e.until <= Date.now()) return false;
+  if (coin.change1h > 4.0 || coin.change5m > 1.5) {   // pump momentum un-benches early
+    delete state.archive[coin.address];
+    saveState();
+    log(`[PUMP UNBENCH] ${coin.symbol} unbenched on pump momentum`);
+    return false;
+  }
+  return true;
+}
+
+function archiveCoin(addr, tag, pnl) {
+  if (pnl > 0) { delete state.archive[addr]; return; }
+  state.archive[addr] = { symbol: state.symbols[addr] || '?', reason: tag, pnl, until: Date.now() + (ARCHIVE_MS[tag] || 6 * HOUR) };
+}
+
+// Sells `qty` tokens at a slippage-adjusted fill, books fees/P&L, sweeps profit to the vault.
+function sellTokens(addr, coin, qty) {
+  const cost = state.costBasis[addr];
+  const fill = coin.price * (1 - slippage(qty * coin.price, coin.liquidity));
+  const gross = qty * fill;
+  const fee = gross * CFG.feeRate;
+  const net = gross - fee;
+  const pnl = net - qty * cost;
+  if (pnl > 0 && state.sweepPct > 0) {
+    const sweep = pnl * (state.sweepPct / 100);
+    state.cash += net - sweep;
+    state.vault += sweep;
+    agentSay('cfo', `Swept ${fmtCurrency(sweep)} of profit into the vault.`);
+  } else {
+    state.cash += net;
+  }
+  state.realizedPnl += pnl;
+  state.fees += fee;
+  state.txCount += 1;
+  return pnl;
+}
+
+function clearPosition(addr) {
+  ['positions', 'costBasis', 'entryTimes', 'peaks', 'tiers'].forEach(k => { delete state[k][addr]; });
+}
+
+function closePosition(addr, coin, tag, msg) {
+  const qty = state.positions[addr];
+  if (!(qty > 0)) return;
+  const sym = state.symbols[addr] || coin.symbol;
+  const pnl = sellTokens(addr, coin, qty);
+  archiveCoin(addr, tag, pnl);
+  clearPosition(addr);
+  playSfx(pnl >= 0 ? 'win' : 'loss');
+  log(`[${tag}] ${msg} ${sym} | P&L: ${fmtSigned(pnl)}`);
+  agentSay(tag === 'STOP-LOSS CUT' ? 'risk' : 'trader', `${tag}: ${sym} closed for ${fmtSigned(pnl)}.`);
+  saveState();
+  renderAll();
+}
+
+function manualSellPosition(addr) {
+  if (!(state.positions[addr] > 0)) return;
+  const coin = market.get(addr) || { price: state.costBasis[addr], liquidity: 1e9, symbol: state.symbols[addr] || '?' };
+  closePosition(addr, coin, 'MANUAL', 'Manually liquidated');
+}
+
+function openPosition(coin) {
+  const addr = coin.address;
+  if (state.positions[addr] > 0 || state.cash <= CFG.minCash || isArchived(coin)) return false;
+  const spend = state.cash * CFG.entryPct;
+  const fee = spend * CFG.feeRate;
+  const fill = coin.price * (1 + slippage(spend, coin.liquidity));
+  state.cash -= spend;
+  state.positions[addr] = (spend - fee) / fill;
+  state.costBasis[addr] = fill;
+  state.symbols[addr] = coin.symbol;
+  state.entryTimes[addr] = Date.now();
+  state.peaks[addr] = coin.price;
+  state.tiers[addr] = 0;
+  state.fees += fee;
+  state.txCount += 1;
+  playSfx('buy');
+  log(`[BUY] ALPHA_X entered ${coin.symbol} | Cost: ${fmtCurrency(spend)}`);
+  agentSay('trader', `Entered ${coin.symbol} with ${fmtCurrency(spend)}.`);
+  saveState();
+  renderAll();
+  return true;
+}
+
+function runExits() {
+  const now = Date.now();
+  for (const addr of heldAddrs()) {
+    const coin = market.get(addr);
+    const sym = state.symbols[addr] || '?';
+    if (!isFresh(coin)) {   // no live price: do nothing rather than act on a guess
+      if (!noFeedWarned.has(addr)) { noFeedWarned.add(addr); log(`[WARN] No live price for ${sym}; exits paused until feed returns`); }
+      continue;
+    }
+    noFeedWarned.delete(addr);
+
+    const cost = state.costBasis[addr] || coin.price;
+    const gain = ((coin.price - cost) / cost) * 100;
+    if (!(state.peaks[addr] >= coin.price)) state.peaks[addr] = coin.price;
+    const drop = ((state.peaks[addr] - coin.price) / state.peaks[addr]) * 100;
+    const healthyDip = classifyDipOrDump(coin) === 'HEALTHY DIP';
+    const tier = state.tiers[addr] || 0;
+
+    if (gain <= CFG.stopLossPct) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
+
+    if (state.mode === 'SNIPER') {
+      if (gain >= 3.5 && tier < 1) {
+        const q = state.positions[addr] * 0.40;
+        const pnl = sellTokens(addr, coin, q);
+        state.positions[addr] -= q; state.tiers[addr] = 1;
+        playSfx('win'); log(`[SNIPER TIER 1] Secured 40% of ${sym} | P&L: ${fmtSigned(pnl)}`);
+        saveState(); continue;
       }
-
-      state.realizedPnl += pnlDelta;
-      state.totalFeesPaid += fee;
-      state.txCount += 1;
-      state.lastTradeTime = Date.now();
-
-      playSfx(pnlDelta >= 0 ? 'win' : 'loss');
-      addSystemLog(`[${tag}] ${msg} ${sym} | P&L: ${pnlDelta >= 0 ? '+' : ''}${fmtCurrency(pnlDelta)}`);
-      saveState();
-      renderAll();
+      if (gain >= 15 && tier < 2) {
+        const q = state.positions[addr] * 0.5833;   // 35% of the original position
+        const pnl = sellTokens(addr, coin, q);
+        state.positions[addr] -= q; state.tiers[addr] = 2;
+        playSfx('win'); log(`[SNIPER TIER 2] Secured 35% of ${sym} | P&L: ${fmtSigned(pnl)}`);
+        saveState(); continue;
+      }
+      if (tier >= 1 && drop >= 15 && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Locked remaining runner on'); continue; }
+    } else if (gain >= CFG.takeProfitPct) {
+      closePosition(addr, coin, 'TAKE-PROFIT', 'Target secured on');
+      continue;
     }
 
-    let decisionMode = localStorage.getItem('orbital_decision_mode') === 'AUTO' ? 'AUTO' : 'COUNCIL';
-    let councilBusy = false;
-    const proposalBlock = {};
+    if (tier === 0 && now - (state.entryTimes[addr] || now) > CFG.staleExitMs && gain < 1) {
+      closePosition(addr, coin, 'STALE EXIT', 'Going nowhere, closed');
+    }
+  }
+}
 
-    function setDecisionMode(mode) {
-      decisionMode = mode === 'AUTO' ? 'AUTO' : 'COUNCIL';
-      localStorage.setItem('orbital_decision_mode', decisionMode);
-      addSystemLog(`[DECISIONS] Mode set to ${decisionMode}`);
-      renderAll();
+async function askCouncil(c) {
+  const key = localStorage.getItem('gemini_api_key');
+  const prompt = 'You are a risk council for a PAPER-TRADING Solana memecoin simulator. Decide whether to open a position. ' +
+    'Reply ONLY with JSON: {"approve": boolean, "reason": string under 140 characters}.\nData: ' +
+    JSON.stringify({ symbol: c.symbol, priceUsd: c.price, liquidityUsd: c.liquidity, volume1hUsd: c.volumeH1, buys1h: c.buysH1, sells1h: c.sellsH1, change5mPct: c.change5m, change1hPct: c.change1h, change24hPct: c.change24h, trend: classifyDipOrDump(c), mode: state.mode });
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CFG.geminiModel}:generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2 } }),
+    signal: AbortSignal.timeout(10000)
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  const text = data && data.candidates && data.candidates[0] && data.candidates[0].content.parts[0].text;
+  const out = JSON.parse(text);
+  return { approve: out.approve === true, reason: String(out.reason || '').slice(0, 140) };
+}
+
+async function considerEntry() {
+  if (state.cash <= CFG.minCash || councilBusy) return;
+  const now = Date.now();
+  const candidates = Array.from(market.values()).filter(c =>
+    isFresh(c) && !(state.positions[c.address] > 0) && !(proposalBlock[c.address] > now) && modeAllows(c) && isActive(c) && !isArchived(c)
+  ).sort((a, b) => activityScore(b) - activityScore(a));
+  if (!candidates.length) return;
+
+  const pick = candidates[Math.floor(Math.random() * Math.min(candidates.length, CFG.topPicks))];
+  const hasKey = (localStorage.getItem('gemini_api_key') || '').length > 5;
+
+  if (state.decision === 'COUNCIL' && hasKey) {
+    councilBusy = true;
+    try {
+      const v = await askCouncil(pick);
+      agentSay('boss', `${pick.symbol}: ${v.approve ? 'APPROVED' : 'VETOED'}. ${v.reason}`);
+      if (!v.approve) { proposalBlock[pick.address] = Date.now() + CFG.councilBlockMs; renderAll(); return; }
+    } catch (e) {
+      log(`[COUNCIL] Gemini unavailable (${e.message}); falling back to AUTO for this entry`);
+    } finally {
+      councilBusy = false;
+    }
+    const fresh = market.get(pick.address);   // price may have moved while we waited
+    if (!isFresh(fresh)) return;
+    openPosition(fresh);
+    return;
+  }
+  openPosition(pick);
+}
+
+function runTradingLoop() {
+  try {
+    if (market.size === 0) return;
+    runExits();
+    considerEntry();
+  } catch (err) { console.error('Loop error:', err); }
+}
+
+/* ============================== UI ACTIONS ============================== */
+function setTradingMode(mode) {
+  state.mode = mode === 'SNIPER' ? 'SNIPER' : 'GROWTH';
+  saveState();
+  log(`[MODE] Operational mode: ${state.mode}`);
+  renderAll();
+}
+
+function setDecisionMode(mode) {
+  state.decision = mode === 'AUTO' ? 'AUTO' : 'COUNCIL';
+  saveState();
+  log(`[DECISIONS] Mode set to ${state.decision}`);
+  if (state.decision === 'COUNCIL' && !(localStorage.getItem('gemini_api_key') || '').length) {
+    log('[DECISIONS] No Gemini key set; COUNCIL will behave like AUTO until you add one (KEY button).');
+  }
+  renderAll();
+}
+
+function promptApiKey() {
+  const key = prompt('Enter your Gemini API key (stored only in this browser):', localStorage.getItem('gemini_api_key') || '');
+  if (key !== null) {
+    if (key.trim()) localStorage.setItem('gemini_api_key', key.trim());
+    else localStorage.removeItem('gemini_api_key');
+    renderAll();
+  }
+}
+
+function freshWipe() {
+  if (!confirm('Reset all bots, positions, and bankroll?')) return;
+  const apiKey = localStorage.getItem('gemini_api_key');
+  try {
+    Object.keys(localStorage).forEach(k => { if (k.startsWith('solaris_') || k.startsWith('orbital_')) localStorage.removeItem(k); });
+    if (apiKey) localStorage.setItem('gemini_api_key', apiKey);
+  } catch (e) { /* ignore */ }
+  location.reload();
+}
+
+function adjustFunds() {
+  const input = prompt('Enter new Active Bot Bankroll amount ($):', state.cash.toFixed(2));
+  if (input === null) return;
+  const amt = parseFloat(input);
+  if (!isNaN(amt) && amt >= 0) { state.cash = amt; saveState(); renderAll(); }
+}
+
+function configureVault() {
+  const choice = prompt(`VAULT:\n- Balance: ${fmtCurrency(state.vault)}\n- Sweep Rate: ${state.sweepPct}%\nEnter '1' to transfer, '2' to change rate`, '1');
+  if (choice === '1') {
+    const val = parseFloat(prompt('Transfer amount (+ to Vault, - to Bankroll):', '0'));
+    if (isNaN(val)) return;
+    if (val > 0 && state.cash >= val) { state.cash -= val; state.vault += val; }
+    else if (val < 0 && state.vault >= -val) { state.vault += val; state.cash -= val; }
+    else return;
+    saveState(); renderAll();
+  } else if (choice === '2') {
+    const p = parseFloat(prompt('Enter new profit sweep percentage (0 to 100):', state.sweepPct));
+    if (!isNaN(p) && p >= 0 && p <= 100) { state.sweepPct = p; saveState(); renderAll(); }
+  }
+}
+
+function portfolioValue() {
+  let value = 0, cost = 0;
+  heldAddrs().forEach(a => {
+    const coin = market.get(a);
+    const qty = state.positions[a], basis = state.costBasis[a];
+    value += qty * (coin ? coin.price : basis);
+    cost += qty * basis;
+  });
+  return { value, cost };
+}
+
+function requestBriefing() {
+  const p = portfolioValue();
+  const net = state.cash + state.vault + p.value;
+  agentSay('boss', `Telemetry [${state.mode}]: Net ${fmtCurrency(net)} | Vault ${fmtCurrency(state.vault)} | Bankroll ${fmtCurrency(state.cash)} | ${heldAddrs().length} open`);
+  switchTab('council');
+}
+
+function switchTab(tabId) {
+  activeTab = tabId;
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+  const target = $('tab-' + tabId);
+  if (target) target.classList.add('active');
+  renderAll();
+  if (tabId === 'warroom') sceneFrame();
+}
+
+/* ============================== RENDER ============================== */
+let renderQueued = false;
+function renderAll() {
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => { renderQueued = false; renderNow(); });
+}
+
+function renderNow() {
+  try {
+    const p = portfolioValue();
+    const unrealized = p.value - p.cost;
+    const net = state.cash + state.vault + p.value;
+
+    const nw = $('net-worth');
+    if (nw) { nw.textContent = fmtCurrency(net); nw.className = 'net-worth-value ' + (net >= CFG.startBankroll ? 'green' : 'red'); }
+    const setPnl = (id, v) => { const el = $(id); if (el) { el.textContent = fmtSigned(v); el.className = 'stat-value ' + (v >= 0 ? 'green' : 'red'); } };
+    setPnl('unrealized-pnl', unrealized);
+    setPnl('realized-pnl', state.realizedPnl);
+
+    setText('cash-balance', fmtCurrency(state.cash));
+    setText('vault-balance', fmtCurrency(state.vault));
+    setText('status-vault', `${fmtCurrency(state.vault)} LOCKED`);
+    setText('total-fees', fmtCurrency(state.fees));
+    setText('scanned-count', String(market.size));
+    setText('hot-count', String(hotCoins().length));
+    setText('benched-count', String(Object.values(state.archive).filter(e => e.until > Date.now()).length));
+    setText('feeds-count', lastScan.req ? `${lastScan.ok}/${lastScan.req}` : '--');
+    setText('status-mode-label', `${state.mode} MODE`);
+    setText('status-decision', state.decision);
+    setText('status-feed', feedStatus);
+    setText('status-news', newsStatus);
+    setText('btn-sound', state.sound ? 'SND ON' : 'SND OFF');
+
+    ['growth', 'sniper'].forEach(m => { const b = $('btn-mode-' + m); if (b) b.classList.toggle('active-mode', state.mode === m.toUpperCase()); });
+    ['council', 'auto'].forEach(m => { const b = $('btn-dec-' + m); if (b) b.classList.toggle('active-mode', state.decision === m.toUpperCase()); });
+
+    const keyEl = $('key-status');
+    if (keyEl) {
+      const ok = (localStorage.getItem('gemini_api_key') || '').length > 5;
+      keyEl.textContent = ok ? '● CONFIGURED' : '● NOT CONFIGURED';
+      keyEl.style.color = ok ? 'var(--green)' : 'var(--text-dim)';
     }
 
-    function executeEntry(sym) {
-      const targetCoin = marketCoins.find(c => c.symbol === sym);
-      if (!targetCoin || !(targetCoin.price > 0)) return false;
-      if ((state.positions[sym] || 0) > 0.00001 || state.cash <= 20.0 || isArchived(targetCoin)) return false;
+    if (activeTab === 'positions') renderPositions();
+    if (activeTab === 'council') renderCouncil();
+    if (activeTab === 'news') renderNewsTab();
+    if (activeTab === 'status') renderProtocol();
+    if (activeTab === 'warroom') renderWarRoomCards();
+  } catch (e) { console.error('Render error:', e); }
+}
 
-      const now = Date.now();
-      const spend = state.cash * 0.20;
-      const fee = spend * 0.003;
-      const netSpend = spend - fee;
-      state.cash -= spend;
+function renderPositions() {
+  const list = $('positions-list');
+  if (list) {
+    const held = heldAddrs();
+    list.innerHTML = held.length ? held.map(a => {
+      const coin = market.get(a);
+      const qty = state.positions[a], cost = state.costBasis[a];
+      const pnl = qty * ((coin ? coin.price : cost) - cost);
+      return `<div class="position-row">
+        <strong style="color: var(--cyan);">${escapeHtml(state.symbols[a] || '?')}</strong>
+        <span>${qty > 1000 ? Math.round(qty).toLocaleString() : qty.toFixed(2)}</span>
+        <span>${fmtPrice(cost)}</span>
+        <span style="color: ${pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${fmtSigned(pnl)}</span>
+        <button class="cyber-btn danger" data-sell="${escapeHtml(a)}">SELL</button>
+      </div>`;
+    }).join('') : '<div class="empty-note">NO ACTIVE POSITIONS HELD</div>';
+  }
+  const arch = $('archive-list');
+  if (arch) {
+    const now = Date.now();
+    const rows = Object.entries(state.archive).filter(([, e]) => e.until > now);
+    arch.innerHTML = rows.length ? rows.map(([a, e]) => {
+      const mins = Math.max(1, Math.round((e.until - now) / 60000));
+      return `<div class="position-row" style="grid-template-columns: 1fr 1.4fr 1fr 1fr;">
+        <strong style="color: var(--amber);">${escapeHtml(e.symbol)}</strong>
+        <span>${escapeHtml(e.reason)}</span><span>${fmtSigned(e.pnl)}</span><span>${mins}m</span></div>`;
+    }).join('') : '<div class="empty-note">NOTHING BENCHED</div>';
+  }
+}
 
-      const tokens = netSpend / targetCoin.price;
-      state.costBasis[sym] = targetCoin.price;
-      state.positions[sym] = tokens;
-      state.entryTimes[sym] = now;
-      if (targetCoin.address) state.addresses[sym] = targetCoin.address;
-      peakPrices[sym] = targetCoin.price;
-      sniperTierState[sym] = 0;
+function renderCouncil() {
+  const box = $('council-feed-container');
+  if (!box) return;
+  box.innerHTML = councilFeed.length ? councilFeed.map(f => `
+    <div class="feed-item" style="border-left-color: ${f.color};">
+      <div class="feed-sender" style="color: ${f.color};">${escapeHtml(f.sender)} <span class="feed-time">${escapeHtml(f.time)}</span></div>
+      <div class="feed-text">"${escapeHtml(f.text)}"</div>
+    </div>`).join('') : '<div class="empty-note">No council activity yet.</div>';
+}
 
-      state.totalFeesPaid += fee;
-      state.txCount += 1;
-      state.lastTradeTime = now;
+function renderNewsTab() {
+  const box = $('whale-news-container');
+  if (!box) return;
+  const whales = whaleFeed.map(w => `
+    <div class="feed-item" style="border-left-color: var(--cyan);">
+      <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE <span class="feed-time">${escapeHtml(w.time)}</span></div>
+      <div class="feed-text">${escapeHtml(w.title)}: ${escapeHtml(w.desc)}</div>
+    </div>`).join('');
+  const news = liveNews.map(n => `
+    <div class="feed-item" style="border-left-color: var(--amber);">
+      <div class="feed-sender" style="color: var(--amber);">NEWS_HAWK // ${escapeHtml(n.source)} <span class="feed-time">${escapeHtml(n.time)}</span></div>
+      <div class="feed-text">${n.url ? `<a href="${escapeHtml(n.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(n.title)}</a>` : escapeHtml(n.title)}</div>
+    </div>`).join('');
+  box.innerHTML = (whales + news) || '<div class="empty-note">Waiting for feeds...</div>';
+}
 
-      playSfx('buy');
-      addSystemLog(`[BUY] ALPHA_X entered ${sym} | Cost: ${fmtCurrency(spend)}`);
-      saveState();
-      renderAll();
-      return true;
-    }
+function renderProtocol() {
+  const box = $('protocol-box');
+  if (!box) return;
+  const lines = [
+    `Volume 1h ≥ ${fmtCurrency(CFG.minVolumeH1)}`,
+    `Turnover (vol/liquidity) ≥ ${CFG.minTurnover}`,
+    `Txns 1h ≥ ${CFG.minTxnsH1}, buy ratio ≥ ${Math.round(CFG.minBuyRatio * 100)}%`,
+    `Entry: ${Math.round(CFG.entryPct * 100)}% of bankroll, random pick from top ${CFG.topPicks}`,
+    `Stop-loss ${CFG.stopLossPct}% | ${state.mode === 'SNIPER' ? 'Tiers: 40% at +3.5%, 35% at +15%, runner trails 15%' : `Take-profit +${CFG.takeProfitPct}%`}`,
+    `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ~${(CFG.baseSlippage * 100).toFixed(1)}% slippage per side`
+  ];
+  box.innerHTML = lines.map(l => `<div class="protocol-line">• ${escapeHtml(l)}</div>`).join('');
+}
 
-    function runTradingLoop() {
-      try {
-        if (marketCoins.length === 0) return;
-        const now = Date.now();
-        const cooldown = operationalMode === 'SNIPER' ? 3000 : 8000;
-        if (state.lastTradeTime && (now - state.lastTradeTime < cooldown)) return;
+function renderWarRoomCards() {
+  const box = $('war-room-container');
+  if (!box) return;
+  box.innerHTML = AGENTS.map(a => `
+    <div class="agent-card" style="border-color: ${a.color};">
+      <div class="agent-name" style="color: ${a.color};">${escapeHtml(a.name)}</div>
+      <div class="agent-role">${escapeHtml(a.role)}</div>
+      <div class="agent-speech">"${escapeHtml(a.says)}"</div>
+    </div>`).join('');
+}
 
-        const activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
+/* ============================== WAR ROOM SCENE ============================== */
+const SEATS = [[128, 36], [196, 56], [216, 96], [188, 138], [128, 150], [68, 138], [40, 96], [60, 56]];
+let selectedAgent = -1;
+let sceneRunning = false;
 
-        for (const sym of activeSymbols) {
-          const coin = marketCoins.find(c => c.symbol === sym);
-          if (!coin) continue;
+function sceneFrame() {
+  if (sceneRunning) return;
+  sceneRunning = true;
+  const canvas = $('orbital-table');
+  const ctx = canvas && canvas.getContext('2d');
+  if (!ctx) { sceneRunning = false; return; }
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-          const qty = state.positions[sym];
-          const cost = state.costBasis[sym] || coin.price;
-          const gainPct = ((coin.price - cost) / cost) * 100;
+  const draw = t => {
+    if (activeTab !== 'warroom') { sceneRunning = false; return; }
+    ctx.fillStyle = '#07010f'; ctx.fillRect(0, 0, 256, 168);
+    ctx.fillStyle = '#05000f'; ctx.fillRect(76, 62, 104, 60);
+    ctx.fillStyle = '#2a1a66'; ctx.fillRect(80, 66, 96, 52);
+    ctx.fillStyle = '#00f0ff'; ctx.fillRect(124, 90, 8, 4);
 
-          if (!peakPrices[sym] || coin.price > peakPrices[sym]) peakPrices[sym] = coin.price;
-          const dropFromPeakPct = peakPrices[sym] > 0 ? ((peakPrices[sym] - coin.price) / peakPrices[sym]) * 100 : 0;
-
-          // AI Dip vs Dump evaluation for holdings
-          const sentiment = classifyDipOrDump(coin);
-          if (sentiment === 'HEALTHY DIP' && gainPct > -2.0) {
-            // Hold through healthy dip instead of panicking
-            continue;
-          }
-
-          if (gainPct <= -2.5) {
-            closePosition(sym, coin, 'STOP-LOSS CUT', 'RISK_CORE cut');
-            return;
-          }
-
-          if (operationalMode === 'SNIPER') {
-            const currentTier = sniperTierState[sym] || 0;
-            if (gainPct >= 3.5 && currentTier < 1) {
-              const sellQty = qty * 0.40;
-              const gross = sellQty * coin.price;
-              const fee = gross * 0.003;
-              state.positions[sym] = qty * 0.60;
-              sniperTierState[sym] = 1;
-              state.cash += (gross - fee);
-              state.realizedPnl += (gross - fee) - (sellQty * cost);
-              playSfx('win');
-              addSystemLog(`[SNIPER TIER 1] Secured 40% on ${sym} to cover fees.`);
-              saveState(); renderAll(); return;
-            }
-            if (gainPct >= 15.0 && currentTier < 2) {
-              const currentQty = state.positions[sym];
-              const sellQty = currentQty * 0.5833;
-              const gross = sellQty * coin.price;
-              const fee = gross * 0.003;
-              state.positions[sym] = currentQty - sellQty;
-              sniperTierState[sym] = 2;
-              state.cash += (gross - fee);
-              state.realizedPnl += (gross - fee) - (sellQty * cost);
-              playSfx('win');
-              addSystemLog(`[SNIPER TIER 2] Secured 35% on ${sym}.`);
-              saveState(); renderAll(); return;
-            }
-            if (currentTier >= 1 && dropFromPeakPct >= 15.0) {
-              closePosition(sym, coin, 'RUNNER EXIT', 'Locked remaining runner on');
-              return;
-            }
-          } else {
-            if (gainPct >= 2.5) {
-              closePosition(sym, coin, 'TAKE-PROFIT', 'Target secured on');
-              return;
-            }
-          }
-        }
-
-        if (state.cash <= 20.0 || councilBusy) return;
-
-        const candidates = marketCoins.filter(c => c.price > 0 && !((state.positions[c.symbol] || 0) > 0.00001) && !isArchived(c) && modeAllows(c));
-        const active = candidates.filter(isActive).sort((a, b) => activityScore(b) - activityScore(a));
-        if (active.length === 0) return;
-
-        const targetCoin = active[Math.floor(Math.random() * Math.min(active.length, TOP_PICKS))];
-        executeEntry(targetCoin.symbol);
-      } catch (err) { console.error("Loop error:", err); }
-    }
-
-    function renderAll() {
-      try {
-        let portfolioVal = 0, totalCostBasisVal = 0;
-        Object.keys(state.positions).forEach(sym => {
-          let coin = marketCoins.find(c => c.symbol === sym) || { price: state.costBasis[sym] || 1 };
-          let qty = state.positions[sym] || 0, cost = state.costBasis[sym] || coin.price;
-          if (qty > 0) { portfolioVal += qty * coin.price; totalCostBasisVal += qty * cost; }
-        });
-
-        let unrealizedPnlVal = portfolioVal > 0 ? portfolioVal - totalCostBasisVal : 0;
-        let netWorth = state.cash + state.vault + portfolioVal;
-
-        if (document.getElementById('net-worth')) {
-          document.getElementById('net-worth').textContent = fmtCurrency(netWorth);
-          document.getElementById('net-worth').className = `net-worth-value ${netWorth >= 100 ? 'green' : 'red'}`;
-        }
-        if (document.getElementById('unrealized-pnl')) {
-          document.getElementById('unrealized-pnl').textContent = (unrealizedPnlVal >= 0 ? '+' : '') + fmtCurrency(unrealizedPnlVal);
-          document.getElementById('unrealized-pnl').className = `stat-value ${unrealizedPnlVal >= 0 ? 'green' : 'red'}`;
-        }
-        if (document.getElementById('cash-balance')) document.getElementById('cash-balance').textContent = fmtCurrency(state.cash);
-        if (document.getElementById('vault-balance')) document.getElementById('vault-balance').textContent = fmtCurrency(state.vault);
-        if (document.getElementById('status-vault')) document.getElementById('status-vault').textContent = `${fmtCurrency(state.vault)} LOCKED`;
-        if (document.getElementById('total-fees')) document.getElementById('total-fees').textContent = fmtCurrency(state.totalFeesPaid);
-        if (document.getElementById('scanned-count')) document.getElementById('scanned-count').textContent = String(marketCoins.length);
-        if (document.getElementById('hot-count')) document.getElementById('hot-count').textContent = String(marketCoins.filter(c => isActive(c) && modeAllows(c)).length);
-        if (document.getElementById('benched-count')) document.getElementById('benched-count').textContent = String(Object.values(state.archive).filter(e => e.until > Date.now()).length);
-        if (document.getElementById('feeds-count')) document.getElementById('feeds-count').textContent = lastScan.req ? `${lastScan.ok}/${lastScan.req}` : '--';
-
-        if (document.getElementById('status-mode-label')) document.getElementById('status-mode-label').textContent = `${operationalMode} MODE`;
-        if (document.getElementById('status-decision')) document.getElementById('status-decision').textContent = decisionMode;
-
-        const posList = document.getElementById('positions-list');
-        if (posList) {
-          let activeSymbols = Object.keys(state.positions).filter(sym => (state.positions[sym] || 0) > 0.00001);
-          if (activeSymbols.length === 0) {
-            posList.innerHTML = `<div style="text-align: center; color: var(--text-dim); padding: 20px;">NO ACTIVE POSITIONS HELD</div>`;
-          } else {
-            posList.innerHTML = activeSymbols.map(sym => {
-              let coin = marketCoins.find(c => c.symbol === sym) || { price: state.costBasis[sym] || 1 };
-              let qty = state.positions[sym], cost = state.costBasis[sym] || coin.price;
-              let coinPnl = (qty * coin.price) - (qty * cost);
-              return `
-                <div class="position-row">
-                  <strong style="color: var(--cyan);">${sym}</strong>
-                  <span>${qty > 1000 ? Math.round(qty).toLocaleString() : qty.toFixed(2)}</span>
-                  <span>${fmtPrice(cost)}</span>
-                  <span style="color: ${coinPnl >= 0 ? 'var(--green)' : 'var(--red)'};">${coinPnl >= 0 ? '+' : ''}${fmtCurrency(coinPnl)}</span>
-                  <button class="cyber-btn danger" style="font-size: 14px; padding: 2px 5px;" onclick="manualSellPosition('${sym}')">SELL</button>
-                </div>
-              `;
-            }).join('');
-          }
-        }
-
-        const feedContainer = document.getElementById('council-feed-container');
-        if (feedContainer) {
-          feedContainer.innerHTML = state.councilFeed.map(f => `
-            <div class="feed-item" style="border-left-color: ${f.color};">
-              <div class="feed-sender" style="color: ${f.color};">${f.sender} <span style="font-size: 14px; color: #8a7fb8;">${f.time}</span></div>
-              <div class="feed-text">"${f.text}"</div>
-            </div>
-          `).join('');
-        }
-      } catch (e) { console.error("Render error:", e); }
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      updateKeyStatus();
-      updateSoundBtn();
-      fetchLiveMarketPrices();
-      fetchLiveNews();
-      renderAll();
-      setInterval(fetchLiveNews, 120000);
-      setInterval(fetchLiveMarketPrices, 30000);
-      setInterval(runTradingLoop, 8000);
+    AGENTS.forEach((a, i) => {
+      const x = SEATS[i][0];
+      const y = SEATS[i][1] + (reduceMotion ? 0 : Math.round(Math.sin(t / 400 + i)));
+      if (i === selectedAgent) { ctx.fillStyle = '#f9f871'; ctx.fillRect(x - 9, y - 19, 18, 31); }
+      ctx.fillStyle = a.color; ctx.fillRect(x - 6, y, 12, 10);                 // body
+      ctx.fillRect(x - 6, y - 10, 12, 11);                                      // head frame
+      ctx.fillStyle = '#150a30'; ctx.fillRect(x - 5, y - 9, 10, 9);             // head
+      ctx.fillStyle = a.color; ctx.fillRect(x - 4, y - 6, 8, 3);                // visor
+      ctx.fillRect(x, y - 14, 1, 4);                                            // antenna
+      ctx.fillStyle = Math.floor(t / 500 + i) % 2 ? '#ffffff' : a.color; ctx.fillRect(x - 1, y - 16, 3, 2);
     });
-  </script>
+    requestAnimationFrame(draw);
+  };
+  requestAnimationFrame(draw);
+}
+
+function initScene() {
+  const canvas = $('orbital-table');
+  if (!canvas) return;
+  canvas.addEventListener('click', e => {
+    const r = canvas.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (256 / r.width), y = (e.clientY - r.top) * (168 / r.height);
+    let best = -1, bestD = 22;
+    SEATS.forEach((s, i) => { const d = Math.hypot(s[0] - x, s[1] - 2 - y); if (d < bestD) { bestD = d; best = i; } });
+    selectedAgent = best;
+    const cap = $('scene-caption');
+    if (cap) cap.textContent = best >= 0 ? `${AGENTS[best].name} — ${AGENTS[best].role}: "${AGENTS[best].says}"` : 'Tap an agent to see who they are.';
+  });
+}
+
+/* ============================== BOOT ============================== */
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+  const posBox = $('positions-container');
+  if (posBox) posBox.addEventListener('click', e => {
+    const btn = e.target.closest('[data-sell]');
+    if (btn) manualSellPosition(btn.dataset.sell);
+  });
+  initScene();
+  agentSay('risk', `Scanner online [${state.mode}]. Paper trading only.`);
+  log('Discovery engine started.');
+  renderAll();
+  scanMarket();
+  fetchLiveNews();
+  setInterval(scanMarket, CFG.scanEveryMs);
+  setInterval(fetchLiveNews, CFG.newsEveryMs);
+});
+
+</script>
 </body>
 </html>
