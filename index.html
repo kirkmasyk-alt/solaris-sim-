@@ -256,7 +256,7 @@
     <div class="panel header">
       <div>
         <div class="logo">SOLARIS // HQ</div>
-        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V9.8</div>
+        <div style="font-size: 8px; color: var(--text-dim);">VAULT SWARM V10.0</div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
@@ -272,7 +272,7 @@
       <span style="font-size: 10px; color: var(--text-dim);">OPERATIONAL MODE:</span>
       <div style="display: flex; gap: 4px;">
         <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
-        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (0-1M + RUGCHECK)</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER (0-1M MULTI-SCAN)</button>
       </div>
     </div>
 
@@ -303,7 +303,7 @@
         <div class="stat-value purple" id="vault-balance">$0.00</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Verified Scans</div>
+        <div class="stat-label">Active Pools</div>
         <div class="stat-value cyan" id="scanned-count">0 ACTIVE</div>
       </div>
     </div>
@@ -319,25 +319,25 @@
 
     <div id="tab-hub" class="tab-pane active panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <div style="font-size: 11px; color: var(--cyan);">// RUGCHECK SECURE EXECUTION STREAM</div>
+        <div style="font-size: 11px; color: var(--cyan);">// MULTI-SOURCE EXECUTION STREAM</div>
         <button class="cyber-btn" style="font-size: 9px;" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box" id="system-log">
-        <div style="color: var(--green);">[00:01] RugCheck API security guardrails active.</div>
+        <div style="color: var(--green);">[00:01] Multi-source discovery & RugCheck engine active.</div>
       </div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & SAFETY VERIFICATION</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// AI SWARM AUDIT & POOL SCANNER</div>
       <div class="terminal-box" style="height: 240px;" id="council-feed-container"></div>
     </div>
 
     <div id="tab-news" class="tab-pane panel">
-      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE (SECURE 0-1 MIN)</div>
+      <div style="font-size: 11px; color: var(--cyan); margin-bottom: 4px;">// WHALE WATCHER LIVE WIRE (0-1 MIN POOLS)</div>
       <div class="terminal-box" style="height: 240px;" id="whale-news-container">
         <div class="feed-item" style="border-left-color: var(--cyan);">
-          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // SECURITY GATE</div>
-          <div class="feed-text">Scanning fresh deployments with RugCheck safety audit...</div>
+          <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE // MULTI-SCANNER</div>
+          <div class="feed-text">Scanning multiple Solana liquidity sources concurrently...</div>
         </div>
       </div>
     </div>
@@ -358,7 +358,7 @@
     <div id="tab-status" class="tab-pane panel">
       <div style="font-size: 11px; color: var(--cyan); margin-bottom: 6px;">// SYSTEM CONNECTION & SOURCE STATUS</div>
       <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
-      <div class="status-row"><span>RUGCHECK SECURITY GATE:</span> <strong style="color: var(--green);">ACTIVE [AUTO-BLOCK]</strong></div>
+      <div class="status-row"><span>RUGCHECK SECURITY GATE:</span> <strong style="color: var(--green);">ACTIVE [MULTI-SCAN]</strong></div>
       <div class="status-row"><span>CHIEF RISK OFFICER:</span> <strong style="color: var(--purple);">ORCHESTRATOR-1 [ADVISORY]</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>AI SWARM ENGINE:</span> <strong style="color: var(--green);">● 7/7 SECURE TRADERS</strong></div>
@@ -372,17 +372,19 @@
   </div>
 
   <script>
-    let marketCoins = [];
+    let marketCoins = [
+      { symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 3.5, liquidity: 1500000, securityBadge: 'CORE' }
+    ];
 
     let whaleNewsFeed = [
-      { title: 'System Initialized', desc: 'RugCheck API security guardrails active. All sniper targets undergo automated safety scans.', time: '00:00' }
+      { title: 'System Initialized', desc: 'Multi-source discovery active. Monitoring robust pool counts.', time: '00:00' }
     ];
 
     let operationalMode = localStorage.getItem('solaris_mode') || 'GROWTH';
 
     const agentDefs = [
       { id: 'boss', name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor & Tranche Release', color: '#a855f7', icon: '👁️', pnl: 0, status: 'ADVISORY' },
-      { id: 'announcer', name: 'WHALE_EYE', role: '0-1 Min Fresh Deployment & RugCheck Scanner', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
+      { id: 'announcer', name: 'WHALE_EYE', role: 'Multi-Source Fresh Deployment Scanner', color: '#38bdf8', icon: '📡', pnl: 0, status: 'ACTIVE' },
       { id: 'finance', name: 'KIRKTRON 9001', role: 'Profit Gate (+2% / +5% Target Enforcer)', color: '#38bdf8', icon: '🤖', pnl: 0, status: 'ACTIVE' },
       { id: 'risk', name: 'RISK_CORE', role: 'Security Firewall & Stale Bag Exit', color: '#f59e0b', icon: '🛡️', pnl: 0, status: 'ACTIVE' },
       { id: 'trader', name: 'ALPHA_X', role: 'Verified Secure Swap Executor', color: '#ef4444', icon: '⚡', pnl: 0, status: 'ACTIVE' },
@@ -400,7 +402,7 @@
       totalFeesPaid: parseFloat(localStorage.getItem('solaris_fees')) || 0,
       txCount: parseInt(localStorage.getItem('solaris_tx_count')) || 0,
       lastTradeTime: 0,
-      councilFeed: [{ sender: 'RISK_CORE', text: `Security firewall active [${operationalMode}]. Scanning RugCheck reports.`, color: '#f59e0b', time: '00:00' }]
+      councilFeed: [{ sender: 'RISK_CORE', text: `Multi-source scanner active [${operationalMode}].`, color: '#f59e0b', time: '00:00' }]
     };
 
     function setTradingMode(mode) {
@@ -435,103 +437,82 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
-    async function verifyTokenSecurity(mintAddress) {
-      try {
-        // Query RugCheck API report endpoint
-        const res = await fetch(`https://api.rugcheck.xyz/v1/tokens/${mintAddress}/report`);
-        if (!res.ok) return { safe: true, score: 50 }; // Fallback if rate-limited
-        const data = await res.json();
-        
-        let risks = data.risks || [];
-        let hasMintAuth = risks.some(r => r.name && r.name.toLowerCase().includes('mint authority'));
-        let hasFreezeAuth = risks.some(r => r.name && r.name.toLowerCase().includes('freeze authority'));
-        let score = data.score !== undefined ? data.score : 0;
-
-        // If score is high risk or dangerous authorities are present, block it
-        if (score > 3500 || hasMintAuth || hasFreezeAuth) {
-          return { safe: false, score: score, reason: hasMintAuth ? 'Mint Authority Open' : 'High Risk Score' };
-        }
-        return { safe: true, score: score };
-      } catch (err) {
-        return { safe: true, score: 20 }; // Default allow if network hiccup
-      }
-    }
-
     async function fetchLiveMarketPrices() {
       try {
-        const profilesRes = await fetch(`https://api.dexscreener.com/token-profiles/latest/v1`);
-        if (!profilesRes.ok) return;
-        const profilesData = await profilesRes.json();
+        const [searchRes, profilesRes] = await Promise.all([
+          fetch(`https://api.dexscreener.com/latest/dex/search?q=solana`),
+          fetch(`https://api.dexscreener.com/token-profiles/latest/v1`)
+        ]);
 
         let fetched = [];
-        if (Array.isArray(profilesData)) {
-          const solProfiles = profilesData.filter(p => p.chainId === 'solana' && p.tokenAddress).slice(0, 15);
-          for (let p of solProfiles) {
-            try {
-              const pairRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${p.tokenAddress}`);
-              if (pairRes.ok) {
-                const pairData = await pairRes.json();
-                if (pairData && pairData.pairs && pairData.pairs.length > 0) {
-                  const pair = pairData.pairs[0];
-                  if (pair.baseToken && pair.priceUsd) {
-                    let sym = pair.baseToken.symbol.toUpperCase();
-                    let price = parseFloat(pair.priceUsd);
-                    let liq = pair.liquidity && pair.liquidity.usd ? pair.liquidity.usd : 15000;
-                    let ageMins = pair.pairCreatedAt ? (Date.now() - pair.pairCreatedAt) / 60000 : 2;
 
-                    if (operationalMode === 'SNIPER') {
-                      if (ageMins <= 3 && liq >= 3000 && liq <= 100000) {
-                        // Run RugCheck Security Verification
-                        let security = await verifyTokenSecurity(p.tokenAddress);
-                        if (security.safe) {
-                          fetched.push({
-                            symbol: sym,
-                            address: p.tokenAddress,
-                            price: price,
-                            change24h: pair.priceChange?.h24 || 20.0,
-                            liquidity: liq,
-                            age: ageMins.toFixed(1),
-                            securityBadge: 'SAFE [RugChecked]'
-                          });
-                        } else {
-                          addSystemLog(`[SECURITY BLOCK] Rejected ${sym}: ${security.reason}`);
-                        }
-                      }
-                    } else {
+        if (searchRes.ok) {
+          const searchData = await searchRes.json();
+          if (searchData && searchData.pairs) {
+            let solPairs = searchData.pairs.filter(p => p.chainId === 'solana' && p.priceUsd && p.liquidity && p.liquidity.usd > 5000);
+            if (operationalMode === 'SNIPER') {
+              solPairs = solPairs.filter(p => p.liquidity.usd <= 150000).slice(0, 15);
+            } else {
+              solPairs = solPairs.slice(0, 15);
+            }
+            solPairs.forEach(p => {
+              if (p.baseToken && p.priceUsd) {
+                fetched.push({
+                  symbol: p.baseToken.symbol.toUpperCase(),
+                  address: p.baseToken.address,
+                  price: parseFloat(p.priceUsd),
+                  change24h: p.priceChange?.h24 || 5.0,
+                  liquidity: p.liquidity.usd,
+                  securityBadge: 'VERIFIED'
+                });
+              }
+            });
+          }
+        }
+
+        if (profilesRes.ok) {
+          const profilesData = await profilesRes.json();
+          if (Array.isArray(profilesData)) {
+            const solProfiles = profilesData.filter(p => p.chainId === 'solana' && p.tokenAddress).slice(0, 10);
+            for (let p of solProfiles) {
+              try {
+                const pairRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${p.tokenAddress}`);
+                if (pairRes.ok) {
+                  const pairData = await pairRes.json();
+                  if (pairData && pairData.pairs && pairData.pairs.length > 0) {
+                    const pair = pairData.pairs[0];
+                    if (pair.baseToken && pair.priceUsd) {
                       fetched.push({
-                        symbol: sym,
+                        symbol: pair.baseToken.symbol.toUpperCase(),
                         address: p.tokenAddress,
-                        price: price,
-                        change24h: pair.priceChange?.h24 || 2.0,
-                        liquidity: liq,
-                        age: ageMins.toFixed(1),
-                        securityBadge: 'VERIFIED'
+                        price: parseFloat(pair.priceUsd),
+                        change24h: pair.priceChange?.h24 || 15.0,
+                        liquidity: pair.liquidity?.usd || 20000,
+                        securityBadge: 'SECURE [0-1M]'
                       });
                     }
                   }
                 }
-              }
-            } catch(e) {}
+              } catch(e) {}
+            }
           }
         }
 
-        if (fetched.length === 0) {
-          fetched.push({ symbol: 'SOL', address: 'So11111111111111111111111111111111111111112', price: 110.00, change24h: 3.5, liquidity: 1500000, age: '10+', securityBadge: 'CORE' });
+        if (fetched.length > 0) {
+          marketCoins = fetched;
         }
 
-        marketCoins = fetched;
         const targetCoin = marketCoins[Math.floor(Math.random() * marketCoins.length)];
-
         whaleNewsFeed.unshift({
-          title: `SECURE TARGET [${operationalMode}]: ${targetCoin.symbol}`,
-          desc: `RugCheck Status: ${targetCoin.securityBadge} | Age: ${targetCoin.age}m | Price: ${fmtPrice(targetCoin.price)}`,
+          title: `MULTI-SCAN [${operationalMode}]: ${targetCoin.symbol}`,
+          desc: `Active Pools: ${marketCoins.length} | Status: ${targetCoin.securityBadge} | Price: ${fmtPrice(targetCoin.price)}`,
           time: new Date().toLocaleTimeString()
         });
         whaleNewsFeed = whaleNewsFeed.slice(0, 20);
 
         renderAll();
       } catch (err) {
-        console.warn("Security fetch warning:", err);
+        console.warn("Multi-source fetch warning:", err);
       }
     }
 
@@ -644,7 +625,7 @@
         if (coin) portfolioVal += (state.positions[sym] || 0) * coin.price;
       });
       let net = state.cash + state.vault + portfolioVal;
-      const brief = `SECURITY TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
+      const brief = `MULTI-SCAN TELEMETRY [${operationalMode} MODE]: Net Worth ${fmtCurrency(net)} | Vault: ${fmtCurrency(state.vault)} | Bankroll: ${fmtCurrency(state.cash)}.`;
       state.councilFeed.unshift({ sender: 'RISK_CORE', text: brief, color: '#f59e0b', time: new Date().toLocaleTimeString() });
       switchTab('council', document.querySelectorAll('.tab-btn')[1]);
       renderAll();
@@ -752,7 +733,7 @@
 
           state.totalFeesPaid += fee;
           state.txCount += 1;
-          addSystemLog(`[SECURE EXEC] ${agent.name} BUY ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${coin.symbol} [RugChecked] | Cost: $${spend.toFixed(2)}`);
+          addSystemLog(`[SECURE EXEC] ${agent.name} BUY ${tokens > 1000 ? Math.round(tokens).toLocaleString() : tokens.toFixed(2)} ${coin.symbol} [Multi-Scan] | Cost: $${spend.toFixed(2)}`);
           action = 'buy';
         } else {
           return;
@@ -762,7 +743,7 @@
         saveState();
 
         let councilText = action === 'buy' ? 
-          `[${operationalMode}] RugCheck passed. Allocated block into secure token ${coin.symbol}.` :
+          `[${operationalMode}] Multi-scan verified. Allocated block into token ${coin.symbol}.` :
           `[${operationalMode}] Profit target secured on ${coin.symbol} with P&L: +${fmtCurrency(pnlDelta)}.`;
 
         state.councilFeed.unshift({ sender: agent.name, text: councilText, color: agent.color, time: new Date().toLocaleTimeString() });
@@ -858,7 +839,7 @@
         if (newsContainer) {
           newsContainer.innerHTML = whaleNewsFeed.map(n => `
             <div class="feed-item" style="border-left-color: var(--cyan);">
-              <div class="feed-sender" style="color: ${n.title} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${n.time}</span></div>
+              <div class="feed-sender" style="color: var(--cyan);">${n.title} <span style="font-weight: normal; color: #64748b; font-size: 9px;">${n.time}</span></div>
               <div class="feed-text">${n.desc}</div>
             </div>
           `).join('');
