@@ -405,7 +405,7 @@ const CFG = {
   minAgeMin: 15,           // ignore pools younger than this (launch-minute rugs)
   sniperMaxLiq: 300000,
   councilBlockMs: 5 * 60 * 1000,
-  geminiModel: 'gemini-2.0-flash'   // change if Google retires this model name
+  geminiModel: 'gemini-3.5-flash'   // Google retires models often: check ai.google.dev/gemini-api/docs/deprecations
 };
 
 const HOUR = 60 * 60 * 1000;
@@ -715,17 +715,29 @@ function announceHot(hot) {
   });
 }
 
+const NEWS_FEEDS = [
+  { name: 'COINTELEGRAPH', url: 'https://cointelegraph.com/rss' },
+  { name: 'COINDESK', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/' },
+  { name: 'DECRYPT', url: 'https://decrypt.co/feed' }
+];
+
 async function fetchLiveNews() {
-  const data = await safeJson('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
-  if (data && Array.isArray(data.Data)) {
-    liveNews = data.Data.slice(0, 15).map(n => ({
-      id: n.id || n.url,
-      title: n.title,
-      source: (n.source_info && n.source_info.name) || n.source || 'NEWS',
-      time: new Date((n.published_on || 0) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      url: /^https?:\/\//.test(n.url || '') ? n.url : ''
+  const results = await Promise.all(NEWS_FEEDS.map(async f => {
+    const d = await safeJson('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(f.url));
+    if (!d || d.status !== 'ok' || !Array.isArray(d.items)) return null;
+    return d.items.slice(0, 8).map(n => ({
+      id: n.guid || n.link,
+      title: String(n.title || ''),
+      source: f.name,
+      ts: Date.parse(String(n.pubDate || '').replace(' ', 'T') + 'Z') || 0,
+      url: /^https?:\/\//.test(n.link || '') ? n.link : ''
     }));
-    newsStatus = 'LIVE [CRYPTOCOMPARE]';
+  }));
+  const ok = results.filter(r => r !== null);
+  if (ok.length) {
+    liveNews = [].concat(...ok).filter(n => n.title).sort((a, b) => b.ts - a.ts).slice(0, 15)
+      .map(n => Object.assign(n, { time: n.ts ? new Date(n.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '' }));
+    newsStatus = `LIVE [${ok.length}/${NEWS_FEEDS.length} FEEDS]`;
     const unseen = liveNews.filter(n => !seenNews.has(n.id));
     unseen.forEach(n => seenNews.add(n.id));
     if (newsBootstrapped && unseen.length) { agentSay('news', unseen[0].title); playSfx('news'); }
@@ -885,7 +897,8 @@ async function askCouncil(c) {
   });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const data = await res.json();
-  const text = data && data.candidates && data.candidates[0] && data.candidates[0].content.parts[0].text;
+  const parts = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+  const text = parts.map(p => p.text || '').join('');
   const out = JSON.parse(text);
   return { approve: out.approve === true, reason: String(out.reason || '').slice(0, 140) };
 }
@@ -924,7 +937,7 @@ function runTradingLoop() {
   try {
     if (market.size === 0) return;
     runExits();
-    considerEntry();
+    considerEntry().catch(e => console.error('Entry error:', e));
   } catch (err) { console.error('Loop error:', err); }
 }
 
@@ -1132,7 +1145,7 @@ function renderProtocol() {
     `Txns 1h ≥ ${CFG.minTxnsH1}, buy ratio ≥ ${Math.round(CFG.minBuyRatio * 100)}%`,
     `Entry: ${Math.round(CFG.entryPct * 100)}% of bankroll, random pick from top ${CFG.topPicks}`,
     `Stop-loss ${CFG.stopLossPct}% | ${state.mode === 'SNIPER' ? 'Tiers: 40% at +3.5%, 35% at +15%, runner trails 15%' : `Take-profit +${CFG.takeProfitPct}%`}`,
-    `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ~${(CFG.baseSlippage * 100).toFixed(1)}% slippage per side`
+    `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ${(CFG.baseSlippage * 100).toFixed(1)}%+ slippage per side`
   ];
   box.innerHTML = lines.map(l => `<div class="protocol-line">• ${escapeHtml(l)}</div>`).join('');
 }
