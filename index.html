@@ -2934,6 +2934,7 @@ async function askAuditor() {
   if (ab) ab.addEventListener('click', e => { const b = e.target.closest('[data-apply]'); if (b) applyProposal(parseInt(b.dataset.apply, 10)); });
 })();
 </script>
+
 <script>
 /* =====================================================================
    ORBITAL // HQ  PATCH v16.8   (goes AFTER patch v16.7, before </body>)
@@ -3309,7 +3310,7 @@ async function openPosition(coin) {
   if (state.positions[addr] > 0 || state.cash <= CFG.minCash || heldAddrs().length >= maxOpenNow()) return false;
   if (major && heldAddrs().filter(a => state.symbols[a] === 'SOL' || state.symbols[a] === 'WSOL').length >= 2) return false;
 
-  const pct = (major ? 0.30 : mode === 'LAUNCH' ? CFG.launch.entryPct : mode === 'PUMP' ? CFG.pump.entryPct : CFG.entryPct) * sizeMult;
+  const pct = (major ? 0.30 : mode === 'LAUNCH' ? CFG.launch.entryPct : mode === 'PUMP' ? CFG.pump.entryPct : CFG.entryPct) * sizeMult * (typeof sizeAdj === 'function' ? sizeAdj(mode, major) : 1);
   const liqPct = mode === 'PUMP' ? CFG.pump.maxSpendPctOfLiq : CFG.maxSpendPctOfLiq;
   const minTicket = (mode === 'LAUNCH' || mode === 'PUMP') ? 5 : 10;
   const wanted = Math.max(minTicket * sizeMult, Math.min(state.cash, state.cash * pct));
@@ -3749,5 +3750,228 @@ function openPumpMenu() {
   }
 })();
 </script>
+
+<script>
+/* =====================================================================
+   ORBITAL // HQ  PATCH v16.9   (goes AFTER patch v16.8, before </body>)
+   1. COIN BOOK: remembers every coin we traded (avg buy, avg sell, record, own average price)
+      and blocks bad re-buys (repeat losers, cooling off, buying back higher than we sold)
+   2. LOW/HIGH vs the coin's own average: cheap coins score higher, stretched coins lower
+   3. PROFIT LOCK: a ratchet. Once a trade was up, it can no longer turn into a loss.
+      Also EXTENDED EXIT: sells when price is far above its average and turning down
+   4. SOUND SIZING: quarter-Kelly from real results + drawdown brake (small when no edge)
+   5. MATH panel: expectancy, payoff, profit factor, break-even win rate (Status tab + report + audit)
+   Paper trading only.
+   ===================================================================== */
+(function () { try { const ls = document.querySelector('.logo-sub'); if (ls) ls.textContent = 'PAPER TRADING // V16.9'; } catch (e) {} })();
+
+CFG.lock = CFG.lock || { on: true, arm: 4, floor: 1, steps: [[6, 0.35], [10, 0.55], [25, 0.65], [60, 0.75]], majorArm: 2.5, majorFloor: 0.3, extPct: 50 };
+function book() { if (!state.book) state.book = {}; return state.book; }
+
+/* ---------- 1. coin book ---------- */
+const _rt3 = recordTrade;
+recordTrade = function (addr, tag, total) {
+  const basis = state.costBasis[addr], coin = market.get(addr), sym = state.symbols[addr] || '?', cost = state.entryCost[addr] || 0;
+  _rt3(addr, tag, total);
+  try {
+    const B = book();
+    const b = B[addr] || (B[addr] = { sym, n: 0, wins: 0, pnl: 0, buys: [], sells: [] });
+    const sell = coin && coin.price > 0 ? coin.price : null;
+    b.sym = sym; b.n++; if (total > 0) b.wins++; b.pnl += total;
+    if (basis > 0) { b.buys.push(basis); if (b.buys.length > 8) b.buys.shift(); }
+    if (sell) { b.sells.push(sell); if (b.sells.length > 8) b.sells.shift(); }
+    b.last = { t: Date.now(), pnl: total, pct: cost > 0 ? (total / cost) * 100 : 0, tag, sell, buy: basis };
+    if (!(b.ema > 0)) b.ema = ((basis || 0) + (sell || basis || 0)) / 2 || sell || basis;
+    const keys = Object.keys(B);
+    if (keys.length > 300) keys.sort((x, y) => ((B[x].last || {}).t || 0) - ((B[y].last || {}).t || 0)).slice(0, keys.length - 300).forEach(k => delete B[k]);
+  } catch (e) { console.error('book', e); }
+};
+const _sp3 = snapshotPrices;
+snapshotPrices = function () {
+  _sp3();
+  try {
+    const B = book();
+    for (const a in B) {
+      const c = market.get(a), b = B[a];
+      if (!c || !(c.price > 0)) continue;
+      b.ema = b.ema > 0 ? b.ema * 0.9 + c.price * 0.1 : c.price;
+      b.lo = Math.min(b.lo || c.price, c.price); b.hi = Math.max(b.hi || 0, c.price); b.seen = Date.now();
+    }
+  } catch (e) {}
+};
+const avgOf = a => (a && a.length) ? a.reduce((s, x) => s + x, 0) / a.length : 0;
+
+/* ---------- 2. is this coin LOW or HIGH versus its own average? ---------- */
+function valueSignal(c) {
+  const b = book()[c.address];
+  let ref = b && b.ema;
+  if (!(ref > 0)) { const h = priceHist.get(c.address); if (h && h.length >= 6) ref = avgOf(h.map(x => x.p)); }
+  if (!(ref > 0) || !(c.price > 0)) return null;
+  const pct = (c.price / ref - 1) * 100;
+  return { ref, pct, label: pct <= -12 ? 'LOW' : pct >= 12 ? 'HIGH' : 'FAIR' };
+}
+function bookBlock(c) {
+  const b = book()[c.address];
+  if (!b || !b.n) return '';
+  const L = b.last || {}, ageH = (Date.now() - (L.t || 0)) / HOUR;
+  if (b.n >= 2 && b.wins / b.n < 0.34) return 'rebuy: repeat loser';
+  if (L.pnl < 0 && ageH < 4) return 'rebuy: cooling off after a loss';
+  if (L.pnl > 0 && ageH < 6 && L.sell && c.price > L.sell * 0.98) return 'rebuy: not cheaper than our last sell';
+  const v = valueSignal(c);
+  if (v && v.pct > 40) return 'rebuy: far above its average';
+  return '';
+}
+const _ib3 = isBuyable;
+isBuyable = function (c) { return !bookBlock(c) && _ib3(c); };
+const _pr3 = pumpReject;
+pumpReject = function (c) { return bookBlock(c) || _pr3(c); };
+const _gr3 = growthReject;
+growthReject = function (c) { return bookBlock(c) || _gr3(c); };
+const _es3 = entryScore;
+entryScore = function (c) {
+  let s = _es3(c);
+  try {
+    const v = valueSignal(c), b = book()[c.address];
+    if (v) {
+      if (v.label === 'LOW' && b && b.wins > 0) s *= 1.15;          // a past winner, now cheap
+      else if (v.pct >= 25) s *= 0.85;                               // stretched above its own average = chasing
+      else if (v.label === 'HIGH') s *= 0.93;
+    }
+  } catch (e) {}
+  return s;
+};
+
+/* ---------- 3. profit lock (anti-greed) ---------- */
+function lockFloor(peakGain, major) {
+  const L = CFG.lock;
+  if (major) { if (peakGain < L.majorArm) return null; return peakGain >= 6 ? Math.max(L.majorFloor, peakGain * 0.5) : L.majorFloor; }
+  if (peakGain < L.arm) return null;
+  let f = L.floor;
+  for (const [pk, keep] of L.steps) if (peakGain >= pk) f = Math.max(f, peakGain * keep);
+  return f;
+}
+const _re3 = runExits;
+runExits = function () {
+  try {
+    if (CFG.lock.on) for (const addr of heldAddrs()) {
+      const coin = market.get(addr);
+      if (!coin || !isFresh(coin) || !(state.positions[addr] > 0)) continue;
+      const cost = state.costBasis[addr] || coin.price;
+      if (!(state.peaks[addr] >= coin.price)) state.peaks[addr] = coin.price;
+      const gain = (coin.price / cost - 1) * 100, peakGain = (state.peaks[addr] / cost - 1) * 100;
+      const fl = lockFloor(peakGain, isMajorWave(coin));
+      if (fl !== null && gain <= fl) { closePosition(addr, coin, 'PROFIT LOCK', `Peak was +${peakGain.toFixed(0)}%, locked in`); continue; }
+      const v = valueSignal(coin);
+      if (gain >= 3 && v && v.pct >= CFG.lock.extPct && coin.change5m < 0) closePosition(addr, coin, 'EXTENDED EXIT', `Price ${v.pct.toFixed(0)}% above its average and turning down, sold`);
+    }
+  } catch (e) { console.error('lock', e); }
+  _re3();
+};
+
+/* ---------- 4. sound sizing ---------- */
+function equityNow() { try { return state.cash + portfolioValue().value; } catch (e) { return state.cash; } }
+function sizeInfo(mode) {
+  const J = state.journal.filter(j => j.mode === mode).slice(-60);
+  const base = mode === 'LAUNCH' ? CFG.launch.entryPct : mode === 'PUMP' ? CFG.pump.entryPct : CFG.entryPct;
+  const out = { mult: 1, why: 'not enough trades yet (need 12), full size', n: J.length };
+  if (J.length >= 12) {
+    const W = J.filter(j => j.win), Ls = J.filter(j => !j.win);
+    const p = wilson(W.length, J.length, 1.28)[0];
+    const aw = avgOf(W.map(j => j.pct)), al = Math.abs(avgOf(Ls.map(j => j.pct))) || 1;
+    const b = aw > 0 ? aw / al : 0.01;
+    const f = p - (1 - p) / b;
+    out.f = f;
+    out.mult = f <= 0 ? 0.25 : Math.min(1, Math.max(0.25, (f * 0.25) / base));
+    out.why = f <= 0 ? `no proven edge in last ${J.length} trades, minimum size` : `quarter-Kelly ${(f * 25).toFixed(1)}% of bankroll vs ${(base * 100).toFixed(0)}% set`;
+  }
+  const eq = equityNow();
+  if (!state.journal.length || !(state.eqPeak > 0)) state.eqPeak = eq;
+  if (eq > state.eqPeak) state.eqPeak = eq;
+  const dd = 1 - eq / state.eqPeak;
+  out.dd = dd;
+  if (dd > 0.2) { out.mult *= 0.5; out.why += ` | drawdown ${(dd * 100).toFixed(0)}% x0.5`; }
+  else if (dd > 0.1) { out.mult *= 0.7; out.why += ` | drawdown ${(dd * 100).toFixed(0)}% x0.7`; }
+  return out;
+}
+function sizeAdj(mode, major) { if (major) return 1; try { return sizeInfo(mode).mult; } catch (e) { return 1; } }
+
+/* ---------- 5. math ---------- */
+function mathStats(mode) {
+  const J = state.journal.filter(j => !mode || j.mode === mode), n = J.length;
+  if (!n) return null;
+  const W = J.filter(j => j.win), Ls = J.filter(j => !j.win);
+  const aw = avgOf(W.map(j => j.pct)), al = Math.abs(avgOf(Ls.map(j => j.pct)));
+  const gw = W.reduce((s, j) => s + j.pnl, 0), gl = Math.abs(Ls.reduce((s, j) => s + j.pnl, 0));
+  const exp = avgOf(J.map(j => j.pct));
+  let run = 0, maxL = 0, cum = 0, pk = 0, mdd = 0;
+  J.forEach(j => { run = j.win ? 0 : run + 1; maxL = Math.max(maxL, run); cum += j.pnl; pk = Math.max(pk, cum); mdd = Math.max(mdd, pk - cum); });
+  return { n, wr: W.length / n * 100, wrLow: wilson(W.length, n, 1.64)[0] * 100, aw, al, payoff: al > 0 ? aw / al : null, pf: gl > 0 ? gw / gl : null,
+    exp, be: al > 0 ? 100 / (1 + aw / al) : null, maxL, mdd, locks: J.filter(j => j.tag === 'PROFIT LOCK' || j.tag === 'EXTENDED EXIT') };
+}
+function mathLines(mode) {
+  const m = mathStats(mode);
+  if (!m) return ['No closed trades yet.'];
+  const f = x => x === null ? 'n/a' : x.toFixed(2);
+  const out = [
+    `${m.n} trades | win rate ${m.wr.toFixed(0)}% (safe estimate ${m.wrLow.toFixed(0)}%) | break-even needs ${m.be === null ? 'n/a' : m.be.toFixed(0) + '%'}`,
+    `avg win ${m.aw.toFixed(1)}% | avg loss -${m.al.toFixed(1)}% | payoff ${f(m.payoff)} | profit factor ${f(m.pf)}`,
+    `expectancy ${m.exp >= 0 ? '+' : ''}${m.exp.toFixed(2)}% per trade | worst losing streak ${m.maxL} | max drawdown ${fmtCurrency(m.mdd)}`
+  ];
+  if (m.locks.length) out.push(`profit lock / extended exits: ${m.locks.length} trades, avg ${avgOf(m.locks.map(j => j.pct)).toFixed(1)}%`);
+  out.push(m.n < 20 ? 'Verdict: too few trades to trust yet (need 20+).' : m.exp > 0 && m.wrLow >= (m.be || 0) ? 'Verdict: real edge so far.' : m.exp > 0 ? 'Verdict: positive but not proven (win rate could be luck).' : 'Verdict: NO EDGE yet, losing after costs.');
+  return out;
+}
+const _runAudit9 = runAudit;
+runAudit = function () {
+  _runAudit9();
+  try {
+    const add = (sev, title, detail) => auditResult.push({ sev, title, detail });
+    const m = mathStats(state.mode);
+    if (m && m.n >= 15) {
+      if (m.exp < 0) add('bad', 'Negative expectancy', `Average trade ${m.exp.toFixed(2)}% after costs. Wins avg ${m.aw.toFixed(1)}%, losses avg -${m.al.toFixed(1)}%. Need ${m.be === null ? '?' : m.be.toFixed(0)}% wins, have ${m.wr.toFixed(0)}%. Bet size is auto-reduced until this turns positive.`);
+      else add('ok', 'Positive expectancy', `Average trade +${m.exp.toFixed(2)}%, profit factor ${m.pf === null ? 'n/a' : m.pf.toFixed(2)}.`);
+    }
+    const si = sizeInfo(state.mode);
+    add('info', 'Position size scale', `x${si.mult.toFixed(2)}: ${si.why}.`);
+    const nb = Object.keys(book()).length;
+    add('info', 'Coin book', `${nb} coins remembered. Re-buys are blocked for repeat losers, 4h after a loss, and above our last sell price.`);
+    const rank = { bad: 0, warn: 1, info: 2, ok: 3 };
+    auditResult.sort((x, y) => rank[x.sev] - rank[y.sev]);
+  } catch (e) { console.error('audit v16.9', e); }
+};
+const _buildReport9 = buildReport;
+buildReport = function () {
+  let extra = '';
+  try {
+    const B = book();
+    const rows = Object.keys(B).sort((a, b) => ((B[b].last || {}).t || 0) - ((B[a].last || {}).t || 0)).slice(0, 12).map(a => { const b = B[a]; return `${b.sym}: ${b.n} trades, ${b.wins} wins, net ${b.pnl.toFixed(2)}, avgBuy ${avgOf(b.buys).toPrecision(3)}, avgSell ${avgOf(b.sells).toPrecision(3)}`; });
+    extra = '\n\nMATH\n' + mathLines(state.mode).join('\n') + '\n\nSIZING ' + JSON.stringify(sizeInfo(state.mode)) + '\n\nCOIN BOOK\n' + (rows.join('\n') || 'empty');
+  } catch (e) {}
+  return _buildReport9() + extra;
+};
+
+/* ---------- Status tab panel ---------- */
+function renderBookPanel() {
+  const host = $('tab-status');
+  if (!host) return;
+  let el = $('book-panel');
+  if (!el) { el = document.createElement('div'); el.id = 'book-panel'; host.appendChild(el); }
+  const B = book(), si = sizeInfo(state.mode);
+  const rows = Object.keys(B).sort((a, b) => ((B[b].last || {}).t || 0) - ((B[a].last || {}).t || 0)).slice(0, 12).map(a => {
+    const b = B[a], c = market.get(a), v = c ? valueSignal(c) : null;
+    const col = !v ? 'var(--text-dim)' : v.label === 'LOW' ? 'var(--green)' : v.label === 'HIGH' ? 'var(--red)' : 'var(--amber)';
+    const sig = v ? `${v.pct >= 0 ? '+' : ''}${v.pct.toFixed(0)}% vs avg ${v.label}` : 'not in view';
+    return `<div class="status-row"><span>${escapeHtml(b.sym)} (${b.wins}/${b.n} wins, ${fmtSigned(b.pnl)})</span><strong style="color:${col};">${sig}</strong></div>`;
+  }).join('');
+  el.innerHTML = `<div class="pane-title" style="margin-top:8px;">// MATH (${escapeHtml(state.mode)})</div>` +
+    mathLines(state.mode).map(l => `<div class="protocol-line">${escapeHtml(l)}</div>`).join('') +
+    `<div class="protocol-line" style="color:var(--amber);">Bet size x${si.mult.toFixed(2)}: ${escapeHtml(si.why)}</div>` +
+    `<div class="protocol-line" style="color:var(--text-dim);">Profit lock ${CFG.lock.on ? 'ON' : 'OFF'}: arms at +${CFG.lock.arm}%, then never lets a winner fall below breakeven; keeps 35-75% of peak gains.</div>` +
+    `<div class="pane-title" style="margin-top:8px;">// COIN BOOK (${Object.keys(B).length} coins)</div>` + (rows || '<div class="protocol-line">Nothing traded yet.</div>');
+}
+const _rn3 = renderNow;
+renderNow = function () { _rn3(); try { if (activeTab === 'status') renderBookPanel(); } catch (e) {} };
+</script>
+
 </body>
 </html>
