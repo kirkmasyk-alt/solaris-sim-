@@ -2462,7 +2462,7 @@ async function askCouncilAI(coin) {
       }),
       signal: AbortSignal.timeout(12000)
     });
-    if (!res.ok) throw new Error(res.status === 401 ? '401 key rejected' : res.status === 429 ? '429 rate limit/quota' : 'HTTP ' + res.status);
+    if (!res.ok) { let em = ''; try { em = (await res.json()).error.message || ''; } catch (e) {} throw new Error((res.status === 401 ? '401 key rejected' : res.status === 429 ? '429 rate limit/quota' : 'HTTP ' + res.status) + (em ? ': ' + em.slice(0, 90) : '')); }
     const data = await res.json();
     const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
     const parsed = JSON.parse(content);
@@ -2914,7 +2914,7 @@ async function askAuditor() {
       }),
       signal: AbortSignal.timeout(30000)
     });
-    if (!res.ok) throw new Error(res.status === 401 ? '401 key rejected' : res.status === 429 ? '429 rate limit/quota' : 'HTTP ' + res.status);
+    if (!res.ok) { let em = ''; try { em = (await res.json()).error.message || ''; } catch (e) {} throw new Error((res.status === 401 ? '401 key rejected' : res.status === 429 ? '429 rate limit/quota' : 'HTTP ' + res.status) + (em ? ': ' + em.slice(0, 90) : '')); }
     const data = await res.json();
     const parsed = JSON.parse(data.choices[0].message.content);
     const props = (Array.isArray(parsed.proposals) ? parsed.proposals : []).filter(x => x && TUNABLE[x.key] && isFinite(Number(x.value))).slice(0, 3)
@@ -2945,6 +2945,59 @@ async function askAuditor() {
    Paper trading only.
    ===================================================================== */
 (function () { try { const ls = document.querySelector('.logo-sub'); if (ls) ls.textContent = 'PAPER TRADING // V16.8'; } catch (e) {} })();
+
+/* ---------- FEED GUARD: spread GeckoTerminal calls out (free limit ~30/min), fix a bad URL, show health ---------- */
+const sleepMs = ms => new Promise(r => setTimeout(r, ms));
+const _feedJson = feedJson;
+const gtTimes = []; let gtChain = Promise.resolve(), gtPauseUntil = 0, gtSkipped = 0;
+feedJson = function (name, url) {
+  if (name === 'gt-dex-trending') url = url.replace('/dex/trending_pools?page=1', '/trending_pools?duration=5m&page=1');   // old path does not exist
+  if (url.indexOf('api.geckoterminal.com') < 0) return _feedJson(name, url);
+  const run = async () => {
+    const now = Date.now();
+    while (gtTimes.length && now - gtTimes[0] > 60000) gtTimes.shift();
+    if (now < gtPauseUntil || gtTimes.length >= 24) { gtSkipped++; return null; }      // stay under the limit instead of getting blocked
+    gtTimes.push(now);
+    const r = await _feedJson(name, url);
+    if (FEEDS[name] && FEEDS[name].msg === 'rate limited') gtPauseUntil = Date.now() + 45000;
+    return r;
+  };
+  const p = gtChain.then(run, run);
+  gtChain = p.then(() => sleepMs(1200), () => sleepMs(1200));                          // one GeckoTerminal call at a time
+  return p;
+};
+function renderFeedHealth() {
+  const host = $('tab-status');
+  if (!host) return;
+  let el = $('feed-health');
+  if (!el) { el = document.createElement('div'); el.id = 'feed-health'; host.appendChild(el); }
+  const rows = Object.keys(FEEDS).sort().map(k => {
+    const f = FEEDS[k], good = f.ok > 0 && f.msg === 'ok';
+    return `<div class="status-row"><span>${good ? '✓' : '✗'} ${escapeHtml(k)}</span><strong style="color:${good ? 'var(--green)' : 'var(--red)'};">${f.ok} ok / ${f.fail} fail${good ? '' : ' (' + escapeHtml(f.msg || '?') + (f.code ? ' ' + f.code : '') + ')'}</strong></div>`;
+  }).join('');
+  const calls = gtTimes.filter(x => Date.now() - x < 60000).length;
+  el.innerHTML = `<div class="pane-title" style="margin-top:8px;">// FEED HEALTH</div>
+    <div class="protocol-line">GeckoTerminal calls last minute: ${calls}/24${Date.now() < gtPauseUntil ? ' | PAUSED (rate limited)' : ''}${gtSkipped ? ' | skipped ' + gtSkipped : ''}</div>` + (rows || '<div class="protocol-line">No feed calls yet.</div>');
+}
+const _rn2 = renderNow;
+renderNow = function () { _rn2(); try { if (activeTab === 'status') renderFeedHealth(); } catch (e) {} };
+
+/* ---------- AI guard: if OpenAI keeps failing, trade on rules only for 10 min instead of freezing the bot ---------- */
+const _askAI = askCouncilAI;
+let aiStreak = 0, aiBypassUntil = 0;
+askCouncilAI = async function (coin) {
+  if (Date.now() < aiBypassUntil) return { approve: true, reason: 'AI offline, rules only' };
+  const v = await _askAI(coin);
+  if (v.error) {
+    aiStreak++;
+    if (aiStreak >= 3) {
+      aiBypassUntil = Date.now() + 10 * 60000; aiStreak = 0;
+      log(`[AI] OpenAI failing (${diag.aiMsg}). Trading on rules only for 10 min. Fix the key/model or set DECISIONS to AUTO.`);
+      return { approve: true, reason: 'AI offline, rules only' };
+    }
+  } else if (!v.skip) aiStreak = 0;
+  return v;
+};
 
 /* ---------- state defaults ---------- */
 state.shadow = state.shadow || { open: [], done: [] };
@@ -3468,15 +3521,48 @@ function pumpFunnel() {
   const feeds = Object.keys(pumpFeedInfo).map(k => `${k} ${pumpFeedInfo[k].ok ? pumpFeedInfo[k].pump + '/' + pumpFeedInfo[k].seen : 'FAILED'}`).join(' | ');
   return { n, txt: txt || 'none', feeds: feeds || 'no data yet' };
 }
+function growthReject(c) {
+  if (!isFresh(c)) return 'stale data';
+  if (isMajorWave(c)) return (c.change5m <= -1.5 && c.change5m >= -8) ? '' : 'big coin not dipping';
+  if (state.mode === 'LAUNCH') return isLaunchCandidate(c) ? '' : 'not a fresh launch';
+  if (c.ageMin !== null && c.ageMin !== undefined && c.ageMin < CFG.minAgeMin) return 'too new';
+  const tx = c.buysH1 + c.sellsH1;
+  if (tx < CFG.minTxnsH1) return 'few trades';
+  if (c.buysH1 / tx < CFG.minBuyRatio) return 'weak buying';
+  if (c.liquidity < CFG.minLiquidity) return 'thin liquidity';
+  if (c.volumeH1 < CFG.minVolumeH1) return 'low volume';
+  if (c.volumeH1 / c.liquidity < CFG.minTurnover) return 'low turnover';
+  if (!modeAllows(c)) return 'too big for sniper';
+  if (CFG.skipClones && isClone(c)) return 'copycat ticker';
+  if (classifyDipOrDump(c) === 'DUMP') return 'dumping';
+  if (!passesChaseGate(c)) return 'already ran';
+  return '';
+}
+function whyNotTrading() {
+  const blockers = [];
+  if (market.size === 0) blockers.push('NO MARKET DATA (feeds down)');
+  if (state.cash <= CFG.minCash) blockers.push('bankroll at minimum');
+  if (heldAddrs().length >= maxOpenNow()) blockers.push('max positions open');
+  const key = (localStorage.getItem('openai_api_key') || '').trim();
+  if (state.decision === 'COUNCIL' && key && diag.aiErr > 0 && diag.aiMsg !== 'ok') blockers.push(`OpenAI error "${diag.aiMsg}" (council can veto everything)`);
+  let funnel;
+  if (state.mode === 'PUMP') funnel = pumpFunnel();
+  else {
+    const cnt = {}; let n = 0;
+    market.forEach(c => { n++; const r = growthReject(c) || 'READY TO BUY'; cnt[r] = (cnt[r] || 0) + 1; });
+    funnel = { n, txt: Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).map(k => `${k} ${cnt[k]}`).join(', ') || 'none', feeds: '' };
+  }
+  return { blockers, funnel };
+}
 let lastFunnelLog = 0;
 function logPumpFunnel() {
-  if (state.mode !== 'PUMP') return;
   const now = Date.now();
   if (now - lastFunnelLog < 60000) return;
   lastFunnelLog = now;
-  const f = pumpFunnel();
-  log(`[PUMP] ${f.n} pump.fun coins in view: ${f.txt}`);
-  log(`[PUMP] feeds (pump coins/seen): ${f.feeds}`);
+  const w = whyNotTrading();
+  log(`[WHY] ${state.mode}: ${w.funnel.n} coins in view -> ${w.funnel.txt}`);
+  if (w.funnel.feeds) log(`[WHY] pump feeds (pump coins/seen): ${w.funnel.feeds}`);
+  if (w.blockers.length) log(`[WHY] BLOCKERS: ${w.blockers.join('; ')}`);
 }
 
 /* ---------- fast 20s loop for pump trading ---------- */
@@ -3544,6 +3630,13 @@ runAudit = function () {
     if (state.mode === 'PUMP') {
       const f = pumpFunnel();
       add(f.n === 0 ? 'bad' : 'info', 'Pump funnel: why coins are not bought', `${f.n} pump.fun coins in view: ${f.txt}. Feeds (pump/seen): ${f.feeds}.`);
+    }
+    if (state.mode !== 'PUMP') {
+      const w = whyNotTrading();
+      add(w.blockers.length ? 'warn' : 'info', 'Why coins are not bought', `${w.funnel.n} coins: ${w.funnel.txt}.` + (w.blockers.length ? ' BLOCKERS: ' + w.blockers.join('; ') + '.' : ''));
+    } else {
+      const w = whyNotTrading();
+      if (w.blockers.length) add('warn', 'Pump trading is blocked', w.blockers.join('; ') + '.');
     }
     const ex = exitAnalysis();
     if (ex) {
