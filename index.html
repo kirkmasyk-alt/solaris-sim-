@@ -2066,8 +2066,11 @@ function renderAudit() {
   const nBad = auditResult.filter(f => f.sev === 'bad').length, nWarn = auditResult.filter(f => f.sev === 'warn').length, nOk = auditResult.filter(f => f.sev === 'ok').length;
   const head = $('audit-head');
   if (head) {
+    let pic = '';
+    try { pic = portraitUrl('auditor'); } catch (e) { pic = ''; }
+    const say = nBad ? `${nBad} problem${nBad > 1 ? 's' : ''} need attention, ${nWarn} warning${nWarn === 1 ? '' : 's'}.` : nWarn ? `No critical problems. ${nWarn} warning${nWarn === 1 ? '' : 's'}.` : 'All checks passing.';
     head.innerHTML = `<div class="agent-card" style="border-color: #39ff88; cursor: default;">
-      <img class="agent-portrait" alt="" src="${portraitUrl('auditor')}" style="border-color: #39ff88;">
+      <img class="agent-portrait" alt="AUDITOR-7" src="${pic}" style="border-color: #39ff88;">
       <div class="agent-body">
         <div class="agent-name" style="color: #39ff88;">AUDITOR-7</div>
         <div class="agent-role">System Inspector</div>
@@ -2076,6 +2079,7 @@ function renderAudit() {
           <div class="chip"><span>Warnings</span><strong>${nWarn}</strong></div>
           <div class="chip"><span>Passing</span><strong>${nOk}</strong></div>
         </div>
+        <div class="agent-speech">"${escapeHtml(say)}"</div>
       </div></div>`;
   }
   const col = { bad: 'var(--red)', warn: 'var(--amber)', info: 'var(--cyan)', ok: 'var(--green)' };
