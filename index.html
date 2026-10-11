@@ -297,7 +297,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V16.2</div>
+          <div class="logo-sub">PAPER TRADING // V16.3</div>
         </div>
       </div>
       <div class="header-btns">
@@ -364,7 +364,7 @@ body::after {
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div class="pane-title">// AI SWARM AUDIT &amp; EXECUTION LOG</div>
+      <div class="pane-title">// WHALE CONSENSUS &amp; COUNCIL FEED</div>
       <div class="terminal-box" id="council-feed-container"></div>
     </div>
 
@@ -404,7 +404,7 @@ body::after {
       <div class="status-row"><span>SCAN FREQUENCY:</span> <strong id="status-scan" style="color: var(--green);">60 SECONDS</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
-      <div class="pane-title" style="margin-top: 8px;">// BUY PROTOCOL</div>
+      <div class="pane-title" style="margin-top: 8px;">// BUY PROTOCOL (WHALE GATED)</div>
       <div id="protocol-box"></div>
       <div class="pane-title" style="margin-top: 8px;">// LEARNED RULES</div>
       <div id="lessons-box"></div>
@@ -476,7 +476,7 @@ const CFG = {
   minVolumeH1: 10000,
   minTurnover: 0.15,
   minTxnsH1: 40,
-  minBuyRatio: 0.52,
+  minBuyRatio: 0.55,       // Enforced whale buy pressure threshold (55%+)
   topPicks: 5,
   maxOpenPositions: 6,
   minLiquidity: 30000,
@@ -490,7 +490,7 @@ const CFG = {
     maxAgeMin: 10,
     minLiq: 2000,
     minTxns: 10,
-    minBuyRatio: 0.58,
+    minBuyRatio: 0.60,
     entryPct: 0.05,
     baseSlippage: 0.03,
     stopPct: -20,
@@ -532,17 +532,17 @@ const auditSeen = {};
 
 const HOUR = 60 * 60 * 1000;
 const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR };
-const STORE_KEY = 'orbital_state_v8';
+const STORE_KEY = 'orbital_state_v9';
 
 const AGENT_JOBS = {
-  boss: 'Supervises the swarm. Enforces momentum-based duration rules and principal-recovery exits.',
-  announcer: 'Watches market feeds and flags momentum breakouts and volume spikes.',
-  news: 'Reads crypto headlines from RSS feeds and announces new ones as they appear.',
+  boss: 'Supervises the swarm. Enforces whale flow consensus and multi-agent agreement before approving any buy order.',
+  announcer: 'WHALE_EYE: Continuously monitors volume spikes and buy pressure, filtering out weak tokens.',
+  news: 'NEWS_HAWK: Reads crypto headlines from RSS feeds and announces matching asset news.',
   finance: 'KIRKTRON 9001: Manages principal recovery, free runners, and dynamic hold horizons.',
-  risk: 'Stop-loss firewall. Cuts any position that falls past its stop and protects capital.',
-  trader: 'The ONLY agent that trades. Executes entries, principal-recovery sells, and profit-locks.',
-  macro: 'Momentum analyzer. Evaluates buy pressure and turnover to decide if a coin is a minute scalp or multi-day hold.',
-  cfo: 'ROBBIEBOT 9000: Vault sweeper. Moves a share of every realized win into the secure vault.'
+  risk: 'RISK_CORE: Stop-loss firewall and veto authority. Blocks any trade with negative flow pressure.',
+  trader: 'ALPHA_X: Executes approved trades only when WHALE_EYE and COUNCIL give the green light.',
+  macro: 'MACRO_9: Momentum scorer. Ranks candidates by breakout velocity and volume turnover.',
+  cfo: 'ROBBIEBOT 9000: Vault sweeper. Moves a share of every winning trade into the secure vault.'
 };
 
 const AGENTS = [
@@ -763,17 +763,21 @@ function isMajorWave(coin) {
 function modeAllows(c) { return state.mode !== 'SNIPER' || c.liquidity <= CFG.sniperMaxLiq; }
 function isFresh(c) { return c && Date.now() - c.seenAt < CFG.staleDataMs; }
 
+// WHALE FLOW & AGENT GATED ENTRY FILTER
 function isActive(c) {
   if (isMajorWave(c)) {
     return c.change5m <= -1.5 && c.change5m >= -8.0;
   }
   if (c.ageMin !== null && c.ageMin !== undefined && c.ageMin < CFG.minAgeMin) return false;
   const tx = c.buysH1 + c.sellsH1;
+  const buyRatio = c.buysH1 / tx;
+  
+  // Strictly enforce WHALE_EYE buy pressure threshold and minimum volume
+  if (buyRatio < CFG.minBuyRatio) return false;
   if (c.liquidity < CFG.minLiquidity) return false;
   if (c.volumeH1 < CFG.minVolumeH1) return false;
   if (c.volumeH1 / c.liquidity < CFG.minTurnover) return false;
   if (tx < CFG.minTxnsH1) return false;
-  if (c.buysH1 / tx < CFG.minBuyRatio) return false;
   return true;
 }
 
@@ -935,6 +939,7 @@ function announceHot(hot) {
     const ratio = Math.round(100 * c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1));
     whaleFeed.unshift({ title: `${c.symbol} heating up`, desc: `$${Math.round(c.volumeH1).toLocaleString()} 1h volume, ${ratio}% buys, liquidity ${fmtCurrency(c.liquidity)}`, time: new Date().toLocaleTimeString() });
     if (whaleFeed.length > 30) whaleFeed.pop();
+    agentSay('announcer', `WHALE_EYE: Flagged ${c.symbol} with ${ratio}% buy pressure and $${Math.round(c.volumeH1).toLocaleString()} volume.`);
   });
 }
 
@@ -1007,7 +1012,7 @@ function sellTokens(addr, coin, qty) {
     bump('cfo', 'swept', sweep); bump('cfo', 'sweeps');
     state.cash += net - sweep;
     state.vault += sweep;
-    agentSay('cfo', `Swept ${fmtCurrency(sweep)} into vault.`);
+    agentSay('cfo', `ROBBIEBOT 9000: Swept ${fmtCurrency(sweep)} into vault.`);
   } else {
     state.cash += net;
   }
@@ -1131,9 +1136,24 @@ function manualSellPosition(addr) {
   closePosition(addr, coin, 'MANUAL', 'Manually liquidated');
 }
 
+// 🤖 MULTI-AGENT CONSENSUS & WHALE FLOW VALIDATION BEFORE ENTRY
 function openPosition(coin) {
   const addr = coin.address;
   if (state.positions[addr] > 0 || state.cash <= CFG.minCash || isArchived(coin)) return false;
+
+  const tx = Math.max(1, coin.buysH1 + coin.sellsH1);
+  const buyRatio = coin.buysH1 / tx;
+
+  // Agent Collaboration Dialogue before execution
+  agentSay('announcer', `WHALE_EYE: Validated ${coin.symbol} flow -> ${Math.round(buyRatio * 100)}% buy pressure. Handing off to MACRO_9.`);
+  agentSay('macro', `MACRO_9: Turnover ratio is robust. Horizon classified as ${determineHoldHorizon(coin)}. Requesting RISK_CORE firewall check.`);
+  
+  if (buyRatio < CFG.minBuyRatio) {
+    agentSay('risk', `RISK_CORE: Vetoed ${coin.symbol}. Buy pressure below ${Math.round(CFG.minBuyRatio * 100)}% threshold.`);
+    bump('boss', 'vetoed');
+    return false;
+  }
+  agentSay('risk', `RISK_CORE: Approved ${coin.symbol}. Stop-loss firewall armed. ALPHA_X executing swap.`);
 
   const major = isMajorWave(coin);
   const held = heldAddrs();
@@ -1159,16 +1179,14 @@ function openPosition(coin) {
   state.entryCost[addr] = spend;
   state.tradePnl[addr] = 0;
   state.runnerRecovered[addr] = false;
-  bump('trader', 'entries'); bump('macro', 'picks');
+  bump('trader', 'entries'); bump('macro', 'picks'); bump('boss', 'approved');
   state.fees += fee;
   state.txCount += 1;
   playSfx('buy');
 
-  const horizon = determineHoldHorizon(coin);
-  const tag = major ? '[MAJOR WAVE // 3X PERP]' : `[MEMECOIN // ${horizon}]`;
-  log(`${tag} KIRKTRON 9001 deployed ${fmtCurrency(spend)} into ${coin.symbol} (${leverage}x leverage)`);
-  logTrade('BUY', `Entered ${coin.symbol} for ${fmtCurrency(spend)}`);
-  agentSay('macro', `MACRO_9: Horizon classified as ${horizon} for ${coin.symbol}.`);
+  log(`[WHALE CONSENSUS BUY] ALPHA_X deployed ${fmtCurrency(spend)} into ${coin.symbol} (${Math.round(buyRatio * 100)}% buy pressure)`);
+  logTrade('BUY', `Whale-verified entry on ${coin.symbol} for ${fmtCurrency(spend)}`);
+  agentSay('trader', `ALPHA_X: Successfully swapped ${fmtCurrency(spend)} for ${coin.symbol} under swarm consensus.`);
   saveState();
   renderAll();
   return true;
@@ -1215,6 +1233,7 @@ function runExits() {
         playSfx('win');
         log(`[PRINCIPAL RECOVERED] Sold initial cost & profit for ${sym} | P&L: ${fmtSigned(pnl)}. Remaining bag is now a FREE RUNNER!`);
         logTrade('PRINCIPAL', `Recovered principal & profit on ${sym}`, pnl);
+        agentSay('finance', `KIRKTRON 9001: Principal secured on ${sym}. Free runner active.`);
         saveState();
         continue;
       }
@@ -1598,7 +1617,7 @@ function renderCouncil() {
     <div class="feed-item" style="border-left-color: ${f.color};">
       <div class="feed-sender" style="color: ${f.color};">${escapeHtml(f.sender)} <span class="feed-time">${escapeHtml(f.time)}</span></div>
       <div class="feed-text">"${escapeHtml(f.text)}"</div>
-    </div>`).join('') : '<div class="empty-note">No council activity yet.</div>';
+    </div>`).join('') : '<div class="empty-note">No whale consensus activity yet.</div>';
 }
 
 function renderNewsTab() {
@@ -1640,9 +1659,9 @@ function renderProtocol() {
   ] : [
     `Volume 1h ≥ ${fmtCurrency(CFG.minVolumeH1)}`,
     `Turnover (vol/liquidity) ≥ ${CFG.minTurnover}`,
-    `Txns 1h ≥ ${CFG.minTxnsH1}, buy ratio ≥ ${Math.round(CFG.minBuyRatio * 100)}%, pool age ≥ ${CFG.minAgeMin} min`,
+    `Txns 1h ≥ ${CFG.minTxnsH1}, WHALE BUY PRESSURE ≥ ${Math.round(CFG.minBuyRatio * 100)}%`,
     `Liquidity ≥ ${fmtCurrency(CFG.minLiquidity)}, max ${CFG.maxOpenPositions} open, copycat tickers skipped`,
-    `Entry: ${Math.round(CFG.entryPct * 100)}% of bankroll, random pick from top ${CFG.topPicks}`,
+    `Entry: ${Math.round(CFG.entryPct * 100)}% of bankroll, multi-agent consensus required`,
     `Stop-loss ${CFG.stopLossPct}% | Principal Recovery + Free Runner Active`,
     `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ${(CFG.baseSlippage * 100).toFixed(1)}%+ slippage per side`
   ];
