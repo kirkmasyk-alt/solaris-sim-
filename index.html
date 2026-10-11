@@ -279,6 +279,7 @@ body::after {
 .chip strong { display: block; color: var(--text-main); font-size: 15px; word-break: break-all; }
 .dialog-msg { white-space: pre-line; }
 #war-room-container { max-height: 460px; }
+
 .audit-btns { display: flex; gap: 4px; flex-wrap: wrap; }
 
 </style>
@@ -296,7 +297,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V15.5 ROBOTS</div>
+          <div class="logo-sub">PAPER TRADING // V16.5</div>
         </div>
       </div>
       <div class="header-btns">
@@ -363,7 +364,7 @@ body::after {
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div class="pane-title">// AI SWARM AUDIT &amp; EXECUTION LOG</div>
+      <div class="pane-title">// WHALE CONSENSUS &amp; COUNCIL FEED</div>
       <div class="terminal-box" id="council-feed-container"></div>
     </div>
 
@@ -402,8 +403,8 @@ body::after {
       <div class="status-row"><span>NEWS FEED:</span> <strong id="status-news" style="color: var(--text-dim);">CONNECTING</strong></div>
       <div class="status-row"><span>SCAN FREQUENCY:</span> <strong id="status-scan" style="color: var(--green);">60 SECONDS</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
-      <div class="pane-title" style="margin-top: 8px;">// BUY PROTOCOL</div>
+      <div class="status-row"><span>OPENAI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
+      <div class="pane-title" style="margin-top: 8px;">// BUY PROTOCOL (WHALE GATED)</div>
       <div id="protocol-box"></div>
       <div class="pane-title" style="margin-top: 8px;">// LEARNED RULES</div>
       <div id="lessons-box"></div>
@@ -411,7 +412,7 @@ body::after {
 
     <div id="tab-warroom" class="tab-pane panel">
       <div class="pane-title">// WAR ROOM</div>
-      <canvas id="orbital-table" width="320" height="200" role="img" aria-label="Animated pixel scene of the eight trading robots around a table"></canvas>
+      <canvas id="orbital-table" width="320" height="200" role="img" aria-label="Animated pixel scene of the eight trading agents around a table"></canvas>
       <div id="scene-caption" class="scene-caption">Tap an agent to see who they are.</div>
       <div id="war-room-container"></div>
     </div>
@@ -424,7 +425,6 @@ body::after {
         <button class="cyber-btn accent" onclick="copyReport()">COPY REPORT</button>
         <button class="cyber-btn purple" onclick="askAuditor()">ASK AI</button>
         <button class="cyber-btn danger" onclick="resetOverrides()">RESET RULES</button>
-        <button class="cyber-btn danger" onclick="forceClearStalePositions()">FORCE CLEAR STALE</button>
       </div>
       <div id="audit-status" class="scene-caption"></div>
       <div class="terminal-box" id="audit-findings" style="height: 300px;"></div>
@@ -502,7 +502,7 @@ const CFG = {
   },
   sniperMaxLiq: 300000,
   councilBlockMs: 5 * 60 * 1000,
-  geminiModel: 'gemini-3.5-flash'
+  openaiModel: 'gpt-4o-mini'
 };
 
 const CFG_DEFAULTS = JSON.parse(JSON.stringify(CFG));
@@ -522,8 +522,7 @@ const TUNABLE = {
   scanEveryMs: { min: 30000, max: 120000, reload: true }
 };
 
-const diag = { hotZero: 0, geminiErr: 0, geminiMsg: '' };
-const ROBOT = { until: {}, speak(id, ms) { this.until[id] = Date.now() + (ms || 2600); } };   // drives the robots' speech bubbles
+const diag = { hotZero: 0, aiErr: 0, aiMsg: '' };
 const errorBuf = [];
 const logBuf = [];
 let auditResult = [];
@@ -536,14 +535,14 @@ const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNE
 const STORE_KEY = 'orbital_state_v10';
 
 const AGENT_JOBS = {
-  boss: 'Supervises the swarm. Enforces momentum-based duration rules and principal-recovery exits.',
-  announcer: 'Watches market feeds and flags momentum breakouts and volume spikes.',
-  news: 'Reads crypto headlines from RSS feeds and announces new ones as they appear.',
+  boss: 'Supervises the swarm. Enforces whale flow consensus and multi-agent agreement before approving any buy order.',
+  announcer: 'WHALE_EYE: Continuously monitors volume spikes and buy pressure, filtering out weak tokens.',
+  news: 'NEWS_HAWK: Reads crypto headlines from RSS feeds and announces matching asset news.',
   finance: 'KIRKTRON 9001: Manages principal recovery, free runners, and dynamic hold horizons.',
-  risk: 'Stop-loss firewall. Cuts any position that falls past its stop and protects capital.',
-  trader: 'The ONLY agent that trades. Executes entries, principal-recovery sells, and profit-locks.',
-  macro: 'Momentum analyzer. Evaluates buy pressure and turnover to decide if a coin is a minute scalp or multi-day hold.',
-  cfo: 'ROBBIEBOT 9000: Vault sweeper. Moves a share of every realized win into the secure vault.'
+  risk: 'RISK_CORE: Stop-loss firewall and veto authority. Blocks any trade with negative flow pressure.',
+  trader: 'ALPHA_X: Executes approved trades only when WHALE_EYE and COUNCIL give the green light.',
+  macro: 'MACRO_9: Momentum scorer. Ranks candidates by breakout velocity and volume turnover.',
+  cfo: 'ROBBIEBOT 9000: Vault sweeper. Moves a share of every winning trade into the secure vault.'
 };
 
 const AGENTS = [
@@ -657,7 +656,7 @@ function agentSay(id, text, opts) {
   const a = AGENTS.find(x => x.id === id);
   if (!a) return;
   a.says = text;
-  try { ROBOT.speak(id, 2600); } catch (e) { /* cosmetics only */ }
+  try { ROBOT.speak(id, 2600); } catch (e) { /* cosmetics */ }
   const led = state.ledger[id] || (state.ledger[id] = []);
   led.unshift({ t: new Date().toLocaleTimeString(), text });
   if (led.length > 12) led.pop();
@@ -770,11 +769,13 @@ function isActive(c) {
   }
   if (c.ageMin !== null && c.ageMin !== undefined && c.ageMin < CFG.minAgeMin) return false;
   const tx = c.buysH1 + c.sellsH1;
+  const buyRatio = c.buysH1 / tx;
+  
+  if (buyRatio < CFG.minBuyRatio) return false;
   if (c.liquidity < CFG.minLiquidity) return false;
   if (c.volumeH1 < CFG.minVolumeH1) return false;
   if (c.volumeH1 / c.liquidity < CFG.minTurnover) return false;
   if (tx < CFG.minTxnsH1) return false;
-  if (c.buysH1 / tx < CFG.minBuyRatio) return false;
   return true;
 }
 
@@ -830,38 +831,64 @@ function isClone(c) {
   return !!t && t.address !== c.address && t.liquidity > c.liquidity;
 }
 
+const FEEDS = {};
+let scanReq = 0, scanFail = 0, gtRot = 0;
+async function feedJson(name, url) {
+  const f = FEEDS[name] || (FEEDS[name] = { ok: 0, fail: 0, code: 0, msg: '', until: 0 });
+  const now = Date.now();
+  if (f.until > now) return null;
+  scanReq++;
+  try {
+    const res = await fetch(url);
+    f.code = res.status;
+    if (res.status === 429) { f.fail++; scanFail++; f.msg = 'rate limited'; f.until = now + 60000; return null; }
+    if (!res.ok) { f.fail++; scanFail++; f.msg = 'HTTP ' + res.status; return null; }
+    const d = await res.json();
+    f.ok++; f.msg = 'ok';
+    return d;
+  } catch (e) {
+    f.fail++; scanFail++; f.code = 0; f.msg = 'offline'; f.until = now + 15000;
+    return null;
+  }
+}
+
 function heldAddrs() { return Object.keys(state.positions).filter(a => state.positions[a] > 0.00001); }
 function hotCoins() { return Array.from(market.values()).filter(c => isFresh(c) && isBuyable(c)); }
 
 async function scanMarket() {
   if (scanning) return;
   scanning = true;
-  let req = 0, fail = 0;
-  const getJson = async url => { req++; const d = await safeJson(url); if (d === null) fail++; return d; };
+  scanReq = 0; scanFail = 0;
+  const getJson = (name, url) => feedJson(name, url);
 
   try {
     const GT = 'https://api.geckoterminal.com/api/v2/networks/solana';
     const DS = 'https://api.dexscreener.com';
 
+    const GT_LIST = [
+      ['gt-trending', `${GT}/trending_pools?page=1`],
+      ['gt-new-1', `${GT}/new_pools?page=1`],
+      ['gt-new-2', `${GT}/new_pools?page=2`],
+      ['gt-volume', `${GT}/pools?page=1&sort=h24_volume_usd_desc`],
+      ['gt-txcount', `${GT}/pools?page=1&sort=h24_tx_count_desc`],
+      ['gt-dex-trending', `${GT}/dex/trending_pools?page=1`],
+      ['gt-top-pools', `${GT}/pools?page=1`]
+    ];
+    const gtPick = [0, 1, 2].map(k => GT_LIST[(gtRot + k) % GT_LIST.length]);
+    gtRot = (gtRot + 3) % GT_LIST.length;
     const [gtPools, boosts, profiles] = await Promise.all([
-      Promise.all([
-        getJson(`${GT}/trending_pools?page=1`),
-        getJson(`${GT}/new_pools?page=1`),
-        getJson(`${GT}/new_pools?page=2`),
-        getJson(`${GT}/pools?page=1&sort=h24_volume_usd_desc`),
-        getJson(`${GT}/pools?page=1&sort=h24_tx_count_desc`)
-      ]),
-      getJson(`${DS}/token-boosts/latest/v1`),
-      getJson(`${DS}/token-profiles/latest/v1`)
+      Promise.all(gtPick.map(x => getJson(x[0], x[1]))),
+      getJson('ds-boosts', `${DS}/token-boosts/latest/v1`),
+      getJson('ds-profiles', `${DS}/token-profiles/latest/v1`)
     ]);
 
     const addrs = new Set(heldAddrs());
     [boosts, profiles].forEach(list => {
       if (Array.isArray(list)) list.forEach(t => { if (t && t.chainId === 'solana' && t.tokenAddress) addrs.add(t.tokenAddress); });
     });
-    const all = Array.from(addrs), chunks = [];
+    const all = Array.from(addrs).slice(0, 90), chunks = [];
     for (let i = 0; i < all.length; i += 30) chunks.push(all.slice(i, i + 30));
-    const lookups = await Promise.all(chunks.map(c => getJson(`${DS}/tokens/v1/solana/${c.join(',')}`)));
+    const lookups = await Promise.all(chunks.map(c => getJson('ds-lookup', `${DS}/tokens/v1/solana/${c.join(',')}`)));
 
     const fresh = new Map();
     const put = c => {
@@ -882,18 +909,14 @@ async function scanMarket() {
 
     symbolTop = {};
     market.forEach(c => { const t = symbolTop[c.symbol]; if (!t || c.liquidity > t.liquidity) symbolTop[c.symbol] = c; });
-    lastScan = { seen: market.size, ok: req - fail, req };
-    feedStatus = fail === req ? 'OFFLINE' : `ONLINE [${lastScan.ok}/${req}]`;
+    lastScan = { seen: market.size, ok: scanReq - scanFail, req: scanReq };
+    feedStatus = lastScan.req === 0 ? 'PAUSED' : (scanFail === scanReq ? 'OFFLINE' : `ONLINE [${lastScan.ok}/${lastScan.req}]`);
     scanCount++;
     bump('announcer', 'scans');
 
     const hot = hotCoins();
     diag.hotZero = hot.length ? 0 : diag.hotZero + 1;
     announceHot(hot);
-    if (scanCount === 1 || scanCount % 4 === 0) {
-      const hotNames = hot.map(c => c.symbol).join(', ') || 'None';
-      log(`[SCAN] ${market.size} seen, ${hot.length} hot [${hotNames}] | feeds ok ${lastScan.ok}/${req}`);
-    }
   } catch (err) {
     console.warn('Scan error:', err);
   } finally {
@@ -913,6 +936,7 @@ function announceHot(hot) {
     const ratio = Math.round(100 * c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1));
     whaleFeed.unshift({ title: `${c.symbol} heating up`, desc: `$${Math.round(c.volumeH1).toLocaleString()} 1h volume, ${ratio}% buys, liquidity ${fmtCurrency(c.liquidity)}`, time: new Date().toLocaleTimeString() });
     if (whaleFeed.length > 30) whaleFeed.pop();
+    agentSay('announcer', `WHALE_EYE: Flagged ${c.symbol} with ${ratio}% buy pressure and $${Math.round(c.volumeH1).toLocaleString()} volume.`);
   });
 }
 
@@ -999,21 +1023,8 @@ function clearPosition(addr) {
   ['positions', 'costBasis', 'entryTimes', 'peaks', 'tiers', 'tradePnl', 'entryFeat', 'entryCost', 'runnerRecovered'].forEach(k => { delete state[k][addr]; });
 }
 
-function forceClearStalePositions() {
-  const held = heldAddrs();
-  let clearedCount = 0;
-  held.forEach(addr => {
-    const coin = market.get(addr);
-    if (!isFresh(coin)) { clearPosition(addr); clearedCount++; }
-  });
-  saveState();
-  renderAll();
-  log(`[FORCE CLEAR] Cleared ${clearedCount} unpriced stale positions.`);
-}
-
 const LESSON_MIN = 8;
 const DIM_NAMES = { liq: 'Liquidity', age: 'Pool age', buys: 'Buy ratio', turn: 'Turnover', run: '1h move' };
-const lessonSeen = {};
 
 function featOf(c) {
   const tx = Math.max(1, c.buysH1 + c.sellsH1);
@@ -1097,9 +1108,8 @@ function closePosition(addr, coin, tag, msg) {
   archiveCoin(addr, tag, pnl);
   clearPosition(addr);
   playSfx(pnl >= 0 ? 'win' : 'loss');
-  log(`[${tag}] ${msg} ${sym} | P&L: ${fmtSigned(pnl)}`);
+  logTrade(tag, `${msg} ${sym}`, pnl);
   agentSay(tag === 'STOP-LOSS CUT' ? 'risk' : 'trader', `${tag}: ${sym} closed for ${fmtSigned(pnl)}.`);
-  logTrade('SELL', `${tag} ${sym}`, pnl);
   saveState();
   renderAll();
 }
@@ -1110,9 +1120,71 @@ function manualSellPosition(addr) {
   closePosition(addr, coin, 'MANUAL', 'Manually liquidated');
 }
 
-function openPosition(coin) {
+// 🤖 OPENAI COUNCIL CONSENSUS API CONNECTOR
+async function askCouncilAI(coin) {
+  const key = (localStorage.getItem('openai_api_key') || '').trim();
+  if (!key || state.decision === 'AUTO') return { approve: true, reason: 'Auto mode approved' };
+  if (councilBusy) return null;
+  councilBusy = true;
+  try {
+    const prompt = `You are the Council of AI Agents (WHALE_EYE, RISK_CORE, MACRO_9) in ORBITAL // HQ. Evaluate this Solana token for entry:
+Symbol: ${coin.symbol}
+Price: $${coin.price}
+Liquidity: $${Math.round(coin.liquidity)}
+1h Volume: $${Math.round(coin.volumeH1)}
+1h Buys: ${coin.buysH1}, Sells: ${coin.sellsH1}
+5m Change: ${coin.change5m}%
+
+Respond ONLY in valid JSON format: {"approve": true/false, "reason": "brief rationale under 100 chars"}`;
+
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: CFG.openaiModel,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+        temperature: 0.2
+      }),
+      signal: AbortSignal.timeout(10000)
+    });
+
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    const parsed = JSON.parse(content);
+    return { approve: parsed.approve === true, reason: String(parsed.reason || '').slice(0, 140) };
+  } catch (e) {
+    diag.aiErr++;
+    diag.aiMsg = e.message;
+    return { approve: true, reason: 'OpenAI unreachable; fallback approved' };
+  } finally {
+    councilBusy = false;
+  }
+}
+
+// 🤖 MULTI-AGENT CONSENSUS & $10 MINIMUM BUY EXECUTION
+async function openPosition(coin) {
   const addr = coin.address;
   if (state.positions[addr] > 0 || state.cash <= CFG.minCash || isArchived(coin)) return false;
+
+  const tx = Math.max(1, coin.buysH1 + coin.sellsH1);
+  const buyRatio = coin.buysH1 / tx;
+
+  agentSay('announcer', `WHALE_EYE: Validated ${coin.symbol} flow -> ${Math.round(buyRatio * 100)}% buy pressure.`);
+  
+  if (state.decision === 'COUNCIL' && (localStorage.getItem('openai_api_key') || '').trim()) {
+    const verdict = await askCouncilAI(coin);
+    if (!verdict.approve) {
+      agentSay('risk', `RISK_CORE: Vetoed ${coin.symbol} via Council AI. Reason: ${verdict.reason}`);
+      bump('boss', 'vetoed');
+      return false;
+    }
+    agentSay('risk', `RISK_CORE: Council AI approved ${coin.symbol}. Reason: ${verdict.reason}`);
+  }
 
   const major = isMajorWave(coin);
   const held = heldAddrs();
@@ -1121,7 +1193,10 @@ function openPosition(coin) {
   if (major && majorHeldCount >= 2) return;
 
   const leverage = major ? CFG.majorLeverage : 1.0;
-  const wanted = state.cash * (major ? 0.30 : (state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct)) * leverage;
+  const percentageWanted = state.cash * (major ? 0.30 : (state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct)) * leverage;
+  
+  // Enforce $10 minimum buy threshold while respecting available cash
+  const wanted = Math.max(10, Math.min(state.cash, percentageWanted));
   const spend = Math.min(wanted, coin.liquidity * CFG.maxSpendPctOfLiq * leverage);
   if (spend < 1) return false;
 
@@ -1138,16 +1213,14 @@ function openPosition(coin) {
   state.entryCost[addr] = spend;
   state.tradePnl[addr] = 0;
   state.runnerRecovered[addr] = false;
-  bump('trader', 'entries'); bump('macro', 'picks');
+  bump('trader', 'entries'); bump('macro', 'picks'); bump('boss', 'approved');
   state.fees += fee;
   state.txCount += 1;
   playSfx('buy');
 
-  const horizon = determineHoldHorizon(coin);
-  const tag = major ? '[MAJOR WAVE // 3X PERP]' : `[MEMECOIN // ${horizon}]`;
-  log(`${tag} KIRKTRON 9001 deployed ${fmtCurrency(spend)} into ${coin.symbol} (${leverage}x leverage)`);
-  agentSay('macro', `MACRO_9: Horizon classified as ${horizon} for ${coin.symbol}.`);
-  logTrade('BUY', `${coin.symbol} ${fmtCurrency(spend)}`);
+  log(`[EXECUTION] ALPHA_X deployed ${fmtCurrency(spend)} into ${coin.symbol}`);
+  logTrade('BUY', `Verified entry on ${coin.symbol} for ${fmtCurrency(spend)}`);
+  agentSay('trader', `ALPHA_X: Successfully swapped ${fmtCurrency(spend)} for ${coin.symbol}.`);
   saveState();
   renderAll();
   return true;
@@ -1174,26 +1247,26 @@ function runExits() {
 
     const launch = state.mode === 'LAUNCH';
     const L = CFG.launch;
-
+    
     const stopLimit = major ? -8.0 : (launch ? L.stopPct : CFG.stopLossPct);
     const currentProfitUsd = (coin.price - cost) * (state.positions[addr] || 0);
     const totalCurrentValue = state.positions[addr] * coin.price;
 
     if (gain <= stopLimit) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
 
-    // Principal Recovery & Free Runner Execution (+8% gain trigger)
     if (!state.runnerRecovered[addr] && gain >= 8.0) {
       const initialCost = state.entryCost[addr] || (totalCurrentValue / (1 + gain / 100));
       const sellFraction = Math.min(0.85, initialCost / totalCurrentValue);
       const qtyToSell = state.positions[addr] * sellFraction;
-
+      
       if (qtyToSell > 0) {
         const pnl = sellTokens(addr, coin, qtyToSell);
         state.positions[addr] -= qtyToSell;
         state.runnerRecovered[addr] = true;
         playSfx('win');
         log(`[PRINCIPAL RECOVERED] Sold initial cost & profit for ${sym} | P&L: ${fmtSigned(pnl)}. Remaining bag is now a FREE RUNNER!`);
-        agentSay('finance', `KIRKTRON 9001: Principal secured on ${sym}. Free runner activated.`);
+        logTrade('PRINCIPAL', `Recovered principal & profit on ${sym}`, pnl);
+        agentSay('finance', `KIRKTRON 9001: Principal secured on ${sym}. Free runner active.`);
         saveState();
         continue;
       }
@@ -1214,33 +1287,17 @@ function runExits() {
         const q = state.positions[addr] * 0.5;
         const pnl = sellTokens(addr, coin, q);
         state.positions[addr] -= q; state.tiers[addr] = 1;
-        playSfx('win'); log(`[LAUNCH TIER 1] Sold 50% of ${sym}, cost recovered | P&L: ${fmtSigned(pnl)}`);
+        playSfx('win'); logTrade('TIER 1', `Sold 50% of ${sym}, cost recovered`, pnl);
         saveState(); continue;
       }
       if (gain >= L.tier2Pct && state.tiers[addr] < 2) {
         const q = state.positions[addr] * 0.5;
         const pnl = sellTokens(addr, coin, q);
         state.positions[addr] -= q; state.tiers[addr] = 2;
-        playSfx('win'); log(`[LAUNCH TIER 2] Sold half the rest of ${sym} | P&L: ${fmtSigned(pnl)}`);
+        playSfx('win'); logTrade('TIER 2', `Sold half the rest of ${sym}`, pnl);
         saveState(); continue;
       }
       if (state.tiers[addr] >= 1 && drop >= L.trailPct && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Trailing stop hit on'); continue; }
-    } else if (state.mode === 'SNIPER') {
-      if (gain >= 3.5 && state.tiers[addr] < 1) {
-        const q = state.positions[addr] * 0.40;
-        const pnl = sellTokens(addr, coin, q);
-        state.positions[addr] -= q; state.tiers[addr] = 1;
-        playSfx('win'); log(`[SNIPER TIER 1] Secured 40% of ${sym} | P&L: ${fmtSigned(pnl)}`);
-        saveState(); continue;
-      }
-      if (gain >= 15 && state.tiers[addr] < 2) {
-        const q = state.positions[addr] * 0.5833;
-        const pnl = sellTokens(addr, coin, q);
-        state.positions[addr] -= q; state.tiers[addr] = 2;
-        playSfx('win'); log(`[SNIPER TIER 2] Secured 35% of ${sym} | P&L: ${fmtSigned(pnl)}`);
-        saveState(); continue;
-      }
-      if (state.tiers[addr] >= 1 && drop >= 15 && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Locked remaining runner on'); continue; }
     } else if (gain >= CFG.takeProfitPct) {
       closePosition(addr, coin, 'TAKE-PROFIT', 'Target secured on');
       continue;
@@ -1253,25 +1310,6 @@ function runExits() {
   }
 }
 
-async function askCouncil(c) {
-  const key = localStorage.getItem('gemini_api_key');
-  const prompt = 'You are a risk council for a PAPER-TRADING Solana memecoin simulator. Decide whether to open a position. ' +
-    'Reply ONLY with JSON: {"approve": boolean, "reason": string under 140 characters}.\nData: ' +
-    JSON.stringify({ symbol: c.symbol, priceUsd: c.price, liquidityUsd: c.liquidity, volume1hUsd: c.volumeH1, buys1h: c.buysH1, sells1h: c.sellsH1, change5mPct: c.change5m, change1hPct: c.change1h, change24hPct: c.change24h, marketCapUsd: c.marketCap, ageMinutes: c.ageMin === null ? null : Math.round(c.ageMin), trend: classifyDipOrDump(c), mode: state.mode });
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CFG.geminiModel}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2 } }),
-    signal: AbortSignal.timeout(10000)
-  });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  const parts = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
-  const text = parts.map(p => p.text || '').join('');
-  const out = JSON.parse(text);
-  return { approve: out.approve === true, reason: String(out.reason || '').slice(0, 140) };
-}
-
 async function considerEntry() {
   if (state.cash <= CFG.minCash || councilBusy || heldAddrs().length >= CFG.maxOpenPositions) return;
   const now = Date.now();
@@ -1282,37 +1320,17 @@ async function considerEntry() {
 
   const avoid = computeLessons().avoid;
   const allowed = candidates.filter(c => !lessonFor(c, avoid));
-  const first = candidates.find(c => lessonFor(c, avoid));
-  if (first && !lessonSeen[first.address]) {
-    lessonSeen[first.address] = true;
-    const l = lessonFor(first, avoid);
-    bump('boss', 'vetoed');
-    agentSay('boss', `Skipped ${first.symbol}: learned rule says avoid ${DIM_NAMES[l.dim]} ${l.bucket} (${Math.round(l.win * 100)}% wins over ${l.n} trades).`);
-  }
   if (!allowed.length) return;
 
   const pick = allowed[Math.floor(Math.random() * Math.min(allowed.length, CFG.topPicks))];
-  const hasKey = (localStorage.getItem('gemini_api_key') || '').length > 5;
-
-  if (state.decision === 'COUNCIL' && hasKey && !isMajorWave(pick)) {
-    councilBusy = true;
-    try {
-      const v = await askCouncil(pick);
-      agentSay('boss', `${pick.symbol}: ${v.approve ? 'APPROVED' : 'VETOED'}. ${v.reason}`);
-      bump('boss', v.approve ? 'approved' : 'vetoed');
-      if (!v.approve) { proposalBlock[pick.address] = Date.now() + CFG.councilBlockMs; renderAll(); return; }
-    } catch (e) {
-      diag.geminiErr++; diag.geminiMsg = e.message;
-      log(`[COUNCIL] Gemini unavailable (${e.message}); falling back to AUTO for this entry`);
-    } finally {
-      councilBusy = false;
-    }
-    const fresh = market.get(pick.address);
-    if (!isFresh(fresh)) return;
-    openPosition(fresh);
-    return;
+  const fresh = await feedJson('quote', `https://api.dexscreener.com/tokens/v1/solana/${pick.address}`);
+  let validPick = pick;
+  if (Array.isArray(fresh)) {
+    const match = fresh.find(p => p && p.baseToken && p.baseToken.address === pick.address);
+    if (match) { const c = toCoin(match); if (c) validPick = c; }
   }
-  openPosition(pick);
+
+  openPosition(validPick);
 }
 
 function runTradingLoop() {
@@ -1354,9 +1372,9 @@ function openDialog(opts) {
     const fields = {};
     (opts.inputs || []).forEach(inp => {
       add('label', 'dialog-label', inp.label);
-      const i = document.createElement('input');
+      const i = document.createElement(inp.multiline ? 'textarea' : 'input');
       i.className = 'dialog-input';
-      i.type = 'text';
+      if (inp.multiline) { i.rows = 7; i.style.fontSize = '13px'; } else i.type = 'text';
       i.value = inp.value === undefined ? '' : inp.value;
       if (inp.inputmode) i.setAttribute('inputmode', inp.inputmode);
       i.setAttribute('autocomplete', 'off');
@@ -1389,14 +1407,14 @@ function num(v) { const n = parseFloat(String(v).replace(/[$,\s]/g, '')); return
 
 async function promptApiKey() {
   const r = await openDialog({
-    title: 'GEMINI API KEY',
+    title: 'OPENAI API KEY',
     message: 'Stored only in this browser. Leave empty to remove it.',
-    inputs: [{ id: 'key', label: 'API key', value: localStorage.getItem('gemini_api_key') || '' }],
+    inputs: [{ id: 'key', label: 'API key', value: localStorage.getItem('openai_api_key') || '' }],
     okText: 'SAVE'
   });
   if (!r) return;
   const key = r.values.key.trim();
-  if (key) localStorage.setItem('gemini_api_key', key); else localStorage.removeItem('gemini_api_key');
+  if (key) localStorage.setItem('openai_api_key', key); else localStorage.removeItem('openai_api_key');
   renderAll();
 }
 
@@ -1412,16 +1430,36 @@ async function freshWipe() {
   const newBankroll = num(r.values.startFund);
   if (newBankroll === null || newBankroll < 0) return;
 
-  const apiKey = localStorage.getItem('gemini_api_key');
+  const apiKey = localStorage.getItem('openai_api_key');
   try {
     Object.keys(localStorage).forEach(k => { if (k.startsWith('solaris_') || k.startsWith('orbital_')) localStorage.removeItem(k); });
-    if (apiKey) localStorage.setItem('gemini_api_key', apiKey);
+    if (apiKey) localStorage.setItem('openai_api_key', apiKey);
   } catch (e) { /* ignore */ }
 
-  const fresh = defaultState();
-  Object.keys(fresh).forEach(k => { state[k] = fresh[k]; });
   state.cash = newBankroll;
+  state.vault = 0;
+  state.realizedPnl = 0;
+  state.fees = 0;
+  state.txCount = 0;
+  state.positions = {};
+  state.costBasis = {};
+  state.symbols = {};
+  state.entryTimes = {};
+  state.peaks = {};
+  state.tiers = {};
+  state.archive = {};
+  state.stats = {};
+  state.ledger = {};
+  state.tradePnl = {};
+  state.entryFeat = {};
+  state.entryCost = {};
+  state.runnerRecovered = {};
+  state.journal = [];
+  state.trades = [];
+  state.history = [];
+  state.overrides = {};
   saveState();
+
   location.reload();
 }
 
@@ -1484,6 +1522,7 @@ function switchTab(tabId) {
   if (target) target.classList.add('active');
   renderAll();
   if (tabId === 'warroom') sceneFrame();
+  portraitLoop();
 }
 
 let renderQueued = false;
@@ -1517,7 +1556,7 @@ function renderNow() {
     setText('status-decision', state.decision);
     setText('status-feed', feedStatus);
     setText('status-news', newsStatus);
-    setText('status-scan', `${Math.round(CFG.scanEveryMs / 1000)} SECONDS`);
+    setText('status-scan', '60 SECONDS');
     setText('btn-sound', state.sound ? 'SND ON' : 'SND OFF');
 
     ['growth', 'sniper', 'launch'].forEach(m => { const b = $('btn-mode-' + m); if (b) b.classList.toggle('active-mode', state.mode === m.toUpperCase()); });
@@ -1525,7 +1564,7 @@ function renderNow() {
 
     const keyEl = $('key-status');
     if (keyEl) {
-      const ok = (localStorage.getItem('gemini_api_key') || '').length > 5;
+      const ok = (localStorage.getItem('openai_api_key') || '').length > 5;
       keyEl.textContent = ok ? '● CONFIGURED' : '● NOT CONFIGURED';
       keyEl.style.color = ok ? 'var(--green)' : 'var(--text-dim)';
     }
@@ -1547,6 +1586,7 @@ function renderPositions() {
   if (list) {
     const held = heldAddrs();
     list.innerHTML = held.length ? held.map(a => {
+      const coin = market.get(a);
       const qty = state.positions[a], cost = state.costBasis[a];
       const pnl = exitValue(a) - qty * cost;
       return `<div class="position-row" onclick="inspectCoin('${escapeHtml(a)}')">
@@ -1574,14 +1614,17 @@ function renderPositions() {
 function renderLedger() {
   const list = $('ledger-list');
   if (!list) return;
-  const history = state.journal || [];
-  list.innerHTML = history.length ? history.slice().reverse().map(j => `
-    <div class="position-row" style="grid-template-columns: 1fr 1.2fr 1fr 1fr; font-size: 13px; cursor: default;">
-      <span style="color: var(--text-dim);">${escapeHtml(j.time || '12:00')}</span>
-      <strong style="color: var(--cyan);">${escapeHtml(j.symbol || 'ASSET')}</strong>
-      <span>${escapeHtml(j.tag)}</span>
-      <span style="color: ${j.win ? 'var(--green)' : 'var(--red)'};">${fmtSigned(j.pnl || 0)}</span>
-    </div>`).join('') : '<div class="empty-note">NO COMPLETED TRANSACTIONS YET</div>';
+  const history = state.trades || [];
+  list.innerHTML = history.length ? history.slice(0, 40).map(t => {
+    const d = new Date(t.t), hhmm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const pnl = t.pnl === null ? '' : `<span style="color: ${t.pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${fmtSigned(t.pnl)}</span>`;
+    return `<div class="position-row" style="grid-template-columns: 1fr 1.2fr 1fr 1fr; font-size: 13px; cursor: default;">
+      <span style="color: var(--text-dim);">${hhmm}</span>
+      <strong style="color: var(--cyan);">${escapeHtml(t.kind || 'TRADE')}</strong>
+      <span style="font-size: 12px; text-align: left;">${escapeHtml(t.text)}</span>
+      ${pnl || '<span></span>'}
+    </div>`;
+  }).join('') : '<div class="empty-note">NO COMPLETED TRANSACTIONS YET</div>';
 }
 
 function renderCouncil() {
@@ -1591,7 +1634,7 @@ function renderCouncil() {
     <div class="feed-item" style="border-left-color: ${f.color};">
       <div class="feed-sender" style="color: ${f.color};">${escapeHtml(f.sender)} <span class="feed-time">${escapeHtml(f.time)}</span></div>
       <div class="feed-text">"${escapeHtml(f.text)}"</div>
-    </div>`).join('') : '<div class="empty-note">No council activity yet.</div>';
+    </div>`).join('') : '<div class="empty-note">No whale consensus activity yet.</div>';
 }
 
 function renderNewsTab() {
@@ -1626,23 +1669,22 @@ function renderProtocol() {
   const lines = state.mode === 'LAUNCH' ? [
     `Pool age ≤ ${L.maxAgeMin} min, market cap ≤ ${fmtCurrency(L.maxMc)}`,
     `Liquidity ≥ ${fmtCurrency(L.minLiq)}, txns ≥ ${L.minTxns}, buy ratio ≥ ${Math.round(L.minBuyRatio * 100)}%`,
-    `Entry: ${Math.round(L.entryPct * 100)}% of bankroll`,
+    `Entry: ${Math.round(L.entryPct * 100)}% of bankroll ($10 minimum)`,
     `Stop-loss ${L.stopPct}% | 50% out at +${L.tier1Pct}%, half the rest at +${L.tier2Pct}%, runner trails ${L.trailPct}%`,
     `Stale: out after ${L.staleMs / 60000} min if under +${L.stalePct}%`,
     `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ${(L.baseSlippage * 100).toFixed(0)}%+ slippage per side`
   ] : [
     `Volume 1h ≥ ${fmtCurrency(CFG.minVolumeH1)}`,
     `Turnover (vol/liquidity) ≥ ${CFG.minTurnover}`,
-    `Txns 1h ≥ ${CFG.minTxnsH1}, buy ratio ≥ ${Math.round(CFG.minBuyRatio * 100)}%, pool age ≥ ${CFG.minAgeMin} min`,
+    `Txns 1h ≥ ${CFG.minTxnsH1}, WHALE BUY PRESSURE ≥ ${Math.round(CFG.minBuyRatio * 100)}%`,
     `Liquidity ≥ ${fmtCurrency(CFG.minLiquidity)}, max ${CFG.maxOpenPositions} open, copycat tickers skipped`,
-    `Entry: ${Math.round(CFG.entryPct * 100)}% of bankroll, random pick from top ${CFG.topPicks}`,
+    `Entry: ${Math.round(CFG.entryPct * 100)}% of bankroll ($10 minimum), multi-agent consensus required`,
     `Stop-loss ${CFG.stopLossPct}% | Principal Recovery + Free Runner Active`,
     `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ${(CFG.baseSlippage * 100).toFixed(1)}%+ slippage per side`
   ];
   box.innerHTML = lines.map(l => `<div class="protocol-line">• ${escapeHtml(l)}</div>`).join('');
 }
 
-/* ---------- Coin inspector ---------- */
 function drawInspChart(coin, entryPrice) {
   const canvas = $('insp-chart');
   if (!canvas) return;
@@ -1715,7 +1757,6 @@ function inspectCoin(addr) {
     <div class="protocol-line"><strong>PRICE:</strong> ${fmtPrice(coin.price)} (Cost: ${fmtPrice(cost)})</div>
     <div class="protocol-line"><strong>LIQUIDITY:</strong> ${fmtCurrency(coin.liquidity)}</div>
     <div class="protocol-line"><strong>1H VOLUME:</strong> ${fmtCurrency(coin.volumeH1)} (Turnover: ${turnover}x)</div>
-    <div class="protocol-line"><strong>BUY PRESSURE:</strong> ${Math.round(100 * coin.buysH1 / tx)}% buys</div>
     <div class="protocol-line"><strong>AI HORIZON:</strong> ${horizon}</div>
     <div class="protocol-line"><strong>HOLDING:</strong> ${heldQty > 0 ? heldQty.toFixed(2) + ' tokens (' + fmtSigned(pnl) + ')' : 'None'}</div>
   `;
@@ -1728,395 +1769,367 @@ function closeInspector() {
   $('inspector-overlay').classList.remove('open');
 }
 
-/* ---------- Pixel sprite engine (characters are defined in the robot script below) ---------- */
-const SW = 36, SH = 40;
-function shade(hex, f) {
-  const n = parseInt(hex.slice(1), 16);
-  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(v => Math.round(f >= 0 ? v + (255 - v) * f : v * (1 + f)));
-  return '#' + ch.map(v => v.toString(16).padStart(2, '0')).join('');
-}
-function ramp(hex) { return { base: hex, hi: shade(hex, 0.3), lo: shade(hex, -0.38), dk: shade(hex, -0.65) }; }
+/* ============================== ROBOT AVATARS ============================== */
+const ROBOT = (function () {
+  const PW = 72, PH = 80;
+  const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const h2r = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const r2h = c => '#' + c.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+  const mix = (a, b, t) => { const A = h2r(a), B = h2r(b); return r2h(A.map((v, i) => v + (B[i] - v) * t)); };
+  const ramp = base => [mix(base, '#000000', 0.7), mix(base, '#000000', 0.42), base, mix(base, '#ffffff', 0.3), mix(base, '#ffffff', 0.75)];
+  const BAY = [[0, 2], [3, 1]];
+  const LIGHT = (() => { const v = [-0.55, -0.65, 0.55], m = Math.hypot(v[0], v[1], v[2]); return v.map(a => a / m); })();
 
-function newGrid() { return Array.from({ length: SH }, () => new Array(SW).fill(null)); }
-function put(g, x, y, c) { if (x >= 0 && x < SW && y >= 0 && y < SH) g[y][x] = c; }
-function rect(g, x, y, w, h, c) { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) put(g, x + i, y + j, c); }
-function dots(g, pts, c) { pts.forEach(p => put(g, p[0], p[1], c)); }
-function mirror(pts) { return pts.map(p => [SW - 1 - p[0], p[1]]); }
-
-function blob(g, cx, cy, rx, ry, p, yMin, yMax) {
-  for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) {
-    if ((yMin !== undefined && y < yMin) || (yMax !== undefined && y > yMax)) continue;
-    for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
-      const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry;
-      if (dx * dx + dy * dy > 1) continue;
-      const l = -(dx + dy) * 0.7;
-      put(g, x, y, l > 0.42 ? p.hi : l < -0.38 ? p.lo : p.base);
-    }
+  function sup(cx, cy, rx, ry, n, clip) {
+    return (x, y) => {
+      const dx = (x - cx) / rx, dy = (y - cy) / ry, ax = Math.abs(dx), ay = Math.abs(dy);
+      if (Math.pow(ax, n) + Math.pow(ay, n) > 1) return null;
+      if (clip && !clip(x, y)) return null;
+      let nx = Math.sign(dx) * Math.pow(ax, n - 1), ny = Math.sign(dy) * Math.pow(ay, n - 1);
+      const m = Math.hypot(nx, ny);
+      if (m > 0.98) { nx *= 0.98 / m; ny *= 0.98 / m; }
+      return [nx, ny, Math.sqrt(Math.max(0.04, 1 - nx * nx - ny * ny))];
+    };
   }
-}
 
-function shadeRect(g, x, y, w, h, p) {
-  rect(g, x, y, w, h, p.base);
-  rect(g, x, y, w, 1, p.hi); rect(g, x, y, 1, h, p.hi);
-  rect(g, x + w - 1, y + 1, 1, h - 1, p.lo); rect(g, x + 1, y + h - 1, w - 1, 1, p.lo);
-}
-
-function outline(g, c) {
-  const out = g.map(r => r.slice());
-  for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) {
-    if (g[y][x]) continue;
-    if ((y > 0 && g[y - 1][x]) || (y < SH - 1 && g[y + 1][x]) || (x > 0 && g[y][x - 1]) || (x < SW - 1 && g[y][x + 1])) out[y][x] = c;
-  }
-  return out;
-}
-
-const CHARS = {};   // filled in by the robot script that follows
-
-function buildSpriteGrid(id) {
-  const g = newGrid();
-  const draw = CHARS[id] || CHARS.boss;
-  if (draw) draw(g);
-  return outline(g, '#0a0412');
-}
-
-const spriteCache = {};
-function spriteCanvas(id) {
-  if (spriteCache[id]) return spriteCache[id];
-  const grid = buildSpriteGrid(id);
-  const c = document.createElement('canvas');
-  c.width = SW; c.height = SH;
-  const cx = c.getContext('2d');
-  for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) {
-    if (grid[y][x]) { cx.fillStyle = grid[y][x]; cx.fillRect(x, y, 1, 1); }
-  }
-  return (spriteCache[id] = c);
-}
-function portraitUrl(id) {
-  const c = spriteCanvas(id);
-  if (!c.dataUrl) c.dataUrl = c.toDataURL();
-  return c.dataUrl;
-}
-
-/* ---------- War room ---------- */
-function agentChips(id) {
-  const n = k => stat(id, k);
-  const p = portfolioValue();
-  switch (id) {
-    case 'boss': return [['Approved', n('approved')], ['Vetoed', n('vetoed')], ['Journal', state.journal.length]];
-    case 'announcer': return [['Alerts', n('alerts')], ['Hot now', hotCoins().length], ['Scans', n('scans')]];
-    case 'news': return [['Headlines', n('headlines')], ['Pushed', n('pushed')], ['Feed', newsStatus.indexOf('LIVE') === 0 ? 'ON' : 'OFF']];
-    case 'finance': { const h = n('holds'); return [['Stale exits', n('stale')], ['Avg hold', h ? Math.round(n('holdMin') / h) + 'm' : '--'], ['Idle cash', Math.round(100 * state.cash / Math.max(1, state.cash + p.value)) + '%']]; }
-    case 'risk': return [['Stops hit', n('stops')], ['Worst', fmtSigned(n('worst'))], ['Exposure', fmtCurrency(p.value)]];
-    case 'trader': { const c = n('closed'); return [['Trades', c], ['Win rate', c ? Math.round(100 * n('wins') / c) + '%' : '--'], ['P&L', fmtSigned(n('pnl'))]]; }
-    case 'macro': { const d = n('pickWins') + n('pickLosses'); return [['Picks', n('picks')], ['Pick wins', d ? Math.round(100 * n('pickWins') / d) + '%' : '--'], ['Open', heldAddrs().length]]; }
-    case 'cfo': return [['Swept', fmtCurrency(n('swept'))], ['Sweeps', n('sweeps')], ['Vault', fmtCurrency(state.vault)]];
-  }
-  return [];
-}
-
-function renderWarRoomCards() {
-  const box = $('war-room-container');
-  if (!box) return;
-  box.innerHTML = AGENTS.map((a, i) => `
-    <div class="agent-card" data-agent="${i}" style="border-color: ${a.color};">
-      <img class="agent-portrait" alt="" src="${portraitUrl(a.id)}" style="border-color: ${a.color};">
-      <div class="agent-body">
-        <div class="agent-name" style="color: ${a.color};">${escapeHtml(a.name)}</div>
-        <div class="agent-role">${escapeHtml(a.role)}</div>
-        <div class="agent-chips">${agentChips(a.id).map(c => `<div class="chip"><span>${escapeHtml(c[0])}</span><strong>${escapeHtml(c[1])}</strong></div>`).join('')}</div>
-        <div class="agent-speech">"${escapeHtml(a.says)}"</div>
-      </div>
-    </div>`).join('');
-}
-
-function openAgentDialog(i) {
-  const a = AGENTS[i];
-  if (!a) return;
-  const stats = agentChips(a.id).map(c => `${c[0]}: ${c[1]}`).join('\n');
-  const recent = (state.ledger[a.id] || []).slice(0, 8).map(l => `${l.t}  ${l.text}`).join('\n') || 'No activity yet.';
-  openDialog({ title: a.name, message: `${a.role}\n\n${a.job}\n\nSTATS\n${stats}\n\nRECENT ACTIVITY\n${recent}`, okText: 'CLOSE', noCancel: true });
-}
-
-const SCALE = 2, CW = 320, CH = 200, SPW = SW * SCALE, SPH = SH * SCALE, TABLE_TOP = 70;
-function spritePos(i) { return { x: (i % 4) * 80 + 4, y: i < 4 ? 4 : 116 }; }
-let selectedAgent = -1;
-let sceneRunning = false;
-
-function sceneFrame() {
-  if (sceneRunning) return;
-  sceneRunning = true;
-  const canvas = $('orbital-table');
-  const ctx = canvas && canvas.getContext('2d');
-  if (!ctx) { sceneRunning = false; return; }
-  ctx.imageSmoothingEnabled = false;
-  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  const drawAgent = (i, t) => {
-    const a = AGENTS[i], p = spritePos(i);
-    const bob = reduceMotion ? 0 : (Math.sin(t / 600 + i * 1.3) > 0.35 ? 2 : 0);
-    ctx.globalAlpha = 0.18; ctx.fillStyle = a.color; ctx.fillRect(p.x, p.y, SPW, SPH); ctx.globalAlpha = 1;
-    ctx.drawImage(spriteCanvas(a.id), 0, 0, SW, SH, p.x, p.y + bob, SPW, SPH);
-    if (i === selectedAgent) { ctx.strokeStyle = '#f9f871'; ctx.lineWidth = 2; ctx.strokeRect(p.x + 1, p.y + 1, SPW - 2, SPH - 2); }
-    if (ROBOT.until[a.id] > Date.now()) {          // speech bubble while a robot is talking
-      const bx = p.x + SPW - 24, by = p.y + 3;
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(bx, by, 22, 12);
-      ctx.fillStyle = '#07010f'; [5, 10, 15].forEach(dx => ctx.fillRect(bx + dx, by + 5, 2, 2));
-    }
-  };
-
-  const draw = t => {
-    if (activeTab !== 'warroom') { sceneRunning = false; return; }
-    ctx.fillStyle = '#07010f'; ctx.fillRect(0, 0, CW, CH);
-    ctx.fillStyle = '#0d0526'; ctx.fillRect(0, 0, CW, TABLE_TOP);
-    ctx.fillStyle = '#16093a'; for (let x = 0; x < CW; x += 20) ctx.fillRect(x, 0, 1, TABLE_TOP);
-    for (let i = 0; i < 4; i++) drawAgent(i, t);
-    ctx.fillStyle = '#05000f'; ctx.fillRect(4, TABLE_TOP - 2, 312, 86);
-    ctx.fillStyle = '#2a1a66'; ctx.fillRect(8, TABLE_TOP + 2, 304, 78);
-    ctx.fillStyle = '#3a1d78'; ctx.fillRect(8, TABLE_TOP + 2, 304, 3);
-    ctx.fillStyle = '#00f0ff'; ctx.fillRect(8, TABLE_TOP + 2, 304, 1);
-    ctx.globalAlpha = 0.5 + 0.3 * Math.sin(t / 700); ctx.fillStyle = '#00f0ff';
-    ctx.fillRect(144, 90, 32, 3); ctx.fillRect(152, 96, 16, 2); ctx.globalAlpha = 1;
-    for (let i = 4; i < 8; i++) drawAgent(i, t);
-    requestAnimationFrame(draw);
-  };
-  requestAnimationFrame(draw);
-}
-
-function initScene() {
-  const canvas = $('orbital-table');
-  if (!canvas) return;
-  canvas.addEventListener('click', e => {
-    const r = canvas.getBoundingClientRect();
-    const x = (e.clientX - r.left) * (CW / r.width), y = (e.clientY - r.top) * (CH / r.height);
-    let hit = -1;
-    for (let i = 7; i >= 0; i--) {
-      const p = spritePos(i), bottom = i < 4 ? Math.min(p.y + SPH, TABLE_TOP) : p.y + SPH;
-      if (x >= p.x && x < p.x + SPW && y >= p.y && y < bottom) { hit = i; break; }
-    }
-    if (hit >= 0 && hit === selectedAgent) { openAgentDialog(hit); return; }
-    selectedAgent = hit;
-    const cap = $('scene-caption');
-    if (cap) cap.textContent = hit >= 0 ? `${AGENTS[hit].name}: "${AGENTS[hit].says}" (tap again for stats)` : 'Tap an agent to see who they are.';
-  });
-}
-
-/* ---------- Auditor ---------- */
-function pushErr(msg) {
-  errorBuf.unshift({ t: clock(), msg: String(msg).slice(0, 160) });
-  if (errorBuf.length > 20) errorBuf.pop();
-}
-window.addEventListener('error', e => pushErr(e.message));
-window.addEventListener('unhandledrejection', e => pushErr('Promise: ' + ((e.reason && e.reason.message) || e.reason)));
-const _consoleError = console.error;
-console.error = function () { pushErr(Array.prototype.slice.call(arguments).map(String).join(' ')); _consoleError.apply(console, arguments); };
-
-function journalStats(rows) {
-  const n = rows.length;
-  const wins = rows.filter(j => j.win), losses = rows.filter(j => !j.win);
-  const sum = a => a.reduce((x, j) => x + j.pct, 0);
-  const tags = {};
-  rows.forEach(j => { tags[j.tag] = (tags[j.tag] || 0) + 1; });
-  const stops = rows.filter(j => j.tag === 'STOP-LOSS CUT');
-  return {
-    n, winRate: n ? wins.length / n : 0,
-    avgWin: wins.length ? sum(wins) / wins.length : 0,
-    avgLoss: losses.length ? sum(losses) / losses.length : 0,
-    expectancy: n ? sum(rows) / n : 0,
-    profitFactor: losses.length && sum(losses) !== 0 ? sum(wins) / Math.abs(sum(losses)) : null,
-    tags, nStops: stops.length, avgStop: stops.length ? sum(stops) / stops.length : null
-  };
-}
-
-function runAudit() {
-  const F = [];
-  const add = (sev, id, title, detail, fix) => {
-    const ok = fix && TUNABLE[fix.key] && CFG[fix.key] !== fix.value;
-    F.push({ sev, id, title, detail, fix: ok ? fix : null });
-  };
-  const p = portfolioValue();
-  const net = state.cash + state.vault + p.value;
-  const held = heldAddrs();
-  const rows = state.journal.filter(j => j.mode === state.mode);
-  const js = journalStats(rows);
-  const cost2 = 2 * (CFG.feeRate + CFG.baseSlippage) * 100;
-
-  if (lastScan.req) {
-    const r = lastScan.ok / lastScan.req;
-    const slow = CFG.scanEveryMs < 30000 ? { key: 'scanEveryMs', value: 30000 } : null;
-    if (r < 0.5) add('bad', 'feeds', 'Market feeds failing', `${lastScan.ok}/${lastScan.req} requests succeeded. Prices go stale and exits pause.`, slow);
-    else if (r < 0.85) add('warn', 'feeds', 'Some market feeds failing', `${lastScan.ok}/${lastScan.req} OK.`, slow);
-    else add('ok', 'feeds', 'Market feeds healthy', `${lastScan.ok}/${lastScan.req} requests OK.`);
-  }
-  if (newsStatus.indexOf('LIVE') !== 0) add('warn', 'news', 'News feed offline', 'Headlines are not loading.');
-
-  const stale = held.filter(a => !isFresh(market.get(a)));
-  if (stale.length) add('bad', 'stale', 'Open positions without a live price', `${stale.map(a => state.symbols[a] || '?').join(', ')}: stops and exits are paused.`);
-  if (state.cash <= CFG.minCash) add('bad', 'frozen', 'Bankroll below trading minimum', `Cash ${fmtCurrency(state.cash)} is at or under minimum.`);
-  if (net > 0 && p.value / net > 0.7) add('warn', 'exposure', 'High exposure', `${Math.round(100 * p.value / net)}% of net worth in open positions.`);
-  if (held.length >= CFG.maxOpenPositions) add('info', 'maxopen', 'At open-position limit', `${held.length}/${CFG.maxOpenPositions} open.`);
-
-  if (state.mode === 'GROWTH' || state.mode === 'SNIPER') {
-    const tp = state.mode === 'GROWTH' ? CFG.takeProfitPct : 3.5, sl = Math.abs(CFG.stopLossPct);
-    const netWin = tp - cost2, netLoss = sl + cost2;
-    if (netWin <= 0) {
-      add('bad', 'breakeven', 'Target is smaller than trading costs', `Round-trip costs ~${cost2.toFixed(1)}%, target +${tp}%.`, { key: 'takeProfitPct', value: Math.min(30, Math.ceil(cost2 + sl)) });
-    } else {
-      const be = netLoss / (netWin + netLoss);
-      if (be > 0.6) {
-        add('warn', 'breakeven', 'Targets too small for trading costs', `Break-even win rate is about ${Math.round(be * 100)}%.`);
-      } else add('ok', 'breakeven', 'Targets clear trading costs', `Break-even win rate ~${Math.round(be * 100)}%.`);
+  function paint(g, box, shape, rp, o) {
+    o = o || {};
+    for (let y = box[1]; y <= box[3]; y++) for (let x = box[0]; x <= box[2]; x++) {
+      const n = shape(x + 0.5, y + 0.5);
+      if (!n) continue;
+      let v = (n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]) * 0.5 + 0.5;
+      if (o.metal) {
+        const h = n[1];
+        const env = h < -0.1 ? 0.8 - 0.1 * h : h < 0.2 ? 0.16 : 0.36 + 0.3 * (h - 0.2);
+        v = v * 0.4 + env * 0.6;
+      }
+      v = Math.max(0, Math.min(1, v + (o.bias || 0)));
+      const pos = v * (rp.length - 1);
+      let i = Math.floor(pos);
+      if (!o.flat && pos - i > (BAY[y & 1][x & 1] + 0.5) / 4) i++;
+      else if (o.flat && pos - i > 0.5) i++;
+      g.fillStyle = rp[Math.min(rp.length - 1, i)];
+      g.fillRect(x, y, 1, 1);
     }
   }
 
-  if (js.n >= 10) {
-    add(js.expectancy < 0 ? 'bad' : 'ok', 'expect', js.expectancy < 0 ? 'Strategy loses money' : 'Strategy is profitable', `${js.n} trades: win rate ${Math.round(js.winRate * 100)}%, expectancy ${js.expectancy.toFixed(2)}%/trade.`);
+  function inPoly(x, y, p) {
+    let c = false;
+    for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+      if (((p[i][1] > y) !== (p[j][1] > y)) && (x < (p[j][0] - p[i][0]) * (y - p[i][1]) / (p[j][1] - p[i][1]) + p[i][0])) c = !c;
+    }
+    return c;
   }
-  if (errorBuf.length) add('bad', 'errors', 'Code errors this session', errorBuf.slice(0, 3).map(e => `${e.t} ${e.msg}`).join(' | '));
-
-  F.forEach(f => {
-    if (f.sev === 'bad' && f.fix) {
-      const key = f.fix.key, val = f.fix.value;
-      if (CFG[key] !== val && !state.overrides[key]) {
-        applyOverride(key, val);
-        log(`[AUTONOMOUS AUDITOR] Auto-fixed ${key} -> ${val} due to: ${f.title}`);
+  function poly(g, pts, col) {
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    for (let y = Math.floor(Math.min.apply(null, ys)); y <= Math.ceil(Math.max.apply(null, ys)); y++) {
+      for (let x = Math.floor(Math.min.apply(null, xs)); x <= Math.ceil(Math.max.apply(null, xs)); x++) {
+        if (inPoly(x + 0.5, y + 0.5, pts)) { g.fillStyle = typeof col === 'function' ? col(x, y) : col; g.fillRect(x, y, 1, 1); }
       }
     }
+  }
+  const R = (g, x, y, w, h, c, a) => { if (a !== undefined) g.globalAlpha = a; g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w, h); if (a !== undefined) g.globalAlpha = 1; };
+  const mir = pts => pts.map(p => [PW - p[0], p[1]]);
+
+  function edge(canvas, rim) {
+    const g = canvas.getContext('2d');
+    const img = g.getImageData(0, 0, PW, PH), d = img.data;
+    const a = (x, y) => (x < 0 || y < 0 || x >= PW || y >= PH) ? 0 : d[(y * PW + x) * 4 + 3];
+    const out = [], rimPx = [];
+    for (let y = 0; y < PH; y++) for (let x = 0; x < PW; x++) {
+      if (a(x, y) > 0) { if (a(x + 1, y) === 0 || (a(x, y + 1) === 0 && x > 36)) rimPx.push([x, y]); }
+      else if (a(x - 1, y) || a(x + 1, y) || a(x, y - 1) || a(x, y + 1)) out.push([x, y]);
+    }
+    g.fillStyle = '#07030f'; out.forEach(p => g.fillRect(p[0], p[1], 1, 1));
+    g.globalAlpha = 0.85; g.fillStyle = rim; rimPx.forEach(p => g.fillRect(p[0], p[1], 1, 1)); g.globalAlpha = 1;
+  }
+
+  const SPEC = {
+    boss: { color: '#ff2bd6', chrome: '#b7bfd8', suit: '#1b1236', head: { cx: 36, cy: 24, rx: 14, ry: 17, n: 3 }, eyes: 'band', visor: [24, 19, 24, 8], mouth: { type: 'grille', y: 34, w: 12 }, crown: true, buttons: [[28, 70], [44, 70], [28, 76], [44, 76]] },
+    announcer: { color: '#00f0ff', chrome: '#a9c8d2', suit: '#0d2430', pin: true, head: { cx: 36, cy: 25, rx: 17, ry: 15, n: 2.3 }, eyes: 'lens', lens: [36, 22, 8], mouth: { type: 'grille', y: 35, w: 10 }, fin: true, dish: true },
+    news: { color: '#f9f871', chrome: '#c4c4b4', suit: '#24210f', head: { cx: 36, cy: 26, rx: 15, ry: 14, n: 4 }, eyes: 'band', visor: [25, 22, 22, 7], mouth: { type: 'grille', y: 36, w: 10 }, hat: true, collar: true },
+    finance: { color: '#4d8bff', chrome: '#a8b6d6', suit: '#101a3a', shirt: '#26468f', head: { cx: 36, cy: 25, rx: 16, ry: 15, n: 6 }, eyes: 'crt', screen: [26, 16, 20, 17], mouth: { type: 'crt', y: 29, w: 14 }, bow: true },
+    risk: { color: '#ff9a3c', chrome: '#b4b4bc', suit: '#1c1620', stripe: true, head: { cx: 36, cy: 27, rx: 18, ry: 13, n: 5 }, eyes: 'slit', visor: [24, 24, 24, 4], mouth: { type: 'grille', y: 35, w: 14 }, hardhat: true },
+    trader: { color: '#ff3b5c', chrome: '#bdb4bc', suit: '#240d18', loose: true, head: { cx: 36, cy: 24, rx: 13, ry: 17, n: 2.7 }, eyes: 'band', visor: [25, 19, 22, 7], mouth: { type: 'grille', y: 34, w: 10 }, racing: true, antenna: { x: 46, y: 12, len: 9, ph: 1.7 } },
+    macro: { color: '#b45cff', chrome: '#c0b4d8', suit: '#1a0f36', head: { cx: 36, cy: 25, rx: 15, ry: 15, n: 2 }, eyes: 'orbs', face: [36, 24, 12, 9], mouth: { type: 'grille', y: 34, w: 10 }, ring: true },
+    cfo: { color: '#39ff88', chrome: '#b8c8bd', suit: '#0d2a1c', chain: true, head: { cx: 36, cy: 25, rx: 15, ry: 14, n: 5 }, eyes: 'band', visor: [25, 21, 22, 7], mouth: { type: 'slot', y: 35, w: 10 }, monocle: true },
+    auditor: { color: '#39ff88', chrome: '#cfd6e6', suit: '#d7deee', coat: true, head: { cx: 36, cy: 25, rx: 15, ry: 16, n: 3 }, eyes: 'lens', lens: [36, 22, 8], mouth: { type: 'grille', y: 35, w: 10 }, scan: true }
+  };
+  const IDS = Object.keys(SPEC);
+
+  function buildBody(id) {
+    const S = SPEC[id], c = mk(PW, PH), g = c.getContext('2d');
+    const suit = S.suit, W = S.coat ? 1 : 0;
+    const sr = W ? [mix(suit, '#000000', 0.35), mix(suit, '#000000', 0.18), suit, mix(suit, '#ffffff', 0.5), '#ffffff']
+                 : [mix(suit, '#000000', 0.55), mix(suit, '#000000', 0.25), suit, mix(suit, '#ffffff', 0.1), mix(suit, '#ffffff', 0.2)];
+    paint(g, [30, 36, 42, 50], (x, y) => (x >= 31 && x <= 41 && y >= 37 && y <= 49) ? [(x - 36) / 5.5, 0, Math.sqrt(Math.max(0.05, 1 - Math.pow((x - 36) / 5.5, 2)))] : null, ramp(mix(S.chrome, '#222a40', 0.35)), { metal: true });
+    [41, 44, 47].forEach(y => R(g, 31, y, 11, 1, '#0b0a18', 0.55));
+    const torso = sup(36, 73, 33, 30, 3, (x, y) => y >= 43);
+    paint(g, [2, 42, 70, 79], torso, sr, { bias: S.coat ? 0.1 : -0.12, flat: true });
+    if (S.pin) for (let x = 6; x < 68; x += 4) for (let y = 48; y < 80; y++) if (torso(x + 0.5, y + 0.5)) R(g, x, y, 1, 1, S.color, 0.1);
+    const shirt = S.shirt || (S.coat ? '#7d8aa8' : '#e4e8f2');
+    poly(g, [[30, 42], [42, 42], [36, 67]], (x, y) => mix(shirt, '#000000', 0.12 + Math.max(0, (y - 44)) * 0.004));
+    poly(g, [[28, 41], [34, 41], [35, 49], [28, 45]], shirt);
+    poly(g, mir([[28, 41], [34, 41], [35, 49], [28, 45]]), mix(shirt, '#000000', 0.15));
+    const lap = mix(suit, '#ffffff', S.coat ? 0.1 : 0.12);
+    const L = [[27, 43], [31, 43], [36, 67], [33, 75], [24, 57]];
+    poly(g, L, (x, y) => mix(lap, '#000000', (x - 24) * 0.012));
+    poly(g, mir(L), (x, y) => mix(lap, '#000000', 0.05 + (48 - x) * 0.006));
+    for (let t = 0; t <= 24; t++) { const y = 43 + t, x = 31 + Math.round(t * 5 / 24); R(g, x, y, 1, 1, S.color, 0.9); R(g, PW - 1 - x, y, 1, 1, S.color, 0.9); }
+    if (S.bow) {
+      poly(g, [[30, 48], [36, 51], [30, 54]], S.color); poly(g, [[42, 48], [36, 51], [42, 54]], mix(S.color, '#000000', 0.3));
+      R(g, 35, 49, 2, 4, mix(S.color, '#ffffff', 0.4));
+    } else {
+      const sk = S.loose ? 1 : 0, kx = 34 + sk, ky = S.loose ? 49 : 46;
+      R(g, kx, ky, 4, 4, S.color); R(g, kx, ky, 4, 1, mix(S.color, '#ffffff', 0.4));
+      poly(g, [[kx + 0.5, ky + 4], [kx + 3.5, ky + 4], [kx + 4.5 + sk, ky + (S.loose ? 13 : 18)], [kx + 2 + sk, ky + (S.loose ? 16 : 21)], [kx - 0.5 + sk, ky + (S.loose ? 13 : 18)]], (x) => x < kx + 2 ? mix(S.color, '#ffffff', 0.18) : mix(S.color, '#000000', 0.25));
+    }
+    if (S.buttons) S.buttons.forEach(b => { R(g, b[0], b[1], 2, 2, '#c8cde0'); R(g, b[0], b[1], 1, 1, '#ffffff'); });
+    if (S.collar) { poly(g, [[22, 44], [30, 41], [31, 52], [20, 56]], mix('#e0c63a', '#000000', 0.25)); poly(g, mir([[22, 44], [30, 41], [31, 52], [20, 56]]), mix('#e0c63a', '#000000', 0.4)); }
+    if (S.stripe) for (let t = 0; t < 22; t++) { R(g, 24 + Math.round(t * 0.35), 58 + t, 2, 1, S.color, 0.9); }
+    if (S.chain) for (let x = 29; x <= 43; x++) R(g, x, 64 + Math.round(Math.pow((x - 36) / 7, 2) * 3), 1, 1, '#f0c030');
+    if (S.coat) { for (let y = 60; y < 80; y += 4) R(g, 12, y, 8, 1, '#aab4cc', 0.5); R(g, 50, 62, 7, 9, '#aab4cc', 0.35); R(g, 50, 62, 7, 1, '#ffffff', 0.5); }
+    else if (id !== 'finance') { R(g, 14, 62, 7, 3, S.color); R(g, 14, 62, 3, 1, '#ffffff'); }
+    edge(c, S.color);
+    return c;
+  }
+
+  function buildHead(id) {
+    const S = SPEC[id], H = S.head, c = mk(PW, PH), g = c.getContext('2d');
+    const chrome = ramp(mix(S.chrome, S.color, 0.1));
+    const box = [H.cx - H.rx - 2, H.cy - H.ry - 3, H.cx + H.rx + 2, H.cy + H.ry + 2];
+    const shape = sup(H.cx, H.cy, H.rx, H.ry, H.n);
+    paint(g, box, shape, chrome, { metal: true });
+    S.shape = shape;
+    const glass = (x, y, w, h) => {
+      R(g, x, y, w, h, '#05060f'); R(g, x, y, w, 1, '#171d3a'); R(g, x, y + h - 1, w, 1, '#0a0c1c');
+      for (let k = 0; k < Math.min(h - 2, 5); k++) R(g, x + 2 + k, y + h - 2 - k, 1, 1, '#2a3566');
+      R(g, x - 1, y - 1, w + 2, 1, '#07030f'); R(g, x - 1, y + h, w + 2, 1, '#07030f');
+      R(g, x - 1, y, 1, h, '#07030f'); R(g, x + w, y, 1, h, '#07030f');
+    };
+    if (S.visor) glass.apply(null, S.visor);
+    if (S.screen) { const s = S.screen; glass(s[0], s[1], s[2], s[3]); for (let y = s[1] + 1; y < s[1] + s[3]; y += 2) R(g, s[0], y, s[2], 1, '#0b1030', 0.7); R(g, s[0] - 2, s[1] - 2, s[2] + 4, 1, '#cfd6ea'); R(g, s[0] - 2, s[1] + s[3] + 1, s[2] + 4, 1, '#667090'); }
+    if (S.lens) {
+      const l = S.lens, r = l[2] - 2, ix = l[0], iy = l[1];
+      paint(g, [l[0] - l[2] - 2, l[1] - l[2] - 2, l[0] + l[2] + 2, l[1] + l[2] + 2], sup(l[0], l[1], l[2] + 2, l[2] + 2, 2), ramp('#8a93ad'), { metal: true });
+      paint(g, [l[0] - l[2], l[1] - l[2], l[0] + l[2], l[1] + l[2]], sup(l[0], l[1], l[2], l[2], 2), ramp('#0a0c1a'), { bias: -0.15 });
+    }
+    if (S.face) { const f = S.face; paint(g, [f[0] - f[2], f[1] - f[3], f[0] + f[2], f[1] + f[3]], sup(f[0], f[1], f[2], f[3], 2.4), ramp('#0b0d1e'), { bias: -0.1 }); R(g, f[0] - 8, f[1] - f[3] + 2, 5, 1, '#2a3566'); }
+    if (S.crown) {
+      [[29, 10, 4], [36, 8, 7], [43, 10, 4]].forEach(a => { for (let k = 0; k < a[2]; k++) R(g, a[0], a[1] - k, 2, 1, mix(S.color, '#ffffff', k * 0.06)); });
+      R(g, 24, 13, 24, 1, S.color, 0.9); R(g, 25, 14, 22, 1, '#0b0a18', 0.5);
+    }
+    if (S.fin) { poly(g, [[34, 10], [38, 10], [37, 2], [35, 5]], mix(S.chrome, '#ffffff', 0.15)); R(g, 36, 3, 1, 3, S.color); }
+    if (S.dish) {
+      paint(g, [11, 20, 22, 32], sup(17, 26, 4, 7, 2), ramp('#9fb0bd'), { metal: true }); R(g, 15, 24, 2, 4, '#0a2230');
+      R(g, 17, 20, 1, 4, '#4a5870'); R(g, 11, 26, 3, 1, '#07030f');
+    }
+    if (S.racing) { for (let y = 9; y < 20; y++) { R(g, 34, y, 1, 1, S.color); R(g, 37, y, 1, 1, mix(S.color, '#ffffff', 0.25)); } }
+    if (S.hardhat) {
+      paint(g, [16, 6, 56, 22], sup(36, 20, 20, 12, 2.3, (x, y) => y <= 21), ramp(S.color), { metal: true });
+      R(g, 17, 20, 38, 2, '#07030f'); R(g, 35, 8, 2, 12, mix(S.color, '#ffffff', 0.4));
+    }
+    if (S.hat) {
+      const olive = '#2c2814';
+      paint(g, [14, 8, 58, 20], sup(36, 16, 21, 4, 2.2, (x, y) => y >= 14), ramp(olive), {});
+      paint(g, [24, 2, 48, 18], sup(36, 12, 11, 9, 2.6, (x, y) => y <= 15), ramp(olive), { bias: 0.04 });
+      R(g, 25, 12, 22, 3, S.color);
+    }
+    if (S.monocle) {
+      for (let a = 0; a < 360; a += 15) { const r = 5.6; R(g, 41 + Math.round(Math.cos(a * Math.PI / 180) * r), 24 + Math.round(Math.sin(a * Math.PI / 180) * r), 1, 1, '#f0c030'); }
+      for (let t = 0; t < 14; t++) R(g, 46, 29 + t, 1, 1, '#f0c030', 0.9);
+    }
+    edge(c, S.color);
+    return c;
+  }
+
+  const cache = {};
+  function layers(id) {
+    if (!cache[id]) cache[id] = { body: buildBody(id), head: buildHead(id), bg: null };
+    return cache[id];
+  }
+
+  function backdrop(id) {
+    const L = layers(id);
+    if (L.bg) return L.bg;
+    const c = mk(PW, PH), g = c.getContext('2d'), S = SPEC[id];
+    const grad = g.createRadialGradient(36, 30, 4, 36, 34, 46);
+    grad.addColorStop(0, mix('#0b0724', S.color, 0.34)); grad.addColorStop(1, '#07010f');
+    g.fillStyle = grad; g.fillRect(0, 0, PW, PH);
+    g.globalAlpha = 0.12; g.fillStyle = S.color; for (let y = 0; y < PH; y += 4) g.fillRect(0, y, PW, 1); g.globalAlpha = 1;
+    return (L.bg = c);
+  }
+
+  const ANIM = {};
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  function anim(id, t) {
+    if (!ANIM[id]) {
+      ANIM[id] = {
+        phase: Math.random() * 6.28, talkUntil: 0, blinkStart: -999, nextBlink: t + rnd(800, 3000),
+        look: 0, lookFrom: 0, lookTo: 0, lookStart: 0, nextLook: t + rnd(900, 2500),
+        glintStart: -9999, nextGlint: t + rnd(2500, 7000), twitchUntil: 0, nextTwitch: t + rnd(3000, 8000),
+        glitchUntil: 0, nextGlitch: t + rnd(14000, 30000), coinStart: -9999, nextCoin: t + rnd(4000, 9000)
+      };
+    }
+    return ANIM[id];
+  }
+  function speak(id, ms) { const A = anim(id, performance.now ? performance.now() : Date.now()); A.talkUntil = (performance.now ? performance.now() : Date.now()) + (ms || 2400); }
+
+  function step(A, t) {
+    if (t > A.nextBlink) { A.blinkStart = t; A.nextBlink = t + (Math.random() < 0.18 ? 260 : rnd(2200, 5200)); }
+    if (t > A.nextLook) { A.lookFrom = A.look; A.lookTo = [-1, -1, 0, 0, 0, 1, 1][Math.floor(Math.random() * 7)]; A.lookStart = t; A.nextLook = t + rnd(1500, 4200); }
+    A.look = A.lookFrom + (A.lookTo - A.lookFrom) * Math.min(1, (t - A.lookStart) / 260);
+    if (t > A.nextGlint) { A.glintStart = t; A.nextGlint = t + rnd(6000, 14000); }
+    if (t > A.nextTwitch) { A.twitchUntil = t + 320; A.nextTwitch = t + rnd(4000, 11000); }
+    if (t > A.nextGlitch) { A.glitchUntil = t + 170; A.nextGlitch = t + rnd(16000, 38000); }
+    if (t > A.nextCoin) { A.coinStart = t; A.nextCoin = t + rnd(5000, 12000); }
+  }
+  function blinkAmt(A, t) {
+    const d = t - A.blinkStart;
+    return d < 0 || d > 210 ? 0 : d < 70 ? d / 70 : d < 140 ? 1 : 1 - (d - 140) / 70;
+  }
+
+  function drawFace(g, id, t, A, talk, blink, look) {
+    const S = SPEC[id], H = S.head, col = S.color, glow = mix(col, '#ffffff', 0.35);
+    const pulse = 0.78 + 0.22 * Math.sin(t / 650 + A.phase);
+    const lx = Math.round(look * 2);
+    const open = talk ? 0.3 + 0.7 * Math.abs(Math.sin(t / 85 + A.phase) * Math.sin(t / 137 + 1)) : 0;
+    const flick = t < A.glitchUntil && Math.floor(t / 40) % 2 === 0;
+
+    if (!flick) {
+      if (S.eyes === 'band') {
+        const v = S.visor, ey = v[1] + 2, h = Math.max(1, Math.round(3 * (1 - blink)));
+        [-5, 5].forEach(o => {
+          const ex = H.cx + o - 2 + lx, y = ey + (3 - h) / 2 + (blink > 0.5 ? 0.5 : 0);
+          R(g, ex - 1, y - 1, 6, h + 2, col, 0.22 * pulse);
+          R(g, ex, y, 4, h, col); if (h > 1) R(g, ex, y, 2, 1, talk ? '#ffffff' : glow);
+        });
+      } else if (S.eyes === 'lens') {
+        const l = S.lens, r = l[2] - 2, ix = l[0] + lx, iy = l[1];
+        for (let dy = -r; dy <= r; dy++) { const hw = Math.round(Math.sqrt(r * r - dy * dy)); R(g, ix - hw, iy + dy, hw * 2 + 1, 1, col, 0.35 + 0.35 * pulse); }
+        for (let dy = -2; dy <= 2; dy++) { const hw = Math.round(Math.sqrt(4 - dy * dy)); R(g, ix - hw, iy + dy, hw * 2 + 1, 1, talk ? '#ffffff' : glow); }
+        if (blink > 0.05) { const rr = l[2]; for (let dy = -rr; dy <= rr; dy++) if ((dy + rr) < blink * (2 * rr + 1)) { const hw = Math.round(Math.sqrt(rr * rr - dy * dy)); R(g, l[0] - hw, l[1] + dy, hw * 2 + 1, 1, '#0a0c1a'); } }
+      } else if (S.eyes === 'crt') {
+        const sc = S.screen, ey = sc[1] + 4, h = Math.max(1, Math.round(4 * (1 - blink)));
+        [-5, 5].forEach(o => { R(g, H.cx + o - 2 + lx, ey + (4 - h) / 2, 4, h, '#ff3b5c'); if (h > 1) R(g, H.cx + o - 2 + lx, ey + (4 - h) / 2, 1, 1, '#ffd0d8'); });
+      } else if (S.eyes === 'slit') {
+        const v = S.visor, sy = v[1] + 1, h = Math.max(1, Math.round(2 * (1 - blink * 0.9)));
+        R(g, v[0] + 1, sy, v[2] - 2, h, col, talk ? 0.95 : 0.4 + 0.2 * pulse);
+      } else if (S.eyes === 'orbs') {
+        const ey = S.face[1] - 1, r = blink > 0.6 ? 0 : 2;
+        [-5, 5].forEach(o => {
+          const ex = H.cx + o + lx;
+          if (r === 0) { R(g, ex - 2, ey, 5, 1, col); return; }
+          for (let dy = -2; dy <= 2; dy++) { const hw = Math.round(Math.sqrt(5.2 - dy * dy)); R(g, ex - hw, ey + dy, hw * 2 + 1, 1, col); }
+        });
+      }
+    }
+
+    const M = S.mouth, mx = H.cx - Math.round(M.w / 2);
+    if (M.type === 'grille') {
+      const h = 1 + Math.round(open * 4), y = M.y - Math.floor((h - 1) / 2);
+      R(g, mx - 1, y - 1, M.w + 2, h + 2, '#07030f');
+      R(g, mx, y, M.w, h, '#0e1226');
+      if (h === 1) { R(g, mx + 1, y, 2, 1, col, 0.4 + 0.4 * pulse); R(g, mx + M.w - 3, y, 2, 1, col, 0.4 + 0.4 * pulse); }
+      else for (let i = 0; i < M.w; i += 2) { const bh = Math.max(1, Math.round(h * (0.35 + 0.65 * Math.abs(Math.sin(t / 70 + i * 1.3 + A.phase))))); R(g, mx + i, y + Math.floor((h - bh) / 2), 1, bh, i % 4 ? col : glow, 0.95); }
+    } else if (M.type === 'slot') {
+      const h = 1 + Math.round(open * 2), y = M.y;
+      R(g, mx - 1, y - 1, M.w + 2, h + 2, '#07030f'); R(g, mx, y, M.w, h, '#03120a');
+      R(g, mx, y - 1, M.w, 1, '#f0c030'); R(g, mx, y + h, M.w, 1, mix('#f0c030', '#000000', 0.4));
+      if (talk) R(g, mx + 2, y, M.w - 4, h, col, 0.55);
+    } else if (M.type === 'crt') {
+      const y = M.y, w = M.w, x0 = H.cx - Math.round(w / 2);
+      if (!talk) R(g, x0 + 2, y, w - 4, 1, '#2b4a99');
+      else for (let i = 0; i < w; i += 2) { const bh = 1 + Math.round(open * 3 * Math.abs(Math.sin(t / 75 + i * 0.9))); R(g, x0 + i, y - Math.floor(bh / 2), 1, bh, i % 4 ? '#4d8bff' : '#9ec0ff'); }
+    }
+
+    if (S.antenna) {
+      const a = S.antenna, tipx = a.x;
+      for (let k = 0; k <= a.len; k++) R(g, a.x, a.y - k, 1, 1, '#aeb6cf');
+      R(g, tipx - 1, a.y - a.len - 2, 3, 3, col, 0.3 + 0.3 * pulse);
+    }
+  }
+
+  function drawGlint(g, id, t, A) {
+    const k = (t - A.glintStart) / 650;
+    if (k < 0 || k > 1) return;
+    const S = SPEC[id], H = S.head, shape = S.shape;
+    if (!shape) return;
+    const pos = H.cx - H.rx - 6 + k * (H.rx * 2 + 14);
+    g.fillStyle = '#ffffff'; g.globalAlpha = 0.45;
+    for (let y = H.cy - H.ry; y <= H.cy + H.ry; y++) { const x = Math.round(pos + (y - H.cy) * 0.55); if (shape(x + 0.5, y + 0.5)) g.fillRect(x, y, 2, 1); }
+    g.globalAlpha = 1;
+  }
+
+  function drawRing(g, id, t, A, front) {
+    const S = SPEC[id], H = S.head, rx = 25, ry = 6, cy = H.cy + 8;
+    const a = t / 900 + A.phase;
+    for (let i = 0; i < 90; i++) {
+      const ang = i / 90 * Math.PI * 2, isFront = Math.sin(ang) > 0;
+      if (isFront !== front) continue;
+      const x = H.cx + Math.cos(ang) * rx, y = cy + Math.sin(ang) * ry;
+      R(g, x, y, 1, 1, S.color, front ? 0.9 : 0.45);
+    }
+    const bx = H.cx + Math.cos(a) * rx, by = cy + Math.sin(a) * ry;
+    if ((Math.sin(a) > 0) === front) R(g, bx - 1, by - 1, 3, 3, '#ffffff');
+  }
+
+  function draw(ctx, id, t, opts) {
+    if (!SPEC[id]) id = 'boss';
+    const A = anim(id, t), L = layers(id), S = SPEC[id];
+    step(A, t);
+    const talk = t < A.talkUntil, blink = blinkAmt(A, t), look = A.look;
+    ctx.imageSmoothingEnabled = false;
+    if (opts && opts.bg) ctx.drawImage(backdrop(id), 0, 0);
+    const breathe = Math.sin(t / 1000 + A.phase) > 0.45 ? 1 : 0;
+    ctx.drawImage(L.body, 0, breathe);
+    const hx = Math.round(look * 1.2), hy = breathe;
+    ctx.save();
+    ctx.translate(hx, hy);
+    if (S.ring) drawRing(ctx, id, t, A, false);
+    ctx.drawImage(L.head, 0, 0);
+    drawFace(ctx, id, t, A, talk, blink, look);
+    drawGlint(ctx, id, t, A);
+    if (S.ring) drawRing(ctx, id, t, A, true);
+    ctx.restore();
+  }
+
+  return { PW, PH, ids: IDS, spec: SPEC, draw, speak, anim };
+})();
+
+function paintPortraits(t) {
+  document.querySelectorAll('canvas[data-robot]').forEach(c => {
+    const g = c.getContext('2d');
+    if (g) ROBOT.draw(g, c.dataset.robot, t, { bg: true });
   });
-
-  auditResult = F;
-  return F;
+}
+let portraitLoopOn = false;
+function portraitLoop() {
+  if (portraitLoopOn) return;
+  portraitLoopOn = true;
+  const slow = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let last = 0;
+  const tick = t => {
+    if (activeTab !== 'warroom' && activeTab !== 'audit') { portraitLoopOn = false; return; }
+    if (!slow || t - last > 1000) { last = t; paintPortraits(t); }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 
-function applyOverride(key, value) {
-  const t = TUNABLE[key], v = Number(value);
-  if (!t || !isFinite(v) || v < t.min || v > t.max) return false;
-  CFG[key] = v;
-  state.overrides[key] = v;
-  saveState();
-  log(`[AUDITOR] Rule changed: ${key} = ${v}`);
-  runAudit();
-  renderAll();
-  return true;
-}
-
-function resetOverrides() {
-  Object.keys(state.overrides).forEach(k => { CFG[k] = CFG_DEFAULTS[k]; });
-  state.overrides = {};
-  saveState();
-  log('[AUDITOR] Rules reset to defaults');
-  runAudit();
-  renderAll();
-}
-
-function runAuditNow() { runAudit(); setAuditStatus('Audit completed.'); renderAll(); }
-function setAuditStatus(t) { setText('audit-status', t); }
-
-function buildReport() {
-  const p = portfolioValue(), net = state.cash + state.vault + p.value;
-  const rows = state.journal.filter(j => j.mode === state.mode);
-  const js = journalStats(rows);
-  return [
-    `ORBITAL AUDIT REPORT ${new Date().toISOString()}`,
-    `Mode ${state.mode} | Net ${fmtCurrency(net)} | Cash ${fmtCurrency(state.cash)} | Realized ${fmtSigned(state.realizedPnl)}`,
-    `CONFIG ${JSON.stringify(CFG)}`,
-    `TRADES (${state.mode}, ${js.n}): win rate ${Math.round(js.winRate * 100)}% | expectancy ${js.expectancy.toFixed(2)}%/trade`,
-    'FINDINGS:',
-    ...auditResult.map(f => `  [${f.sev.toUpperCase()}] ${f.title}: ${f.detail}`),
-    'RECENT ERRORS: ' + (errorBuf.length ? errorBuf.slice(0, 8).map(e => `${e.t} ${e.msg}`).join(' || ') : 'none'),
-    'RECENT LOG:',
-    ...logBuf.slice(-30).map(x => '  ' + x)
-  ].join('\n');
-}
-
-async function copyReport() {
-  runAudit();
-  const text = buildReport();
-  let ok = false;
-  try { await navigator.clipboard.writeText(text); ok = true; } catch (e) { ok = false; }
-  if (ok) setAuditStatus('Report copied to clipboard.');
-  else { setAuditStatus('Copy blocked; the report is shown below.'); auditAnswer = { text, props: [] }; renderAudit(); }
-}
-
-async function callAuditor(question) {
-  const key = localStorage.getItem('gemini_api_key');
-  runAudit();
-  const prompt = 'You are AUDITOR-7, the inspector for a PAPER-TRADING crypto dashboard. Answer concisely in plain text. Question: ' + question + '\nReport:\n' + buildReport();
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CFG.geminiModel}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3 } }),
-    signal: AbortSignal.timeout(30000)
-  });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  const parts = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
-  return { text: parts.map(x => x.text || '').join(''), props: [] };
-}
-
-async function askAuditor() {
-  if ((localStorage.getItem('gemini_api_key') || '').length < 6) { setAuditStatus('Add a Gemini key first.'); return; }
-  const r = await openDialog({ title: 'ASK AUDITOR-7', inputs: [{ id: 'q', label: 'Question', value: 'How can I fix my win rate?' }], okText: 'ASK' });
-  if (!r) return;
-  setAuditStatus('Analyzing...');
-  try { auditAnswer = await callAuditor(r.values.q); setAuditStatus('Done.'); } catch (e) { setAuditStatus('Error: ' + e.message); }
-  renderAudit();
-}
-
-function renderAudit() {
-  const nBad = auditResult.filter(f => f.sev === 'bad').length, nWarn = auditResult.filter(f => f.sev === 'warn').length, nOk = auditResult.filter(f => f.sev === 'ok').length;
-  const head = $('audit-head');
-  if (head) {
-    let pic = '';
-    try { pic = portraitUrl('auditor'); } catch (e) { pic = ''; }
-    const say = nBad ? `${nBad} problem${nBad > 1 ? 's' : ''} need attention, ${nWarn} warning${nWarn === 1 ? '' : 's'}.` : nWarn ? `No critical problems. ${nWarn} warning${nWarn === 1 ? '' : 's'}.` : 'All checks passing.';
-    head.innerHTML = `<div class="agent-card" style="border-color: #39ff88; cursor: default;">
-      <img class="agent-portrait" alt="AUDITOR-7" src="${pic}" style="border-color: #39ff88;">
-      <div class="agent-body">
-        <div class="agent-name" style="color: #39ff88;">AUDITOR-7</div>
-        <div class="agent-role">System Inspector</div>
-        <div class="agent-chips">
-          <div class="chip"><span>Problems</span><strong>${nBad}</strong></div>
-          <div class="chip"><span>Warnings</span><strong>${nWarn}</strong></div>
-          <div class="chip"><span>Passing</span><strong>${nOk}</strong></div>
-        </div>
-        <div class="agent-speech">"${escapeHtml(say)}"</div>
-      </div></div>`;
-  }
-  const col = { bad: 'var(--red)', warn: 'var(--amber)', info: 'var(--cyan)', ok: 'var(--green)' };
-  const tag = { bad: 'PROBLEM', warn: 'WARNING', info: 'NOTE', ok: 'OK' };
-  const box = $('audit-findings');
-  if (box) {
-    box.innerHTML = auditResult.map((f, i) => `
-      <div class="feed-item" style="border-left-color: ${col[f.sev]};">
-        <div class="feed-sender" style="color: ${col[f.sev]};">${tag[f.sev]} // ${escapeHtml(f.title)}</div>
-        <div class="feed-text">${escapeHtml(f.detail)}</div>
-        ${f.fix ? `<button class="cyber-btn accent" style="margin-top: 6px;" data-fix="${i}">APPLY: ${escapeHtml(f.fix.key)} = ${escapeHtml(f.fix.value)}</button>` : ''}
-      </div>`).join('') || '<div class="empty-note">Waiting for first scan.</div>';
-  }
-  const ans = $('audit-answer');
-  if (ans) {
-    ans.innerHTML = auditAnswer.text
-      ? `<div class="feed-text" style="white-space: pre-wrap;">${escapeHtml(auditAnswer.text)}</div>`
-      : '<div class="empty-note">Tap ASK AI for an analysis, or COPY REPORT to paste into your chat with Claude.</div>';
-  }
-}
-
-/* ============================== BOOT ============================== */
 window.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+  const posBox = $('positions-container');
+  if (posBox) posBox.addEventListener('click', e => {
+    const btn = e.target.closest('[data-sell]');
+    if (btn) manualSellPosition(btn.dataset.sell);
+  });
   document.addEventListener('click', e => {
     const b = e.target.closest('button');
     if (!b) return;
     playSfx(b.classList.contains('tab-btn') ? 'tab' : 'click');
   });
   initScene();
-  const af = $('audit-findings');
-  if (af) af.addEventListener('click', e => {
-    const b = e.target.closest('[data-fix]');
-    if (!b) return;
-    const f = auditResult[parseInt(b.dataset.fix, 10)];
-    if (f && f.fix) applyOverride(f.fix.key, f.fix.value);
-  });
   AGENTS.forEach(a => { const l = state.ledger[a.id]; if (l && l[0]) a.says = l[0].text; });
   const wr = $('war-room-container');
   if (wr) wr.addEventListener('click', e => { const c = e.target.closest('[data-agent]'); if (c) openAgentDialog(parseInt(c.dataset.agent, 10)); });
@@ -2128,212 +2141,6 @@ window.addEventListener('DOMContentLoaded', () => {
   setInterval(scanMarket, CFG.scanEveryMs);
   setInterval(fetchLiveNews, CFG.newsEveryMs);
 });
-
-  </script>
-  <script>
-/* ORBITAL // HQ robot avatars.
-   Load this AFTER the main script (see the one-line edit). It replaces the character sprites only. */
-(function () {
-  if (typeof CHARS === 'undefined' || typeof blob === 'undefined') { console.warn('robots.js must load after the main script'); return; }
-
-  const DARK = '#0b0f1c';
-
-  // ---- shared robot parts ----
-  function rbHead(g, p, x, y, w, h) {          // beveled metal box with corner bolts
-    shadeRect(g, x, y, w, h, p);
-    [[x, y], [x + w - 1, y], [x, y + h - 1], [x + w - 1, y + h - 1]].forEach(c => { g[c[1]][c[0]] = null; });
-    dots(g, [[x + 2, y + 2], [x + w - 3, y + 2]], p.dk);
-  }
-  function rbNeck(g, p) { rect(g, 15, 23, 6, 6, p.lo); rect(g, 15, 24, 6, 1, p.dk); rect(g, 15, 26, 6, 1, p.dk); }
-  function rbBody(g, p, joint) {                 // boxy chest with shoulder ball joints
-    shadeRect(g, 4, 28, 28, 14, p);
-    dots(g, [[4, 28], [31, 28]], null);
-    g[28][4] = null; g[28][31] = null;
-    blob(g, 4, 33, 4.5, 4.5, joint); blob(g, 31, 33, 4.5, 4.5, joint);
-  }
-  function rbEyes(g, y, col, glint) {            // two square LED eyes
-    [12, 20].forEach(x => {
-      rect(g, x, y, 4, 3, DARK);
-      rect(g, x + 1, y + 1, 2, 1, col);
-      dots(g, [[x, y + 1], [x + 3, y + 1]], shade(col, -0.45));
-    });
-    if (glint) dots(g, [[13, y + 1], [21, y + 1]], '#ffffff');
-  }
-  function rbGrille(g, x, y, w, col) {
-    rect(g, x, y, w, 3, DARK);
-    for (let i = x + 1; i < x + w; i += 2) { put(g, i, y, col); put(g, i, y + 1, col); put(g, i, y + 2, col); }
-  }
-  function rbSmile(g, y, col) { dots(g, [[13, y], [14, y + 1], [15, y + 2], [16, y + 2], [17, y + 2], [18, y + 2], [19, y + 2], [20, y + 2], [21, y + 1], [22, y]], col); }
-
-  const R = {
-    // ORCHESTRATOR-1: magenta overlord, gold prongs, three glowing eyes
-    boss(g) {
-      const mag = ramp('#b0407f'), steel = ramp('#8a8fb0'), gold = ramp('#f0bf30');
-      rbBody(g, mag, steel);
-      rect(g, 11, 28, 14, 2, gold.base); rect(g, 11, 28, 14, 1, gold.hi);
-      shadeRect(g, 14, 32, 8, 6, ramp('#2a0f26')); blob(g, 18, 35, 2.5, 2.5, ramp('#ff5ad8'));
-      rbNeck(g, steel);
-      const prong = [[9, 8], [8, 7], [8, 6], [7, 5], [7, 4], [6, 3], [6, 2], [7, 1]];
-      [prong, mirror(prong)].forEach(pr => { dots(g, pr, gold.base); dots(g, pr.map(p => [p[0] + (p[0] < 18 ? 1 : -1), p[1]]), gold.lo); });
-      rbHead(g, steel, 9, 6, 18, 17);
-      rect(g, 9, 6, 18, 3, mag.base); rect(g, 9, 6, 18, 1, mag.hi);
-      blob(g, 18, 8, 2, 2, ramp('#ff5ad8'));
-      rect(g, 11, 12, 14, 5, DARK);
-      [12, 17, 22].forEach(x => { rect(g, x, 13, 2, 2, '#ff5ad8'); put(g, x, 13, '#ffffff'); });
-      rbGrille(g, 13, 19, 10, '#6a6f90');
-    },
-
-    // WHALE_EYE: teal dome, one giant lens, radar dish
-    announcer(g) {
-      const teal = ramp('#1a8a9c'), steel = ramp('#7fa2ad');
-      rbBody(g, teal, steel);
-      rect(g, 12, 28, 12, 2, teal.hi); rect(g, 17, 31, 2, 3, '#ffd84a');
-      rbNeck(g, steel);
-      rect(g, 27, 6, 1, 7, steel.lo); blob(g, 29, 5, 3.5, 2.4, steel); put(g, 29, 5, '#00f0ff');
-      blob(g, 18, 15, 10, 10, teal);
-      rect(g, 12, 22, 12, 3, steel.lo); rbGrille(g, 13, 22, 10, '#3a6a78');
-      blob(g, 18, 15, 6.5, 6.5, ramp('#08242c'));
-      blob(g, 18, 15, 4.8, 4.8, ramp('#00c8e0'));
-      blob(g, 18, 15, 2.2, 2.2, ramp('#052a33'));
-      dots(g, [[15, 12], [16, 12], [15, 13]], '#ffffff');
-    },
-
-    // NEWS_HAWK: yellow robot with a beak, sharp brow plates, headset
-    news(g) {
-      const gold = ramp('#e2b52c'), steel = ramp('#9aa3b4'), orange = ramp('#e8782a');
-      rbBody(g, gold, steel);
-      rect(g, 13, 28, 10, 2, '#f4f4f0');
-      rect(g, 6, 33, 6, 4, '#ffffff'); rect(g, 7, 34, 4, 1, '#222222'); rect(g, 7, 36, 3, 1, '#999999');
-      rbNeck(g, steel);
-      blob(g, 18, 3, 3, 4.5, orange, undefined, 6); put(g, 18, 0, '#ffffff');
-      rbHead(g, gold, 9, 6, 18, 17);
-      rbEyes(g, 13, '#fff27a', true);
-      dots(g, [[11, 11], [12, 11], [13, 12], [14, 12], [15, 12]], steel.dk);
-      dots(g, mirror([[11, 11], [12, 11], [13, 12], [14, 12], [15, 12]]), steel.dk);
-      rect(g, 16, 17, 4, 2, orange.base); rect(g, 17, 19, 2, 2, orange.lo); put(g, 17, 21, orange.dk); dots(g, [[16, 17], [16, 18]], orange.hi);
-      rect(g, 7, 13, 3, 6, steel.lo); dots(g, [[8, 19], [9, 20], [10, 21], [11, 22], [12, 22]], '#222222'); rect(g, 13, 21, 2, 2, orange.base);
-    },
-
-    // KIRKTRON 9001: black hoodie, long brown hair tucked inside the hood, brown mustache
-    finance(g) {
-      const hood = ramp('#1c1c24'), metal = ramp('#9aa8c8'), hair = ramp('#7a4e28'), stache = ramp('#4a2a12');
-      blob(g, 18, 40, 16, 13, hood);
-      rect(g, 11, 33, 14, 6, hood.lo); rect(g, 11, 33, 14, 1, hood.hi); rect(g, 17, 33, 2, 6, hood.dk);
-      dots(g, [[15, 28], [15, 29], [15, 30], [15, 31], [15, 32], [20, 28], [20, 29], [20, 30], [20, 31], [20, 32]], '#cfd3dc');
-      dots(g, [[15, 33], [20, 33]], '#ffffff');
-      blob(g, 18, 14, 13, 13, hood, 1, 29);
-      rect(g, 15, 23, 6, 5, metal.dk);
-      rect(g, 9, 8, 18, 17, '#08080c');
-      rbHead(g, metal, 10, 9, 16, 14);
-      rect(g, 10, 12, 16, 1, metal.lo);                                   // forehead panel seam
-      rect(g, 10, 9, 16, 2, hair.base); rect(g, 10, 9, 16, 1, hair.hi);   // fringe peeking out of the hood
-      dots(g, [[11, 11], [13, 11], [16, 11], [19, 11], [22, 11], [24, 11]], hair.base);
-      dots(g, [[17, 9], [18, 9], [17, 10], [18, 10]], hair.dk);
-      rect(g, 10, 12, 1, 8, hair.lo);                                     // a strand along each cheek
-      rect(g, 25, 12, 1, 8, hair.lo);
-      rect(g, 8, 5, 20, 4, hood.base); rect(g, 8, 5, 20, 1, hood.hi);     // hood rim hides the roots
-      rect(g, 7, 8, 3, 18, hood.base); rect(g, 26, 8, 3, 18, hood.base); rect(g, 7, 8, 1, 18, hood.hi);
-      rbEyes(g, 14, '#4d8bff', true);
-      dots(g, [[11, 17], [11, 19], [24, 17], [24, 19]], metal.dk);        // cheek vents
-      rect(g, 12, 19, 12, 2, stache.base); rect(g, 12, 19, 12, 1, stache.hi);
-      dots(g, [[11, 20], [11, 21], [24, 20], [24, 21], [12, 21], [23, 21]], stache.base); dots(g, [[17, 20], [18, 20]], stache.lo);
-      rect(g, 12, 21, 12, 2, metal.lo); rect(g, 15, 21, 6, 1, DARK);
-    },
-
-    // RISK_CORE: orange and steel knight robot with a visor slit and vents
-    risk(g) {
-      const steel = ramp('#8c93a6'), dsteel = ramp('#6f7690'), orange = ramp('#e07b1c');
-      rbBody(g, steel, dsteel);
-      shadeRect(g, 14, 29, 8, 11, orange);
-      rect(g, 17, 31, 2, 6, '#3a1a08'); rect(g, 15, 33, 6, 1, '#3a1a08');
-      blob(g, 5, 33, 6, 6, steel); blob(g, 31, 33, 6, 6, steel);
-      dots(g, [[5, 32], [31, 32], [3, 34], [33, 34]], orange.base);
-      rbNeck(g, dsteel);
-      rect(g, 17, 2, 2, 5, dsteel.base); blob(g, 18, 2, 2, 2, orange);
-      rbHead(g, steel, 9, 6, 18, 17);
-      rect(g, 17, 6, 2, 17, steel.hi);
-      rect(g, 10, 13, 16, 4, DARK); rect(g, 11, 14, 14, 2, '#ff9a3c'); rect(g, 17, 13, 2, 4, steel.base);
-      rbGrille(g, 12, 19, 12, '#5a6075');
-    },
-
-    // ALPHA_X: red berserker robot, cable mane, cracked faceplate, jagged teeth
-    trader(g) {
-      const red = ramp('#c23a34'), cable = ramp('#1b1426'), fur = ramp('#7a5638');
-      rbBody(g, red, ramp('#8a2a2a'));
-      blob(g, 6, 33, 7, 5, fur); blob(g, 30, 33, 7, 5, fur);
-      dots(g, [[2, 29], [4, 28], [7, 28], [29, 28], [32, 28], [34, 29]], fur.hi);
-      dots(g, [[16, 30], [17, 31], [17, 32], [18, 33], [18, 34], [19, 35]], red.dk);
-      blob(g, 18, 16, 13, 14, cable, 2, 32);
-      [8, 10, 25, 27].forEach(x => rect(g, x, 12, 1, 16, cable.hi));
-      rbNeck(g, ramp('#7c5a58'));
-      rbHead(g, red, 9, 6, 18, 17);
-      rbEyes(g, 13, '#ff3030', true);
-      dots(g, [[11, 11], [12, 11], [13, 12], [14, 12], [15, 12]], red.dk);
-      dots(g, mirror([[11, 11], [12, 11], [13, 12], [14, 12], [15, 12]]), red.dk);
-      dots(g, [[24, 7], [23, 8], [23, 9], [22, 10], [22, 11], [21, 12], [21, 16], [20, 17], [20, 18]], '#ffc0b0');
-      rect(g, 12, 19, 12, 3, DARK);
-      for (let x = 13; x <= 21; x += 2) { put(g, x, 19, '#e8e8e8'); put(g, x + 1, 21, '#e8e8e8'); }
-    },
-
-    // MACRO_9: purple wizard robot with a star hat and a fibre-optic beard
-    macro(g) {
-      const robe = ramp('#6b32c4'), steel = ramp('#a899d8'), gold = '#f3c33a';
-      rbBody(g, robe, ramp('#8d78d0'));
-      rect(g, 13, 28, 10, 2, gold); dots(g, [[8, 34], [28, 36], [10, 37], [26, 33]], gold);
-      rbNeck(g, steel);
-      rbHead(g, steel, 10, 10, 16, 14);
-      for (let y = 0; y <= 9; y++) {
-        const w = 1 + y * 0.95;
-        for (let x = Math.round(18 - w); x <= Math.round(18 + w); x++) put(g, x, y, x < 18 - w * 0.4 ? robe.hi : x > 18 + w * 0.5 ? robe.lo : robe.base);
-      }
-      blob(g, 18, 10, 13, 3, robe);
-      rect(g, 11, 8, 14, 2, gold);
-      dots(g, [[18, 2], [17, 3], [18, 3], [19, 3], [18, 4]], '#fff3a0');
-      rbEyes(g, 14, '#d28bff', true);
-      blob(g, 18, 23, 8, 9, ramp('#e4e4f0'), 19);
-      dots(g, [[15, 22], [18, 24], [21, 22], [16, 26], [20, 26], [18, 29]], '#9fd8ff');
-    },
-
-    // ROBBIEBOT 9000: plain green t-shirt, tall blonde mohawk fin, friendly LED smile
-    cfo(g) {
-      const metal = ramp('#a9bdd0'), tee = ramp('#34c26e'), hair = ramp('#f2d04a');
-      rect(g, 0, 36, 5, 4, metal.base); rect(g, 31, 36, 5, 4, metal.base); rect(g, 0, 36, 1, 4, metal.hi); rect(g, 35, 36, 1, 4, metal.lo);
-      blob(g, 18, 41, 14, 14, tee);
-      blob(g, 5, 34, 5, 5, tee); blob(g, 31, 34, 5, 5, tee);
-      rbNeck(g, metal);
-      rect(g, 13, 28, 10, 1, tee.lo); rect(g, 14, 29, 8, 1, tee.lo); rect(g, 15, 28, 6, 2, metal.lo);
-      rbHead(g, metal, 9, 6, 18, 17);
-      const fin = [[0, 18, 19], [1, 17, 19], [2, 16, 19], [3, 16, 20], [4, 15, 20], [5, 15, 20], [6, 15, 20]];
-      fin.forEach(r => {
-        for (let x = r[1]; x <= r[2]; x++) put(g, x, r[0], x === r[1] ? hair.hi : x === r[2] ? hair.lo : hair.base);
-      });
-      dots(g, [[14, 5], [21, 5], [14, 6], [21, 6]], hair.base);   // loose strands at the base
-      dots(g, [[17, 3], [17, 4], [18, 1]], hair.lo);
-      rbEyes(g, 12, '#39ff88', true);
-      rbSmile(g, 18, '#39ff88');
-      dots(g, [[9, 13], [26, 13], [9, 17], [26, 17]], metal.dk);
-    },
-
-    // AUDITOR-7: silver inspector robot, big round lenses, antenna sprouts, lab coat
-    auditor(g) {
-      const coat = ramp('#e6ebf5'), metal = ramp('#a8b4c8');
-      blob(g, 18, 40, 16, 13, coat);
-      rect(g, 14, 28, 8, 2, '#ffffff'); rect(g, 17, 29, 2, 10, '#c22b3a'); put(g, 17, 29, '#e8505e');
-      rect(g, 13, 29, 1, 11, coat.lo); rect(g, 22, 29, 1, 11, coat.lo);
-      rect(g, 6, 33, 6, 5, coat.lo); dots(g, [[7, 32], [9, 32], [11, 32]], '#2a6bd6'); dots(g, [[8, 32]], '#c22b3a');
-      rbNeck(g, metal);
-      rbHead(g, metal, 9, 6, 18, 17);
-      [11, 14, 17, 20, 23].forEach(x => { rect(g, x, 2 + (x % 2), 1, 4, '#d8dce8'); put(g, x, 1 + (x % 2), '#39ff88'); });
-      [13, 23].forEach(x => { blob(g, x, 14, 3.8, 3.6, ramp('#2a2a3a')); blob(g, x, 14, 2.8, 2.6, ramp('#bfe8ff')); put(g, x, 14, '#39ff88'); put(g, x - 1, 13, '#ffffff'); });
-      rect(g, 16, 13, 4, 1, '#2a2a3a');
-      rbSmile(g, 19, '#39ff88');
-    }
-  };
-
-  Object.keys(R).forEach(id => { CHARS[id] = R[id]; });
-  if (typeof spriteCache !== 'undefined') Object.keys(spriteCache).forEach(k => { delete spriteCache[k]; });
-})();
-
   </script>
 </body>
 </html>
