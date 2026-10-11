@@ -3498,6 +3498,12 @@ runAudit = function () {
       else if (avg < -2) add('ok', `Filter "${k}" is saving money`, `${o.n} coins it blocked: only ${Math.round(win * 100)}% would have won, avg ${avg.toFixed(1)}%.`);
       else add('info', `Filter "${k}" is neutral`, `${o.n} blocked coins: ${Math.round(win * 100)}% wins, avg ${avg.toFixed(1)}%.`);
     });
+    if (state.mode === 'PUMP') {
+      const cnt = {}; let n = 0;
+      market.forEach(c => { if (!isPump(c)) return; n++; const r = pumpReject(c) || 'PASS'; cnt[r] = (cnt[r] || 0) + 1; });
+      const txt = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).map(k => `${k} ${cnt[k]}`).join(', ');
+      add('info', 'Pump funnel: why coins are rejected', `${n} pump.fun coins: ${txt || 'none'}. age = too young/old, mc = outside mcap range, liq = thin, flow = buy pressure too low, weak = falling, chase = already ran, fade = volume fading, topped = off its high, phase:X = wrong phase.`);
+    }
     const ex = exitAnalysis();
     if (ex) {
       if (ex.stops >= 5 && ex.stopsWereUp8 / ex.stops > 0.25) add('warn', 'Stop-outs were winners first', `${ex.stopsWereUp8} of ${ex.stops} stop-losses had been up 8%+ before reversing. Take principal earlier (lower recoverPct) or tighten the trail.`);
