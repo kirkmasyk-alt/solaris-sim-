@@ -1,3 +1,2241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ORBITAL // HQ - Autonomous Crypto Treasury</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --bg-color: #0a0118;
+  --panel-bg: #150a30;
+  --outline: #05000f;
+  --border-color: #ff2bd6;
+  --cyan: #00f0ff;
+  --green: #39ff88;
+  --red: #ff3b5c;
+  --amber: #f9f871;
+  --purple: #b45cff;
+  --text-main: #e9f7ff;
+  --text-dim: #8a7fb8;
+  --pixel: 'Press Start 2P', 'Courier New', monospace;
+  --body: 'VT323', 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box; margin: 0; padding: 0;
+  font-family: var(--body);
+  -webkit-font-smoothing: none;
+}
+
+body {
+  background-color: var(--bg-color);
+  background-image:
+    linear-gradient(rgba(0,240,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,43,214,0.06) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px;
+  color: var(--text-main);
+  font-size: 16px;
+  padding: 10px 14px 14px 10px;
+  display: flex;
+  justify-content: center;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.14) 0px, rgba(0,0,0,0.14) 1px, transparent 1px, transparent 3px);
+}
+
+.container {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel {
+  background: var(--panel-bg);
+  border: 4px solid var(--outline);
+  box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422, 4px 4px 0 var(--outline);
+  padding: 12px;
+}
+
+.row-panel {
+  flex-wrap: wrap;
+  gap: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+}
+.row-label { font-size: 15px; color: var(--text-dim); }
+.row-btns { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.planet { image-rendering: pixelated; flex-shrink: 0; }
+.logo {
+  font-family: var(--pixel);
+  font-size: 12px;
+  color: var(--cyan);
+  text-shadow: 2px 2px 0 var(--border-color);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.logo-sub { font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap; }
+
+.header-btns {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 1 1 200px;
+}
+
+.cyber-btn {
+  --btn-bg: #12306b; --btn-hi: #00b8d4; --btn-lo: #081a40; --btn-fg: #ffffff;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 2px solid var(--outline);
+  box-shadow: inset 2px 2px 0 var(--btn-hi), inset -2px -2px 0 var(--btn-lo);
+  font-size: 15px;
+  line-height: 1;
+  padding: 6px 8px;
+  min-height: 30px;
+  cursor: pointer;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.45);
+}
+.cyber-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: inset 2px 2px 0 var(--btn-lo), inset -2px -2px 0 var(--btn-hi);
+}
+.cyber-btn:focus-visible, .tab-btn:focus-visible { outline: 2px dashed var(--amber); outline-offset: 2px; }
+.cyber-btn.danger { --btn-bg: #c2185b; --btn-hi: #ff5c9d; --btn-lo: #6a0a33; }
+.cyber-btn.accent { --btn-bg: #d4c400; --btn-hi: #fffb9a; --btn-lo: #7a7000; --btn-fg: #1a1700; text-shadow: none; }
+.cyber-btn.purple { --btn-bg: #6a2bd9; --btn-hi: #b58cff; --btn-lo: #35127a; }
+.cyber-btn.active-mode { --btn-bg: #00f0ff; --btn-hi: #b8fbff; --btn-lo: #0096a3; --btn-fg: #001014; text-shadow: none; }
+
+.net-worth-banner {
+  background: #07010f;
+  border: 4px solid var(--outline);
+  box-shadow: inset 0 0 0 3px var(--border-color), 0 0 14px rgba(255,43,214,0.35), 4px 4px 0 var(--outline);
+  padding: 16px 12px 18px;
+  text-align: center;
+}
+.net-worth-label { font-size: 16px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; }
+.net-worth-value {
+  font-family: var(--pixel);
+  font-size: 22px;
+  color: var(--cyan);
+  margin-top: 10px;
+  text-shadow: 3px 3px 0 var(--outline), 0 0 10px rgba(0,240,255,0.5);
+}
+.net-worth-value.green { color: var(--green); }
+.net-worth-value.red { color: var(--red); }
+
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stat-box {
+  background: #07010f;
+  border: 3px solid var(--outline);
+  box-shadow: inset 2px 2px 0 #2a1a66, 3px 3px 0 var(--outline);
+  padding: 8px;
+}
+.stat-label { font-size: 14px; color: var(--text-dim); text-transform: uppercase; line-height: 1.1; }
+.stat-value { font-family: var(--pixel); font-size: 10px; color: var(--cyan); margin-top: 8px; line-height: 1.4; word-break: break-all; }
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+.stat-value.amber { color: var(--amber); }
+.stat-value.purple { color: var(--purple); }
+
+.nav-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+.tab-btn {
+  background: #1a0f40;
+  border: 2px solid var(--outline);
+  box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422;
+  color: var(--text-dim);
+  font-size: 14px;
+  padding: 9px 0;
+  text-align: center;
+  cursor: pointer;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.tab-btn.active { background: var(--cyan); color: #001014; box-shadow: inset 2px 2px 0 #b8fbff, inset -2px -2px 0 #0096a3; }
+
+.tab-pane { display: none; flex-direction: column; gap: 8px; }
+.tab-pane.active { display: flex; }
+.pane-title { font-size: 16px; color: var(--cyan); margin-bottom: 4px; }
+.pane-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+
+.terminal-box {
+  background: #07010f;
+  border: 3px solid var(--outline);
+  box-shadow: inset 2px 2px 0 #2a1a66;
+  padding: 8px;
+  height: 240px;
+  overflow-y: auto;
+  font-size: 16px;
+  line-height: 1.15;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.terminal-box.log { height: 220px; gap: 2px; }
+.log-line { color: var(--green); }
+
+.feed-item { padding: 6px 8px; border-left: 4px solid var(--cyan); background: rgba(255,255,255,0.04); }
+.feed-sender { font-size: 15px; margin-bottom: 2px; letter-spacing: 1px; }
+.feed-time { font-size: 14px; color: var(--text-dim); }
+.feed-text { color: var(--text-main); font-size: 16px; }
+.feed-text a { color: var(--text-main); text-decoration: underline; }
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 15px;
+  padding: 6px 8px;
+  background: #07010f;
+  border: 2px solid var(--outline);
+  box-shadow: inset 2px 2px 0 #2a1a66;
+  margin-bottom: 4px;
+  align-items: center;
+}
+.protocol-line { font-size: 15px; color: var(--text-main); padding: 2px 0; }
+
+.agent-card {
+  background: #07010f;
+  border: 3px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  padding: 8px;
+}
+.agent-name { font-size: 16px; }
+.agent-role { font-size: 14px; color: var(--text-dim); }
+.agent-speech { font-size: 15px; margin-top: 4px; color: var(--text-main); }
+
+.position-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 0.8fr;
+  gap: 2px;
+  font-size: 14px;
+  padding: 6px 2px;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 2px solid #2a1a66;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+}
+.position-header { color: var(--amber); border-bottom: 2px solid var(--border-color); padding-bottom: 4px; cursor: default; }
+.empty-note { text-align: center; color: var(--text-dim); padding: 16px; }
+.section-title { font-size: 15px; color: var(--amber); margin: 10px 0 4px; border-bottom: 2px solid var(--border-color); }
+
+#orbital-table {
+  width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+  border: 3px solid var(--outline);
+  box-shadow: 0 0 0 2px var(--cyan), 0 0 16px rgba(0,240,255,0.35);
+  cursor: pointer;
+  touch-action: manipulation;
+  background: #07010f;
+}
+.scene-caption { font-size: 16px; color: var(--text-dim); min-height: 20px; padding: 0 2px 4px; }
+#war-room-container { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cyber-btn:active { transform: none; }
+}
+
+.dialog-overlay { position: fixed; inset: 0; background: rgba(5,0,15,0.85); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+.dialog-overlay.open { display: flex; }
+.dialog-box { width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; background: var(--panel-bg); border: 4px solid var(--outline); box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422, 0 0 0 2px var(--cyan); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.dialog-title { font-family: var(--pixel); font-size: 11px; color: var(--cyan); text-shadow: 2px 2px 0 var(--border-color); line-height: 1.4; }
+.dialog-msg { font-size: 16px; color: var(--text-dim); }
+.dialog-label { font-size: 15px; color: var(--text-dim); }
+.dialog-input { width: 100%; background: #07010f; border: 3px solid var(--outline); box-shadow: inset 2px 2px 0 #2a1a66; color: var(--text-main); font-size: 18px; padding: 8px; }
+.dialog-input:focus-visible { outline: 2px dashed var(--amber); outline-offset: 2px; }
+.dialog-btns { display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px; }
+
+.agent-card { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.agent-portrait { display: block; width: 72px; height: 80px; image-rendering: pixelated; border: 3px solid; background: #150a30; flex-shrink: 0; }
+.agent-body { min-width: 0; flex: 1; }
+.agent-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 4px; }
+.chip { background: #150a30; border: 2px solid var(--outline); padding: 2px 4px; text-align: center; font-size: 13px; color: var(--text-dim); line-height: 1.1; }
+.chip strong { display: block; color: var(--text-main); font-size: 15px; word-break: break-all; }
+.dialog-msg { white-space: pre-line; }
+#war-room-container { max-height: 460px; }
+
+.audit-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="panel header">
+      <div class="brand">
+        <svg class="planet" width="30" height="30" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">
+          <g fill="#00f0ff"><rect x="4" y="2" width="4" height="1"/><rect x="3" y="3" width="6" height="1"/><rect x="2" y="4" width="8" height="4"/><rect x="3" y="8" width="6" height="1"/><rect x="4" y="9" width="4" height="1"/></g>
+          <g fill="#2a7fc0"><rect x="6" y="6" width="4" height="2"/><rect x="5" y="8" width="4" height="1"/></g>
+          <g fill="#c8f3ff"><rect x="4" y="3" width="2" height="1"/><rect x="3" y="4" width="2" height="1"/></g>
+          <g fill="#ff2bd6"><rect x="0" y="7" width="2" height="1"/><rect x="2" y="6" width="8" height="1"/><rect x="10" y="5" width="2" height="1"/></g>
+        </svg>
+        <div>
+          <div class="logo">ORBITAL // HQ</div>
+          <div class="logo-sub">PAPER TRADING // V16.6</div>
+        </div>
+      </div>
+      <div class="header-btns">
+        <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
+        <button class="cyber-btn accent" onclick="adjustFunds()">FUND</button>
+        <button class="cyber-btn" onclick="promptApiKey()">KEY</button>
+        <button class="cyber-btn" onclick="requestBriefing()">BRIEF</button>
+        <button class="cyber-btn" id="btn-sound" onclick="toggleSound()">SND ON</button>
+        <button class="cyber-btn danger" onclick="freshWipe()">WIPE</button>
+      </div>
+    </div>
+
+    <div class="panel row-panel">
+      <span class="row-label">OPERATIONAL MODE:</span>
+      <div class="row-btns">
+        <button id="btn-mode-growth" class="cyber-btn" onclick="setTradingMode('GROWTH')">GROWTH</button>
+        <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER</button>
+        <button id="btn-mode-launch" class="cyber-btn" onclick="setTradingMode('LAUNCH')">🚀 LAUNCH</button>
+      </div>
+    </div>
+
+    <div class="panel row-panel">
+      <span class="row-label">DECISIONS:</span>
+      <div class="row-btns">
+        <button id="btn-dec-council" class="cyber-btn" onclick="setDecisionMode('COUNCIL')">COUNCIL</button>
+        <button id="btn-dec-auto" class="cyber-btn" onclick="setDecisionMode('AUTO')">⚙ AUTO (NO AI)</button>
+      </div>
+    </div>
+
+    <div class="net-worth-banner">
+      <div class="net-worth-label">Total Treasury Net Worth</div>
+      <div class="net-worth-value" id="net-worth">$100.00</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-label">Realized P&amp;L</div><div class="stat-value green" id="realized-pnl">+$0.00</div></div>
+      <div class="stat-box"><div class="stat-label">Unrealized P&amp;L</div><div class="stat-value green" id="unrealized-pnl">+$0.00</div></div>
+      <div class="stat-box"><div class="stat-label">Total Fees Paid</div><div class="stat-value amber" id="total-fees">$0.00</div></div>
+      <div class="stat-box"><div class="stat-label">Bot Bankroll</div><div class="stat-value amber" id="cash-balance">$100.00</div></div>
+      <div class="stat-box"><div class="stat-label">Main Vault</div><div class="stat-value purple" id="vault-balance">$0.00</div></div>
+      <div class="stat-box"><div class="stat-label">Coins Seen</div><div class="stat-value" id="scanned-count">0</div></div>
+      <div class="stat-box"><div class="stat-label">Hot (Buyable)</div><div class="stat-value green" id="hot-count">0</div></div>
+      <div class="stat-box"><div class="stat-label">Benched</div><div class="stat-value amber" id="benched-count">0</div></div>
+      <div class="stat-box"><div class="stat-label">Feeds Online</div><div class="stat-value purple" id="feeds-count">--</div></div>
+    </div>
+
+    <div class="nav-tabs" role="tablist">
+      <button class="tab-btn active" data-tab="hub">Hub</button>
+      <button class="tab-btn" data-tab="council">Council</button>
+      <button class="tab-btn" data-tab="news">News</button>
+      <button class="tab-btn" data-tab="positions">Positions</button>
+      <button class="tab-btn" data-tab="ledger">Ledger</button>
+      <button class="tab-btn" data-tab="status">Status</button>
+      <button class="tab-btn" data-tab="warroom">War Room</button>
+      <button class="tab-btn" id="tab-btn-audit" data-tab="audit">Audit</button>
+    </div>
+
+    <div id="tab-hub" class="tab-pane active panel">
+      <div class="pane-head">
+        <div class="pane-title">// DISCOVERY ENGINE LOG</div>
+        <button class="cyber-btn" onclick="requestBriefing()">SUMMARY</button>
+      </div>
+      <div class="terminal-box log" id="system-log"></div>
+    </div>
+
+    <div id="tab-council" class="tab-pane panel">
+      <div class="pane-title">// WHALE CONSENSUS &amp; COUNCIL FEED</div>
+      <div class="terminal-box" id="council-feed-container"></div>
+    </div>
+
+    <div id="tab-news" class="tab-pane panel">
+      <div class="pane-title">// NEWS_HAWK &amp; WHALE_EYE LIVE WIRE</div>
+      <div class="terminal-box" id="whale-news-container"></div>
+    </div>
+
+    <div id="tab-positions" class="tab-pane panel">
+      <div class="pane-title">// OPEN HOLDINGS (TAP FOR DEEP INSPECT)</div>
+      <div class="terminal-box" id="positions-container">
+        <div class="position-row position-header">
+          <div>ASSET</div><div>HOLDING</div><div>AVG COST</div><div>P&amp;L ($)</div><div>ACTION</div>
+        </div>
+        <div id="positions-list"></div>
+        <div class="section-title">// ARCHIVE (LOSERS &amp; FLAT COINS ONLY)</div>
+        <div id="archive-list"></div>
+      </div>
+    </div>
+
+    <div id="tab-ledger" class="tab-pane panel">
+      <div class="pane-title">// COMPLETED TRANSACTION LEDGER</div>
+      <div class="terminal-box" id="ledger-container" style="height: 320px;">
+        <div class="position-row position-header" style="grid-template-columns: 1fr 1.2fr 1fr 1fr; cursor: default;">
+          <div>TIME</div><div>ASSET</div><div>TRIGGER</div><div>P&amp;L ($)</div>
+        </div>
+        <div id="ledger-list"></div>
+      </div>
+    </div>
+
+    <div id="tab-status" class="tab-pane panel">
+      <div class="pane-title">// SYSTEM CONNECTION &amp; SOURCE STATUS</div>
+      <div class="status-row"><span>OPERATIONAL MODE:</span> <strong id="status-mode-label" style="color: var(--cyan);">GROWTH MODE</strong></div>
+      <div class="status-row"><span>DECISION MODE:</span> <strong id="status-decision" style="color: var(--cyan);">COUNCIL</strong></div>
+      <div class="status-row"><span>MARKET FEED:</span> <strong id="status-feed" style="color: var(--text-dim);">CONNECTING</strong></div>
+      <div class="status-row"><span>NEWS FEED:</span> <strong id="status-news" style="color: var(--text-dim);">CONNECTING</strong></div>
+      <div class="status-row"><span>SCAN FREQUENCY:</span> <strong id="status-scan" style="color: var(--green);">60 SECONDS</strong></div>
+      <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
+      <div class="status-row"><span>OPENAI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
+      <div class="pane-title" style="margin-top: 8px;">// BUY PROTOCOL (WHALE GATED)</div>
+      <div id="protocol-box"></div>
+      <div class="pane-title" style="margin-top: 8px;">// LEARNED RULES</div>
+      <div id="lessons-box"></div>
+    </div>
+
+    <div id="tab-warroom" class="tab-pane panel">
+      <div class="pane-title">// WAR ROOM</div>
+      <canvas id="orbital-table" width="320" height="200" role="img" aria-label="Animated pixel scene of the eight trading agents around a table"></canvas>
+      <div id="scene-caption" class="scene-caption">Tap an agent to see who they are.</div>
+      <div id="war-room-container"></div>
+    </div>
+
+    <div id="tab-audit" class="tab-pane panel">
+      <div class="pane-title">// AUDITOR-7 // SYSTEM INSPECTOR</div>
+      <div id="audit-head"></div>
+      <div class="audit-btns">
+        <button class="cyber-btn" onclick="runAuditNow()">RUN AUDIT</button>
+        <button class="cyber-btn accent" onclick="copyReport()">COPY REPORT</button>
+        <button class="cyber-btn purple" onclick="askAuditor()">ASK AI</button>
+        <button class="cyber-btn danger" onclick="resetOverrides()">RESET RULES</button>
+      </div>
+      <div id="audit-status" class="scene-caption"></div>
+      <div class="terminal-box" id="audit-findings" style="height: 300px;"></div>
+      <div class="pane-title">// AUDITOR ANSWER</div>
+      <div class="terminal-box" id="audit-answer" style="height: 220px;"></div>
+    </div>
+
+  </div>
+
+  <!-- Dialog Overlay -->
+  <div id="dialog-overlay" class="dialog-overlay"><div id="dialog-box" class="dialog-box" role="dialog" aria-modal="true"></div></div>
+
+  <!-- Coin Inspector Modal -->
+  <div id="inspector-overlay" class="dialog-overlay">
+    <div id="inspector-box" class="dialog-box" role="dialog" aria-modal="true">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+        <img id="insp-logo" alt="" src="" style="width: 32px; height: 32px; image-rendering: pixelated; border-radius: 4px; display: none; background: #2a1a66;" />
+        <div class="dialog-title" id="insp-title" style="margin-bottom: 0;">// COIN DEEP INSPECT</div>
+      </div>
+      <div class="terminal-box" id="insp-content" style="height: 160px; font-size: 14px;"></div>
+      <div style="background: #07010f; border: 2px solid var(--outline); padding: 4px; text-align: center;">
+        <canvas id="insp-chart" width="400" height="110" style="width: 100%; height: 100px; image-rendering: pixelated; display: block;"></canvas>
+      </div>
+      <div class="dialog-btns" style="margin-top: 6px;">
+        <button class="cyber-btn accent" onclick="closeInspector()">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+'use strict';
+/* ORBITAL // HQ — paper-trading dashboard. Everything here is simulated; no real funds move. */
+
+/* ============================== CONFIG ============================== */
+const CFG = {
+  startBankroll: 100,
+  entryPct: 0.20,
+  maxSpendPctOfLiq: 0.02,
+  minCash: 5,
+  feeRate: 0.003,
+  baseSlippage: 0.005,
+  stopLossPct: -3.0,
+  takeProfitPct: 15.0,
+  staleExitMs: 2 * 60 * 60 * 1000,
+  scanEveryMs: 60000,
+  newsEveryMs: 120000,
+  recentKeepMs: 90000,
+  staleDataMs: 60000,
+  minVolumeH1: 10000,
+  minTurnover: 0.15,
+  minTxnsH1: 40,
+  minBuyRatio: 0.55,
+  topPicks: 5,
+  maxOpenPositions: 6,
+  minLiquidity: 30000,
+  skipClones: true,
+  minAgeMin: 15,
+  majorLeverage: 3.0,
+  stableMinLiq: 500000,
+  stableTargetProfitUsd: 1.00,
+  launch: {
+    maxMc: 5000,
+    maxAgeMin: 10,
+    minLiq: 2000,
+    minTxns: 10,
+    minBuyRatio: 0.60,
+    entryPct: 0.05,
+    baseSlippage: 0.03,
+    stopPct: -20,
+    tier1Pct: 100,
+    tier2Pct: 400,
+    trailPct: 30,
+    staleMs: 30 * 60 * 1000,
+    stalePct: 10
+  },
+  sniperMaxLiq: 300000,
+  councilBlockMs: 5 * 60 * 1000,
+  openaiModel: 'gpt-4o-mini'
+};
+
+const CFG_DEFAULTS = JSON.parse(JSON.stringify(CFG));
+
+const TUNABLE = {
+  takeProfitPct: { min: 1, max: 30 },
+  stopLossPct: { min: -30, max: -1 },
+  entryPct: { min: 0.02, max: 0.3 },
+  maxSpendPctOfLiq: { min: 0.002, max: 0.05 },
+  maxOpenPositions: { min: 1, max: 20 },
+  minLiquidity: { min: 0, max: 200000 },
+  minVolumeH1: { min: 1000, max: 200000 },
+  minTurnover: { min: 0.02, max: 3 },
+  minTxnsH1: { min: 5, max: 500 },
+  minBuyRatio: { min: 0.4, max: 0.8 },
+  minAgeMin: { min: 0, max: 180 },
+  scanEveryMs: { min: 30000, max: 120000, reload: true }
+};
+
+const diag = { hotZero: 0, aiErr: 0, aiMsg: '' };
+const errorBuf = [];
+const logBuf = [];
+let auditResult = [];
+let auditAnswer = { text: '', props: [] };
+let symbolTop = {};
+const auditSeen = {};
+
+const HOUR = 60 * 60 * 1000;
+const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR };
+const STORE_KEY = 'orbital_state_v11';
+
+const AGENT_JOBS = {
+  boss: 'Supervises the swarm. Enforces whale flow consensus and multi-agent agreement before approving any buy order.',
+  announcer: 'WHALE_EYE: Continuously monitors volume spikes and buy pressure, filtering out weak tokens.',
+  news: 'NEWS_HAWK: Reads crypto headlines from RSS feeds and announces matching asset news.',
+  finance: 'KIRKTRON 9001: Manages principal recovery, free runners, and dynamic hold horizons.',
+  risk: 'RISK_CORE: Stop-loss firewall and veto authority. Blocks any trade with negative flow pressure.',
+  trader: 'ALPHA_X: Executes approved trades only when WHALE_EYE and COUNCIL give the green light.',
+  macro: 'MACRO_9: Momentum scorer. Ranks candidates by breakout velocity and volume turnover.',
+  cfo: 'ROBBIEBOT 9000: Vault sweeper. Moves a share of every winning trade into the secure vault.'
+};
+
+const AGENTS = [
+  { id: 'boss',      name: 'ORCHESTRATOR-1', role: 'Treasury Supervisor',     color: '#ff2bd6' },
+  { id: 'announcer', name: 'WHALE_EYE',      role: 'Whale Flow Watcher',      color: '#00f0ff' },
+  { id: 'news',      name: 'NEWS_HAWK',      role: 'Live News Announcer',     color: '#f9f871' },
+  { id: 'finance',   name: 'KIRKTRON 9001',  role: 'Duration & Vault Core',   color: '#4d8bff' },
+  { id: 'risk',      name: 'RISK_CORE',      role: 'Stop-Loss Firewall',      color: '#ff9a3c' },
+  { id: 'trader',    name: 'ALPHA_X',        role: 'Swap Executor',           color: '#ff3b5c' },
+  { id: 'macro',     name: 'MACRO_9',        role: 'Momentum Duration Scorer',color: '#b45cff' },
+  { id: 'cfo',       name: 'ROBBIEBOT 9000', role: 'Vault Sweeper',           color: '#39ff88' }
+].map(a => Object.assign(a, { says: 'Standing by.', job: AGENT_JOBS[a.id] }));
+
+function defaultState() {
+  return {
+    cash: CFG.startBankroll, vault: 0, sweepPct: 20,
+    positions: {}, costBasis: {}, symbols: {}, entryTimes: {}, peaks: {}, tiers: {},
+    archive: {}, realizedPnl: 0, fees: 0, txCount: 0,
+    mode: 'GROWTH', decision: 'COUNCIL', sound: true,
+    stats: {}, ledger: {}, tradePnl: {}, entryFeat: {}, entryCost: {}, runnerRecovered: {}, journal: [], overrides: {},
+    trades: [], history: [], lastSnap: 0
+  };
+}
+
+function loadState() {
+  const s = defaultState();
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') Object.assign(s, parsed);
+    }
+  } catch (e) { /* fresh state */ }
+  const now = Date.now();
+  Object.keys(s.archive).forEach(a => {
+    const e = s.archive[a];
+    if (!e || e.until <= now || (e.pnl || 0) > 0) delete s.archive[a];
+  });
+  return s;
+}
+
+function saveState() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+}
+
+const state = loadState();
+Object.keys(state.overrides || {}).forEach(k => { if (TUNABLE[k] && isFinite(state.overrides[k])) CFG[k] = state.overrides[k]; });
+const market = new Map();
+const councilFeed = [];
+const whaleFeed = [];
+const whaleSeen = {};
+let liveNews = [];
+let newsStatus = 'CONNECTING';
+let feedStatus = 'CONNECTING';
+let lastScan = { seen: 0, ok: 0, req: 0 };
+let scanCount = 0;
+let scanning = false;
+let councilBusy = false;
+const proposalBlock = {};
+const noFeedWarned = new Set();
+const seenNews = new Set();
+let newsBootstrapped = false;
+let activeTab = 'hub';
+
+const $ = id => document.getElementById(id);
+function setText(id, v) { const el = $(id); if (el) el.textContent = v; }
+
+function escapeHtml(str) {
+  return String(str === undefined || str === null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function fmtCurrency(v) { return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtSigned(v) { return (v >= 0 ? '+' : '-') + fmtCurrency(Math.abs(v)); }
+function fmtPrice(v) {
+  if (!(v > 0)) return '$0';
+  if (v >= 0.01) return '$' + v.toFixed(2);
+  return '$' + v.toFixed(Math.min(12, 2 - Math.floor(Math.log10(v))));
+}
+function clock() { return new Date().toTimeString().split(' ')[0]; }
+
+async function safeJson(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) { return null; }
+}
+
+function log(msg) {
+  logBuf.push(`[${clock()}] ${msg}`);
+  if (logBuf.length > 80) logBuf.shift();
+  const box = $('system-log');
+  if (!box) return;
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.textContent = `[${clock()}] ${msg}`;
+  box.appendChild(line);
+  while (box.children.length > 150) box.removeChild(box.firstChild);
+  box.scrollTop = box.scrollHeight;
+}
+
+function bump(id, key, amt) {
+  const st = state.stats[id] || (state.stats[id] = {});
+  st[key] = (st[key] || 0) + (amt === undefined ? 1 : amt);
+}
+function stat(id, key) { return (state.stats[id] && state.stats[id][key]) || 0; }
+
+function agentSay(id, text, opts) {
+  const a = AGENTS.find(x => x.id === id);
+  if (!a) return;
+  a.says = text;
+  try { ROBOT.speak(id, 2600); } catch (e) { /* cosmetics */ }
+  const led = state.ledger[id] || (state.ledger[id] = []);
+  led.unshift({ t: new Date().toLocaleTimeString(), text });
+  if (led.length > 12) led.pop();
+  if (opts && opts.quiet) return;
+  councilFeed.unshift({ sender: a.name, text, color: a.color, time: new Date().toLocaleTimeString() });
+  if (councilFeed.length > 40) councilFeed.pop();
+}
+
+function logTrade(kind, text, pnl) {
+  state.trades.unshift({ t: Date.now(), kind, text, pnl: pnl === undefined ? null : pnl });
+  if (state.trades.length > 80) state.trades.pop();
+}
+
+let audioCtx = null;
+function getAudio() {
+  if (!state.sound) return null;
+  try {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  } catch (e) { return null; }
+}
+function tone(freq, delay, dur, type, vol) {
+  const ctx = getAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime + delay;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'square';
+  osc.frequency.setValueAtTime(freq, t);
+  gain.gain.setValueAtTime(vol || 0.05, t);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(t); osc.stop(t + dur + 0.02);
+}
+const SFX = {
+  click() { tone(880, 0, 0.04, 'square', 0.04); },
+  tab()   { tone(660, 0, 0.05, 'square', 0.04); tone(990, 0.05, 0.05, 'square', 0.04); },
+  buy()  { tone(988, 0, 0.07, 'square', 0.05); tone(1319, 0.07, 0.14, 'square', 0.05); },
+  win()  { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.08, 0.12, 'square', 0.05)); },
+  loss() { [392, 330, 262, 196].forEach((f, i) => tone(f, i * 0.1, 0.14, 'triangle', 0.08)); },
+  news() { tone(1568, 0, 0.06, 'square', 0.04); tone(1319, 0.08, 0.1, 'square', 0.04); }
+};
+function playSfx(name) { try { if (SFX[name]) SFX[name](); } catch (e) {} }
+function toggleSound() {
+  state.sound = !state.sound;
+  saveState();
+  renderAll();
+  if (state.sound) { getAudio(); SFX.news(); }
+}
+
+function cleanSymbol(s) { return String(s || '').toUpperCase().replace(/[<>&"'`\\]/g, '').slice(0, 20); }
+
+function toCoin(p) {
+  if (!p || p.chainId !== 'solana' || !p.priceUsd || !p.baseToken || !p.baseToken.address) return null;
+  const liquidity = (p.liquidity && p.liquidity.usd) || 0;
+  const price = parseFloat(p.priceUsd);
+  if (!(liquidity > 0) || !(price > 0)) return null;
+  const symbol = cleanSymbol(p.baseToken.symbol);
+  if (!symbol) return null;
+  const pc = p.priceChange || {}, tx = (p.txns && p.txns.h1) || {};
+  return {
+    address: p.baseToken.address, symbol, price, liquidity,
+    change5m: pc.m5 || 0, change1h: pc.h1 || 0, change24h: pc.h24 || 0,
+    volumeH1: (p.volume && p.volume.h1) || 0,
+    buysH1: tx.buys || 0, sellsH1: tx.sells || 0,
+    ageMin: p.pairCreatedAt ? (Date.now() - p.pairCreatedAt) / 60000 : null,
+    marketCap: p.marketCap || p.fdv || null,
+    seenAt: Date.now()
+  };
+}
+
+function toCoinGT(p) {
+  const a = p && p.attributes;
+  const baseId = p && p.relationships && p.relationships.base_token && p.relationships.base_token.data && p.relationships.base_token.data.id;
+  if (!a || !baseId) return null;
+  const address = String(baseId).replace(/^solana_/, '');
+  const price = parseFloat(a.base_token_price_usd);
+  const liquidity = parseFloat(a.reserve_in_usd);
+  const symbol = cleanSymbol(String(a.name || '').split(' / ')[0]);
+  if (!address || !(price > 0) || !(liquidity > 0) || !symbol) return null;
+  const pc = a.price_change_percentage || {}, vol = a.volume_usd || {};
+  const tx = (a.transactions && a.transactions.h1) || {};
+  const created = a.pool_created_at ? Date.parse(a.pool_created_at) : NaN;
+  return {
+    address, symbol, price, liquidity,
+    change5m: parseFloat(pc.m5) || 0, change1h: parseFloat(pc.h1) || 0, change24h: parseFloat(pc.h24) || 0,
+    volumeH1: parseFloat(vol.h1) || 0,
+    buysH1: tx.buys || 0, sellsH1: tx.sells || 0,
+    ageMin: isNaN(created) ? null : (Date.now() - created) / 60000,
+    marketCap: parseFloat(a.market_cap_usd) || parseFloat(a.fdv_usd) || null,
+    seenAt: Date.now()
+  };
+}
+
+function isMajorWave(coin) {
+  return coin.symbol === 'SOL' || coin.symbol === 'WSOL' || coin.liquidity >= CFG.stableMinLiq;
+}
+
+function modeAllows(c) { return state.mode !== 'SNIPER' || c.liquidity <= CFG.sniperMaxLiq; }
+function isFresh(c) { return c && Date.now() - c.seenAt < CFG.staleDataMs; }
+
+function isActive(c) {
+  if (isMajorWave(c)) {
+    return c.change5m <= -1.5 && c.change5m >= -8.0;
+  }
+  if (c.ageMin !== null && c.ageMin !== undefined && c.ageMin < CFG.minAgeMin) return false;
+  const tx = c.buysH1 + c.sellsH1;
+  const buyRatio = c.buysH1 / tx;
+  
+  if (buyRatio < CFG.minBuyRatio) return false;
+  if (c.liquidity < CFG.minLiquidity) return false;
+  if (c.volumeH1 < CFG.minVolumeH1) return false;
+  if (c.volumeH1 / c.liquidity < CFG.minTurnover) return false;
+  if (tx < CFG.minTxnsH1) return false;
+  return true;
+}
+
+function determineHoldHorizon(c) {
+  const turnover = c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0;
+  const tx = Math.max(1, c.buysH1 + c.sellsH1);
+  const buyRatio = c.buysH1 / tx;
+  if (isMajorWave(c)) return 'MULTI-DAY WAVE';
+  if (turnover > 1.5 && buyRatio > 0.65) return 'MOMENTUM SURGE (Hours)';
+  if (turnover > 0.5) return 'QUICK SCALP (Minutes)';
+  return 'PATIENT HOLD';
+}
+
+function activityScore(c) {
+  const tx = Math.max(1, c.buysH1 + c.sellsH1);
+  return (c.volumeH1 / c.liquidity) * (c.buysH1 / tx) * (1 + Math.max(0, c.change1h) / 50);
+}
+
+function isLaunchCandidate(c) {
+  if (isMajorWave(c)) return false;
+  const L = CFG.launch;
+  if (c.ageMin === null || c.ageMin === undefined || c.ageMin > L.maxAgeMin) return false;
+  if (!(c.marketCap > 0) || c.marketCap > L.maxMc) return false;
+  if (c.liquidity < L.minLiq) return false;
+  const tx = c.buysH1 + c.sellsH1;
+  return tx >= L.minTxns && c.buysH1 / tx >= L.minBuyRatio;
+}
+
+function isBuyable(c) {
+  if (classifyDipOrDump(c) === 'DUMP' && !isMajorWave(c)) return false;
+  return state.mode === 'LAUNCH' ? isLaunchCandidate(c) : (isActive(c) && modeAllows(c) && !(CFG.skipClones && isClone(c)));
+}
+
+function entryScore(c) {
+  if (isMajorWave(c)) return Math.abs(c.change5m) * 15;
+  if (state.mode === 'LAUNCH') return c.buysH1 * (c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1));
+  return activityScore(c);
+}
+
+function classifyDipOrDump(c) {
+  const tx = Math.max(1, c.buysH1 + c.sellsH1);
+  const buyRatio = c.buysH1 / tx;
+  const turnover = c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0;
+  if (c.change5m < 0) {
+    if (buyRatio < 0.48 || turnover < 0.12) return 'DUMP';
+    if (buyRatio >= 0.52 && turnover >= 0.15) return 'HEALTHY DIP';
+  }
+  return 'STABLE';
+}
+
+function isClone(c) {
+  const t = symbolTop[c.symbol];
+  return !!t && t.address !== c.address && t.liquidity > c.liquidity;
+}
+
+const FEEDS = {};
+let scanReq = 0, scanFail = 0, gtRot = 0;
+async function feedJson(name, url) {
+  const f = FEEDS[name] || (FEEDS[name] = { ok: 0, fail: 0, code: 0, msg: '', until: 0 });
+  const now = Date.now();
+  if (f.until > now) return null;
+  scanReq++;
+  try {
+    const res = await fetch(url);
+    f.code = res.status;
+    if (res.status === 429) { f.fail++; scanFail++; f.msg = 'rate limited'; f.until = now + 60000; return null; }
+    if (!res.ok) { f.fail++; scanFail++; f.msg = 'HTTP ' + res.status; return null; }
+    const d = await res.json();
+    f.ok++; f.msg = 'ok';
+    return d;
+  } catch (e) {
+    f.fail++; scanFail++; f.code = 0; f.msg = 'offline'; f.until = now + 15000;
+    return null;
+  }
+}
+
+function heldAddrs() { return Object.keys(state.positions).filter(a => state.positions[a] > 0.00001); }
+function hotCoins() { return Array.from(market.values()).filter(c => isFresh(c) && isBuyable(c)); }
+
+async function scanMarket() {
+  if (scanning) return;
+  scanning = true;
+  scanReq = 0; scanFail = 0;
+  const getJson = (name, url) => feedJson(name, url);
+
+  try {
+    const GT = 'https://api.geckoterminal.com/api/v2/networks/solana';
+    const DS = 'https://api.dexscreener.com';
+
+    const GT_LIST = [
+      ['gt-trending', `${GT}/trending_pools?page=1`],
+      ['gt-new-1', `${GT}/new_pools?page=1`],
+      ['gt-new-2', `${GT}/new_pools?page=2`],
+      ['gt-volume', `${GT}/pools?page=1&sort=h24_volume_usd_desc`],
+      ['gt-txcount', `${GT}/pools?page=1&sort=h24_tx_count_desc`],
+      ['gt-dex-trending', `${GT}/dex/trending_pools?page=1`],
+      ['gt-top-pools', `${GT}/pools?page=1`]
+    ];
+    const gtPick = [0, 1, 2].map(k => GT_LIST[(gtRot + k) % GT_LIST.length]);
+    gtRot = (gtRot + 3) % GT_LIST.length;
+    const [gtPools, boosts, profiles] = await Promise.all([
+      Promise.all(gtPick.map(x => getJson(x[0], x[1]))),
+      getJson('ds-boosts', `${DS}/token-boosts/latest/v1`),
+      getJson('ds-profiles', `${DS}/token-profiles/latest/v1`)
+    ]);
+
+    const addrs = new Set(heldAddrs());
+    [boosts, profiles].forEach(list => {
+      if (Array.isArray(list)) list.forEach(t => { if (t && t.chainId === 'solana' && t.tokenAddress) addrs.add(t.tokenAddress); });
+    });
+    const all = Array.from(addrs).slice(0, 90), chunks = [];
+    for (let i = 0; i < all.length; i += 30) chunks.push(all.slice(i, i + 30));
+    const lookups = await Promise.all(chunks.map(c => getJson('ds-lookup', `${DS}/tokens/v1/solana/${c.join(',')}`)));
+
+    const fresh = new Map();
+    const put = c => {
+      if (!c) return;
+      const prev = fresh.get(c.address);
+      if (!prev || prev.liquidity < c.liquidity) fresh.set(c.address, c);
+    };
+    gtPools.forEach(d => { if (d && Array.isArray(d.data)) d.data.forEach(p => put(toCoinGT(p))); });
+    lookups.forEach(d => { if (Array.isArray(d)) d.forEach(p => put(toCoin(p))); });
+
+    if (fresh.size > 0) {
+      const now = Date.now();
+      fresh.forEach((c, a) => market.set(a, c));
+      for (const [a, c] of market) {
+        if (!fresh.has(a) && now - c.seenAt > CFG.recentKeepMs && !(state.positions[a] > 0)) market.delete(a);
+      }
+    }
+
+    symbolTop = {};
+    market.forEach(c => { const t = symbolTop[c.symbol]; if (!t || c.liquidity > t.liquidity) symbolTop[c.symbol] = c; });
+    lastScan = { seen: market.size, ok: scanReq - scanFail, req: scanReq };
+    feedStatus = lastScan.req === 0 ? 'PAUSED' : (scanFail === scanReq ? 'OFFLINE' : `ONLINE [${lastScan.ok}/${lastScan.req}]`);
+    scanCount++;
+    bump('announcer', 'scans');
+
+    const hot = hotCoins();
+    diag.hotZero = hot.length ? 0 : diag.hotZero + 1;
+    announceHot(hot);
+  } catch (err) {
+    console.warn('Scan error:', err);
+  } finally {
+    scanning = false;
+    try { runAudit(); } catch (e) { console.error('Audit error:', e); }
+    renderAll();
+    runTradingLoop();
+  }
+}
+
+function announceHot(hot) {
+  const now = Date.now();
+  hot.forEach(c => {
+    if (whaleSeen[c.address] && now - whaleSeen[c.address] < 30 * 60 * 1000) return;
+    whaleSeen[c.address] = now;
+    bump('announcer', 'alerts');
+    const ratio = Math.round(100 * c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1));
+    whaleFeed.unshift({ title: `${c.symbol} heating up`, desc: `$${Math.round(c.volumeH1).toLocaleString()} 1h volume, ${ratio}% buys, liquidity ${fmtCurrency(c.liquidity)}`, time: new Date().toLocaleTimeString() });
+    if (whaleFeed.length > 30) whaleFeed.pop();
+    agentSay('announcer', `WHALE_EYE: Flagged ${c.symbol} with ${ratio}% buy pressure and $${Math.round(c.volumeH1).toLocaleString()} volume.`);
+  });
+}
+
+const NEWS_FEEDS = [
+  { name: 'COINTELEGRAPH', url: 'https://cointelegraph.com/rss' },
+  { name: 'COINDESK', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/' },
+  { name: 'DECRYPT', url: 'https://decrypt.co/feed' }
+];
+
+async function fetchLiveNews() {
+  const results = await Promise.all(NEWS_FEEDS.map(async f => {
+    const d = await safeJson('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(f.url));
+    if (!d || d.status !== 'ok' || !Array.isArray(d.items)) return null;
+    return d.items.slice(0, 8).map(n => ({
+      id: n.guid || n.link,
+      title: String(n.title || ''),
+      source: f.name,
+      ts: Date.parse(String(n.pubDate || '').replace(' ', 'T') + 'Z') || 0,
+      url: /^https?:\/\//.test(n.link || '') ? n.link : ''
+    }));
+  }));
+  const ok = results.filter(r => r !== null);
+  if (ok.length) {
+    liveNews = [].concat(...ok).filter(n => n.title).sort((a, b) => b.ts - a.ts).slice(0, 15)
+      .map(n => Object.assign(n, { time: n.ts ? new Date(n.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '' }));
+    newsStatus = `LIVE [${ok.length}/${NEWS_FEEDS.length} FEEDS]`;
+    const unseen = liveNews.filter(n => !seenNews.has(n.id));
+    unseen.forEach(n => seenNews.add(n.id));
+    if (unseen.length) bump('news', 'headlines', unseen.length);
+    if (newsBootstrapped && unseen.length) { agentSay('news', unseen[0].title); bump('news', 'pushed'); playSfx('news'); }
+    newsBootstrapped = true;
+  } else {
+    newsStatus = 'OFFLINE';
+  }
+  renderAll();
+}
+
+function slippage(usd, liquidity) {
+  const base = state.mode === 'LAUNCH' ? CFG.launch.baseSlippage : CFG.baseSlippage;
+  return base + Math.min(0.15, (2 * usd) / Math.max(1, liquidity));
+}
+
+function isArchived(coin) {
+  const e = state.archive[coin.address];
+  if (!e || e.until <= Date.now()) return false;
+  if (coin.change1h > 4.0 || coin.change5m > 1.5) {
+    delete state.archive[coin.address];
+    saveState();
+    log(`[PUMP UNBENCH] ${coin.symbol} unbenched on pump momentum`);
+    return false;
+  }
+  return true;
+}
+
+function archiveCoin(addr, tag, pnl) {
+  if (pnl > 0) { delete state.archive[addr]; return; }
+  state.archive[addr] = { symbol: state.symbols[addr] || '?', reason: tag, pnl, until: Date.now() + (ARCHIVE_MS[tag] || 6 * HOUR) };
+}
+
+function sellTokens(addr, coin, qty) {
+  const cost = state.costBasis[addr];
+  const fill = coin.price * (1 - slippage(qty * coin.price, coin.liquidity));
+  const gross = qty * fill;
+  const fee = gross * CFG.feeRate;
+  const net = gross - fee;
+  const pnl = net - qty * cost;
+  state.tradePnl[addr] = (state.tradePnl[addr] || 0) + pnl;
+  if (pnl > 0 && state.sweepPct > 0) {
+    const sweep = pnl * (state.sweepPct / 100);
+    bump('cfo', 'swept', sweep); bump('cfo', 'sweeps');
+    state.cash += net - sweep;
+    state.vault += sweep;
+    agentSay('cfo', `ROBBIEBOT 9000: Swept ${fmtCurrency(sweep)} into vault.`);
+  } else {
+    state.cash += net;
+  }
+  state.realizedPnl += pnl;
+  state.fees += fee;
+  state.txCount += 1;
+  return pnl;
+}
+
+function clearPosition(addr) {
+  ['positions', 'costBasis', 'entryTimes', 'peaks', 'tiers', 'tradePnl', 'entryFeat', 'entryCost', 'runnerRecovered'].forEach(k => { delete state[k][addr]; });
+}
+
+const LESSON_MIN = 8;
+const DIM_NAMES = { liq: 'Liquidity', age: 'Pool age', buys: 'Buy ratio', turn: 'Turnover', run: '1h move' };
+
+function featOf(c) {
+  const tx = Math.max(1, c.buysH1 + c.sellsH1);
+  return {
+    mode: state.mode, liq: c.liquidity, mc: c.marketCap, ageMin: c.ageMin === undefined ? null : c.ageMin,
+    buyRatio: c.buysH1 / tx, turnover: c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0, ch5m: c.change5m, ch1h: c.change1h
+  };
+}
+
+function bucketOf(f) {
+  return {
+    liq: f.liq < 5000 ? '<$5k' : f.liq < 20000 ? '$5-20k' : f.liq < 100000 ? '$20-100k' : '$100k+',
+    age: f.ageMin === null ? 'unknown' : f.ageMin < 15 ? '<15m' : f.ageMin < 120 ? '15m-2h' : f.ageMin < 1440 ? '2-24h' : '1d+',
+    buys: f.buyRatio < 0.55 ? '<55%' : f.buyRatio < 0.65 ? '55-65%' : '65%+',
+    turn: f.turnover < 0.5 ? '<0.5' : f.turnover < 2 ? '0.5-2' : '2+',
+    run: f.ch1h < 0 ? 'down' : f.ch1h < 10 ? '0-10%' : f.ch1h < 50 ? '10-50%' : '50%+'
+  };
+}
+
+function recordTrade(addr, tag, total) {
+  const f = state.entryFeat[addr], cost = state.entryCost[addr] || 0;
+  const heldMin = (Date.now() - (state.entryTimes[addr] || Date.now())) / 60000;
+  const win = total > 0;
+  bump('trader', 'closed'); if (win) bump('trader', 'wins'); bump('trader', 'pnl', total);
+  bump('macro', win ? 'pickWins' : 'pickLosses');
+  bump('finance', 'holdMin', heldMin); bump('finance', 'holds');
+  if (tag === 'STOP-LOSS CUT') bump('risk', 'stops');
+  if (tag === 'STALE EXIT') bump('finance', 'stale');
+  const rs = state.stats.risk || (state.stats.risk = {});
+  if (total < (rs.worst || 0)) rs.worst = total;
+  if (f && tag !== 'MANUAL') {
+    state.journal.push({
+      symbol: state.symbols[addr] || '?',
+      mode: f.mode,
+      b: bucketOf(f),
+      pct: cost > 0 ? (total / cost) * 100 : 0,
+      pnl: total,
+      win,
+      tag,
+      time: clock(),
+      heldMin: Math.round(heldMin)
+    });
+    if (state.journal.length > 300) state.journal.shift();
+  }
+}
+
+function computeLessons() {
+  const rows = state.journal.filter(j => j.mode === state.mode);
+  const res = { avoid: [], favor: [], n: rows.length };
+  if (rows.length < LESSON_MIN) return res;
+  const overall = rows.reduce((a, j) => a + j.pct, 0) / rows.length;
+  Object.keys(DIM_NAMES).forEach(dim => {
+    const groups = {};
+    rows.forEach(j => { (groups[j.b[dim]] = groups[j.b[dim]] || []).push(j); });
+    Object.keys(groups).forEach(bucket => {
+      const arr = groups[bucket];
+      if (arr.length < LESSON_MIN) return;
+      const avg = arr.reduce((a, j) => a + j.pct, 0) / arr.length;
+      const win = arr.filter(j => j.win).length / arr.length;
+      const item = { dim, bucket, n: arr.length, avg, win };
+      if (avg < overall - 2 && win < 0.4) res.avoid.push(item);
+      else if (avg > overall + 2 && win > 0.5) res.favor.push(item);
+    });
+  });
+  return res;
+}
+
+function lessonFor(c, avoid) {
+  if (!avoid.length) return null;
+  const b = bucketOf(featOf(c));
+  return avoid.find(l => b[l.dim] === l.bucket) || null;
+}
+
+function closePosition(addr, coin, tag, msg) {
+  const qty = state.positions[addr];
+  if (!(qty > 0)) return;
+  const sym = state.symbols[addr] || coin.symbol;
+  sellTokens(addr, coin, qty);
+  const pnl = state.tradePnl[addr];
+  recordTrade(addr, tag, pnl);
+  archiveCoin(addr, tag, pnl);
+  clearPosition(addr);
+  playSfx(pnl >= 0 ? 'win' : 'loss');
+  logTrade(tag, `${msg} ${sym}`, pnl);
+  agentSay(tag === 'STOP-LOSS CUT' ? 'risk' : 'trader', `${tag}: ${sym} closed for ${fmtSigned(pnl)}.`);
+  saveState();
+  renderAll();
+}
+
+function manualSellPosition(addr) {
+  if (!(state.positions[addr] > 0)) return;
+  const coin = market.get(addr) || { price: state.costBasis[addr], liquidity: 1e9, symbol: state.symbols[addr] || '?' };
+  closePosition(addr, coin, 'MANUAL', 'Manually liquidated');
+}
+
+async function askCouncilAI(coin) {
+  const key = (localStorage.getItem('openai_api_key') || '').trim();
+  if (!key || state.decision === 'AUTO') return { approve: true, reason: 'Auto mode approved' };
+  if (councilBusy) return null;
+  councilBusy = true;
+  try {
+    const prompt = `You are the Council of AI Agents (WHALE_EYE, RISK_CORE, MACRO_9) in ORBITAL // HQ. Evaluate this Solana token for entry:
+Symbol: ${coin.symbol}
+Price: $${coin.price}
+Liquidity: $${Math.round(coin.liquidity)}
+1h Volume: $${Math.round(coin.volumeH1)}
+1h Buys: ${coin.buysH1}, Sells: ${coin.sellsH1}
+5m Change: ${coin.change5m}%
+
+Respond ONLY in valid JSON format: {"approve": true/false, "reason": "brief rationale under 100 chars"}`;
+
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: CFG.openaiModel,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+        temperature: 0.2
+      }),
+      signal: AbortSignal.timeout(10000)
+    });
+
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    const parsed = JSON.parse(content);
+    return { approve: parsed.approve === true, reason: String(parsed.reason || '').slice(0, 140) };
+  } catch (e) {
+    diag.aiErr++;
+    diag.aiMsg = e.message;
+    return { approve: true, reason: 'OpenAI unreachable; fallback approved' };
+  } finally {
+    councilBusy = false;
+  }
+}
+
+async function openPosition(coin) {
+  const addr = coin.address;
+  if (state.positions[addr] > 0 || state.cash <= CFG.minCash || isArchived(coin)) return false;
+
+  const tx = Math.max(1, coin.buysH1 + coin.sellsH1);
+  const buyRatio = coin.buysH1 / tx;
+
+  agentSay('announcer', `WHALE_EYE: Validated ${coin.symbol} flow -> ${Math.round(buyRatio * 100)}% buy pressure.`);
+  
+  if (state.decision === 'COUNCIL' && (localStorage.getItem('openai_api_key') || '').trim()) {
+    const verdict = await askCouncilAI(coin);
+    if (!verdict.approve) {
+      agentSay('risk', `RISK_CORE: Vetoed ${coin.symbol} via Council AI. Reason: ${verdict.reason}`);
+      bump('boss', 'vetoed');
+      return false;
+    }
+    agentSay('risk', `RISK_CORE: Council AI approved ${coin.symbol}. Reason: ${verdict.reason}`);
+  }
+
+  const major = isMajorWave(coin);
+  const held = heldAddrs();
+  const majorHeldCount = held.filter(a => state.symbols[a] === 'SOL' || state.symbols[a] === 'WSOL').length;
+
+  if (major && majorHeldCount >= 2) return;
+
+  const leverage = major ? CFG.majorLeverage : 1.0;
+  const percentageWanted = state.cash * (major ? 0.30 : (state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct)) * leverage;
+  
+  const wanted = Math.max(10, Math.min(state.cash, percentageWanted));
+  const spend = Math.min(wanted, coin.liquidity * CFG.maxSpendPctOfLiq * leverage);
+  if (spend < 1) return false;
+
+  const fee = spend * CFG.feeRate;
+  const fill = coin.price * (1 + slippage(spend, coin.liquidity));
+  state.cash -= spend;
+  state.positions[addr] = (spend - fee) / fill;
+  state.costBasis[addr] = fill;
+  state.symbols[addr] = coin.symbol;
+  state.entryTimes[addr] = Date.now();
+  state.peaks[addr] = coin.price;
+  state.tiers[addr] = 0;
+  state.entryFeat[addr] = featOf(coin);
+  state.entryCost[addr] = spend;
+  state.tradePnl[addr] = 0;
+  state.runnerRecovered[addr] = false;
+  bump('trader', 'entries'); bump('macro', 'picks'); bump('boss', 'approved');
+  state.fees += fee;
+  state.txCount += 1;
+  playSfx('buy');
+
+  log(`[EXECUTION] ALPHA_X deployed ${fmtCurrency(spend)} into ${coin.symbol}`);
+  logTrade('BUY', `Verified entry on ${coin.symbol} for ${fmtCurrency(spend)}`);
+  agentSay('trader', `ALPHA_X: Successfully swapped ${fmtCurrency(spend)} for ${coin.symbol}.`);
+  saveState();
+  renderAll();
+  return true;
+}
+
+function runExits() {
+  const now = Date.now();
+  for (const addr of heldAddrs()) {
+    const coin = market.get(addr);
+    const sym = state.symbols[addr] || '?';
+    if (!isFresh(coin)) {
+      if (!noFeedWarned.has(addr)) { noFeedWarned.add(addr); log(`[WARN] No live price for ${sym}; exits paused until feed returns`); }
+      continue;
+    }
+    noFeedWarned.delete(addr);
+
+    const cost = state.costBasis[addr] || coin.price;
+    const gain = ((coin.price - cost) / cost) * 100;
+    if (!(state.peaks[addr] >= coin.price)) state.peaks[addr] = coin.price;
+    const drop = ((state.peaks[addr] - coin.price) / state.peaks[addr]) * 100;
+    const healthyDip = classifyDipOrDump(coin) === 'HEALTHY DIP';
+    const major = isMajorWave(coin);
+    const horizon = determineHoldHorizon(coin);
+
+    const launch = state.mode === 'LAUNCH';
+    const L = CFG.launch;
+    
+    const stopLimit = major ? -8.0 : (launch ? L.stopPct : CFG.stopLossPct);
+    const currentProfitUsd = (coin.price - cost) * (state.positions[addr] || 0);
+    const totalCurrentValue = state.positions[addr] * coin.price;
+
+    if (gain <= stopLimit) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
+
+    if (!state.runnerRecovered[addr] && gain >= 8.0) {
+      const initialCost = state.entryCost[addr] || (totalCurrentValue / (1 + gain / 100));
+      const sellFraction = Math.min(0.85, initialCost / totalCurrentValue);
+      const qtyToSell = state.positions[addr] * sellFraction;
+      
+      if (qtyToSell > 0) {
+        const pnl = sellTokens(addr, coin, qtyToSell);
+        state.positions[addr] -= qtyToSell;
+        state.runnerRecovered[addr] = true;
+        playSfx('win');
+        log(`[PRINCIPAL RECOVERED] Sold initial cost & profit for ${sym} | P&L: ${fmtSigned(pnl)}. Remaining bag is now a FREE RUNNER!`);
+        logTrade('PRINCIPAL', `Recovered principal & profit on ${sym}`, pnl);
+        agentSay('finance', `KIRKTRON 9001: Principal secured on ${sym}. Free runner active.`);
+        saveState();
+        continue;
+      }
+    }
+
+    if (state.runnerRecovered[addr] && drop >= 12.0 && !healthyDip) {
+      closePosition(addr, coin, 'RUNNER EXIT', 'Free runner trailing stop hit on');
+      continue;
+    }
+
+    if (major) {
+      if (currentProfitUsd >= CFG.stableTargetProfitUsd) {
+        closePosition(addr, coin, 'TAKE-PROFIT ($1+)', `Secured target profit of $${currentProfitUsd.toFixed(2)} on`);
+        continue;
+      }
+    } else if (launch) {
+      if (gain >= L.tier1Pct && state.tiers[addr] < 1) {
+        const q = state.positions[addr] * 0.5;
+        const pnl = sellTokens(addr, coin, q);
+        state.positions[addr] -= q; state.tiers[addr] = 1;
+        playSfx('win'); logTrade('TIER 1', `Sold 50% of ${sym}, cost recovered`, pnl);
+        saveState(); continue;
+      }
+      if (gain >= L.tier2Pct && state.tiers[addr] < 2) {
+        const q = state.positions[addr] * 0.5;
+        const pnl = sellTokens(addr, coin, q);
+        state.positions[addr] -= q; state.tiers[addr] = 2;
+        playSfx('win'); logTrade('TIER 2', `Sold half the rest of ${sym}`, pnl);
+        saveState(); continue;
+      }
+      if (state.tiers[addr] >= 1 && drop >= L.trailPct && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Trailing stop hit on'); continue; }
+    } else if (gain >= CFG.takeProfitPct) {
+      closePosition(addr, coin, 'TAKE-PROFIT', 'Target secured on');
+      continue;
+    }
+
+    const maxHoldTime = horizon === 'QUICK SCALP (Minutes)' ? 30 * 60 * 1000 : (horizon === 'MOMENTUM SURGE (Hours)' ? 6 * 60 * 60 * 1000 : CFG.staleExitMs);
+    if (!major && !state.runnerRecovered[addr] && now - (state.entryTimes[addr] || now) > maxHoldTime && gain < 2.0) {
+      closePosition(addr, coin, 'STALE EXIT', `Horizon (${horizon}) time elapsed, closed`);
+    }
+  }
+}
+
+async function considerEntry() {
+  if (state.cash <= CFG.minCash || councilBusy || heldAddrs().length >= CFG.maxOpenPositions) return;
+  const now = Date.now();
+  const candidates = Array.from(market.values()).filter(c =>
+    isFresh(c) && !(state.positions[c.address] > 0) && !(proposalBlock[c.address] > now) && isBuyable(c) && !isArchived(c)
+  ).sort((a, b) => entryScore(b) - entryScore(a));
+  if (!candidates.length) return;
+
+  const avoid = computeLessons().avoid;
+  const allowed = candidates.filter(c => !lessonFor(c, avoid));
+  if (!allowed.length) return;
+
+  const pick = allowed[Math.floor(Math.random() * Math.min(allowed.length, CFG.topPicks))];
+  const fresh = await feedJson('quote', `https://api.dexscreener.com/tokens/v1/solana/${pick.address}`);
+  let validPick = pick;
+  if (Array.isArray(fresh)) {
+    const match = fresh.find(p => p && p.baseToken && p.baseToken.address === pick.address);
+    if (match) { const c = toCoin(match); if (c) validPick = c; }
+  }
+
+  openPosition(validPick);
+}
+
+function runTradingLoop() {
+  try {
+    if (market.size === 0) return;
+    runExits();
+    considerEntry().catch(e => console.error('Entry error:', e));
+  } catch (err) { console.error('Loop error:', err); }
+}
+
+function setTradingMode(mode) {
+  state.mode = ['GROWTH', 'SNIPER', 'LAUNCH'].includes(mode) ? mode : 'GROWTH';
+  saveState();
+  log(`[MODE] Operational mode: ${state.mode}`);
+  renderAll();
+}
+
+function setDecisionMode(mode) {
+  state.decision = mode === 'AUTO' ? 'AUTO' : 'COUNCIL';
+  saveState();
+  log(`[DECISIONS] Mode set to ${state.decision}`);
+  renderAll();
+}
+
+function openDialog(opts) {
+  return new Promise(resolve => {
+    const overlay = $('dialog-overlay'), box = $('dialog-box');
+    if (!overlay || !box) { resolve(null); return; }
+    box.textContent = '';
+    const add = (tag, cls, text) => {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      box.appendChild(e);
+      return e;
+    };
+    add('div', 'dialog-title', opts.title);
+    if (opts.message) add('div', 'dialog-msg', opts.message);
+    const fields = {};
+    (opts.inputs || []).forEach(inp => {
+      add('label', 'dialog-label', inp.label);
+      const i = document.createElement(inp.multiline ? 'textarea' : 'input');
+      i.className = 'dialog-input';
+      if (inp.multiline) { i.rows = 7; i.style.fontSize = '13px'; } else i.type = 'text';
+      i.value = inp.value === undefined ? '' : inp.value;
+      if (inp.inputmode) i.setAttribute('inputmode', inp.inputmode);
+      i.setAttribute('autocomplete', 'off');
+      i.setAttribute('autocapitalize', 'off');
+      i.setAttribute('spellcheck', 'false');
+      box.appendChild(i);
+      fields[inp.id] = i;
+    });
+    const row = add('div', 'dialog-btns');
+    const close = () => overlay.classList.remove('open');
+    const mk = (text, cls, fn) => {
+      const b = document.createElement('button');
+      b.className = 'cyber-btn ' + cls;
+      b.textContent = text;
+      b.addEventListener('click', fn);
+      row.appendChild(b);
+    };
+    if (!opts.noCancel) mk(opts.cancelText || 'CANCEL', '', () => { close(); resolve(null); });
+    mk(opts.okText || 'OK', opts.danger ? 'danger' : 'accent', () => {
+      close();
+      const values = {};
+      Object.keys(fields).forEach(k => { values[k] = fields[k].value; });
+      resolve({ action: 'ok', values });
+    });
+    overlay.classList.add('open');
+  });
+}
+
+function num(v) { const n = parseFloat(String(v).replace(/[$,\s]/g, '')); return isNaN(n) ? null : n; }
+
+async function promptApiKey() {
+  const r = await openDialog({
+    title: 'OPENAI API KEY',
+    message: 'Stored only in this browser. Leave empty to remove it.',
+    inputs: [{ id: 'key', label: 'API key', value: localStorage.getItem('openai_api_key') || '' }],
+    okText: 'SAVE'
+  });
+  if (!r) return;
+  const key = r.values.key.trim();
+  if (key) localStorage.setItem('openai_api_key', key); else localStorage.removeItem('openai_api_key');
+  renderAll();
+}
+
+async function freshWipe() {
+  const r = await openDialog({
+    title: 'WIPE & RESET TREASURY',
+    message: 'Resets vault, positions, and trade history. Enter your new starting bankroll:',
+    inputs: [{ id: 'startFund', label: 'Starting Bankroll ($)', value: '100.00', inputmode: 'decimal' }],
+    okText: 'WIPE & START',
+    danger: true
+  });
+  if (!r) return;
+  const newBankroll = num(r.values.startFund);
+  if (newBankroll === null || newBankroll < 0) return;
+
+  const apiKey = localStorage.getItem('openai_api_key');
+  try {
+    Object.keys(localStorage).forEach(k => { if (k.startsWith('solaris_') || k.startsWith('orbital_')) localStorage.removeItem(k); });
+    if (apiKey) localStorage.setItem('openai_api_key', apiKey);
+  } catch (e) { /* ignore */ }
+
+  state.cash = newBankroll;
+  state.vault = 0;
+  state.realizedPnl = 0;
+  state.fees = 0;
+  state.txCount = 0;
+  state.positions = {};
+  state.costBasis = {};
+  state.symbols = {};
+  state.entryTimes = {};
+  state.peaks = {};
+  state.tiers = {};
+  state.archive = {};
+  state.stats = {};
+  state.ledger = {};
+  state.tradePnl = {};
+  state.entryFeat = {};
+  state.entryCost = {};
+  state.runnerRecovered = {};
+  state.journal = [];
+  state.trades = [];
+  state.history = [];
+  state.overrides = {};
+  saveState();
+
+  location.reload();
+}
+
+async function adjustFunds() {
+  const r = await openDialog({
+    title: 'SET BANKROLL',
+    message: 'Sets the active bot bankroll (paper money).',
+    inputs: [{ id: 'amt', label: 'Bankroll ($)', value: state.cash.toFixed(2), inputmode: 'decimal' }],
+    okText: 'SET'
+  });
+  if (!r) return;
+  const amt = num(r.values.amt);
+  if (amt !== null && amt >= 0) { state.cash = amt; saveState(); renderAll(); }
+}
+
+async function configureVault() {
+  const r = await openDialog({
+    title: 'VAULT',
+    message: `Vault ${fmtCurrency(state.vault)} | Bankroll ${fmtCurrency(state.cash)} | Sweep ${state.sweepPct}% of profit`,
+    inputs: [
+      { id: 'toVault', label: 'Move to vault ($)', value: '0', inputmode: 'decimal' },
+      { id: 'toCash', label: 'Move to bankroll ($)', value: '0', inputmode: 'decimal' },
+      { id: 'pct', label: 'Profit sweep % (0-100)', value: String(state.sweepPct), inputmode: 'decimal' }
+    ],
+    okText: 'SAVE'
+  });
+  if (!r) return;
+  const toVault = num(r.values.toVault) || 0, toCash = num(r.values.toCash) || 0, pct = num(r.values.pct);
+  if (toVault > 0 && state.cash >= toVault) { state.cash -= toVault; state.vault += toVault; }
+  if (toCash > 0 && state.vault >= toCash) { state.vault -= toCash; state.cash += toCash; }
+  if (pct !== null && pct >= 0 && pct <= 100) state.sweepPct = pct;
+  saveState(); renderAll();
+}
+
+function exitValue(addr) {
+  const coin = market.get(addr), qty = state.positions[addr] || 0;
+  if (!coin) return qty * (state.costBasis[addr] || 0);
+  const gross = qty * coin.price;
+  return gross * (1 - slippage(gross, coin.liquidity)) * (1 - CFG.feeRate);
+}
+
+function portfolioValue() {
+  let value = 0, cost = 0;
+  heldAddrs().forEach(a => { value += exitValue(a); cost += state.positions[a] * state.costBasis[a]; });
+  return { value, cost };
+}
+
+function requestBriefing() {
+  const p = portfolioValue();
+  const net = state.cash + state.vault + p.value;
+  agentSay('boss', `Telemetry [${state.mode}]: Net ${fmtCurrency(net)} | Vault ${fmtCurrency(state.vault)} | Bankroll ${fmtCurrency(state.cash)} | ${heldAddrs().length} open`);
+  switchTab('council');
+}
+
+function switchTab(tabId) {
+  activeTab = tabId;
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+  const target = $('tab-' + tabId);
+  if (target) target.classList.add('active');
+  renderAll();
+  if (tabId === 'warroom') sceneFrame();
+  portraitLoop();
+}
+
+let renderQueued = false;
+function renderAll() {
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => { renderQueued = false; renderNow(); });
+}
+
+function renderNow() {
+  try {
+    const p = portfolioValue();
+    const unrealized = p.value - p.cost;
+    const net = state.cash + state.vault + p.value;
+
+    const nw = $('net-worth');
+    if (nw) { nw.textContent = fmtCurrency(net); nw.className = 'net-worth-value ' + (net >= CFG.startBankroll ? 'green' : 'red'); }
+    const setPnl = (id, v) => { const el = $(id); if (el) { el.textContent = fmtSigned(v); el.className = 'stat-value ' + (v >= 0 ? 'green' : 'red'); } };
+    setPnl('unrealized-pnl', unrealized);
+    setPnl('realized-pnl', state.realizedPnl);
+
+    setText('cash-balance', fmtCurrency(state.cash));
+    setText('vault-balance', fmtCurrency(state.vault));
+    setText('status-vault', `${fmtCurrency(state.vault)} LOCKED`);
+    setText('total-fees', fmtCurrency(state.fees));
+    setText('scanned-count', String(market.size));
+    setText('hot-count', String(hotCoins().length));
+    setText('benched-count', String(Object.values(state.archive).filter(e => e.until > Date.now()).length));
+    setText('feeds-count', lastScan.req ? `${lastScan.ok}/${lastScan.req}` : '--');
+    setText('status-mode-label', `${state.mode} MODE`);
+    setText('status-decision', state.decision);
+    setText('status-feed', feedStatus);
+    setText('status-news', newsStatus);
+    setText('status-scan', '60 SECONDS');
+    setText('btn-sound', state.sound ? 'SND ON' : 'SND OFF');
+
+    ['growth', 'sniper', 'launch'].forEach(m => { const b = $('btn-mode-' + m); if (b) b.classList.toggle('active-mode', state.mode === m.toUpperCase()); });
+    ['council', 'auto'].forEach(m => { const b = $('btn-dec-' + m); if (b) b.classList.toggle('active-mode', state.decision === m.toUpperCase()); });
+
+    const keyEl = $('key-status');
+    if (keyEl) {
+      const ok = (localStorage.getItem('openai_api_key') || '').length > 5;
+      keyEl.textContent = ok ? '● CONFIGURED' : '● NOT CONFIGURED';
+      keyEl.style.color = ok ? 'var(--green)' : 'var(--text-dim)';
+    }
+
+    if (activeTab === 'positions') renderPositions();
+    if (activeTab === 'ledger') renderLedger();
+    if (activeTab === 'council') renderCouncil();
+    if (activeTab === 'news') renderNewsTab();
+    if (activeTab === 'status') { renderProtocol(); renderLessons(); }
+    if (activeTab === 'warroom') renderWarRoomCards();
+    if (activeTab === 'audit') renderAudit();
+    const nBad = auditResult.filter(f => f.sev === 'bad').length, nWarn = auditResult.filter(f => f.sev === 'warn').length;
+    setText('tab-btn-audit', nBad ? `Audit ${nBad}!` : nWarn ? `Audit ${nWarn}` : 'Audit');
+  } catch (e) { console.error('Render error:', e); }
+}
+
+function renderPositions() {
+  const list = $('positions-list');
+  if (list) {
+    const held = heldAddrs();
+    list.innerHTML = held.length ? held.map(a => {
+      const coin = market.get(a);
+      const qty = state.positions[a], cost = state.costBasis[a];
+      const pnl = exitValue(a) - qty * cost;
+      return `<div class="position-row" onclick="inspectCoin('${escapeHtml(a)}')">
+        <strong style="color: var(--cyan);">${escapeHtml(state.symbols[a] || '?')}</strong>
+        <span>${qty > 1000 ? Math.round(qty).toLocaleString() : qty.toFixed(2)}</span>
+        <span>${fmtPrice(cost)}</span>
+        <span style="color: ${pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${fmtSigned(pnl)}</span>
+        <button class="cyber-btn danger" onclick="event.stopPropagation(); manualSellPosition('${escapeHtml(a)}')">SELL</button>
+      </div>`;
+    }).join('') : '<div class="empty-note">NO ACTIVE POSITIONS HELD (TAP ANY FOR INSPECT)</div>';
+  }
+  const arch = $('archive-list');
+  if (arch) {
+    const now = Date.now();
+    const rows = Object.entries(state.archive).filter(([, e]) => e.until > now);
+    arch.innerHTML = rows.length ? rows.map(([a, e]) => {
+      const mins = Math.max(1, Math.round((e.until - now) / 60000));
+      return `<div class="position-row" style="grid-template-columns: 1fr 1.4fr 1fr 1fr; cursor: default;" onclick="inspectCoin('${escapeHtml(a)}')">
+        <strong style="color: var(--amber);">${escapeHtml(e.symbol)}</strong>
+        <span>${escapeHtml(e.reason)}</span><span>${fmtSigned(e.pnl)}</span><span>${mins}m</span></div>`;
+    }).join('') : '<div class="empty-note">NOTHING BENCHED</div>';
+  }
+}
+
+function renderLedger() {
+  const list = $('ledger-list');
+  if (!list) return;
+  const history = state.trades || [];
+  list.innerHTML = history.length ? history.slice(0, 40).map(t => {
+    const d = new Date(t.t), hhmm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const pnl = t.pnl === null ? '' : `<span style="color: ${t.pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${fmtSigned(t.pnl)}</span>`;
+    return `<div class="position-row" style="grid-template-columns: 1fr 1.2fr 1fr 1fr; font-size: 13px; cursor: default;">
+      <span style="color: var(--text-dim);">${hhmm}</span>
+      <strong style="color: var(--cyan);">${escapeHtml(t.kind || 'TRADE')}</strong>
+      <span style="font-size: 12px; text-align: left;">${escapeHtml(t.text)}</span>
+      ${pnl || '<span></span>'}
+    </div>`;
+  }).join('') : '<div class="empty-note">NO COMPLETED TRANSACTIONS YET</div>';
+}
+
+function renderCouncil() {
+  const box = $('council-feed-container');
+  if (!box) return;
+  box.innerHTML = councilFeed.length ? councilFeed.map(f => `
+    <div class="feed-item" style="border-left-color: ${f.color};">
+      <div class="feed-sender" style="color: ${f.color};">${escapeHtml(f.sender)} <span class="feed-time">${escapeHtml(f.time)}</span></div>
+      <div class="feed-text">"${escapeHtml(f.text)}"</div>
+    </div>`).join('') : '<div class="empty-note">No whale consensus activity yet.</div>';
+}
+
+function renderNewsTab() {
+  const box = $('whale-news-container');
+  if (!box) return;
+  const whales = whaleFeed.map(w => `
+    <div class="feed-item" style="border-left-color: var(--cyan);">
+      <div class="feed-sender" style="color: var(--cyan);">WHALE_EYE <span class="feed-time">${escapeHtml(w.time)}</span></div>
+      <div class="feed-text">${escapeHtml(w.title)}: ${escapeHtml(w.desc)}</div>
+    </div>`).join('');
+  const news = liveNews.map(n => `
+    <div class="feed-item" style="border-left-color: var(--amber);">
+      <div class="feed-sender" style="color: var(--amber);">NEWS_HAWK // ${escapeHtml(n.source)} <span class="feed-time">${escapeHtml(n.time)}</span></div>
+      <div class="feed-text">${n.url ? `<a href="${escapeHtml(n.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(n.title)}</a>` : escapeHtml(n.title)}</div>
+    </div>`).join('');
+  box.innerHTML = (whales + news) || '<div class="empty-note">Waiting for feeds...</div>';
+}
+
+function renderLessons() {
+  const box = $('lessons-box');
+  if (!box) return;
+  const L = computeLessons();
+  const row = (avoid, l) => `<div class="protocol-line" style="color: ${avoid ? 'var(--red)' : 'var(--green)'};">${avoid ? 'AVOID' : 'FAVOR'} ${escapeHtml(DIM_NAMES[l.dim])} ${escapeHtml(l.bucket)}: ${Math.round(l.win * 100)}% wins, avg ${l.avg.toFixed(1)}% over ${l.n} trades</div>`;
+  const rows = L.avoid.map(l => row(true, l)).concat(L.favor.map(l => row(false, l)));
+  box.innerHTML = `<div class="protocol-line">Journal: ${L.n} ${escapeHtml(state.mode)} trades (rules start at ${LESSON_MIN})</div>` + (rows.join('') || '<div class="protocol-line">No clear patterns yet.</div>');
+}
+
+function renderProtocol() {
+  const box = $('protocol-box');
+  if (!box) return;
+  const L = CFG.launch;
+  const lines = state.mode === 'LAUNCH' ? [
+    `Pool age ≤ ${L.maxAgeMin} min, market cap ≤ ${fmtCurrency(L.maxMc)}`,
+    `Liquidity ≥ ${fmtCurrency(L.minLiq)}, txns ≥ ${L.minTxns}, buy ratio ≥ ${Math.round(L.minBuyRatio * 100)}%`,
+    `Entry: ${Math.round(L.entryPct * 100)}% of bankroll ($10 minimum)`,
+    `Stop-loss ${L.stopPct}% | 50% out at +${L.tier1Pct}%, half the rest at +${L.tier2Pct}%, runner trails ${L.trailPct}%`,
+    `Stale: out after ${L.staleMs / 60000} min if under +${L.stalePct}%`,
+    `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ${(L.baseSlippage * 100).toFixed(0)}%+ slippage per side`
+  ] : [
+    `Volume 1h ≥ ${fmtCurrency(CFG.minVolumeH1)}`,
+    `Turnover (vol/liquidity) ≥ ${CFG.minTurnover}`,
+    `Txns 1h ≥ ${CFG.minTxnsH1}, WHALE BUY PRESSURE ≥ ${Math.round(CFG.minBuyRatio * 100)}%`,
+    `Liquidity ≥ ${fmtCurrency(CFG.minLiquidity)}, max ${CFG.maxOpenPositions} open, copycat tickers skipped`,
+    `Entry: ${Math.round(CFG.entryPct * 100)}% of bankroll ($10 minimum), multi-agent consensus required`,
+    `Stop-loss ${CFG.stopLossPct}% | Principal Recovery + Free Runner Active`,
+    `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ${(CFG.baseSlippage * 100).toFixed(1)}%+ slippage per side`
+  ];
+  box.innerHTML = lines.map(l => `<div class="protocol-line">• ${escapeHtml(l)}</div>`).join('');
+}
+
+function drawInspChart(coin, entryPrice) {
+  const canvas = $('insp-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#07010f';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const pts = [];
+  let p = entryPrice ? entryPrice * 0.98 : coin.price * 0.95;
+  for (let i = 0; i < 10; i++) {
+    pts.push(p);
+    p += (coin.price - p) * 0.25;
+  }
+  if (entryPrice) pts.push(entryPrice);
+  pts.push(coin.price);
+
+  const min = Math.min(...pts, entryPrice || coin.price);
+  const max = Math.max(...pts, entryPrice || coin.price);
+  const range = max - min || 1;
+  const w = canvas.width, h = canvas.height;
+
+  ctx.strokeStyle = '#00f0ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  pts.forEach((val, idx) => {
+    const x = (idx / (pts.length - 1)) * (w - 20) + 10;
+    const y = h - 15 - ((val - min) / range) * (h - 30);
+    if (idx === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  if (entryPrice && entryPrice > 0) {
+    const ey = h - 15 - ((entryPrice - min) / range) * (h - 30);
+    ctx.strokeStyle = '#ff3b5c';
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(10, ey); ctx.lineTo(w - 10, ey); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#ff3b5c';
+    ctx.font = '12px VT323';
+    ctx.fillText(`ENTRY: ${fmtPrice(entryPrice)}`, 14, ey - 4);
+  }
+}
+
+function inspectCoin(addr) {
+  const coin = market.get(addr);
+  const box = $('insp-content');
+  const logoEl = $('insp-logo');
+  if (!coin || !box) return;
+
+  if (logoEl) {
+    logoEl.src = `https://cdn.dexscreener.com/token-images/solana/${coin.address}`;
+    logoEl.style.display = 'block';
+    logoEl.onerror = () => { logoEl.style.display = 'none'; };
+  }
+
+  const tx = Math.max(1, coin.buysH1 + coin.sellsH1);
+  const turnover = coin.liquidity > 0 ? (coin.volumeH1 / coin.liquidity).toFixed(2) : '0';
+  const horizon = determineHoldHorizon(coin);
+  const heldQty = state.positions[addr] || 0;
+  const cost = state.costBasis[addr] || coin.price;
+  const pnl = heldQty > 0 ? exitValue(addr) - heldQty * cost : 0;
+  const entryTimeMs = state.entryTimes[addr];
+  const entryTimeStr = entryTimeMs ? new Date(entryTimeMs).toLocaleTimeString() : 'N/A';
+
+  box.innerHTML = `
+    <div class="protocol-line"><strong>SYMBOL:</strong> ${escapeHtml(coin.symbol)}</div>
+    <div class="protocol-line"><strong>ADDRESS:</strong> ${escapeHtml(coin.address)}</div>
+    <div class="protocol-line"><strong>BOUGHT AT:</strong> ${entryTimeStr}</div>
+    <div class="protocol-line"><strong>TIER:</strong> ${isMajorWave(coin) ? 'MAJOR WAVE / PERP' : 'MEMECOIN SCALP'}</div>
+    <div class="protocol-line"><strong>PRICE:</strong> ${fmtPrice(coin.price)} (Cost: ${fmtPrice(cost)})</div>
+    <div class="protocol-line"><strong>LIQUIDITY:</strong> ${fmtCurrency(coin.liquidity)}</div>
+    <div class="protocol-line"><strong>1H VOLUME:</strong> ${fmtCurrency(coin.volumeH1)} (Turnover: ${turnover}x)</div>
+    <div class="protocol-line"><strong>AI HORIZON:</strong> ${horizon}</div>
+    <div class="protocol-line"><strong>HOLDING:</strong> ${heldQty > 0 ? heldQty.toFixed(2) + ' tokens (' + fmtSigned(pnl) + ')' : 'None'}</div>
+  `;
+
+  drawInspChart(coin, heldQty > 0 ? cost : null);
+  $('inspector-overlay').classList.add('open');
+}
+
+function closeInspector() {
+  $('inspector-overlay').classList.remove('open');
+}
+
+/* ============================== ROBOT AVATARS ============================== */
+const ROBOT = (function () {
+  const PW = 72, PH = 80;
+  const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const h2r = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const r2h = c => '#' + c.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+  const mix = (a, b, t) => { const A = h2r(a), B = h2r(b); return r2h(A.map((v, i) => v + (B[i] - v) * t)); };
+  const ramp = base => [mix(base, '#000000', 0.7), mix(base, '#000000', 0.42), base, mix(base, '#ffffff', 0.3), mix(base, '#ffffff', 0.75)];
+  const BAY = [[0, 2], [3, 1]];
+  const LIGHT = (() => { const v = [-0.55, -0.65, 0.55], m = Math.hypot(v[0], v[1], v[2]); return v.map(a => a / m); })();
+
+  function sup(cx, cy, rx, ry, n, clip) {
+    return (x, y) => {
+      const dx = (x - cx) / rx, dy = (y - cy) / ry, ax = Math.abs(dx), ay = Math.abs(dy);
+      if (Math.pow(ax, n) + Math.pow(ay, n) > 1) return null;
+      if (clip && !clip(x, y)) return null;
+      let nx = Math.sign(dx) * Math.pow(ax, n - 1), ny = Math.sign(dy) * Math.pow(ay, n - 1);
+      const m = Math.hypot(nx, ny);
+      if (m > 0.98) { nx *= 0.98 / m; ny *= 0.98 / m; }
+      return [nx, ny, Math.sqrt(Math.max(0.04, 1 - nx * nx - ny * ny))];
+    };
+  }
+
+  function paint(g, box, shape, rp, o) {
+    o = o || {};
+    for (let y = box[1]; y <= box[3]; y++) for (let x = box[0]; x <= box[2]; x++) {
+      const n = shape(x + 0.5, y + 0.5);
+      if (!n) continue;
+      let v = (n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]) * 0.5 + 0.5;
+      if (o.metal) {
+        const h = n[1];
+        const env = h < -0.1 ? 0.8 - 0.1 * h : h < 0.2 ? 0.16 : 0.36 + 0.3 * (h - 0.2);
+        v = v * 0.4 + env * 0.6;
+      }
+      v = Math.max(0, Math.min(1, v + (o.bias || 0)));
+      const pos = v * (rp.length - 1);
+      let i = Math.floor(pos);
+      if (!o.flat && pos - i > (BAY[y & 1][x & 1] + 0.5) / 4) i++;
+      else if (o.flat && pos - i > 0.5) i++;
+      g.fillStyle = rp[Math.min(rp.length - 1, i)];
+      g.fillRect(x, y, 1, 1);
+    }
+  }
+
+  function inPoly(x, y, p) {
+    let c = false;
+    for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+      if (((p[i][1] > y) !== (p[j][1] > y)) && (x < (p[j][0] - p[i][0]) * (y - p[i][1]) / (p[j][1] - p[i][1]) + p[i][0])) c = !c;
+    }
+    return c;
+  }
+  function poly(g, pts, col) {
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    for (let y = Math.floor(Math.min.apply(null, ys)); y <= Math.ceil(Math.max.apply(null, ys)); y++) {
+      for (let x = Math.floor(Math.min.apply(null, xs)); x <= Math.ceil(Math.max.apply(null, xs)); x++) {
+        if (inPoly(x + 0.5, y + 0.5, pts)) { g.fillStyle = typeof col === 'function' ? col(x, y) : col; g.fillRect(x, y, 1, 1); }
+      }
+    }
+  }
+  const R = (g, x, y, w, h, c, a) => { if (a !== undefined) g.globalAlpha = a; g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w, h); if (a !== undefined) g.globalAlpha = 1; };
+  const mir = pts => pts.map(p => [PW - p[0], p[1]]);
+
+  function edge(canvas, rim) {
+    const g = canvas.getContext('2d');
+    const img = g.getImageData(0, 0, PW, PH), d = img.data;
+    const a = (x, y) => (x < 0 || y < 0 || x >= PW || y >= PH) ? 0 : d[(y * PW + x) * 4 + 3];
+    const out = [], rimPx = [];
+    for (let y = 0; y < PH; y++) for (let x = 0; x < PW; x++) {
+      if (a(x, y) > 0) { if (a(x + 1, y) === 0 || (a(x, y + 1) === 0 && x > 36)) rimPx.push([x, y]); }
+      else if (a(x - 1, y) || a(x + 1, y) || a(x, y - 1) || a(x, y + 1)) out.push([x, y]);
+    }
+    g.fillStyle = '#07030f'; out.forEach(p => g.fillRect(p[0], p[1], 1, 1));
+    g.globalAlpha = 0.85; g.fillStyle = rim; rimPx.forEach(p => g.fillRect(p[0], p[1], 1, 1)); g.globalAlpha = 1;
+  }
+
+  const SPEC = {
+    boss: { color: '#ff2bd6', chrome: '#b7bfd8', suit: '#1b1236', head: { cx: 36, cy: 24, rx: 14, ry: 17, n: 3 }, eyes: 'band', visor: [24, 19, 24, 8], mouth: { type: 'grille', y: 34, w: 12 }, crown: true, buttons: [[28, 70], [44, 70], [28, 76], [44, 76]] },
+    announcer: { color: '#00f0ff', chrome: '#a9c8d2', suit: '#0d2430', pin: true, head: { cx: 36, cy: 25, rx: 17, ry: 15, n: 2.3 }, eyes: 'lens', lens: [36, 22, 8], mouth: { type: 'grille', y: 35, w: 10 }, fin: true, dish: true },
+    news: { color: '#f9f871', chrome: '#c4c4b4', suit: '#24210f', head: { cx: 36, cy: 26, rx: 15, ry: 14, n: 4 }, eyes: 'band', visor: [25, 22, 22, 7], mouth: { type: 'grille', y: 36, w: 10 }, hat: true, collar: true },
+    finance: { color: '#4d8bff', chrome: '#a8b6d6', suit: '#101a3a', shirt: '#26468f', head: { cx: 36, cy: 25, rx: 16, ry: 15, n: 6 }, eyes: 'crt', screen: [26, 16, 20, 17], mouth: { type: 'crt', y: 29, w: 14 }, bow: true },
+    risk: { color: '#ff9a3c', chrome: '#b4b4bc', suit: '#1c1620', stripe: true, head: { cx: 36, cy: 27, rx: 18, ry: 13, n: 5 }, eyes: 'slit', visor: [24, 24, 24, 4], mouth: { type: 'grille', y: 35, w: 14 }, hardhat: true },
+    trader: { color: '#ff3b5c', chrome: '#bdb4bc', suit: '#240d18', loose: true, head: { cx: 36, cy: 24, rx: 13, ry: 17, n: 2.7 }, eyes: 'band', visor: [25, 19, 22, 7], mouth: { type: 'grille', y: 34, w: 10 }, racing: true, antenna: { x: 46, y: 12, len: 9, ph: 1.7 } },
+    macro: { color: '#b45cff', chrome: '#c0b4d8', suit: '#1a0f36', head: { cx: 36, cy: 25, rx: 15, ry: 15, n: 2 }, eyes: 'orbs', face: [36, 24, 12, 9], mouth: { type: 'grille', y: 34, w: 10 }, ring: true },
+    cfo: { color: '#39ff88', chrome: '#b8c8bd', suit: '#0d2a1c', chain: true, head: { cx: 36, cy: 25, rx: 15, ry: 14, n: 5 }, eyes: 'band', visor: [25, 21, 22, 7], mouth: { type: 'slot', y: 35, w: 10 }, monocle: true },
+    auditor: { color: '#39ff88', chrome: '#cfd6e6', suit: '#d7deee', coat: true, head: { cx: 36, cy: 25, rx: 15, ry: 16, n: 3 }, eyes: 'lens', lens: [36, 22, 8], mouth: { type: 'grille', y: 35, w: 10 }, scan: true }
+  };
+  const IDS = Object.keys(SPEC);
+
+  function buildBody(id) {
+    const S = SPEC[id], c = mk(PW, PH), g = c.getContext('2d');
+    const suit = S.suit, W = S.coat ? 1 : 0;
+    const sr = W ? [mix(suit, '#000000', 0.35), mix(suit, '#000000', 0.18), suit, mix(suit, '#ffffff', 0.5), '#ffffff']
+                 : [mix(suit, '#000000', 0.55), mix(suit, '#000000', 0.25), suit, mix(suit, '#ffffff', 0.1), mix(suit, '#ffffff', 0.2)];
+    paint(g, [30, 36, 42, 50], (x, y) => (x >= 31 && x <= 41 && y >= 37 && y <= 49) ? [(x - 36) / 5.5, 0, Math.sqrt(Math.max(0.05, 1 - Math.pow((x - 36) / 5.5, 2)))] : null, ramp(mix(S.chrome, '#222a40', 0.35)), { metal: true });
+    [41, 44, 47].forEach(y => R(g, 31, y, 11, 1, '#0b0a18', 0.55));
+    const torso = sup(36, 73, 33, 30, 3, (x, y) => y >= 43);
+    paint(g, [2, 42, 70, 79], torso, sr, { bias: S.coat ? 0.1 : -0.12, flat: true });
+    if (S.pin) for (let x = 6; x < 68; x += 4) for (let y = 48; y < 80; y++) if (torso(x + 0.5, y + 0.5)) R(g, x, y, 1, 1, S.color, 0.1);
+    const shirt = S.shirt || (S.coat ? '#7d8aa8' : '#e4e8f2');
+    poly(g, [[30, 42], [42, 42], [36, 67]], (x, y) => mix(shirt, '#000000', 0.12 + Math.max(0, (y - 44)) * 0.004));
+    poly(g, [[28, 41], [34, 41], [35, 49], [28, 45]], shirt);
+    poly(g, mir([[28, 41], [34, 41], [35, 49], [28, 45]]), mix(shirt, '#000000', 0.15));
+    const lap = mix(suit, '#ffffff', S.coat ? 0.1 : 0.12);
+    const L = [[27, 43], [31, 43], [36, 67], [33, 75], [24, 57]];
+    poly(g, L, (x, y) => mix(lap, '#000000', (x - 24) * 0.012));
+    poly(g, mir(L), (x, y) => mix(lap, '#000000', 0.05 + (48 - x) * 0.006));
+    for (let t = 0; t <= 24; t++) { const y = 43 + t, x = 31 + Math.round(t * 5 / 24); R(g, x, y, 1, 1, S.color, 0.9); R(g, PW - 1 - x, y, 1, 1, S.color, 0.9); }
+    if (S.bow) {
+      poly(g, [[30, 48], [36, 51], [30, 54]], S.color); poly(g, [[42, 48], [36, 51], [42, 54]], mix(S.color, '#000000', 0.3));
+      R(g, 35, 49, 2, 4, mix(S.color, '#ffffff', 0.4));
+    } else {
+      const sk = S.loose ? 1 : 0, kx = 34 + sk, ky = S.loose ? 49 : 46;
+      R(g, kx, ky, 4, 4, S.color); R(g, kx, ky, 4, 1, mix(S.color, '#ffffff', 0.4));
+      poly(g, [[kx + 0.5, ky + 4], [kx + 3.5, ky + 4], [kx + 4.5 + sk, ky + (S.loose ? 13 : 18)], [kx + 2 + sk, ky + (S.loose ? 16 : 21)], [kx - 0.5 + sk, ky + (S.loose ? 13 : 18)]], (x) => x < kx + 2 ? mix(S.color, '#ffffff', 0.18) : mix(S.color, '#000000', 0.25));
+    }
+    if (S.buttons) S.buttons.forEach(b => { R(g, b[0], b[1], 2, 2, '#c8cde0'); R(g, b[0], b[1], 1, 1, '#ffffff'); });
+    if (S.collar) { poly(g, [[22, 44], [30, 41], [31, 52], [20, 56]], mix('#e0c63a', '#000000', 0.25)); poly(g, mir([[22, 44], [30, 41], [31, 52], [20, 56]]), mix('#e0c63a', '#000000', 0.4)); }
+    if (S.stripe) for (let t = 0; t < 22; t++) { R(g, 24 + Math.round(t * 0.35), 58 + t, 2, 1, S.color, 0.9); }
+    if (S.chain) for (let x = 29; x <= 43; x++) R(g, x, 64 + Math.round(Math.pow((x - 36) / 7, 2) * 3), 1, 1, '#f0c030');
+    if (S.coat) { for (let y = 60; y < 80; y += 4) R(g, 12, y, 8, 1, '#aab4cc', 0.5); R(g, 50, 62, 7, 9, '#aab4cc', 0.35); R(g, 50, 62, 7, 1, '#ffffff', 0.5); }
+    else if (id !== 'finance') { R(g, 14, 62, 7, 3, S.color); R(g, 14, 62, 3, 1, '#ffffff'); }
+    edge(c, S.color);
+    return c;
+  }
+
+  function buildHead(id) {
+    const S = SPEC[id], H = S.head, c = mk(PW, PH), g = c.getContext('2d');
+    const chrome = ramp(mix(S.chrome, S.color, 0.1));
+    const box = [H.cx - H.rx - 2, H.cy - H.ry - 3, H.cx + H.rx + 2, H.cy + H.ry + 2];
+    const shape = sup(H.cx, H.cy, H.rx, H.ry, H.n);
+    paint(g, box, shape, chrome, { metal: true });
+    S.shape = shape;
+    const glass = (x, y, w, h) => {
+      R(g, x, y, w, h, '#05060f'); R(g, x, y, w, 1, '#171d3a'); R(g, x, y + h - 1, w, 1, '#0a0c1c');
+      for (let k = 0; k < Math.min(h - 2, 5); k++) R(g, x + 2 + k, y + h - 2 - k, 1, 1, '#2a3566');
+      R(g, x - 1, y - 1, w + 2, 1, '#07030f'); R(g, x - 1, y + h, w + 2, 1, '#07030f');
+      R(g, x - 1, y, 1, h, '#07030f'); R(g, x + w, y, 1, h, '#07030f');
+    };
+    if (S.visor) glass.apply(null, S.visor);
+    if (S.screen) { const s = S.screen; glass(s[0], s[1], s[2], s[3]); for (let y = s[1] + 1; y < s[1] + s[3]; y += 2) R(g, s[0], y, s[2], 1, '#0b1030', 0.7); R(g, s[0] - 2, s[1] - 2, s[2] + 4, 1, '#cfd6ea'); R(g, s[0] - 2, s[1] + s[3] + 1, s[2] + 4, 1, '#667090'); }
+    if (S.lens) {
+      const l = S.lens, r = l[2] - 2, ix = l[0], iy = l[1];
+      paint(g, [l[0] - l[2] - 2, l[1] - l[2] - 2, l[0] + l[2] + 2, l[1] + l[2] + 2], sup(l[0], l[1], l[2] + 2, l[2] + 2, 2), ramp('#8a93ad'), { metal: true });
+      paint(g, [l[0] - l[2], l[1] - l[2], l[0] + l[2], l[1] + l[2]], sup(l[0], l[1], l[2], l[2], 2), ramp('#0a0c1a'), { bias: -0.15 });
+    }
+    if (S.face) { const f = S.face; paint(g, [f[0] - f[2], f[1] - f[3], f[0] + f[2], f[1] + f[3]], sup(f[0], f[1], f[2], f[3], 2.4), ramp('#0b0d1e'), { bias: -0.1 }); R(g, f[0] - 8, f[1] - f[3] + 2, 5, 1, '#2a3566'); }
+    if (S.crown) {
+      [[29, 10, 4], [36, 8, 7], [43, 10, 4]].forEach(a => { for (let k = 0; k < a[2]; k++) R(g, a[0], a[1] - k, 2, 1, mix(S.color, '#ffffff', k * 0.06)); });
+      R(g, 24, 13, 24, 1, S.color, 0.9); R(g, 25, 14, 22, 1, '#0b0a18', 0.5);
+    }
+    if (S.fin) { poly(g, [[34, 10], [38, 10], [37, 2], [35, 5]], mix(S.chrome, '#ffffff', 0.15)); R(g, 36, 3, 1, 3, S.color); }
+    if (S.dish) {
+      paint(g, [11, 20, 22, 32], sup(17, 26, 4, 7, 2), ramp('#9fb0bd'), { metal: true }); R(g, 15, 24, 2, 4, '#0a2230');
+      R(g, 17, 20, 1, 4, '#4a5870'); R(g, 11, 26, 3, 1, '#07030f');
+    }
+    if (S.racing) { for (let y = 9; y < 20; y++) { R(g, 34, y, 1, 1, S.color); R(g, 37, y, 1, 1, mix(S.color, '#ffffff', 0.25)); } }
+    if (S.hardhat) {
+      paint(g, [16, 6, 56, 22], sup(36, 20, 20, 12, 2.3, (x, y) => y <= 21), ramp(S.color), { metal: true });
+      R(g, 17, 20, 38, 2, '#07030f'); R(g, 35, 8, 2, 12, mix(S.color, '#ffffff', 0.4));
+    }
+    if (S.hat) {
+      const olive = '#2c2814';
+      paint(g, [14, 8, 58, 20], sup(36, 16, 21, 4, 2.2, (x, y) => y >= 14), ramp(olive), {});
+      paint(g, [24, 2, 48, 18], sup(36, 12, 11, 9, 2.6, (x, y) => y <= 15), ramp(olive), { bias: 0.04 });
+      R(g, 25, 12, 22, 3, S.color);
+    }
+    if (S.monocle) {
+      for (let a = 0; a < 360; a += 15) { const r = 5.6; R(g, 41 + Math.round(Math.cos(a * Math.PI / 180) * r), 24 + Math.round(Math.sin(a * Math.PI / 180) * r), 1, 1, '#f0c030'); }
+      for (let t = 0; t < 14; t++) R(g, 46, 29 + t, 1, 1, '#f0c030', 0.9);
+    }
+    edge(c, S.color);
+    return c;
+  }
+
+  const cache = {};
+  function layers(id) {
+    if (!cache[id]) cache[id] = { body: buildBody(id), head: buildHead(id), bg: null };
+    return cache[id];
+  }
+
+  function backdrop(id) {
+    const L = layers(id);
+    if (L.bg) return L.bg;
+    const c = mk(PW, PH), g = c.getContext('2d'), S = SPEC[id];
+    const grad = g.createRadialGradient(36, 30, 4, 36, 34, 46);
+    grad.addColorStop(0, mix('#0b0724', S.color, 0.34)); grad.addColorStop(1, '#07010f');
+    g.fillStyle = grad; g.fillRect(0, 0, PW, PH);
+    g.globalAlpha = 0.12; g.fillStyle = S.color; for (let y = 0; y < PH; y += 4) g.fillRect(0, y, PW, 1); g.globalAlpha = 1;
+    return (L.bg = c);
+  }
+
+  const ANIM = {};
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  function anim(id, t) {
+    if (!ANIM[id]) {
+      ANIM[id] = {
+        phase: Math.random() * 6.28, talkUntil: 0, blinkStart: -999, nextBlink: t + rnd(800, 3000),
+        look: 0, lookFrom: 0, lookTo: 0, lookStart: 0, nextLook: t + rnd(900, 2500),
+        glintStart: -9999, nextGlint: t + rnd(2500, 7000), twitchUntil: 0, nextTwitch: t + rnd(3000, 8000),
+        glitchUntil: 0, nextGlitch: t + rnd(14000, 30000), coinStart: -9999, nextCoin: t + rnd(4000, 9000)
+      };
+    }
+    return ANIM[id];
+  }
+  function speak(id, ms) { const A = anim(id, performance.now ? performance.now() : Date.now()); A.talkUntil = (performance.now ? performance.now() : Date.now()) + (ms || 2400); }
+
+  function step(A, t) {
+    if (t > A.nextBlink) { A.blinkStart = t; A.nextBlink = t + (Math.random() < 0.18 ? 260 : rnd(2200, 5200)); }
+    if (t > A.nextLook) { A.lookFrom = A.look; A.lookTo = [-1, -1, 0, 0, 0, 1, 1][Math.floor(Math.random() * 7)]; A.lookStart = t; A.nextLook = t + rnd(1500, 4200); }
+    A.look = A.lookFrom + (A.lookTo - A.lookFrom) * Math.min(1, (t - A.lookStart) / 260);
+    if (t > A.nextGlint) { A.glintStart = t; A.nextGlint = t + rnd(6000, 14000); }
+    if (t > A.nextTwitch) { A.twitchUntil = t + 320; A.nextTwitch = t + rnd(4000, 11000); }
+    if (t > A.nextGlitch) { A.glitchUntil = t + 170; A.nextGlitch = t + rnd(16000, 38000); }
+    if (t > A.nextCoin) { A.coinStart = t; A.nextCoin = t + rnd(5000, 12000); }
+  }
+  function blinkAmt(A, t) {
+    const d = t - A.blinkStart;
+    return d < 0 || d > 210 ? 0 : d < 70 ? d / 70 : d < 140 ? 1 : 1 - (d - 140) / 70;
+  }
+
+  function drawFace(g, id, t, A, talk, blink, look) {
+    const S = SPEC[id], H = S.head, col = S.color, glow = mix(col, '#ffffff', 0.35);
+    const pulse = 0.78 + 0.22 * Math.sin(t / 650 + A.phase);
+    const lx = Math.round(look * 2);
+    const open = talk ? 0.3 + 0.7 * Math.abs(Math.sin(t / 85 + A.phase) * Math.sin(t / 137 + 1)) : 0;
+    const flick = t < A.glitchUntil && Math.floor(t / 40) % 2 === 0;
+
+    if (!flick) {
+      if (S.eyes === 'band') {
+        const v = S.visor, ey = v[1] + 2, h = Math.max(1, Math.round(3 * (1 - blink)));
+        [-5, 5].forEach(o => {
+          const ex = H.cx + o - 2 + lx, y = ey + (3 - h) / 2 + (blink > 0.5 ? 0.5 : 0);
+          R(g, ex - 1, y - 1, 6, h + 2, col, 0.22 * pulse);
+          R(g, ex, y, 4, h, col); if (h > 1) R(g, ex, y, 2, 1, talk ? '#ffffff' : glow);
+        });
+      } else if (S.eyes === 'lens') {
+        const l = S.lens, r = l[2] - 2, ix = l[0] + lx, iy = l[1];
+        for (let dy = -r; dy <= r; dy++) { const hw = Math.round(Math.sqrt(r * r - dy * dy)); R(g, ix - hw, iy + dy, hw * 2 + 1, 1, col, 0.35 + 0.35 * pulse); }
+        for (let dy = -2; dy <= 2; dy++) { const hw = Math.round(Math.sqrt(4 - dy * dy)); R(g, ix - hw, iy + dy, hw * 2 + 1, 1, talk ? '#ffffff' : glow); }
+        if (blink > 0.05) { const rr = l[2]; for (let dy = -rr; dy <= rr; dy++) if ((dy + rr) < blink * (2 * rr + 1)) { const hw = Math.round(Math.sqrt(rr * rr - dy * dy)); R(g, l[0] - hw, l[1] + dy, hw * 2 + 1, 1, '#0a0c1a'); } }
+      } else if (S.eyes === 'crt') {
+        const sc = S.screen, ey = sc[1] + 4, h = Math.max(1, Math.round(4 * (1 - blink)));
+        [-5, 5].forEach(o => { R(g, H.cx + o - 2 + lx, ey + (4 - h) / 2, 4, h, '#ff3b5c'); if (h > 1) R(g, H.cx + o - 2 + lx, ey + (4 - h) / 2, 1, 1, '#ffd0d8'); });
+      } else if (S.eyes === 'slit') {
+        const v = S.visor, sy = v[1] + 1, h = Math.max(1, Math.round(2 * (1 - blink * 0.9)));
+        R(g, v[0] + 1, sy, v[2] - 2, h, col, talk ? 0.95 : 0.4 + 0.2 * pulse);
+      } else if (S.eyes === 'orbs') {
+        const ey = S.face[1] - 1, r = blink > 0.6 ? 0 : 2;
+        [-5, 5].forEach(o => {
+          const ex = H.cx + o + lx;
+          if (r === 0) { R(g, ex - 2, ey, 5, 1, col); return; }
+          for (let dy = -2; dy <= 2; dy++) { const hw = Math.round(Math.sqrt(5.2 - dy * dy)); R(g, ex - hw, ey + dy, hw * 2 + 1, 1, col); }
+        });
+      }
+    }
+
+    const M = S.mouth, mx = H.cx - Math.round(M.w / 2);
+    if (M.type === 'grille') {
+      const h = 1 + Math.round(open * 4), y = M.y - Math.floor((h - 1) / 2);
+      R(g, mx - 1, y - 1, M.w + 2, h + 2, '#07030f');
+      R(g, mx, y, M.w, h, '#0e1226');
+      if (h === 1) { R(g, mx + 1, y, 2, 1, col, 0.4 + 0.4 * pulse); R(g, mx + M.w - 3, y, 2, 1, col, 0.4 + 0.4 * pulse); }
+      else for (let i = 0; i < M.w; i += 2) { const bh = Math.max(1, Math.round(h * (0.35 + 0.65 * Math.abs(Math.sin(t / 70 + i * 1.3 + A.phase))))); R(g, mx + i, y + Math.floor((h - bh) / 2), 1, bh, i % 4 ? col : glow, 0.95); }
+    } else if (M.type === 'slot') {
+      const h = 1 + Math.round(open * 2), y = M.y;
+      R(g, mx - 1, y - 1, M.w + 2, h + 2, '#07030f'); R(g, mx, y, M.w, h, '#03120a');
+      R(g, mx, y - 1, M.w, 1, '#f0c030'); R(g, mx, y + h, M.w, 1, mix('#f0c030', '#000000', 0.4));
+      if (talk) R(g, mx + 2, y, M.w - 4, h, col, 0.55);
+    } else if (M.type === 'crt') {
+      const y = M.y, w = M.w, x0 = H.cx - Math.round(w / 2);
+      if (!talk) R(g, x0 + 2, y, w - 4, 1, '#2b4a99');
+      else for (let i = 0; i < w; i += 2) { const bh = 1 + Math.round(open * 3 * Math.abs(Math.sin(t / 75 + i * 0.9))); R(g, x0 + i, y - Math.floor(bh / 2), 1, bh, i % 4 ? '#4d8bff' : '#9ec0ff'); }
+    }
+
+    if (S.antenna) {
+      const a = S.antenna, tipx = a.x;
+      for (let k = 0; k <= a.len; k++) R(g, a.x, a.y - k, 1, 1, '#aeb6cf');
+      R(g, tipx - 1, a.y - a.len - 2, 3, 3, col, 0.3 + 0.3 * pulse);
+    }
+  }
+
+  function drawGlint(g, id, t, A) {
+    const k = (t - A.glintStart) / 650;
+    if (k < 0 || k > 1) return;
+    const S = SPEC[id], H = S.head, shape = S.shape;
+    if (!shape) return;
+    const pos = H.cx - H.rx - 6 + k * (H.rx * 2 + 14);
+    g.fillStyle = '#ffffff'; g.globalAlpha = 0.45;
+    for (let y = H.cy - H.ry; y <= H.cy + H.ry; y++) { const x = Math.round(pos + (y - H.cy) * 0.55); if (shape(x + 0.5, y + 0.5)) g.fillRect(x, y, 2, 1); }
+    g.globalAlpha = 1;
+  }
+
+  function drawRing(g, id, t, A, front) {
+    const S = SPEC[id], H = S.head, rx = 25, ry = 6, cy = H.cy + 8;
+    const a = t / 900 + A.phase;
+    for (let i = 0; i < 90; i++) {
+      const ang = i / 90 * Math.PI * 2, isFront = Math.sin(ang) > 0;
+      if (isFront !== front) continue;
+      const x = H.cx + Math.cos(ang) * rx, y = cy + Math.sin(ang) * ry;
+      R(g, x, y, 1, 1, S.color, front ? 0.9 : 0.45);
+    }
+    const bx = H.cx + Math.cos(a) * rx, by = cy + Math.sin(a) * ry;
+    if ((Math.sin(a) > 0) === front) R(g, bx - 1, by - 1, 3, 3, '#ffffff');
+  }
+
+  function draw(ctx, id, t, opts) {
+    if (!SPEC[id]) id = 'boss';
+    const A = anim(id, t), L = layers(id), S = SPEC[id];
+    step(A, t);
+    const talk = t < A.talkUntil, blink = blinkAmt(A, t), look = A.look;
+    ctx.imageSmoothingEnabled = false;
+    if (opts && opts.bg) ctx.drawImage(backdrop(id), 0, 0);
+    const breathe = Math.sin(t / 1000 + A.phase) > 0.45 ? 1 : 0;
+    ctx.drawImage(L.body, 0, breathe);
+    const hx = Math.round(look * 1.2), hy = breathe;
+    ctx.save();
+    ctx.translate(hx, hy);
+    if (S.ring) drawRing(ctx, id, t, A, false);
+    ctx.drawImage(L.head, 0, 0);
+    drawFace(ctx, id, t, A, talk, blink, look);
+    drawGlint(ctx, id, t, A);
+    if (S.ring) drawRing(ctx, id, t, A, true);
+    ctx.restore();
+  }
+
+  return { PW, PH, ids: IDS, spec: SPEC, draw, speak, anim };
+})();
+
+function paintPortraits(t) {
+  document.querySelectorAll('canvas[data-robot]').forEach(c => {
+    const g = c.getContext('2d');
+    if (g) ROBOT.draw(g, c.dataset.robot, t, { bg: true });
+  });
+}
+let portraitLoopOn = false;
+function portraitLoop() {
+  if (portraitLoopOn) return;
+  portraitLoopOn = true;
+  const slow = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let last = 0;
+  const tick = t => {
+    if (activeTab !== 'warroom' && activeTab !== 'audit') { portraitLoopOn = false; return; }
+    if (!slow || t - last > 1000) { last = t; paintPortraits(t); }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+function agentChips(id) {
+  const n = k => stat(id, k);
+  const p = portfolioValue();
+  switch (id) {
+    case 'boss': return [['Approved', n('approved')], ['Vetoed', n('vetoed')], ['Journal', state.journal.length]];
+    case 'announcer': return [['Alerts', n('alerts')], ['Hot now', hotCoins().length], ['Scans', n('scans')]];
+    case 'news': return [['Headlines', n('headlines')], ['Pushed', n('pushed')], ['Feed', newsStatus.indexOf('LIVE') === 0 ? 'ON' : 'OFF']];
+    case 'finance': { const h = n('holds'); return [['Stale exits', n('stale')], ['Avg hold', h ? Math.round(n('holdMin') / h) + 'm' : '--'], ['Idle cash', Math.round(100 * state.cash / Math.max(1, state.cash + p.value)) + '%']]; }
+    case 'risk': return [['Stops hit', n('stops')], ['Worst', fmtSigned(n('worst'))], ['Exposure', fmtCurrency(p.value)]];
+    case 'trader': { const c = n('closed'); return [['Trades', c], ['Win rate', c ? Math.round(100 * n('wins') / c) + '%' : '--'], ['P&L', fmtSigned(n('pnl'))]]; }
+    case 'macro': { const d = n('pickWins') + n('pickLosses'); return [['Picks', n('picks')], ['Pick wins', d ? Math.round(100 * n('pickWins') / d) + '%' : '--'], ['Open', heldAddrs().length]]; }
+    case 'cfo': return [['Swept', fmtCurrency(n('swept'))], ['Sweeps', n('sweeps')], ['Vault', fmtCurrency(state.vault)]];
+  }
+  return [];
+}
+
+function renderWarRoomCards() {
+  const box = $('war-room-container');
+  if (!box) return;
+  box.innerHTML = AGENTS.map((a, i) => `
+    <div class="agent-card" data-agent="${i}" style="border-color: ${a.color};">
+      <canvas class="agent-portrait" width="72" height="80" data-robot="${a.id}" style="border-color: ${a.color};"></canvas>
+      <div class="agent-body">
+        <div class="agent-name" style="color: ${a.color};">${escapeHtml(a.name)}</div>
+        <div class="agent-role">${escapeHtml(a.role)}</div>
+        <div class="agent-chips">${agentChips(a.id).map(c => `<div class="chip"><span>${escapeHtml(c[0])}</span><strong>${escapeHtml(c[1])}</strong></div>`).join('')}</div>
+        <div class="agent-speech">"${escapeHtml(a.says)}"</div>
+      </div>
+    </div>`).join('');
+  paintPortraits(performance.now());
+}
+
+function openAgentDialog(i) {
+  const a = AGENTS[i];
+  if (!a) return;
+  const stats = agentChips(a.id).map(c => `${c[0]}: ${c[1]}`).join('\n');
+  const recent = (state.ledger[a.id] || []).slice(0, 8).map(l => `${l.t}  ${l.text}`).join('\n') || 'No activity yet.';
+  openDialog({ title: a.name, message: `${a.role}\n\n${a.job}\n\nSTATS\n${stats}\n\nRECENT ACTIVITY\n${recent}`, okText: 'CLOSE', noCancel: true });
+}
+
+const CW = 320, CH = 200, SPW = ROBOT.PW, SPH = ROBOT.PH, TABLE_TOP = 70;
+function spritePos(i) { return { x: (i % 4) * 80 + 4, y: i < 4 ? 4 : 116 }; }
+let selectedAgent = -1;
+let sceneRunning = false;
+
+function sceneFrame() {
+  if (sceneRunning) return;
+  sceneRunning = true;
+  const canvas = $('orbital-table');
+  const ctx = canvas && canvas.getContext('2d');
+  if (!ctx) { sceneRunning = false; return; }
+  ctx.imageSmoothingEnabled = false;
+
+  const drawAgent = (i, t) => {
+    const a = AGENTS[i], p = spritePos(i);
+    ctx.globalAlpha = 0.18; ctx.fillStyle = a.color; ctx.fillRect(p.x, p.y, SPW, SPH); ctx.globalAlpha = 1;
+    ctx.save(); ctx.translate(p.x, p.y); ROBOT.draw(ctx, a.id, t); ctx.restore();
+    if (i === selectedAgent) { ctx.strokeStyle = '#f9f871'; ctx.lineWidth = 2; ctx.strokeRect(p.x + 1, p.y + 1, SPW - 2, SPH - 2); }
+  };
+
+  const draw = t => {
+    if (activeTab !== 'warroom') { sceneRunning = false; return; }
+    ctx.fillStyle = '#07010f'; ctx.fillRect(0, 0, CW, CH);
+    ctx.fillStyle = '#0d0526'; ctx.fillRect(0, 0, CW, TABLE_TOP);
+    ctx.fillStyle = '#16093a'; for (let x = 0; x < CW; x += 20) ctx.fillRect(x, 0, 1, TABLE_TOP);
+    for (let i = 0; i < 4; i++) drawAgent(i, t);
+    ctx.fillStyle = '#05000f'; ctx.fillRect(4, TABLE_TOP - 2, 312, 86);
+    ctx.fillStyle = '#2a1a66'; ctx.fillRect(8, TABLE_TOP + 2, 304, 78);
+    ctx.fillStyle = '#3a1d78'; ctx.fillRect(8, TABLE_TOP + 2, 304, 3);
+    ctx.fillStyle = '#00f0ff'; ctx.fillRect(8, TABLE_TOP + 2, 304, 1);
+    ctx.globalAlpha = 0.5 + 0.3 * Math.sin(t / 700); ctx.fillStyle = '#00f0ff';
+    ctx.fillRect(144, 90, 32, 3); ctx.fillRect(152, 96, 16, 2); ctx.globalAlpha = 1;
+    for (let i = 4; i < 8; i++) drawAgent(i, t);
+    requestAnimationFrame(draw);
+  };
+  requestAnimationFrame(draw);
+}
+
+function initScene() {
+  const canvas = $('orbital-table');
+  if (!canvas) return;
+  canvas.addEventListener('click', e => {
+    const r = canvas.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (CW / r.width), y = (e.clientY - r.top) * (CH / r.height);
+    let hit = -1;
+    for (let i = 7; i >= 0; i--) {
+      const p = spritePos(i), bottom = i < 4 ? Math.min(p.y + SPH, TABLE_TOP) : p.y + SPH;
+      if (x >= p.x && x < p.x + SPW && y >= p.y && y < bottom) { hit = i; break; }
+    }
+    if (hit >= 0 && hit === selectedAgent) { openAgentDialog(hit); return; }
+    selectedAgent = hit;
+    if (hit >= 0) ROBOT.speak(AGENTS[hit].id, 1800);
+    const cap = $('scene-caption');
+    if (cap) cap.textContent = hit >= 0 ? `${AGENTS[hit].name}: "${AGENTS[hit].says}" (tap again for stats)` : 'Tap an agent to see who they are.';
+  });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+  const posBox = $('positions-container');
+  if (posBox) posBox.addEventListener('click', e => {
+    const btn = e.target.closest('[data-sell]');
+    if (btn) manualSellPosition(btn.dataset.sell);
+  });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    playSfx(b.classList.contains('tab-btn') ? 'tab' : 'click');
+  });
+  initScene();
+  AGENTS.forEach(a => { const l = state.ledger[a.id]; if (l && l[0]) a.says = l[0].text; });
+  const wr = $('war-room-container');
+  if (wr) wr.addEventListener('click', e => { const c = e.target.closest('[data-agent]'); if (c) openAgentDialog(parseInt(c.dataset.agent, 10)); });
+  agentSay('risk', `Scanner online [${state.mode}]. Paper trading only.`);
+  log('Discovery engine started.');
+  renderAll();
+  scanMarket();
+  fetchLiveNews();
+  setInterval(scanMarket, CFG.scanEveryMs);
+  setInterval(fetchLiveNews, CFG.newsEveryMs);
+});
+  </script>
 <script>
 /* =====================================================================
    ORBITAL // HQ  PATCH v16.7  (paste as a 2nd <script> right before </body>)
@@ -695,3 +2933,5 @@ async function askAuditor() {
   if (ab) ab.addEventListener('click', e => { const b = e.target.closest('[data-apply]'); if (b) applyProposal(parseInt(b.dataset.apply, 10)); });
 })();
 </script>
+</body>
+</html>
