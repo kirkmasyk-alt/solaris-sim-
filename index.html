@@ -2900,7 +2900,8 @@ async function askAuditor() {
       results: { all: auditStats(null), GROWTH: auditStats('GROWTH'), SNIPER: auditStats('SNIPER'), LAUNCH: auditStats('LAUNCH'), PUMP: auditStats('PUMP') },
       findings: auditResult.map(f => `${f.sev}: ${f.title} - ${f.detail}`),
       journal: state.journal.slice(-20).map(j => ({ s: j.symbol, m: j.mode, pct: +j.pct.toFixed(1), tag: j.tag, b: j.b })),
-      errors: errorBuf.slice(-5)
+      errors: errorBuf.slice(-5),
+      extra: (typeof auditExtraContext === 'function') ? auditExtraContext() : null
     };
     const sys = 'You are AUDITOR-7, reviewer of a PAPER-TRADING Solana memecoin bot. Be concise (under 180 words) and concrete. Base claims on the data given. Never recommend riskier settings without evidence. Respond ONLY with JSON: {"answer": string, "proposals": [{"key": string, "value": number, "why": string}]}. Max 3 proposals; keys must be from the tunable list.';
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -2931,6 +2932,681 @@ async function askAuditor() {
 (function () {
   const ab = $('audit-answer');
   if (ab) ab.addEventListener('click', e => { const b = e.target.closest('[data-apply]'); if (b) applyProposal(parseInt(b.dataset.apply, 10)); });
+})();
+</script>
+<script>
+/* =====================================================================
+   ORBITAL // HQ  PATCH v16.8   (goes AFTER patch v16.7, before </body>)
+   1. "Is this pump already done?" detector (phase + off-high + volume momentum)
+   2. Pump.fun profiles + PUMP SETUP menu (5 operations, every number editable)
+   3. Learning v2: recency weighting, statistical evidence, probe trades,
+      FAVOR boosts score, shadow-tracking of every skipped coin, MFE/MAE exit analysis
+   4. Faster 20s loop while PUMP mode (or a pump position) is active
+   Paper trading only.
+   ===================================================================== */
+(function () { try { const ls = document.querySelector('.logo-sub'); if (ls) ls.textContent = 'PAPER TRADING // V16.8'; } catch (e) {} })();
+
+/* ---------- state defaults ---------- */
+state.shadow = state.shadow || { open: [], done: [] };
+state.lows = state.lows || {};
+state.pumpProfile = state.pumpProfile || 'BALANCED';
+state.pumpEdits = state.pumpEdits || null;
+if (!state.txCount && !state.journal.length) { state.shadow = { open: [], done: [] }; state.lows = {}; }   // fresh wipe
+
+/* ---------- pump profiles ---------- */
+const PUMP_COMMON = {
+  minAgeMin: 3, maxAgeMin: 120, minMc: 6000, maxMc: 60000, minLiq: 4000,
+  minTxns: 30, minBuyRatio: 0.58, minTx5m: 6, minBuy5m: 0.55,
+  minCh5m: -4, maxCh5m: 20, minCh1h: -100, maxCh1h: 150, minCh24h: -1000, maxScanRun: 12,
+  maxDD: 12, minAccel: 0.8, phases: ['EARLY', 'BUILDING'],
+  entryPct: 0.05, baseSlippage: 0.02, maxSpendPctOfLiq: 0.03,
+  stopPct: -12, recoverPct: 50, tier2Pct: 150, trailPct: 20, staleMin: 25, stalePct: 5,
+  maxOpen: 4, exitMc: 0, topExit: true
+};
+const PUMP_PROFILES = {
+  BALANCED: { label: 'Balanced', desc: 'All-round: coins 3-120 min old with live buying, skips anything that already ran or is rolling over.' },
+  SNIPER: {
+    label: 'Early Sniper', desc: 'Brand-new coins (1-15 min, mcap under $25k) while volume is still accelerating. Small size, wide stop, fast stale exit. Needs speed, so expect worse real-world fills than paper.',
+    minAgeMin: 1, maxAgeMin: 15, minMc: 5000, maxMc: 25000, minLiq: 3000, minTxns: 15, minBuyRatio: 0.62, minTx5m: 8, minBuy5m: 0.6,
+    maxCh5m: 30, maxCh1h: 80, minAccel: 1.0, phases: ['EARLY'], entryPct: 0.04, stopPct: -15, recoverPct: 40, tier2Pct: 120, trailPct: 20, staleMin: 12, stalePct: 4, maxOpen: 5
+  },
+  MOMENTUM: {
+    label: 'Momentum Rider', desc: 'Coins 10-90 min old that proved themselves (60+ txns/hour) and are still building, not spiking. Tighter stop, earlier profit-taking.',
+    minAgeMin: 10, maxAgeMin: 90, minMc: 15000, maxMc: 55000, minLiq: 6000, minTxns: 60, minTx5m: 10, maxCh5m: 12, maxCh1h: 100, minCh1h: 5,
+    maxDD: 10, minAccel: 0.9, phases: ['BUILDING', 'EARLY'], stopPct: -10, recoverPct: 35, tier2Pct: 100, trailPct: 15, staleMin: 25, stalePct: 5
+  },
+  GRADUATION: {
+    label: 'Graduation Run', desc: 'Coins near the end of the bonding curve (mcap $45-66k) still gaining volume. Sells everything at $68k mcap, before the migration volatility.',
+    minAgeMin: 5, maxAgeMin: 240, minMc: 45000, maxMc: 66000, minLiq: 8000, minTxns: 50, minTx5m: 8, maxCh5m: 15, maxCh1h: 120,
+    phases: ['EARLY', 'BUILDING'], stopPct: -10, recoverPct: 25, tier2Pct: 80, trailPct: 15, staleMin: 20, stalePct: 3, exitMc: 68000
+  },
+  DIP: {
+    label: 'Graduate Dip', desc: 'Older coins (30 min-24 h, mcap $40-400k) that ran 50%+ in 24h and are pulling back gently with buyers returning. Tight stop. Highest risk of catching a dying coin.',
+    minAgeMin: 30, maxAgeMin: 1440, minMc: 40000, maxMc: 400000, minLiq: 15000, minTxns: 80, minBuyRatio: 0.5, minTx5m: 6, minBuy5m: 0.52,
+    minCh5m: -6, maxCh5m: 3, minCh1h: -25, maxCh1h: 15, minCh24h: 50, maxScanRun: 4, maxDD: 25, minAccel: 0.6, phases: ['BUILDING', 'EARLY'],
+    stopPct: -8, recoverPct: 15, tier2Pct: 60, trailPct: 12, staleMin: 40, stalePct: 2
+  }
+};
+function applyPumpProfile() {
+  const name = PUMP_PROFILES[state.pumpProfile] ? state.pumpProfile : 'BALANCED';
+  CFG.pump = Object.assign({}, PUMP_COMMON, PUMP_PROFILES[name], state.pumpEdits || {});
+  CFG.pump.profile = name;
+  CFG.pump.label = PUMP_PROFILES[name].label + (state.pumpEdits ? ' (edited)' : '');
+}
+applyPumpProfile();
+CFG_DEFAULTS.pump = Object.assign({}, PUMP_COMMON);
+
+/* ---------- per-coin tracking + "is the pump over?" detector ---------- */
+const coinTrack = new Map();
+function trackCoin(c) {
+  const now = Date.now();
+  let t = coinTrack.get(c.address);
+  if (!t) { t = { firstAt: now, firstPrice: c.price, high: c.price, low: c.price }; coinTrack.set(c.address, t); }
+  if (c.price > t.high) t.high = c.price;
+  if (c.price < t.low) t.low = c.price;
+  return t;
+}
+function snapshotPrices() {
+  market.forEach((c, a) => {
+    let h = priceHist.get(a);
+    if (!h) { h = []; priceHist.set(a, h); }
+    const last = h[h.length - 1];
+    if (!last || last.t !== c.seenAt) h.push({ t: c.seenAt, p: c.price });
+    while (h.length > 24) h.shift();
+    trackCoin(c);
+  });
+  if (priceHist.size > 500) priceHist.forEach((v, a) => { if (!market.has(a)) { priceHist.delete(a); coinTrack.delete(a); } });
+}
+function scanRun(c) {
+  const h = priceHist.get(c.address);
+  if (!h || !h.length) return 0;
+  const recent = h.filter(x => x.t >= Date.now() - 3 * 60000);
+  if (!recent.length || !(recent[0].p > 0)) return 0;
+  return (c.price / recent[0].p - 1) * 100;
+}
+function pumpMetrics(c) {
+  const tx1 = Math.max(1, c.buysH1 + c.sellsH1), tx5 = (c.buysM5 || 0) + (c.sellsM5 || 0);
+  const win = Math.max(5, Math.min(60, c.ageMin === null || c.ageMin === undefined ? 60 : c.ageMin));
+  const t = coinTrack.get(c.address);
+  return {
+    flow1: c.buysH1 / tx1,
+    flow5: tx5 > 0 ? (c.buysM5 || 0) / tx5 : 0,
+    tx5,
+    accel: c.volumeH1 > 0 ? ((c.volumeM5 || 0) / 5) / (c.volumeH1 / win) : 0,   // volume per minute now vs. average
+    dd: t && t.high > 0 ? Math.max(0, (t.high - c.price) / t.high * 100) : 0       // % below the highest price we have seen
+  };
+}
+function pumpPhase(c, P) {
+  P = P || CFG.pump;
+  const m = pumpMetrics(c);
+  const maxDD = P.maxDD || 12, maxCh5m = P.maxCh5m || 20;
+  if (m.accel < 0.25 || m.dd > maxDD * 1.8) return 'DEAD';
+  if (c.change1h >= 50 && (c.change5m <= 1 || m.flow5 < m.flow1 - 0.12 || m.accel < 0.6 || m.dd > maxDD * 0.6)) return 'TOPPING';
+  if (c.change5m > maxCh5m || (c.change1h > 30 && c.change5m > 0.5 * c.change1h)) return 'PARABOLIC';
+  if (c.change1h < 25 && c.change5m >= -2 && m.accel >= 1 && m.flow5 >= 0.55) return 'EARLY';
+  return 'BUILDING';
+}
+function pumpReject(c) {
+  const P = CFG.pump;
+  if (!isPump(c) || isMajorWave(c)) return 'notpump';
+  if (c.ageMin === null || c.ageMin === undefined || c.ageMin < P.minAgeMin || c.ageMin > P.maxAgeMin) return 'age';
+  if (!(c.marketCap > 0) || c.marketCap < P.minMc || c.marketCap > P.maxMc) return 'mc';
+  if (c.liquidity < P.minLiq) return 'liq';
+  const tx = c.buysH1 + c.sellsH1;
+  if (tx < P.minTxns || c.buysH1 / tx < P.minBuyRatio) return 'flow';
+  const m = pumpMetrics(c);
+  if (m.tx5 < P.minTx5m || m.flow5 < P.minBuy5m) return 'flow';
+  if (c.change5m < P.minCh5m || c.change1h < P.minCh1h || c.change24h < P.minCh24h) return 'weak';
+  if (c.change5m > P.maxCh5m || c.change1h > P.maxCh1h) return 'chase';
+  if (c.change1h > 30 && c.change5m > 0.5 * c.change1h) return 'chase';
+  if (scanRun(c) > P.maxScanRun) return 'chase';
+  if (m.accel < P.minAccel) return 'fade';
+  if (m.dd > P.maxDD) return 'topped';
+  const ph = pumpPhase(c, P);
+  if (P.phases.indexOf(ph) < 0) return 'phase:' + ph;
+  return '';
+}
+function isPumpCandidate(c) { return pumpReject(c) === ''; }
+function pumpScore(c) {
+  const P = CFG.pump, m = pumpMetrics(c);
+  const ext = Math.min(0.7, Math.max(0, c.change5m) / (P.maxCh5m * 1.5));
+  return m.flow5 * Math.sqrt(Math.max(1, m.tx5)) * (1 - ext) * Math.min(2, Math.max(0.3, m.accel));
+}
+function passesChaseGate(c) {
+  if (isMajorWave(c)) return true;
+  if (c.change5m > CFG.maxCh5m || c.change1h > CFG.maxCh1h || c.change5m < -4) return false;
+  if (scanRun(c) > CFG.maxScanRun) return false;
+  const ph = pumpPhase(c, { maxDD: 12, maxCh5m: CFG.maxCh5m });
+  return !(ph === 'TOPPING' || ph === 'DEAD' || ph === 'PARABOLIC');
+}
+
+/* ---------- learning v2 ---------- */
+DIM_NAMES.phase = 'Pump phase'; DIM_NAMES.accel = 'Volume momentum'; DIM_NAMES.dd = 'Off recent high';
+function featOf(c) {
+  const tx = Math.max(1, c.buysH1 + c.sellsH1), m = pumpMetrics(c), P = CFG.pump;
+  const f = {
+    mode: state.mode, liq: c.liquidity, mc: c.marketCap, ageMin: c.ageMin === undefined ? null : c.ageMin,
+    buyRatio: c.buysH1 / tx, turnover: c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0, ch5m: c.change5m, ch1h: c.change1h,
+    phase: pumpPhase(c, P), accel: m.accel, dd: m.dd, flow5: m.flow5
+  };
+  if (state.mode === 'PUMP') {
+    f.profile = P.profile;
+    f.pcfg = { stopPct: P.stopPct, recoverPct: P.recoverPct, tier2Pct: P.tier2Pct, trailPct: P.trailPct, staleMin: P.staleMin, stalePct: P.stalePct, exitMc: P.exitMc, topExit: P.topExit };
+  }
+  return f;
+}
+function bucketOf(f) {
+  return {
+    liq: f.liq < 5000 ? '<$5k' : f.liq < 20000 ? '$5-20k' : f.liq < 100000 ? '$20-100k' : '$100k+',
+    age: f.ageMin === null ? 'unknown' : f.ageMin < 15 ? '<15m' : f.ageMin < 120 ? '15m-2h' : f.ageMin < 1440 ? '2-24h' : '1d+',
+    buys: f.buyRatio < 0.55 ? '<55%' : f.buyRatio < 0.65 ? '55-65%' : '65%+',
+    turn: f.turnover < 0.5 ? '<0.5' : f.turnover < 2 ? '0.5-2' : '2+',
+    run: f.ch1h < 0 ? 'down' : f.ch1h < 10 ? '0-10%' : f.ch1h < 50 ? '10-50%' : '50%+',
+    phase: f.phase || undefined,
+    accel: f.accel === undefined ? undefined : f.accel < 0.6 ? '<0.6x' : f.accel < 1.2 ? '0.6-1.2x' : '1.2x+',
+    dd: f.dd === undefined ? undefined : f.dd < 3 ? '<3%' : f.dd < 10 ? '3-10%' : '10%+'
+  };
+}
+function recordTrade(addr, tag, total) {
+  const f = state.entryFeat[addr], cost = state.entryCost[addr] || 0;
+  const heldMin = (Date.now() - (state.entryTimes[addr] || Date.now())) / 60000;
+  const win = total > 0;
+  bump('trader', 'closed'); if (win) bump('trader', 'wins'); bump('trader', 'pnl', total);
+  bump('macro', win ? 'pickWins' : 'pickLosses');
+  bump('finance', 'holdMin', heldMin); bump('finance', 'holds');
+  if (tag === 'STOP-LOSS CUT') bump('risk', 'stops');
+  if (tag === 'STALE EXIT') bump('finance', 'stale');
+  const rs = state.stats.risk || (state.stats.risk = {});
+  if (total < (rs.worst || 0)) rs.worst = total;
+  const basis = state.costBasis[addr] || 0;
+  const mfe = basis > 0 ? ((state.peaks[addr] || basis) / basis - 1) * 100 : 0;
+  const mae = basis > 0 ? ((state.lows[addr] || basis) / basis - 1) * 100 : 0;
+  if (f && tag !== 'MANUAL') {
+    state.journal.push({
+      symbol: state.symbols[addr] || '?', mode: f.mode, b: bucketOf(f),
+      pct: cost > 0 ? (total / cost) * 100 : 0, pnl: total, win, tag, time: clock(),
+      heldMin: Math.round(heldMin), mfe: Math.max(0, mfe), mae: Math.min(0, mae), profile: f.profile || null
+    });
+    if (state.journal.length > 400) state.journal.shift();
+  }
+  delete state.lows[addr];
+}
+
+let lessonCache = { k: '', L: null };
+function wilson(wins, n, z) {
+  if (!n) return [0, 1];
+  const p = wins / n, d = 1 + z * z / n, c = p + z * z / (2 * n), a = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n));
+  return [(c - a) / d, (c + a) / d];
+}
+function computeLessons() {
+  const key = state.mode + ':' + state.journal.length + ':' + Math.floor(Date.now() / 30000);
+  if (lessonCache.k === key) return lessonCache.L;
+  const rows = state.journal.filter(j => j.mode === state.mode);
+  const res = { avoid: [], favor: [], n: rows.length };
+  if (rows.length >= LESSON_MIN) {
+    const N = rows.length, w = rows.map((j, i) => Math.pow(0.97, N - 1 - i));      // newer trades count more
+    const W = w.reduce((a, b) => a + b, 0);
+    const overall = rows.reduce((a, j, i) => a + j.pct * w[i], 0) / W;
+    Object.keys(DIM_NAMES).forEach(dim => {
+      const groups = {};
+      rows.forEach((j, i) => { const b = j.b && j.b[dim]; if (!b || b === '?') return; (groups[b] = groups[b] || []).push(i); });
+      Object.keys(groups).forEach(bucket => {
+        const idx = groups[bucket];
+        if (idx.length < LESSON_MIN) return;
+        const gw = idx.reduce((a, i) => a + w[i], 0);
+        const avg = idx.reduce((a, i) => a + rows[i].pct * w[i], 0) / gw;
+        const wins = idx.filter(i => rows[i].win).length, ci = wilson(wins, idx.length, 1.28);
+        const item = { dim, bucket, n: idx.length, avg, win: wins / idx.length, lo: ci[0], hi: ci[1] };
+        if (avg < overall - 2 && ci[1] < 0.45) res.avoid.push(item);          // clearly worse AND win rate provably low
+        else if (avg > overall + 2 && ci[0] > 0.4) res.favor.push(item);
+      });
+    });
+  }
+  lessonCache = { k: key, L: res };
+  return res;
+}
+function favorBoost(c) {
+  const L = computeLessons();
+  if (!L.favor.length) return 1;
+  const b = bucketOf(featOf(c));
+  return 1 + Math.min(0.5, 0.12 * L.favor.filter(l => b[l.dim] === l.bucket).length);
+}
+const _es2 = entryScore;
+entryScore = function (c) { return _es2(c) * favorBoost(c); };
+
+/* ---------- shadow tracking: what would the coins we SKIPPED have done? ---------- */
+const SHADOW_MS = 30 * 60000, PROBE_MS = 3 * HOUR;
+const shadowSeen = {};
+let probeNext = false;
+function shadowAdd(c, reason) {
+  const now = Date.now();
+  if (shadowSeen[c.address] && now - shadowSeen[c.address] < SHADOW_MS) return false;
+  shadowSeen[c.address] = now;
+  state.shadow.open.push({ a: c.address, sym: c.symbol, p: c.price, t: now, reason, mode: state.mode, hi: c.price, lo: c.price });
+  if (state.shadow.open.length > 80) state.shadow.open.shift();
+  return true;
+}
+function shadowTick() {
+  const s = state.shadow, now = Date.now(), keep = [];
+  s.open.forEach(x => {
+    const c = market.get(x.a);
+    if (c && isFresh(c)) { if (c.price > x.hi) x.hi = c.price; if (c.price < x.lo) x.lo = c.price; x.last = c.price; }
+    if (now - x.t >= SHADOW_MS) {
+      if (x.last) {
+        const pct = (x.last / x.p - 1) * 100 - 2;       // minus ~2% round-trip costs
+        s.done.push({ reason: x.reason, mode: x.mode, sym: x.sym, pct, mfe: (x.hi / x.p - 1) * 100, mae: (x.lo / x.p - 1) * 100, win: pct > 0, t: now });
+        if (s.done.length > 300) s.done.shift();
+      }
+    } else keep.push(x);
+  });
+  s.open = keep;
+  saveState();
+}
+function shadowStats() {
+  const by = {};
+  state.shadow.done.forEach(d => {
+    const o = by[d.reason] || (by[d.reason] = { n: 0, w: 0, s: 0, mfe: 0 });
+    o.n++; if (d.win) o.w++; o.s += d.pct; o.mfe += d.mfe;
+  });
+  return by;
+}
+function collectShadows(all) {
+  let n = 0;
+  for (const c of all) {
+    if (n >= 3) break;
+    let r = '';
+    if (state.mode === 'PUMP') {
+      const x = pumpReject(c);
+      if (x === 'chase' || x === 'fade' || x === 'topped' || x.indexOf('phase') === 0) r = 'PUMP:' + (x.indexOf('phase') === 0 ? 'phase' : x);
+    } else if (state.mode !== 'LAUNCH') {
+      if (_isBuyable(c) && !passesChaseGate(c)) r = 'GROWTH:chase';
+    }
+    if (r && shadowAdd(c, r)) n++;
+  }
+}
+
+const _scan2 = scanMarket;
+scanMarket = async function () {
+  const r = await _scan2();
+  try { shadowTick(); } catch (e) { console.warn('shadow', e); }
+  return r;
+};
+
+/* ---------- entries (probe trades, shadows, best-first) ---------- */
+async function openPosition(coin) {
+  const addr = coin.address;
+  if (state.positions[addr] > 0 || state.cash <= CFG.minCash || isArchived(coin)) return false;
+  if (heldAddrs().length >= maxOpenNow()) return false;
+  const mode = state.mode, major = isMajorWave(coin), sizeMult = probeNext ? 0.5 : 1;
+  const tx = Math.max(1, coin.buysH1 + coin.sellsH1);
+  agentSay('announcer', `WHALE_EYE: Validated ${coin.symbol} flow -> ${Math.round(100 * coin.buysH1 / tx)}% buy pressure.`);
+
+  if (state.decision === 'COUNCIL' && (localStorage.getItem('openai_api_key') || '').trim()) {
+    const verdict = await askCouncilAI(coin);
+    if (!verdict.approve) {
+      if (!verdict.skip) {
+        agentSay('risk', `RISK_CORE: Vetoed ${coin.symbol}. ${verdict.reason}`);
+        bump('boss', 'vetoed');
+        if (!verdict.error) shadowAdd(coin, 'COUNCIL');
+      }
+      return false;
+    }
+    agentSay('risk', `RISK_CORE: Council AI approved ${coin.symbol}. ${verdict.reason}`);
+  }
+  if (state.positions[addr] > 0 || state.cash <= CFG.minCash || heldAddrs().length >= maxOpenNow()) return false;
+  if (major && heldAddrs().filter(a => state.symbols[a] === 'SOL' || state.symbols[a] === 'WSOL').length >= 2) return false;
+
+  const pct = (major ? 0.30 : mode === 'LAUNCH' ? CFG.launch.entryPct : mode === 'PUMP' ? CFG.pump.entryPct : CFG.entryPct) * sizeMult;
+  const liqPct = mode === 'PUMP' ? CFG.pump.maxSpendPctOfLiq : CFG.maxSpendPctOfLiq;
+  const minTicket = (mode === 'LAUNCH' || mode === 'PUMP') ? 5 : 10;
+  const wanted = Math.max(minTicket * sizeMult, Math.min(state.cash, state.cash * pct));
+  const spend = Math.min(wanted, state.cash, coin.liquidity * liqPct);
+  if (spend < 1) return false;
+
+  const fee = spend * CFG.feeRate;
+  const fill = coin.price * (1 + slippage(spend, coin.liquidity));
+  state.cash -= spend;
+  state.positions[addr] = (spend - fee) / fill;
+  state.costBasis[addr] = fill;
+  state.symbols[addr] = coin.symbol;
+  state.entryTimes[addr] = Date.now();
+  state.peaks[addr] = coin.price;
+  state.lows[addr] = Math.min(coin.price, fill);
+  state.tiers[addr] = 0;
+  state.entryFeat[addr] = featOf(coin);
+  state.entryCost[addr] = spend;
+  state.tradePnl[addr] = 0;
+  state.runnerRecovered[addr] = false;
+  bump('trader', 'entries'); bump('macro', 'picks'); bump('boss', 'approved');
+  state.fees += fee;
+  state.txCount += 1;
+  playSfx('buy');
+  log(`[EXECUTION] ALPHA_X deployed ${fmtCurrency(spend)} into ${coin.symbol} [${mode}${probeNext ? ' PROBE' : ''}]`);
+  logTrade('BUY', `Verified entry on ${coin.symbol} for ${fmtCurrency(spend)}`);
+  agentSay('trader', `ALPHA_X: Successfully swapped ${fmtCurrency(spend)} for ${coin.symbol}.`);
+  saveState();
+  renderAll();
+  return true;
+}
+
+async function considerEntry() {
+  if (entering || state.cash <= CFG.minCash || councilBusy || heldAddrs().length >= maxOpenNow()) return;
+  entering = true;
+  try {
+    const now = Date.now();
+    const all = Array.from(market.values()).filter(c => isFresh(c) && !(state.positions[c.address] > 0) && !(proposalBlock[c.address] > now) && !isArchived(c));
+    collectShadows(all);
+    const cands = all.filter(c => isBuyable(c)).sort((a, b) => entryScore(b) - entryScore(a));
+    if (!cands.length) return;
+    const avoid = computeLessons().avoid;
+    let allowed = cands.filter(c => !lessonFor(c, avoid));
+    const blocked = cands.filter(c => lessonFor(c, avoid));
+    blocked.slice(0, 2).forEach(c => shadowAdd(c, 'LESSON'));
+    let probe = false;
+    if (!allowed.length && blocked.length && now - (state.lastProbe || 0) > PROBE_MS) { allowed = [blocked[0]]; probe = true; }   // re-test an avoided pattern at half size
+    allowed = allowed.slice(0, 3);
+    const maxDrift = state.mode === 'PUMP' ? 4 : 2;
+
+    for (const pick of allowed) {
+      let c = pick;
+      const fresh = await feedJson('quote', `https://api.dexscreener.com/tokens/v1/solana/${pick.address}`);
+      if (Array.isArray(fresh)) {
+        const m = fresh.find(p => p && p.baseToken && p.baseToken.address === pick.address);
+        const f = m && toCoin(m);
+        if (f) c = f;
+      }
+      const drift = (c.price / pick.price - 1) * 100;
+      if (drift > maxDrift) {
+        proposalBlock[pick.address] = Date.now() + 2 * 60000;
+        shadowAdd(c, 'DRIFT');
+        log(`[LATE] Skipped ${pick.symbol}: price already +${drift.toFixed(1)}% since scan`);
+        continue;
+      }
+      if (!isBuyable(c)) {
+        proposalBlock[pick.address] = Date.now() + 2 * 60000;
+        log(`[LATE] Skipped ${pick.symbol}: failed entry rules on fresh quote`);
+        continue;
+      }
+      probeNext = probe;
+      let ok = false;
+      try { ok = await openPosition(c); } finally { probeNext = false; }
+      if (ok) { if (probe) { state.lastProbe = Date.now(); log(`[LEARN] Probe trade on ${c.symbol} (half size) to re-test an avoided pattern`); } break; }
+      proposalBlock[pick.address] = Date.now() + CFG.councilBlockMs;
+    }
+  } finally { entering = false; }
+}
+
+/* ---------- exits: adds TOP EXIT / GRAD EXIT / flow exit and records lows ---------- */
+function runExits() {
+  const now = Date.now();
+  for (const addr of heldAddrs()) {
+    const coin = market.get(addr);
+    const sym = state.symbols[addr] || '?';
+    if (!isFresh(coin)) {
+      if (!noFeedWarned.has(addr)) { noFeedWarned.add(addr); log(`[WARN] No live price for ${sym}; exits paused until feed returns`); }
+      continue;
+    }
+    noFeedWarned.delete(addr);
+
+    const feat = state.entryFeat[addr] || {};
+    const pm = feat.mode || state.mode;
+    const cost = state.costBasis[addr] || coin.price;
+    const gain = ((coin.price - cost) / cost) * 100;
+    if (!(state.peaks[addr] >= coin.price)) state.peaks[addr] = coin.price;
+    if (!(state.lows[addr] <= coin.price)) state.lows[addr] = Math.min(coin.price, cost);
+    const drop = ((state.peaks[addr] - coin.price) / state.peaks[addr]) * 100;
+    const healthyDip = classifyDipOrDump(coin) === 'HEALTHY DIP';
+    const major = isMajorWave(coin);
+    const horizon = determineHoldHorizon(coin);
+    const L = CFG.launch;
+    const isLaunch = pm === 'LAUNCH' && !major, isPumpPos = pm === 'PUMP' && !major;
+    const P = isPumpPos ? Object.assign({}, CFG.pump, feat.pcfg || {}) : CFG.pump;     // rules the trade was opened with
+    const qty = state.positions[addr] || 0;
+    const value = qty * coin.price;
+    const profitUsd = (coin.price - cost) * qty;
+    const heldMs = now - (state.entryTimes[addr] || now);
+    const buyRatio = coin.buysH1 / Math.max(1, coin.buysH1 + coin.sellsH1);
+    const stopLimit = major ? CFG.majorStopPct : isPumpPos ? P.stopPct : isLaunch ? L.stopPct : CFG.stopLossPct;
+
+    if (gain <= stopLimit) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
+
+    if (isPumpPos) {
+      if (P.exitMc > 0 && coin.marketCap >= P.exitMc) { closePosition(addr, coin, 'GRAD EXIT', 'Reached exit mcap, sold'); continue; }
+      const ph = pumpPhase(coin, P);
+      if (P.topExit && gain > 1 && (ph === 'TOPPING' || ph === 'DEAD')) { closePosition(addr, coin, 'TOP EXIT', `Pump looks finished (${ph}), banked`); continue; }
+      if (gain <= 0 && ph === 'DEAD' && heldMs > 3 * 60000) { closePosition(addr, coin, 'FLOW EXIT', 'Volume died, cut'); continue; }
+      if (!state.runnerRecovered[addr] && gain < 0 && heldMs > 2 * 60000 && buyRatio < 0.45) { closePosition(addr, coin, 'FLOW EXIT', 'Buy flow reversed on'); continue; }
+    }
+
+    const recoverAt = isPumpPos ? P.recoverPct : 8;
+    if (!isLaunch && !state.runnerRecovered[addr] && gain >= recoverAt && value > 0) {
+      const initialCost = state.entryCost[addr] || (value / (1 + gain / 100));
+      const qtyToSell = qty * Math.min(0.85, initialCost / value);
+      if (qtyToSell > 0) {
+        const pnl = sellTokens(addr, coin, qtyToSell);
+        state.positions[addr] -= qtyToSell;
+        state.runnerRecovered[addr] = true;
+        playSfx('win');
+        log(`[PRINCIPAL RECOVERED] ${sym} | P&L: ${fmtSigned(pnl)}. Remaining bag is a FREE RUNNER`);
+        logTrade('PRINCIPAL', `Recovered principal & profit on ${sym}`, pnl);
+        agentSay('finance', `KIRKTRON 9001: Principal secured on ${sym}. Free runner active.`);
+        saveState();
+        continue;
+      }
+    }
+
+    if (state.runnerRecovered[addr] && drop >= (isPumpPos ? P.trailPct : 12) && !healthyDip) {
+      closePosition(addr, coin, 'RUNNER EXIT', 'Free runner trailing stop hit on'); continue;
+    }
+
+    if (major) {
+      if (profitUsd >= CFG.stableTargetProfitUsd) { closePosition(addr, coin, 'TAKE-PROFIT ($1+)', `Secured $${profitUsd.toFixed(2)} on`); continue; }
+    } else if (isPumpPos) {
+      if (gain >= P.tier2Pct && state.tiers[addr] < 1) {
+        const q = qty * 0.5, pnl = sellTokens(addr, coin, q);
+        state.positions[addr] -= q; state.tiers[addr] = 1;
+        playSfx('win'); logTrade('TIER 2', `Sold half the runner of ${sym}`, pnl);
+        saveState(); continue;
+      }
+    } else if (isLaunch) {
+      if (gain >= L.tier1Pct && state.tiers[addr] < 1) {
+        const q = qty * 0.5, pnl = sellTokens(addr, coin, q);
+        state.positions[addr] -= q; state.tiers[addr] = 1;
+        playSfx('win'); logTrade('TIER 1', `Sold 50% of ${sym}, cost recovered`, pnl);
+        saveState(); continue;
+      }
+      if (gain >= L.tier2Pct && state.tiers[addr] < 2) {
+        const q = qty * 0.5, pnl = sellTokens(addr, coin, q);
+        state.positions[addr] -= q; state.tiers[addr] = 2;
+        playSfx('win'); logTrade('TIER 2', `Sold half the rest of ${sym}`, pnl);
+        saveState(); continue;
+      }
+      if (state.tiers[addr] >= 1 && drop >= L.trailPct && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Trailing stop hit on'); continue; }
+    } else if (gain >= CFG.takeProfitPct) {
+      closePosition(addr, coin, 'TAKE-PROFIT', 'Target secured on'); continue;
+    }
+
+    if (!major && !state.runnerRecovered[addr]) {
+      if (isPumpPos && heldMs > P.staleMin * 60000 && gain < P.stalePct) { closePosition(addr, coin, 'STALE EXIT', 'Pump went quiet, closed'); continue; }
+      if (isLaunch && state.tiers[addr] < 1 && heldMs > L.staleMs && gain < L.stalePct) { closePosition(addr, coin, 'STALE EXIT', 'Launch went quiet, closed'); continue; }
+      if (!isPumpPos && !isLaunch) {
+        const maxHold = horizon === 'QUICK SCALP (Minutes)' ? 30 * 60000 : horizon === 'MOMENTUM SURGE (Hours)' ? 6 * HOUR : CFG.staleExitMs;
+        if (heldMs > maxHold && gain < 2.0) closePosition(addr, coin, 'STALE EXIT', `Horizon (${horizon}) elapsed, closed`);
+      }
+    }
+  }
+}
+
+/* ---------- fast 20s loop for pump trading ---------- */
+let fastBusy = false;
+async function fastTick() {
+  if (fastBusy || scanning) return;
+  const pumpHeld = heldAddrs().some(a => (state.entryFeat[a] || {}).mode === 'PUMP');
+  if (state.mode !== 'PUMP' && !pumpHeld) return;
+  fastBusy = true;
+  try {
+    snapshotPrices();
+    await pumpScan();
+    const held = heldAddrs();
+    if (held.length) {
+      const d = await feedJson('ds-lookup', `https://api.dexscreener.com/tokens/v1/solana/${held.slice(0, 30).join(',')}`);
+      if (Array.isArray(d)) {
+        const best = {};
+        d.forEach(p => { const c = toCoin(p); if (c && (!best[c.address] || best[c.address].liquidity < c.liquidity)) best[c.address] = c; });
+        Object.keys(best).forEach(a => market.set(a, best[a]));
+      }
+    }
+    runTradingLoop();
+    renderAll();
+  } catch (e) { console.warn('fastTick', e); } finally { fastBusy = false; }
+}
+setInterval(fastTick, 20000);
+
+/* ---------- audit additions ---------- */
+function exitAnalysis() {
+  const rows = state.journal.filter(j => j.mode === state.mode && j.mfe !== undefined);
+  if (rows.length < 10) return null;
+  const stops = rows.filter(j => j.tag === 'STOP-LOSS CUT'), wins = rows.filter(j => j.win);
+  const avg = (a, k) => a.length ? a.reduce((s, j) => s + j[k], 0) / a.length : 0;
+  return {
+    n: rows.length, stops: stops.length, stopsWereUp8: stops.filter(j => j.mfe >= 8).length,
+    capture: wins.length ? avg(wins, 'pct') / Math.max(1, avg(wins, 'mfe')) : null, winnersAvgDip: avg(wins, 'mae'), avgHoldMin: avg(rows, 'heldMin')
+  };
+}
+function auditExtraContext() {
+  const by = shadowStats(), sh = {};
+  Object.keys(by).forEach(k => { const o = by[k]; sh[k] = { n: o.n, winPct: Math.round(100 * o.w / o.n), avgPct: +(o.s / o.n).toFixed(1) }; });
+  const L = computeLessons();
+  return {
+    blockedCoinOutcomes_30min: sh, exitAnalysis: exitAnalysis(),
+    learnedAvoid: L.avoid.map(l => `${DIM_NAMES[l.dim]}=${l.bucket} n${l.n} avg${l.avg.toFixed(1)}%`),
+    learnedFavor: L.favor.map(l => `${DIM_NAMES[l.dim]}=${l.bucket} n${l.n} avg${l.avg.toFixed(1)}%`),
+    pumpProfile: CFG.pump.label, pump: CFG.pump
+  };
+}
+const _runAudit = runAudit;
+runAudit = function () {
+  _runAudit();
+  try {
+    const add = (sev, title, detail) => auditResult.push({ sev, title, detail });
+    const by = shadowStats();
+    Object.keys(by).forEach(k => {
+      const o = by[k];
+      if (o.n < 10) return;
+      const avg = o.s / o.n, win = o.w / o.n;
+      if (avg > 3 && win > 0.55) add('warn', `Filter "${k}" may be too strict`, `${o.n} coins it blocked: ${Math.round(win * 100)}% would have won, avg ${avg.toFixed(1)}% after costs (30 min).`);
+      else if (avg < -2) add('ok', `Filter "${k}" is saving money`, `${o.n} coins it blocked: only ${Math.round(win * 100)}% would have won, avg ${avg.toFixed(1)}%.`);
+      else add('info', `Filter "${k}" is neutral`, `${o.n} blocked coins: ${Math.round(win * 100)}% wins, avg ${avg.toFixed(1)}%.`);
+    });
+    const ex = exitAnalysis();
+    if (ex) {
+      if (ex.stops >= 5 && ex.stopsWereUp8 / ex.stops > 0.25) add('warn', 'Stop-outs were winners first', `${ex.stopsWereUp8} of ${ex.stops} stop-losses had been up 8%+ before reversing. Take principal earlier (lower recoverPct) or tighten the trail.`);
+      if (ex.capture !== null && ex.capture < 0.5) add('warn', 'Giving back too much profit', `Winners keep only ${Math.round(ex.capture * 100)}% of their peak gain. Tighten the trailing stop.`);
+      else if (ex.capture !== null) add('info', 'Profit capture', `Winners keep ${Math.round(ex.capture * 100)}% of peak gain; avg hold ${Math.round(ex.avgHoldMin)} min.`);
+    }
+    const L = computeLessons();
+    add('info', 'Learning status', `${L.n} ${state.mode} trades in journal, ${L.avoid.length} avoid rules, ${L.favor.length} favor rules, ${state.shadow.done.length} shadow results, ${state.shadow.open.length} still tracking.`);
+    const rank = { bad: 0, warn: 1, info: 2, ok: 3 };
+    auditResult.sort((x, y) => rank[x.sev] - rank[y.sev]);
+  } catch (e) { console.error('audit v16.8', e); }
+};
+const _buildReport = buildReport;
+buildReport = function () { return _buildReport() + '\n\nLEARNING ' + JSON.stringify(auditExtraContext()); };
+
+/* ---------- Status tab: learning + shadow results ---------- */
+const _rl = renderLessons;
+renderLessons = function () {
+  _rl();
+  const box = $('lessons-box');
+  if (!box) return;
+  const by = shadowStats(), rows = [];
+  Object.keys(by).forEach(k => {
+    const o = by[k];
+    if (o.n < 5) return;
+    const avg = o.s / o.n;
+    rows.push(`<div class="protocol-line" style="color:${avg < 0 ? 'var(--green)' : 'var(--amber)'};">BLOCKED ${escapeHtml(k)}: ${o.n} coins, ${Math.round(100 * o.w / o.n)}% would have won, avg ${avg.toFixed(1)}% ${avg < 0 ? '(filter helping)' : '(filter may cost you)'}</div>`);
+  });
+  box.insertAdjacentHTML('beforeend', `<div class="protocol-line" style="color:var(--text-dim);">Shadow: ${state.shadow.done.length} results, ${state.shadow.open.length} tracking. Avoided patterns get a half-size probe trade every 3h.</div>` + rows.join(''));
+};
+const _rp2 = renderProtocol;
+renderProtocol = function () {
+  _rp2();
+  if (state.mode !== 'PUMP') return;
+  const box = $('protocol-box');
+  if (box) box.insertAdjacentHTML('afterbegin', `<div class="protocol-line" style="color:var(--amber);">PROFILE: ${escapeHtml(CFG.pump.label)} | phases ${escapeHtml(CFG.pump.phases.join('/'))} | off-high max ${CFG.pump.maxDD}% | volume momentum min ${CFG.pump.minAccel}x${CFG.pump.exitMc ? ' | sells at mcap ' + fmtCurrency(CFG.pump.exitMc) : ''}</div>`);
+};
+
+/* ---------- PUMP SETUP menu ---------- */
+const PUMP_FIELDS = [
+  ['minAgeMin', 'Min age (min)', 1], ['maxAgeMin', 'Max age (min)', 1], ['minMc', 'Min mcap ($)', 1], ['maxMc', 'Max mcap ($)', 1],
+  ['minLiq', 'Min liquidity ($)', 1], ['minTxns', 'Min txns 1h', 1], ['minBuyRatio', 'Min buys 1h (%)', 100], ['minTx5m', 'Min txns 5m', 1],
+  ['minBuy5m', 'Min buys 5m (%)', 100], ['maxCh5m', 'Max 5m gain (%)', 1], ['maxCh1h', 'Max 1h gain (%)', 1], ['maxScanRun', 'Max gain last 3 min (%)', 1],
+  ['maxDD', 'Max drop from high (%)', 1], ['minAccel', 'Min volume momentum (x)', 1], ['entryPct', 'Entry size (% of bankroll)', 100], ['maxOpen', 'Max open positions', 1],
+  ['stopPct', 'Stop-loss (%)', 1], ['recoverPct', 'Take principal at (%)', 1], ['tier2Pct', 'Sell half runner at (%)', 1], ['trailPct', 'Runner trail (%)', 1],
+  ['staleMin', 'Stale after (min)', 1], ['stalePct', 'Stale if under (%)', 1], ['exitMc', 'Sell at mcap ($, 0 = off)', 1]
+];
+function openPumpMenu() {
+  let ov = document.getElementById('pump-overlay');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'pump-overlay'; ov.className = 'dialog-overlay'; document.body.appendChild(ov); }
+  ov.textContent = '';
+  const box = document.createElement('div'); box.className = 'dialog-box'; ov.appendChild(box);
+  const add = (p, tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; p.appendChild(e); return e; };
+  let sel = CFG.pump.profile, draft = Object.assign({}, CFG.pump);
+  add(box, 'div', 'dialog-title', 'PUMP.FUN SETUP');
+  const desc = add(box, 'div', 'dialog-msg', '');
+  const prow = add(box, 'div', 'dialog-btns'); prow.style.flexWrap = 'wrap'; prow.style.justifyContent = 'flex-start';
+  const pbtn = {};
+  const grid = add(box, 'div'); grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;';
+  const inputs = {};
+  PUMP_FIELDS.forEach(f => {
+    const w = add(grid, 'div'); add(w, 'label', 'dialog-label', f[1]);
+    const i = add(w, 'input', 'dialog-input'); i.type = 'text'; i.setAttribute('inputmode', 'decimal'); i.setAttribute('autocomplete', 'off'); i.style.fontSize = '15px';
+    inputs[f[0]] = i;
+  });
+  const chkRow = add(box, 'div', 'dialog-label'); chkRow.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;';
+  const mkChk = (label) => { const l = add(chkRow, 'label'); const c = document.createElement('input'); c.type = 'checkbox'; l.appendChild(c); l.appendChild(document.createTextNode(' ' + label)); return c; };
+  const cbEarly = mkChk('Buy EARLY phase'), cbBuild = mkChk('Buy BUILDING phase'), cbTop = mkChk('Sell when pump tops');
+  const msg = add(box, 'div', 'dialog-msg', '');
+  const refresh = () => {
+    desc.textContent = (PUMP_PROFILES[sel] ? PUMP_PROFILES[sel].desc : 'Custom settings');
+    PUMP_FIELDS.forEach(f => { inputs[f[0]].value = String(+(draft[f[0]] * f[2]).toFixed(4)); });
+    cbEarly.checked = draft.phases.indexOf('EARLY') >= 0; cbBuild.checked = draft.phases.indexOf('BUILDING') >= 0; cbTop.checked = !!draft.topExit;
+    Object.keys(pbtn).forEach(k => pbtn[k].classList.toggle('active-mode', k === sel));
+  };
+  Object.keys(PUMP_PROFILES).forEach(k => {
+    const b = add(prow, 'button', 'cyber-btn', PUMP_PROFILES[k].label); pbtn[k] = b;
+    b.addEventListener('click', () => { sel = k; draft = Object.assign({}, PUMP_COMMON, PUMP_PROFILES[k]); msg.textContent = ''; refresh(); });
+  });
+  const row = add(box, 'div', 'dialog-btns');
+  const close = () => ov.classList.remove('open');
+  const bReset = add(row, 'button', 'cyber-btn danger', 'RESET'); bReset.addEventListener('click', () => { state.pumpEdits = null; state.pumpProfile = sel; applyPumpProfile(); draft = Object.assign({}, CFG.pump); saveState(); msg.textContent = 'Reset to preset.'; refresh(); renderAll(); });
+  const bClose = add(row, 'button', 'cyber-btn', 'CLOSE'); bClose.addEventListener('click', close);
+  const bSave = add(row, 'button', 'cyber-btn accent', 'SAVE + USE');
+  bSave.addEventListener('click', () => {
+    const out = Object.assign({}, draft); let bad = false;
+    PUMP_FIELDS.forEach(f => { const v = parseFloat(String(inputs[f[0]].value).replace(/[$,%\s]/g, '')); if (!isFinite(v)) bad = true; else out[f[0]] = v / f[2]; });
+    if (bad) { msg.textContent = 'Check the numbers.'; return; }
+    out.stopPct = -Math.abs(out.stopPct) || -12;
+    out.entryPct = Math.min(0.25, Math.max(0.01, out.entryPct));
+    out.maxOpen = Math.max(1, Math.min(10, Math.round(out.maxOpen)));
+    out.phases = []; if (cbEarly.checked) out.phases.push('EARLY'); if (cbBuild.checked) out.phases.push('BUILDING');
+    if (!out.phases.length) out.phases = ['EARLY', 'BUILDING'];
+    out.topExit = cbTop.checked;
+    state.pumpProfile = sel; state.pumpEdits = out; applyPumpProfile(); saveState();
+    log(`[PUMP] Profile ${CFG.pump.label} saved`);
+    setTradingMode('PUMP'); close();
+  });
+  refresh();
+  ov.classList.add('open');
+}
+(function () {
+  const anchor = $('btn-mode-pump');
+  if (anchor && !$('btn-pump-setup')) {
+    const b = document.createElement('button');
+    b.id = 'btn-pump-setup'; b.className = 'cyber-btn purple'; b.textContent = '⚙ PUMP SETUP';
+    b.addEventListener('click', openPumpMenu);
+    anchor.parentNode.appendChild(b);
+  }
 })();
 </script>
 </body>
