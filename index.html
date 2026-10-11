@@ -2955,7 +2955,7 @@ if (!state.txCount && !state.journal.length) { state.shadow = { open: [], done: 
 
 /* ---------- pump profiles ---------- */
 const PUMP_COMMON = {
-  minAgeMin: 3, maxAgeMin: 120, minMc: 6000, maxMc: 60000, minLiq: 4000,
+  minAgeMin: 3, maxAgeMin: 180, minMc: 6000, maxMc: 90000, minLiq: 4000,
   minTxns: 30, minBuyRatio: 0.58, minTx5m: 6, minBuy5m: 0.55,
   minCh5m: -4, maxCh5m: 20, minCh1h: -100, maxCh1h: 150, minCh24h: -1000, maxScanRun: 12,
   maxDD: 12, minAccel: 0.8, phases: ['EARLY', 'BUILDING'],
@@ -3228,7 +3228,7 @@ function collectShadows(all) {
 const _scan2 = scanMarket;
 scanMarket = async function () {
   const r = await _scan2();
-  try { shadowTick(); } catch (e) { console.warn('shadow', e); }
+  try { shadowTick(); logPumpFunnel(); } catch (e) { console.warn('shadow', e); }
   return r;
 };
 
@@ -3311,7 +3311,8 @@ async function considerEntry() {
       let c = pick;
       const fresh = await feedJson('quote', `https://api.dexscreener.com/tokens/v1/solana/${pick.address}`);
       if (Array.isArray(fresh)) {
-        const m = fresh.find(p => p && p.baseToken && p.baseToken.address === pick.address);
+        const m = fresh.filter(p => p && p.baseToken && p.baseToken.address === pick.address)
+          .sort((a, b) => ((b.liquidity && b.liquidity.usd) || 0) - ((a.liquidity && a.liquidity.usd) || 0))[0];   // main pool, not a thin side pool
         const f = m && toCoin(m);
         if (f) c = f;
       }
@@ -3437,6 +3438,47 @@ function runExits() {
   }
 }
 
+/* ---------- pump feeds: find coins that are active RIGHT NOW (not just old high-volume ones) ---------- */
+const PUMP_FEEDS = [
+  ['gt-new', 'new_pools?page=1'],
+  ['gt-trend5m', 'trending_pools?duration=5m&page=1'],
+  ['gt-pumpfun', 'dexes/pump-fun/pools?page=1&sort=h24_volume_usd_desc'],
+  ['gt-trend1h', 'trending_pools?duration=1h&page=1'],
+  ['gt-pumpswap', 'dexes/pumpswap/pools?page=1&sort=h24_tx_count_desc'],
+  ['gt-new2', 'new_pools?page=2']
+];
+let pumpFeedRot = 0;
+const pumpFeedInfo = {};
+async function pumpScan() {
+  const GT = 'https://api.geckoterminal.com/api/v2/networks/solana';
+  const picks = [0, 1].map(k => PUMP_FEEDS[(pumpFeedRot + k) % PUMP_FEEDS.length]);
+  pumpFeedRot = (pumpFeedRot + 2) % PUMP_FEEDS.length;
+  const lists = await Promise.all(picks.map(p => feedJson(p[0], `${GT}/${p[1]}`)));
+  lists.forEach((d, i) => {
+    let seen = 0, pump = 0;
+    if (d && Array.isArray(d.data)) d.data.forEach(p => { const c = toCoinGT(p); if (!c) return; seen++; if (isPump(c)) { pump++; market.set(c.address, c); } });
+    pumpFeedInfo[picks[i][0]] = { seen, pump, ok: !!d, t: Date.now() };
+  });
+}
+const REJECT_WORDS = { PASS: 'READY TO BUY', age: 'wrong age', mc: 'mcap out of range', liq: 'thin liquidity', flow: 'weak buying', weak: 'falling', chase: 'already ran', fade: 'volume fading', topped: 'off its high', notpump: 'not pump.fun' };
+function pumpFunnel() {
+  const cnt = {}; let n = 0;
+  market.forEach(c => { if (!isPump(c)) return; n++; const r = pumpReject(c) || 'PASS'; const k = r.indexOf('phase:') === 0 ? 'phase ' + r.slice(6) : (REJECT_WORDS[r] || r); cnt[k] = (cnt[k] || 0) + 1; });
+  const txt = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).map(k => `${k} ${cnt[k]}`).join(', ');
+  const feeds = Object.keys(pumpFeedInfo).map(k => `${k} ${pumpFeedInfo[k].ok ? pumpFeedInfo[k].pump + '/' + pumpFeedInfo[k].seen : 'FAILED'}`).join(' | ');
+  return { n, txt: txt || 'none', feeds: feeds || 'no data yet' };
+}
+let lastFunnelLog = 0;
+function logPumpFunnel() {
+  if (state.mode !== 'PUMP') return;
+  const now = Date.now();
+  if (now - lastFunnelLog < 60000) return;
+  lastFunnelLog = now;
+  const f = pumpFunnel();
+  log(`[PUMP] ${f.n} pump.fun coins in view: ${f.txt}`);
+  log(`[PUMP] feeds (pump coins/seen): ${f.feeds}`);
+}
+
 /* ---------- fast 20s loop for pump trading ---------- */
 let fastBusy = false;
 async function fastTick() {
@@ -3447,6 +3489,7 @@ async function fastTick() {
   try {
     snapshotPrices();
     await pumpScan();
+    logPumpFunnel();
     const held = heldAddrs();
     if (held.length) {
       const d = await feedJson('ds-lookup', `https://api.dexscreener.com/tokens/v1/solana/${held.slice(0, 30).join(',')}`);
@@ -3499,10 +3542,8 @@ runAudit = function () {
       else add('info', `Filter "${k}" is neutral`, `${o.n} blocked coins: ${Math.round(win * 100)}% wins, avg ${avg.toFixed(1)}%.`);
     });
     if (state.mode === 'PUMP') {
-      const cnt = {}; let n = 0;
-      market.forEach(c => { if (!isPump(c)) return; n++; const r = pumpReject(c) || 'PASS'; cnt[r] = (cnt[r] || 0) + 1; });
-      const txt = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).map(k => `${k} ${cnt[k]}`).join(', ');
-      add('info', 'Pump funnel: why coins are rejected', `${n} pump.fun coins: ${txt || 'none'}. age = too young/old, mc = outside mcap range, liq = thin, flow = buy pressure too low, weak = falling, chase = already ran, fade = volume fading, topped = off its high, phase:X = wrong phase.`);
+      const f = pumpFunnel();
+      add(f.n === 0 ? 'bad' : 'info', 'Pump funnel: why coins are not bought', `${f.n} pump.fun coins in view: ${f.txt}. Feeds (pump/seen): ${f.feeds}.`);
     }
     const ex = exitAnalysis();
     if (ex) {
