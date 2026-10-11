@@ -297,7 +297,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V16.1</div>
+          <div class="logo-sub">PAPER TRADING // V16.2</div>
         </div>
       </div>
       <div class="header-btns">
@@ -342,9 +342,6 @@ body::after {
       <div class="stat-box"><div class="stat-label">Hot (Buyable)</div><div class="stat-value green" id="hot-count">0</div></div>
       <div class="stat-box"><div class="stat-label">Benched</div><div class="stat-value amber" id="benched-count">0</div></div>
       <div class="stat-box"><div class="stat-label">Feeds Online</div><div class="stat-value purple" id="feeds-count">--</div></div>
-      <div class="stat-box"><div class="stat-label">Trades Logged</div><div class="stat-value" id="learn-trades">0</div></div>
-      <div class="stat-box"><div class="stat-label">Learned Rules</div><div class="stat-value amber" id="learn-rules">0</div></div>
-      <div class="stat-box"><div class="stat-label">Win Rate</div><div class="stat-value green" id="win-rate">--</div></div>
     </div>
 
     <div class="nav-tabs" role="tablist">
@@ -360,14 +357,14 @@ body::after {
 
     <div id="tab-hub" class="tab-pane active panel">
       <div class="pane-head">
-        <div class="pane-title">// ENGINE LOG (SCANS, FEEDS, SYSTEM)</div>
+        <div class="pane-title">// DISCOVERY ENGINE LOG</div>
         <button class="cyber-btn" onclick="requestBriefing()">SUMMARY</button>
       </div>
       <div class="terminal-box log" id="system-log"></div>
     </div>
 
     <div id="tab-council" class="tab-pane panel">
-      <div class="pane-title">// COUNCIL ROOM (REPORTS &amp; DECISIONS)</div>
+      <div class="pane-title">// AI SWARM AUDIT &amp; EXECUTION LOG</div>
       <div class="terminal-box" id="council-feed-container"></div>
     </div>
 
@@ -377,7 +374,7 @@ body::after {
     </div>
 
     <div id="tab-positions" class="tab-pane panel">
-      <div class="pane-title">// OPEN HOLDINGS &amp; MANUAL LIQUIDATION</div>
+      <div class="pane-title">// OPEN HOLDINGS (TAP FOR DEEP INSPECT)</div>
       <div class="terminal-box" id="positions-container">
         <div class="position-row position-header">
           <div>ASSET</div><div>HOLDING</div><div>AVG COST</div><div>P&amp;L ($)</div><div>ACTION</div>
@@ -404,16 +401,9 @@ body::after {
       <div class="status-row"><span>DECISION MODE:</span> <strong id="status-decision" style="color: var(--cyan);">COUNCIL</strong></div>
       <div class="status-row"><span>MARKET FEED:</span> <strong id="status-feed" style="color: var(--text-dim);">CONNECTING</strong></div>
       <div class="status-row"><span>NEWS FEED:</span> <strong id="status-news" style="color: var(--text-dim);">CONNECTING</strong></div>
-      <div class="status-row"><span>MAX POSITION CAP:</span> <strong id="status-cap" style="color: var(--green);">20% OF BANKROLL</strong></div>
+      <div class="status-row"><span>SCAN FREQUENCY:</span> <strong id="status-scan" style="color: var(--green);">60 SECONDS</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
       <div class="status-row"><span>GEMINI API KEY:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
-      <div class="pane-title" style="margin-top: 8px;">// FEED HEALTH</div>
-      <div id="feed-box"></div>
-      <div class="pane-title" style="margin-top: 8px;">// BACKUP</div>
-      <div class="audit-btns">
-        <button class="cyber-btn accent" onclick="exportData()">EXPORT DATA</button>
-        <button class="cyber-btn danger" onclick="importData()">IMPORT DATA</button>
-      </div>
       <div class="pane-title" style="margin-top: 8px;">// BUY PROTOCOL</div>
       <div id="protocol-box"></div>
       <div class="pane-title" style="margin-top: 8px;">// LEARNED RULES</div>
@@ -542,7 +532,7 @@ const auditSeen = {};
 
 const HOUR = 60 * 60 * 1000;
 const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR };
-const STORE_KEY = 'orbital_state_v7';
+const STORE_KEY = 'orbital_state_v8';
 
 const AGENT_JOBS = {
   boss: 'Supervises the swarm. Enforces momentum-based duration rules and principal-recovery exits.',
@@ -931,7 +921,6 @@ async function scanMarket() {
   } finally {
     scanning = false;
     try { runAudit(); } catch (e) { console.error('Audit error:', e); }
-    try { snapshotNet(); } catch (e) { console.error('Snapshot error:', e); }
     renderAll();
     runTradingLoop();
   }
@@ -1548,7 +1537,7 @@ function renderNow() {
     if (activeTab === 'ledger') renderLedger();
     if (activeTab === 'council') renderCouncil();
     if (activeTab === 'news') renderNewsTab();
-    if (activeTab === 'status') { renderProtocol(); renderLessons(); renderFeedHealth(); }
+    if (activeTab === 'status') { renderProtocol(); renderLessons(); }
     if (activeTab === 'warroom') renderWarRoomCards();
     if (activeTab === 'audit') renderAudit();
     const nBad = auditResult.filter(f => f.sev === 'bad').length, nWarn = auditResult.filter(f => f.sev === 'warn').length;
@@ -1600,55 +1589,6 @@ function renderLedger() {
       ${pnl || '<span></span>'}
     </div>`;
   }).join('') : '<div class="empty-note">NO COMPLETED TRANSACTIONS YET</div>';
-}
-
-function snapshotNet() {
-  const now = Date.now();
-  if (now - (state.lastSnap || 0) < 5 * 60 * 1000) return;
-  const p = portfolioValue();
-  state.history.push({ t: now, net: +(state.cash + state.vault + p.value).toFixed(2) });
-  if (state.history.length > 600) state.history.shift();
-  state.lastSnap = now;
-  saveState();
-}
-
-function renderFeedHealth() {
-  const box = $('feed-box');
-  if (!box) return;
-  const names = Object.keys(FEEDS);
-  box.innerHTML = names.length ? names.map(n => {
-    const f = FEEDS[n], ok = f.msg === 'ok', paused = f.until > Date.now();
-    return `<div class="status-row"><span>${escapeHtml(n)}</span><strong style="color: ${ok ? 'var(--green)' : 'var(--red)'};">${paused ? 'PAUSED ' : ''}${escapeHtml(f.msg || '--')}${f.code ? ' [' + f.code + ']' : ''} ${f.ok}/${f.ok + f.fail}</strong></div>`;
-  }).join('') : '<div class="protocol-line">No requests yet.</div>';
-}
-
-async function exportData() {
-  const payload = JSON.stringify({ app: 'orbital-hq', v: 2, savedAt: new Date().toISOString(), state });
-  let copied = false;
-  try { await navigator.clipboard.writeText(payload); copied = true; } catch (e) { copied = false; }
-  await openDialog({
-    title: 'EXPORT DATA',
-    message: copied ? 'Copied to your clipboard. Paste it somewhere safe.' : 'Copy was blocked. Long-press the box, select all and copy.',
-    inputs: [{ id: 'd', label: 'Backup', value: payload, multiline: true }],
-    okText: 'DONE', noCancel: true
-  });
-}
-
-async function importData() {
-  const r = await openDialog({
-    title: 'IMPORT DATA',
-    message: 'Paste a backup. This REPLACES all current data.',
-    inputs: [{ id: 'd', label: 'Backup', value: '', multiline: true }],
-    okText: 'IMPORT', danger: true
-  });
-  if (!r) return;
-  try {
-    const o = JSON.parse(r.values.d.trim());
-    const st = o && o.state;
-    if (!st || typeof st.cash !== 'number' || typeof st.positions !== 'object') throw new Error('not a valid backup');
-    localStorage.setItem(STORE_KEY, JSON.stringify(st));
-    location.reload();
-  } catch (e) { log('[BACKUP] Import failed: ' + e.message); setAuditStatus('Import failed: ' + e.message); }
 }
 
 function renderCouncil() {
