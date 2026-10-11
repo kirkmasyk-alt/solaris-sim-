@@ -7,336 +7,89 @@
   <link rel="preconnect" href="https://googleapis.com">
   <link rel="preconnect" href="https://gstatic.com" crossorigin>
   <link href="https://googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-  <style>
-:root {
-  --bg-color: #0a0118;
-  --panel-bg: #150a30;
-  --outline: #05000f;
-  --border-color: #ff2bd6;
-  --cyan: #00f0ff;
-  --green: #39ff88;
-  --red: #ff3b5c;
-  --amber: #f9f871;
-  --purple: #b45cff;
-  --text-main: #e9f7ff;
-  --text-dim: #8a7fb8;
-  --pixel: 'Press Start 2P', 'Courier New', monospace;
-  --body: 'VT323', 'Courier New', monospace;
-}
-
-* {
-  box-sizing: border-box; margin: 0; padding: 0;
-  font-family: var(--body);
-  -webkit-font-smoothing: none;
-}
-
-body {
-  background-color: var(--bg-color);
-  background-image:
-    linear-gradient(rgba(0,240,255,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,43,214,0.06) 1px, transparent 1px);
-  background-size: 24px 24px, 24px 24px;
-  color: var(--text-main);
-  font-size: 16px;
-  padding: 10px 14px 14px 10px;
-  display: flex;
-  justify-content: center;
-}
-
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 50;
-  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.14) 0px, rgba(0,0,0,0.14) 1px, transparent 1px, transparent 3px);
-}
-
-/* ==========================================================================
-   STARTUP SPLASH SCREEN STYLES
-   ========================================================================== */
-#splash-screen {
-  position: fixed;
-  inset: 0;
-  background-color: #05000f;
-  z-index: 9999;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  transition: opacity 0.4s ease-in-out, visibility 0.4s;
-}
-
-#splash-screen.fade-out {
-  opacity: 0;
-  visibility: hidden;
-}
-
-.boot-loader {
-  width: 100%;
-  max-width: 340px;
-  font-family: var(--pixel);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.boot-title {
-  color: var(--border-color);
-  font-size: 11px;
-  text-shadow: 0 0 8px var(--border-color);
-  margin-bottom: 6px;
-}
-
-.boot-text {
-  color: var(--cyan);
-  font-size: 9px;
-  white-space: nowrap;
-  overflow: hidden;
-  width: 0;
-  animation: typewriter 0.4s steps(30, end) forwards;
-}
-
-.boot-bar-container {
-  width: 100%;
-  height: 14px;
-  border: 3px solid var(--outline);
-  background: #150a30;
-  box-shadow: inset 2px 2px 0 #0d0422;
-  opacity: 0;
-  animation: fadeIn 0.1s forwards;
-}
-
-.boot-bar {
-  width: 0%;
-  height: 100%;
-  background: var(--green);
-  box-shadow: 0 0 8px var(--green);
-  animation: loadProgress 1.0s ease-in-out forwards;
-}
-
-@keyframes typewriter {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
-
-@keyframes loadProgress {
-  to { width: 100%; }
-}
-
-/* ==========================================================================
-   MAIN DASHBOARD STYLES
-   ========================================================================== */
-.container {
-  width: 100%;
-  max-width: 480px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.panel {
-  background: var(--panel-bg);
-  border: 4px solid var(--outline);
-  box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422, 4px 4px 0 var(--outline);
-  padding: 12px;
-}
-
-.row-panel {
-  flex-wrap: wrap;
-  gap: 6px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-}
-.row-label { font-size: 15px; color: var(--text-dim); }
-.row-btns { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
-
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 12px;
-}
-.brand { display: flex; align-items: center; gap: 10px; }
-.planet { image-rendering: pixelated; flex-shrink: 0; }
-.logo {
-  font-family: var(--pixel);
-  font-size: 12px;
-  color: var(--cyan);
-  text-shadow: 2px 2px 0 var(--border-color);
-  line-height: 1.3;
-  white-space: nowrap;
-}
-.logo-sub { font-size: 14px; color: var(--text-dim); margin-top: 4px; white-space: nowrap; }
-
-.header-btns {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  flex: 1 1 200px;
-}
-
-.cyber-btn {
-  --btn-bg: #12306b; --btn-hi: #00b8d4; --btn-lo: #081a40; --btn-fg: #ffffff;
-  background: var(--btn-bg);
-  color: var(--btn-fg);
-  border: 2px solid var(--outline);
-  box-shadow: inset 2px 2px 0 var(--btn-hi), inset -2px -2px 0 var(--btn-lo);
-  font-size: 15px;
-  line-height: 1;
-  padding: 6px 8px;
-  min-height: 30px;
-  cursor: pointer;
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.45);
-}
-.cyber-btn:active {
-  transform: translate(1px, 1px);
-  box-shadow: inset 2px 2px 0 var(--btn-lo), inset -2px -2px 0 var(--btn-hi);
-}
-.cyber-btn:focus-visible, .tab-btn:focus-visible { outline: 2px dashed var(--amber); outline-offset: 2px; }
-.cyber-btn.danger { --btn-bg: #c2185b; --btn-hi: #ff5c9d; --btn-lo: #6a0a33; }
-.cyber-btn.accent { --btn-bg: #d4c400; --btn-hi: #fffb9a; --btn-lo: #7a7000; --btn-fg: #1a1700; text-shadow: none; }
-.cyber-btn.purple { --btn-bg: #6a2bd9; --btn-hi: #b58cff; --btn-lo: #35127a; }
-.cyber-btn.active-mode { --btn-bg: #00f0ff; --btn-hi: #b8fbff; --btn-lo: #0096a3; --btn-fg: #001014; text-shadow: none; }
-
-.net-worth-banner {
-  background: #07010f;
-  border: 4px solid var(--outline);
-  box-shadow: inset 0 0 0 3px var(--border-color), 0 0 14px rgba(255,43,214,0.35), 4px 4px 0 var(--outline);
-  padding: 16px 12px 18px;
-  text-align: center;
-}
-.net-worth-label { font-size: 16px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; }
-.net-worth-value {
-  font-family: var(--pixel);
-  font-size: 22px;
-  color: var(--cyan);
-  margin-top: 10px;
-  text-shadow: 3px 3px 0 var(--outline), 0 0 10px rgba(0,240,255,0.5);
-}
-.net-worth-value.green { color: var(--green); }
-.net-worth-value.red { color: var(--red); }
-
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.stat-box {
-  background: #07010f;
-  border: 3px solid var(--outline);
-  box-shadow: inset 2px 2px 0 #2a1a66, 3px 3px 0 var(--outline);
-  padding: 8px;
-}
-.stat-label { font-size: 14px; color: var(--text-dim); text-transform: uppercase; line-height: 1.1; }
-.stat-value { font-family: var(--pixel); font-size: 10px; color: var(--cyan); margin-top: 8px; line-height: 1.4; word-break: break-all; }
-.stat-value.green { color: var(--green); }
-.stat-value.red { color: var(--red); }
-.stat-value.amber { color: var(--amber); }
-.stat-value.purple { color: var(--purple); }
-
-.nav-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
-.tab-btn {
-  background: #1a0f40;
-  border: 2px solid var(--outline);
-  box-shadow: inset 2px 2px 0 #3a1d78, inset -2px -2px 0 #0d0422;
-  color: var(--text-dim);
-  font-size: 14px;
-  padding: 9px 0;
-  text-align: center;
-  cursor: pointer;
-  text-transform: uppercase;
-  line-height: 1;
-}
-.tab-btn.active { background: var(--cyan); color: #001014; box-shadow: inset 2px 2px 0 #b8fbff, inset -2px -2px 0 #0096a3; }
-
-.tab-pane { display: none; flex-direction: column; gap: 8px; }
-.tab-pane.active { display: flex; }
-.pane-title { font-size: 16px; color: var(--cyan); margin-bottom: 4px; }
-.pane-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-
-.terminal-box {
-  background: #07010f;
-  border: 3px solid var(--outline);
-  box-shadow: inset 2px 2px 0 #2a1a66;
-  padding: 8px;
-  height: 240px;
-  overflow-y: auto;
-  font-size: 16px;
-  line-height: 1.15;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.terminal-box.log { height: 220px; gap: 2px; }
-.log-line { color: var(--green); }
-
-.feed-item { padding: 6px 8px; border-left: 4px solid var(--cyan); background: rgba(255,255,255,0.04); }
-.feed-sender { font-size: 15px; margin-bottom: 2px; letter-spacing: 1px; }
-.feed-time { font-size: 14px; color: var(--text-dim); }
-.feed-text { color: var(--text-main); font-size: 16px; }
-.feed-text a { color: var(--text-main); text-decoration: underline; }
-
-.status-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 15px;
-  padding: 6px 8px;
-  background: #07010f;
-  border: 2px solid var(--outline);
-  box-shadow: inset 2px 2px 0 #2a1a66;
-  margin-bottom: 4px;
-  align-items: center;
-}
-.protocol-line { font-size: 15px; color: var(--text-main); padding: 2px 0; }
-
-.agent-card {
-  background: #07010f;
-  border: 3px solid var(--outline);
-  box-shadow: 3px 3px 0 var(--outline);
-  padding: 8px;
-}
-.agent-name { font-size: 16px; }
-.agent-role { font-size: 14px; color: var(--text-dim); }
-.agent-speech { font-size: 15px; margin-top: 4px; color: var(--text-main); }
-
-.position-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 0.8fr;
-  gap: 2px;
-  font-size: 14px;
-  padding: 6px 2px;
-  background: rgba(255,255,255,0.04);
-  border-bottom: 2px solid #2a1a66;
-  align-items: center;
-  text-align: center;
-  cursor: pointer;
-}
-.position-header { color: var(--amber); border-bottom: 2px solid var(--border-color); padding-bottom: 4px; cursor: default; }
-.empty-note { text-align: center; color: var(--text-dim); padding: 16px; }
-.section-title { font-size: 15px; color: var(--amber); margin: 10px 0 4px; border-bottom: 2px solid var(--border-color); }
-
-#orbital-table {
-  width: 100%;
-  height: auto;
-  display: block;
-  image-rendering: pixelated;
-  border: 3px solid var(--outline);
-  box-shadow: 0 0 0 2px var(--cyan), 0 0 16px rgba(0,240,255,0.35);
-  cursor: pointer;
-  touch-action: manipulation;
-  background: #07010f;
-}
-.scene-caption { font-size: 16px; color: var(--text-dim); min-height: 20px; padding: 0 2px 4px; }
-#war-room-container { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-  </style>
+  <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
+  <!-- STARTUP SPLASH OVERLAY -->
+  <div id="splash-screen">
+    <div class="boot-loader">
+      <div class="boot-title">ORBITAL // BOOT_OS_v4.8</div>
+      <div class="boot-text" id="boot-text-1" style="animation-delay: 0s;">>> COLD BOOT CORE REGISTER...</div>
+      <div class="boot-text" id="boot-text-2" style="animation-delay: 0.5s;">>> SYNCING COMLINK SATELLITE...</div>
+      <div class="boot-text" id="boot-text-3" style="animation-delay: 1.1s;">>> TREASURY FIREWALL ACTIVE.</div>
+      <div class="boot-bar-container" style="animation-delay: 1.6s;">
+        <div class="boot-bar" style="animation-delay: 1.7s;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div class="container">
+    <header class="panel header">
+      <div class="brand">
+        <div class="planet">🌌</div>
+        <div>
+          <h1 class="logo">ORBITAL // HQ</h1>
+          <p class="logo-sub">Autonomous Crypto Treasury</p>
+        </div>
+      </div>
+      <div class="header-btns">
+        <button class="cyber-btn purple">CONNECT</button>
+      </div>
+    </header>
+
+    <section class="net-worth-banner">
+      <div class="net-worth-label">Total Treasury Value</div>
+      <div class="net-worth-value">$2,481,950.42</div>
+    </section>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">Health</div>
+        <div class="stat-value green">98.4%</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Gas Limit</div>
+        <div class="stat-value amber">42 Gwei</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Uptime</div>
+        <div class="stat-value purple">842h</div>
+      </div>
+    </div>
+
+    <nav class="nav-tabs">
+      <button class="tab-btn active">Terminal</button>
+      <button class="tab-btn">Assets</button>
+      <button class="tab-btn">Agents</button>
+      <button class="tab-btn">Logs</button>
+    </nav>
+
+    <main class="panel">
+      <div class="tab-pane active">
+        <h2 class="pane-title">System Log Terminal</h2>
+        <div class="terminal-box">
+          <p class="log-line">[01:14:22] SECURE PIPELINE ESTABLISHED</p>
+          <p class="log-line">[01:14:25] DEPLOYING LIQUIDITY POOL ALIGNMENT...</p>
+          <p class="log-line">[01:14:30] ASSET MATRIX OPERATIONAL</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        if (splash) splash.classList.add('fade-out');
+      }, 3000);
+    });
+  </script>
+</body>
+</html>
