@@ -297,7 +297,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V16.5</div>
+          <div class="logo-sub">PAPER TRADING // V16.6</div>
         </div>
       </div>
       <div class="header-btns">
@@ -532,7 +532,7 @@ const auditSeen = {};
 
 const HOUR = 60 * 60 * 1000;
 const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR };
-const STORE_KEY = 'orbital_state_v10';
+const STORE_KEY = 'orbital_state_v11';
 
 const AGENT_JOBS = {
   boss: 'Supervises the swarm. Enforces whale flow consensus and multi-agent agreement before approving any buy order.',
@@ -1120,7 +1120,6 @@ function manualSellPosition(addr) {
   closePosition(addr, coin, 'MANUAL', 'Manually liquidated');
 }
 
-// 🤖 OPENAI COUNCIL CONSENSUS API CONNECTOR
 async function askCouncilAI(coin) {
   const key = (localStorage.getItem('openai_api_key') || '').trim();
   if (!key || state.decision === 'AUTO') return { approve: true, reason: 'Auto mode approved' };
@@ -1166,7 +1165,6 @@ Respond ONLY in valid JSON format: {"approve": true/false, "reason": "brief rati
   }
 }
 
-// 🤖 MULTI-AGENT CONSENSUS & $10 MINIMUM BUY EXECUTION
 async function openPosition(coin) {
   const addr = coin.address;
   if (state.positions[addr] > 0 || state.cash <= CFG.minCash || isArchived(coin)) return false;
@@ -1195,7 +1193,6 @@ async function openPosition(coin) {
   const leverage = major ? CFG.majorLeverage : 1.0;
   const percentageWanted = state.cash * (major ? 0.30 : (state.mode === 'LAUNCH' ? CFG.launch.entryPct : CFG.entryPct)) * leverage;
   
-  // Enforce $10 minimum buy threshold while respecting available cash
   const wanted = Math.max(10, Math.min(state.cash, percentageWanted));
   const spend = Math.min(wanted, coin.liquidity * CFG.maxSpendPctOfLiq * leverage);
   if (spend < 1) return false;
@@ -2115,6 +2112,103 @@ function portraitLoop() {
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
+}
+
+function agentChips(id) {
+  const n = k => stat(id, k);
+  const p = portfolioValue();
+  switch (id) {
+    case 'boss': return [['Approved', n('approved')], ['Vetoed', n('vetoed')], ['Journal', state.journal.length]];
+    case 'announcer': return [['Alerts', n('alerts')], ['Hot now', hotCoins().length], ['Scans', n('scans')]];
+    case 'news': return [['Headlines', n('headlines')], ['Pushed', n('pushed')], ['Feed', newsStatus.indexOf('LIVE') === 0 ? 'ON' : 'OFF']];
+    case 'finance': { const h = n('holds'); return [['Stale exits', n('stale')], ['Avg hold', h ? Math.round(n('holdMin') / h) + 'm' : '--'], ['Idle cash', Math.round(100 * state.cash / Math.max(1, state.cash + p.value)) + '%']]; }
+    case 'risk': return [['Stops hit', n('stops')], ['Worst', fmtSigned(n('worst'))], ['Exposure', fmtCurrency(p.value)]];
+    case 'trader': { const c = n('closed'); return [['Trades', c], ['Win rate', c ? Math.round(100 * n('wins') / c) + '%' : '--'], ['P&L', fmtSigned(n('pnl'))]]; }
+    case 'macro': { const d = n('pickWins') + n('pickLosses'); return [['Picks', n('picks')], ['Pick wins', d ? Math.round(100 * n('pickWins') / d) + '%' : '--'], ['Open', heldAddrs().length]]; }
+    case 'cfo': return [['Swept', fmtCurrency(n('swept'))], ['Sweeps', n('sweeps')], ['Vault', fmtCurrency(state.vault)]];
+  }
+  return [];
+}
+
+function renderWarRoomCards() {
+  const box = $('war-room-container');
+  if (!box) return;
+  box.innerHTML = AGENTS.map((a, i) => `
+    <div class="agent-card" data-agent="${i}" style="border-color: ${a.color};">
+      <canvas class="agent-portrait" width="72" height="80" data-robot="${a.id}" style="border-color: ${a.color};"></canvas>
+      <div class="agent-body">
+        <div class="agent-name" style="color: ${a.color};">${escapeHtml(a.name)}</div>
+        <div class="agent-role">${escapeHtml(a.role)}</div>
+        <div class="agent-chips">${agentChips(a.id).map(c => `<div class="chip"><span>${escapeHtml(c[0])}</span><strong>${escapeHtml(c[1])}</strong></div>`).join('')}</div>
+        <div class="agent-speech">"${escapeHtml(a.says)}"</div>
+      </div>
+    </div>`).join('');
+  paintPortraits(performance.now());
+}
+
+function openAgentDialog(i) {
+  const a = AGENTS[i];
+  if (!a) return;
+  const stats = agentChips(a.id).map(c => `${c[0]}: ${c[1]}`).join('\n');
+  const recent = (state.ledger[a.id] || []).slice(0, 8).map(l => `${l.t}  ${l.text}`).join('\n') || 'No activity yet.';
+  openDialog({ title: a.name, message: `${a.role}\n\n${a.job}\n\nSTATS\n${stats}\n\nRECENT ACTIVITY\n${recent}`, okText: 'CLOSE', noCancel: true });
+}
+
+const CW = 320, CH = 200, SPW = ROBOT.PW, SPH = ROBOT.PH, TABLE_TOP = 70;
+function spritePos(i) { return { x: (i % 4) * 80 + 4, y: i < 4 ? 4 : 116 }; }
+let selectedAgent = -1;
+let sceneRunning = false;
+
+function sceneFrame() {
+  if (sceneRunning) return;
+  sceneRunning = true;
+  const canvas = $('orbital-table');
+  const ctx = canvas && canvas.getContext('2d');
+  if (!ctx) { sceneRunning = false; return; }
+  ctx.imageSmoothingEnabled = false;
+
+  const drawAgent = (i, t) => {
+    const a = AGENTS[i], p = spritePos(i);
+    ctx.globalAlpha = 0.18; ctx.fillStyle = a.color; ctx.fillRect(p.x, p.y, SPW, SPH); ctx.globalAlpha = 1;
+    ctx.save(); ctx.translate(p.x, p.y); ROBOT.draw(ctx, a.id, t); ctx.restore();
+    if (i === selectedAgent) { ctx.strokeStyle = '#f9f871'; ctx.lineWidth = 2; ctx.strokeRect(p.x + 1, p.y + 1, SPW - 2, SPH - 2); }
+  };
+
+  const draw = t => {
+    if (activeTab !== 'warroom') { sceneRunning = false; return; }
+    ctx.fillStyle = '#07010f'; ctx.fillRect(0, 0, CW, CH);
+    ctx.fillStyle = '#0d0526'; ctx.fillRect(0, 0, CW, TABLE_TOP);
+    ctx.fillStyle = '#16093a'; for (let x = 0; x < CW; x += 20) ctx.fillRect(x, 0, 1, TABLE_TOP);
+    for (let i = 0; i < 4; i++) drawAgent(i, t);
+    ctx.fillStyle = '#05000f'; ctx.fillRect(4, TABLE_TOP - 2, 312, 86);
+    ctx.fillStyle = '#2a1a66'; ctx.fillRect(8, TABLE_TOP + 2, 304, 78);
+    ctx.fillStyle = '#3a1d78'; ctx.fillRect(8, TABLE_TOP + 2, 304, 3);
+    ctx.fillStyle = '#00f0ff'; ctx.fillRect(8, TABLE_TOP + 2, 304, 1);
+    ctx.globalAlpha = 0.5 + 0.3 * Math.sin(t / 700); ctx.fillStyle = '#00f0ff';
+    ctx.fillRect(144, 90, 32, 3); ctx.fillRect(152, 96, 16, 2); ctx.globalAlpha = 1;
+    for (let i = 4; i < 8; i++) drawAgent(i, t);
+    requestAnimationFrame(draw);
+  };
+  requestAnimationFrame(draw);
+}
+
+function initScene() {
+  const canvas = $('orbital-table');
+  if (!canvas) return;
+  canvas.addEventListener('click', e => {
+    const r = canvas.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (CW / r.width), y = (e.clientY - r.top) * (CH / r.height);
+    let hit = -1;
+    for (let i = 7; i >= 0; i--) {
+      const p = spritePos(i), bottom = i < 4 ? Math.min(p.y + SPH, TABLE_TOP) : p.y + SPH;
+      if (x >= p.x && x < p.x + SPW && y >= p.y && y < bottom) { hit = i; break; }
+    }
+    if (hit >= 0 && hit === selectedAgent) { openAgentDialog(hit); return; }
+    selectedAgent = hit;
+    if (hit >= 0) ROBOT.speak(AGENTS[hit].id, 1800);
+    const cap = $('scene-caption');
+    if (cap) cap.textContent = hit >= 0 ? `${AGENTS[hit].name}: "${AGENTS[hit].says}" (tap again for stats)` : 'Tap an agent to see who they are.';
+  });
 }
 
 window.addEventListener('DOMContentLoaded', () => {
