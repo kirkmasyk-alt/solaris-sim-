@@ -1530,48 +1530,28 @@ function aiLabel() { return aiProvider() === 'openai' ? 'OpenAI' : 'Gemini'; }
 
 async function aiCall(prompt, opts) {
   opts = opts || {};
-  const prov = aiProvider();
-  const key = localStorage.getItem(prov + '_api_key') || localStorage.getItem('gemini_api_key') || '';
-  if (key.length < 6) throw new Error('no ' + prov + ' key set');
+  const key = (localStorage.getItem('gemini_api_key') || '').trim();
+  if (key.length < 6) throw new Error('No Gemini key set');
   const signal = AbortSignal.timeout(opts.timeout || 15000);
-  
-  if (prov === 'openai') {
-    const send = async useJson => {
-      const body = { model: aiModel(), messages: [{ role: 'user', content: prompt }] };
-      if (useJson) body.response_format = { type: 'json_object' };
-      return fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key }, body: JSON.stringify(body), signal });
-    };
-    let res = await send(!!opts.json);
-    if (res.status === 400 && opts.json) res = await send(false);
-    if (!res.ok) {
-      let m = '';
-      try { const e = await res.json(); m = e && e.error && e.error.message ? e.error.message : ''; } catch (x) {}
-      throw new Error('OpenAI HTTP ' + res.status + (m ? ': ' + m.slice(0, 140) : ''));
-    }
-    const j = await res.json();
-    const text = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-    if (!text) throw new Error('empty answer');
-    return text;
-  }
-  
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CFG.geminiModel}:generateContent?key=${key}`, {
+
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: opts.json ? { responseMimeType: 'application/json', temperature: 0.2 } : { temperature: 0.3 } }),
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: opts.json ? { responseMimeType: 'application/json', temperature: 0.2 } : { temperature: 0.3 }
+    }),
     signal
   });
+
   if (!res.ok) throw new Error('Gemini HTTP ' + res.status);
   const data = await res.json();
   const parts = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
   const text = parts.map(x => x.text || '').join('');
-  if (!text) throw new Error('empty answer');
+  if (!text) throw new Error('Empty answer from Gemini');
   return text;
 }
 
-async function testAI() {
-  if (!aiReady()) { await openDialog({ title: 'AI TEST', message: `No ${aiLabel()} key is saved yet. Tap SET AI KEY first.`, okText: 'OK', noCancel: true }); return; }
-  let title, msg;
-  try {
     const t = await aiCall('Reply with exactly this JSON and nothing else: {"ok": true, "word": "ready"}', { json: true, timeout: 20000 });
     title = 'AI TEST PASSED';
     msg = `${aiLabel()} (${aiModel()}) answered:\n${String(t).slice(0, 160)}\n\nThe council chair and AUDITOR-7 will use this.`;
