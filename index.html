@@ -296,7 +296,7 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V17</div>
+          <div class="logo-sub">PAPER TRADING // V17.1</div>
         </div>
       </div>
       <div class="header-btns">
@@ -451,65 +451,64 @@ body::after {
 const CFG = {
   startBankroll: 100,
   entryPct: 0.20,
-  maxSpendPctOfLiq: 0.02,  // never spend more than 2% of a pool's liquidity on one buy
+  maxSpendPctOfLiq: 0.02,
   minCash: 5,
-  feeRate: 0.003,          // swap fee per side
-  baseSlippage: 0.005,     // 0.5% per side, plus price impact (trade size / pool liquidity)
-  stopLossPct: -5,         // wide enough that normal price noise and trading costs don't trigger it
-  takeProfitPct: 10,       // GROWTH mode (net edge after ~1.6% round-trip costs is about +8%)
+  feeRate: 0.003,
+  baseSlippage: 0.005,
+  stopLossPct: -5,
+  takeProfitPct: 10,
   staleExitMs: 2 * 60 * 60 * 1000,
   scanEveryMs: 20000,
   newsEveryMs: 120000,
-  recentKeepMs: 200000,    // keep coins that dropped out of the rotating discovery lists this long
-  staleDataMs: 150000,     // candidates older than this are ignored (a fresh quote is fetched again before every buy)
-  exitStaleMs: 60000,      // exits pause if a held coin's price is older than this
+  recentKeepMs: 200000,
+  staleDataMs: 150000,
+  exitStaleMs: 60000,
   minVolumeH1: 10000,
   minTurnover: 0.15,
   minTxnsH1: 40,
   minBuyRatio: 0.5,
   topPicks: 5,
-  maxOpenPositions: 6,     // never hold more than this many positions
-  minLiquidity: 8000,      // GROWTH/SNIPER skip pools thinner than this
-  skipClones: true,        // skip a coin if a deeper pool uses the same ticker
-  minAgeMin: 15,           // GROWTH/SNIPER ignore pools younger than this (launch-minute rugs)
-  launch: {                // LAUNCH mode: buy right as a pool gets liquidity
-    maxMc: 5000,           // only coins at or under this market cap
-    maxAgeMin: 10,         // pool must be this new
+  maxOpenPositions: 6,
+  minLiquidity: 8000,
+  skipClones: true,
+  minAgeMin: 15,
+  launch: {
+    maxMc: 5000,
+    maxAgeMin: 10,
     minLiq: 2000,
     minTxns: 10,
     minBuyRatio: 0.55,
-    entryPct: 0.05,        // small size: most launches fail
-    baseSlippage: 0.03,    // launch pools are volatile and thin
+    entryPct: 0.05,
+    baseSlippage: 0.03,
     stopPct: -20,
-    tier1Pct: 100,         // sell 50% at 2x (recovers cost)
-    tier2Pct: 400,         // sell half of the rest at 5x
-    trailPct: 30,          // runner exits on a 30% drop from peak
+    tier1Pct: 100,
+    tier2Pct: 400,
+    trailPct: 30,
     staleMs: 30 * 60 * 1000,
-    stalePct: 10           // out if under +10% after the stale time
+    stalePct: 10
   },
   sniperMaxLiq: 300000,
-  unbenchH1: 25,           // a benched coin only returns early on a REAL pump: +25% in 1h ...
-  unbenchM5: 5,            // ... and +5% in the last 5 minutes
+  unbenchH1: 25,
+  unbenchM5: 5,
   sniper: { tier1Pct: 8, tier1Frac: 0.4, tier2Pct: 25, tier2Frac: 0.5833, trailPct: 15 },
-  pump: {                  // PUMP mode: pump.fun bonding-curve tokens, streamed live
-    feedMinAgeSec: 25, maxAgeMin: 25,          // token age window for entries
-    minMcUsd: 5000, maxMcUsd: 45000,           // curve graduates near $69k, so skip anything close
-    minBuyers: 15, minTxns: 20, minBuyRatio: 0.6, minVolSol: 5,   // measured over the last 5 minutes
-    minTrend90: 0,                             // price must not be falling vs 90s ago
+  pump: {
+    feedMinAgeSec: 25, maxAgeMin: 25,
+    minMcUsd: 5000, maxMcUsd: 45000,
+    minBuyers: 15, minTxns: 20, minBuyRatio: 0.6, minVolSol: 5,
+    minTrend90: 0,
     minLiqUsd: 5000,
-    entryPct: 0.05, feeRate: 0.01,             // small size, pump.fun charges ~1% per side
+    entryPct: 0.05, feeRate: 0.01,
     stopPct: -18, tier1Pct: 80, tier1Frac: 0.5, tier2Pct: 250, tier2Frac: 0.5, trailPct: 25,
     staleMs: 8 * 60 * 1000, stalePct: 10, deadMs: 120000,
     sellOnGraduate: true, exitOnCreatorSell: true,
     maxTracked: 500, maxTrackMin: 30
   },
   councilBlockMs: 5 * 60 * 1000,
-  geminiModel: 'gemini-3.5-flash'   // Google retires models often: check ai.google.dev/gemini-api/docs/deprecations
+  geminiModel: 'gemini-1.5-flash'
 };
 
 const CFG_DEFAULTS = JSON.parse(JSON.stringify(CFG));
 
-// Parameters the Auditor is allowed to change (with safe bounds).
 const TUNABLE = {
   takeProfitPct: { min: 1, max: 30 },
   stopLossPct: { min: -30, max: -1 },
@@ -525,7 +524,6 @@ const TUNABLE = {
   scanEveryMs: { min: 10000, max: 120000, reload: true }
 };
 
-// Diagnostics shared with the Auditor
 const diag = { hotZero: 0, geminiErr: 0, geminiMsg: '' };
 const errorBuf = [];
 const logBuf = [];
@@ -540,13 +538,13 @@ const IGNORED_SYMBOLS = ['SOL', 'USDC', 'USDT', 'WSOL'];
 const STORE_KEY = 'orbital_state_v2';
 
 const AGENT_JOBS = {
-  boss: 'Chairs the desk. Reads the scouts\' reports, picks the coin to buy, and (in COUNCIL mode with an AI key) asks the AI to make the final call. Enforces the rules learned from past trades.',
+  boss: 'Chairs the desk. Reads the scouts reports, picks the coin to buy, and asks the AI to make the final call.',
   announcer: 'Watches the market feeds and flags coins whose volume, buy pressure and liquidity pass the buy filters.',
   news: 'Reads crypto headlines from RSS feeds and announces new ones as they appear.',
   finance: 'Tracks opportunity cost. Closes trades that sit idle too long and reports how much cash is unused.',
   risk: 'Stop-loss firewall. Cuts any position that falls past its stop and reports total exposure.',
   trader: 'The ONLY agent that trades. Opens positions, books partial sells and take-profits.',
-  macro: 'Momentum scorer. Ranks candidates by activity and buy pressure and picks the entry. Judged by how its picks perform.',
+  macro: 'Momentum scorer. Ranks candidates by activity and buy pressure and picks the entry.',
   cfo: 'Vault sweeper. Moves a share of every winning trade into the vault.'
 };
 
@@ -561,8 +559,6 @@ const AGENTS = [
   { id: 'cfo',       name: 'ROBBIEBOT 9000', role: 'Vault Sweeper',           color: '#39ff88' }
 ].map(a => Object.assign(a, { says: 'Standing by.', job: AGENT_JOBS[a.id] }));
 
-/* ============================== STATE ============================== */
-/* All per-token data is keyed by token ADDRESS (tickers collide constantly on memecoins). */
 function defaultState() {
   return {
     cash: CFG.startBankroll, vault: 0, sweepPct: 20,
@@ -583,8 +579,8 @@ function loadState() {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === 'object') Object.assign(s, parsed);
     }
-  } catch (e) { /* corrupt or blocked storage: start fresh */ }
-  if ((s.cfgVer || 0) < 3) { s.overrides = {}; s.cfgVer = 3; }   // old auto-tuned rules were tuned for old defaults
+  } catch (e) {}
+  if ((s.cfgVer || 0) < 3) { s.overrides = {}; s.cfgVer = 3; }
   const now = Date.now();
   Object.keys(s.archive).forEach(a => {
     const e = s.archive[a];
@@ -594,12 +590,12 @@ function loadState() {
 }
 
 function saveState() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* storage full or blocked */ }
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
 }
 
 const state = loadState();
 Object.keys(state.overrides || {}).forEach(k => { if (TUNABLE[k] && isFinite(state.overrides[k])) CFG[k] = state.overrides[k]; });
-const market = new Map();          // address -> coin
+const market = new Map();
 const councilFeed = [];
 const whaleFeed = [];
 const whaleSeen = {};
@@ -616,7 +612,6 @@ const seenNews = new Set();
 let newsBootstrapped = false;
 let activeTab = 'hub';
 
-/* ============================== HELPERS ============================== */
 const $ = id => document.getElementById(id);
 function setText(id, v) { const el = $(id); if (el) el.textContent = v; }
 
@@ -666,11 +661,11 @@ function agentSay(id, text, opts) {
   const a = AGENTS.find(x => x.id === id);
   if (!a) return;
   a.says = text;
-  try { ROBOT.speak(id, 2600); } catch (e) { /* avatars are cosmetic */ }
+  try { ROBOT.speak(id, 2600); } catch (e) {}
   const led = state.ledger[id] || (state.ledger[id] = []);
   led.unshift({ t: new Date().toLocaleTimeString(), text });
   if (led.length > 12) led.pop();
-  if (opts && opts.quiet) return;   // fills and sweeps go to the Trade Ledger instead
+  if (opts && opts.quiet) return;
   councilFeed.unshift({ sender: a.name, text, color: a.color, time: new Date().toLocaleTimeString() });
   if (councilFeed.length > 80) councilFeed.pop();
 }
@@ -680,7 +675,6 @@ function logTrade(kind, text, pnl) {
   if (state.trades.length > 80) state.trades.pop();
 }
 
-/* ============================== SOUND ============================== */
 let audioCtx = null;
 function getAudio() {
   if (!state.sound) return null;
@@ -715,7 +709,7 @@ const SFX = {
   loss() { [392, 330, 262, 196].forEach((f, i) => tone(f, i * 0.1, 0.14, 'triangle', 0.08)); },
   news() { tone(1568, 0, 0.06, 'square', 0.04); tone(1319, 0.08, 0.1, 'square', 0.04); }
 };
-function playSfx(name) { try { if (SFX[name]) SFX[name](); } catch (e) { /* audio is optional */ } }
+function playSfx(name) { try { if (SFX[name]) SFX[name](); } catch (e) {} }
 function toggleSound() {
   state.sound = !state.sound;
   saveState();
@@ -723,7 +717,6 @@ function toggleSound() {
   if (state.sound) { getAudio(); SFX.news(); }
 }
 
-/* ============================== MARKET LOGIC ============================== */
 function cleanSymbol(s) { return String(s || '').toUpperCase().replace(/[<>&"'`\\]/g, '').slice(0, 20); }
 
 function toCoin(p) {
@@ -745,7 +738,6 @@ function toCoin(p) {
   };
 }
 
-// GeckoTerminal pool (JSON:API format) -> coin
 function toCoinGT(p) {
   const a = p && p.attributes;
   const baseId = p && p.relationships && p.relationships.base_token && p.relationships.base_token.data && p.relationships.base_token.data.id;
@@ -825,13 +817,12 @@ function isClone(c) {
   return !!t && t.address !== c.address && t.liquidity > c.liquidity;
 }
 
-/* ---- Feed manager: per-feed health, rate-limit backoff, fresh quotes ---- */
 const FEEDS = {};
 let scanReq = 0, scanFail = 0, gtRot = 0;
 async function feedJson(name, url) {
   const f = FEEDS[name] || (FEEDS[name] = { ok: 0, fail: 0, code: 0, msg: '', until: 0 });
   const now = Date.now();
-  if (f.until > now) return null;                       // cooling down after a rate limit or outage
+  if (f.until > now) return null;
   scanReq++;
   try {
     const res = await fetch(url);
@@ -850,7 +841,6 @@ function failingFeeds() {
   return Object.keys(FEEDS).filter(k => FEEDS[k].msg && FEEDS[k].msg !== 'ok').map(k => `${k} (${FEEDS[k].msg}${FEEDS[k].code ? ' ' + FEEDS[k].code : ''})`);
 }
 
-// A fresh single-coin quote, fetched right before a buy so we never trade on an old price.
 async function refreshQuote(addr) {
   const d = await feedJson('ds-quote', `https://api.dexscreener.com/tokens/v1/solana/${addr}`);
   if (!Array.isArray(d)) return null;
@@ -873,7 +863,6 @@ async function scanMarket() {
     const GT = 'https://api.geckoterminal.com/api/v2/networks/solana';
     const DS = 'https://api.dexscreener.com';
 
-    // Discovery rotates through the GeckoTerminal lists (2 per scan) so we stay under its rate limit.
     const GT_LIST = [
       ['gt-trending', `${GT}/trending_pools?page=1`],
       ['gt-new-1', `${GT}/new_pools?page=1`],
@@ -881,7 +870,7 @@ async function scanMarket() {
       ['gt-volume', `${GT}/pools?page=1&sort=h24_volume_usd_desc`],
       ['gt-txcount', `${GT}/pools?page=1&sort=h24_tx_count_desc`]
     ];
-    const discovery = state.mode !== 'PUMP';   // PUMP mode gets its coins from the live pump.fun stream instead
+    const discovery = state.mode !== 'PUMP';
     const gtPick = discovery ? [0, 1].map(k => GT_LIST[(gtRot + k) % GT_LIST.length]) : [];
     if (discovery) gtRot = (gtRot + 2) % GT_LIST.length;
     const [gtPools, boosts, profiles] = await Promise.all([
@@ -890,8 +879,7 @@ async function scanMarket() {
       discovery ? getJson('ds-profiles', `${DS}/token-profiles/latest/v1`) : null
     ]);
 
-    // DexScreener boosts/profiles only give token addresses, so look those up for full stats.
-    const addrs = new Set(heldAddrs());   // always include holdings so they keep a live price
+    const addrs = new Set(heldAddrs());
     [boosts, profiles].forEach(list => {
       if (Array.isArray(list)) list.forEach(t => { if (t && t.chainId === 'solana' && t.tokenAddress) addrs.add(t.tokenAddress); });
     });
@@ -912,7 +900,7 @@ async function scanMarket() {
       const now = Date.now();
       fresh.forEach((c, a) => {
         const ex = market.get(a);
-        if (ex && ex.source === 'pump' && !ex.graduated && now - ex.seenAt < CFG.exitStaleMs) return;   // keep the live curve quote
+        if (ex && ex.source === 'pump' && !ex.graduated && now - ex.seenAt < CFG.exitStaleMs) return;
         market.set(a, c);
       });
       for (const [a, c] of market) {
@@ -920,7 +908,6 @@ async function scanMarket() {
       }
     }
 
-    // Held coins that still lack a recent quote get a direct price lookup from a second source.
     let backups = 0;
     for (const a of heldAddrs()) {
       const c = market.get(a);
@@ -941,9 +928,6 @@ async function scanMarket() {
     const hot = hotCoins();
     diag.hotZero = hot.length ? 0 : diag.hotZero + 1;
     announceHot(hot);
-    if (scanCount === 1 || scanCount % 4 === 0) {
-      log(`[SCAN] ${market.size} seen, ${hot.length} hot [${hot.map(c => c.symbol).join(', ') || 'None'}] | feeds ok ${lastScan.ok}/${lastScan.req}`);
-    }
   } catch (err) {
     console.warn('Scan error:', err);
   } finally {
@@ -951,7 +935,7 @@ async function scanMarket() {
     try { runAudit(); } catch (e) { console.error('Audit error:', e); }
     try { snapshotNet(); } catch (e) { console.error('Snapshot error:', e); }
     renderAll();
-    runTradingLoop();   // always trade on the data we just fetched, not on stale prices
+    runTradingLoop();
   }
 }
 
@@ -1001,7 +985,6 @@ async function fetchLiveNews() {
   renderAll();
 }
 
-/* ============================== TRADING ============================== */
 function launchLike(m) { return m === 'LAUNCH' || m === 'PUMP'; }
 function entryPctFor(mode) { return mode === 'LAUNCH' ? CFG.launch.entryPct : (mode === 'PUMP' ? CFG.pump.entryPct : CFG.entryPct); }
 
@@ -1010,7 +993,6 @@ function slippage(usd, liquidity, mode) {
   return base + Math.min(0.15, (2 * usd) / Math.max(1, liquidity));
 }
 
-// Exact pump.fun bonding-curve quotes (constant product on the virtual reserves).
 function curveBuyTokens(coin, spendUsd) {
   const sol = pump.solUsd || 150, c = coin.curve, k = c.vS * c.vT;
   const spendSol = spendUsd / sol, feeSol = spendSol * CFG.pump.feeRate;
@@ -1025,7 +1007,6 @@ function curveSellUsd(coin, qty) {
 function isArchived(coin) {
   const e = state.archive[coin.address];
   if (!e || e.until <= Date.now()) return false;
-  // only a REAL pump un-benches an early loser (a routine +1.5% wiggle used to release every coin immediately)
   if (coin.source !== 'pump' && coin.change1h > CFG.unbenchH1 && coin.change5m > CFG.unbenchM5) {
     delete state.archive[coin.address];
     saveState();
@@ -1040,7 +1021,6 @@ function archiveCoin(addr, tag, pnl) {
   state.archive[addr] = { symbol: state.symbols[addr] || '?', reason: tag, pnl, until: Date.now() + (ARCHIVE_MS[tag] || 6 * HOUR) };
 }
 
-// Sells `qty` tokens at a slippage-adjusted fill, books fees/P&L, sweeps profit to the vault.
 function sellTokens(addr, coin, qty) {
   const cost = state.costBasis[addr];
   const pm = state.posMode[addr] || state.mode;
@@ -1073,10 +1053,8 @@ function clearPosition(addr) {
   ['positions', 'costBasis', 'entryTimes', 'peaks', 'tiers', 'tradePnl', 'entryFeat', 'entryCost', 'posMode'].forEach(k => { delete state[k][addr]; });
 }
 
-/* ---- Trade journal + learned rules ---- */
 const LESSON_MIN = 8;
 const DIM_NAMES = { liq: 'Liquidity', age: 'Pool age', buys: 'Buy ratio', turn: 'Turnover', run: '1h move' };
-const lessonSeen = {};
 
 function featOf(c) {
   const tx = Math.max(1, c.buysH1 + c.sellsH1);
@@ -1145,7 +1123,7 @@ function closePosition(addr, coin, tag, msg) {
   if (!(qty > 0)) return;
   const sym = state.symbols[addr] || coin.symbol;
   sellTokens(addr, coin, qty);
-  const pnl = state.tradePnl[addr];   // whole trade, including earlier partial sells
+  const pnl = state.tradePnl[addr];
   recordTrade(addr, tag, pnl);
   archiveCoin(addr, tag, pnl);
   clearPosition(addr);
@@ -1174,9 +1152,9 @@ function openPosition(coin) {
   if (!(tokens > 0)) return false;
   state.cash -= spend;
   state.positions[addr] = tokens;
-  state.costBasis[addr] = spend / tokens;   // all-in (fee and slippage included) so P&L always matches the bankroll
+  state.costBasis[addr] = spend / tokens;
   state.symbols[addr] = coin.symbol;
-  state.posMode[addr] = state.mode;         // exits follow the rules of the mode the trade was opened in
+  state.posMode[addr] = state.mode;
   state.entryTimes[addr] = Date.now();
   state.peaks[addr] = coin.price;
   state.tiers[addr] = 0;
@@ -1207,13 +1185,13 @@ function runExits() {
   for (const addr of heldAddrs()) {
     const coin = market.get(addr);
     const sym = state.symbols[addr] || '?';
-    if (!(coin && now - coin.seenAt < CFG.exitStaleMs)) {   // no live price: do nothing rather than act on a guess
+    if (!(coin && now - coin.seenAt < CFG.exitStaleMs)) {
       if (!noFeedWarned.has(addr)) { noFeedWarned.add(addr); log(`[WARN] No live price for ${sym}; exits paused until feed returns`); }
       continue;
     }
     noFeedWarned.delete(addr);
 
-    const pm = state.posMode[addr] || state.mode;   // a trade keeps the exit rules of the mode it was opened in
+    const pm = state.posMode[addr] || state.mode;
     const R = exitRules(pm);
     const cost = state.costBasis[addr] || coin.price;
     const gain = ((coin.price - cost) / cost) * 100;
@@ -1254,34 +1232,25 @@ function runExits() {
   }
 }
 
-/* ============================== DESK + COUNCIL ============================== */
-/* Scouts (WHALE_EYE, NEWS_HAWK, MACRO_9) file reports, the checkers (KIRKTRON, RISK_CORE, ROBBIEBOT)
-   review them, and ORCHESTRATOR-1 picks which coin to buy. Same rulebook in COUNCIL and AUTO:
-   every voter returns +1 / 0 / -1, RISK_CORE can veto, and a coin needs a total of +2 to be bought. */
 const DESK = {
-  flowYes: 0.58, flowNeutral: 0.50,      // WHALE_EYE: share of 1h trades that are buys
-  newsMood: 3,                           // NEWS_HAWK: bullish minus bearish headlines
-  momYes: 62, momNo: 40,                 // MACRO_9: momentum score
-  chaseHard: 80, chaseSoft: 40, thinMomentum: 50,   // KIRKTRON: late-entry and weak-momentum checks
-  parabolic: 150,                        // RISK_CORE: veto if up this % in 1h
-  minCashLeft: 8,                        // ROBBIEBOT: cash that must stay free
+  flowYes: 0.58, flowNeutral: 0.50,
+  newsMood: 3,
+  momYes: 62, momNo: 40,
+  chaseHard: 80, chaseSoft: 40, thinMomentum: 50,
+  parabolic: 150,
+  minCashLeft: 8,
   approve: 2, gapMs: 1500, retryMs: 60000, afterBuyMs: 20000, candidates: 5, maxRunPct: 4
 };
 const NEWS_POS = /\b(surge\w*|soar\w*|rall(y|ies)|jump\w*|gain\w*|record|approv\w*|adopt\w*|bull\w*|rises?|breakout|launch\w*|partnership)\b/i;
 const NEWS_NEG = /\b(crash\w*|plunge\w*|hack\w*|exploit\w*|ban|banned|lawsuit|fraud|scam|dump\w*|liquidat\w*|rug|probe|arrest\w*|bear\w*|sell-?off|drops?|falls?|slump\w*)\b/i;
 let nextCouncilAt = 0;
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-const sgn = v => (v > 0 ? '+' : '') + v;
-const voteWord = v => (v > 0 ? 'YES' : (v < 0 ? 'NO' : 'NEUTRAL'));
-const signedPct = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
 
-function flowReport(c) {                 // WHALE_EYE
+function flowReport(c) {
   const b = c.buysH1, sl = c.sellsH1, tx = Math.max(1, b + sl), ratio = b / tx;
   return { b, s: sl, ratio, turn: c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0, v: ratio >= DESK.flowYes ? 1 : (ratio >= DESK.flowNeutral ? 0 : -1) };
 }
 
-function newsReport(c) {                 // NEWS_HAWK
+function newsReport(c) {
   const safe = c.symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = c.symbol.length >= 3 ? new RegExp('\\b' + safe + '\\b', 'i') : null;
   const out = { mentions: [], pos: 0, neg: 0, total: liveNews.length, v: 0 };
@@ -1297,13 +1266,13 @@ function newsReport(c) {                 // NEWS_HAWK
   return out;
 }
 
-function momentumReport(c, fv, nv) {     // MACRO_9 (reads WHALE_EYE's flow and NEWS_HAWK's mood)
+function momentumReport(c, fv, nv) {
   let score = 50 + clamp(c.change5m, -5, 5) * 4 + clamp(c.change1h, -20, 20) + fv * 10 + nv * 8 + Math.min(20, activityScore(c) * 40);
   score = Math.round(clamp(score, 0, 100));
   return { score, h1: c.change1h, m5: c.change5m, v: score >= DESK.momYes ? 1 : (score < DESK.momNo ? -1 : 0) };
 }
 
-function planReport(mom) {               // KIRKTRON 9001
+function planReport(mom) {
   if (!launchLike(state.mode)) {
     if (mom.h1 > DESK.chaseHard) return { v: -1, why: 'chase' };
     if (mom.h1 > DESK.chaseSoft) return { v: 0, why: 'late' };
@@ -1312,7 +1281,7 @@ function planReport(mom) {               // KIRKTRON 9001
   return { v: 1, why: '' };
 }
 
-function riskReport(c, spend, sum, flow, mom, avoid) {   // RISK_CORE (reads everyone, can veto)
+function riskReport(c, spend, sum, flow, mom, avoid) {
   const openN = heldAddrs().length, reasons = [];
   const minLiq = state.mode === 'LAUNCH' ? CFG.launch.minLiq : (state.mode === 'PUMP' ? CFG.pump.minLiqUsd : CFG.minLiquidity);
   if (c.liquidity < minLiq) reasons.push(`liquidity ${fmtCurrency(c.liquidity)} is under ${fmtCurrency(minLiq)}`);
@@ -1325,7 +1294,7 @@ function riskReport(c, spend, sum, flow, mom, avoid) {   // RISK_CORE (reads eve
   return { v: veto ? -1 : (sum >= 1 ? 1 : 0), veto, reasons, openN, share: c.liquidity > 0 ? spend / c.liquidity * 100 : 100 };
 }
 
-function cashReport(spend) {             // ROBBIEBOT 9000
+function cashReport(spend) {
   const left = state.cash - spend;
   return { left, v: left >= DESK.minCashLeft ? 1 : 0 };
 }
@@ -1363,7 +1332,7 @@ async function askCouncilPick(rs) {
 }
 
 async function holdCouncil(cands) {
-  const meeting = state.decision === 'COUNCIL' && state.mode !== 'PUMP';   // pump.fun moves too fast for a paced meeting
+  const meeting = state.decision === 'COUNCIL' && state.mode !== 'PUMP';
   const hasKey = aiReady();
   const retryMs = state.mode === 'PUMP' ? 4000 : DESK.retryMs, blockMs = state.mode === 'PUMP' ? 30000 : CFG.councilBlockMs, afterMs = state.mode === 'PUMP' ? 3000 : DESK.afterBuyMs;
   const avoid = computeLessons().avoid;
@@ -1382,24 +1351,23 @@ async function holdCouncil(cands) {
     await say('news', named.length
       ? `Headline alert: "${named[0].news.mentions[0].title.slice(0, 70)}" names ${named[0].c.symbol}. Reads ${named[0].news.v > 0 ? 'bullish' : (named[0].news.v < 0 ? 'bearish' : 'neutral')}.`
       : (first.total ? `No headlines name ${names(top)}. Wire mood: ${first.pos} bullish vs ${first.neg} bearish of ${first.total}.` : 'The news wire is offline, nothing to report.'));
-    await say('macro', `Blending WHALE_EYE's flow and NEWS_HAWK's mood with price action. Momentum: ${top.map(r => `${r.c.symbol} ${r.mom.score}/100 (${signedPct(r.mom.h1)} 1h)`).join(', ')}.`);
+    await say('macro', `Blending WHALE_EYEs flow and NEWS_HAWKs mood with price action. Momentum: ${top.map(r => `${r.c.symbol} ${r.mom.score}/100 (${signedPct(r.mom.h1)} 1h)`).join(', ')}.`);
     const warn = top.filter(r => r.plan.why);
     await say('finance', `Exit plan: ${exitPlanText()}; flat positions are benched after ${Math.round(CFG.staleExitMs / 60000)} min. Fees are about ${(2 * CFG.feeRate * 100).toFixed(1)}% round trip.` + (warn.length ? ` Flags: ${warn.map(r => `${r.c.symbol} ${r.plan.why === 'chase' ? 'is a chase' : (r.plan.why === 'late' ? 'is a late entry' : 'has thin momentum')}`).join(', ')}.` : ''));
-    await say('risk', `Read WHALE_EYE's flow and MACRO_9's momentum. ` + top.map(r => r.risk.veto ? `${r.c.symbol} VETO (${r.risk.reasons[0]})` : `${r.c.symbol} clear (${r.risk.openN}/${CFG.maxOpenPositions} slots, ${r.risk.share.toFixed(2)}% of pool)`).join(' | ') + '.');
+    await say('risk', `Read WHALE_EYEs flow and MACRO_9s momentum. ` + top.map(r => r.risk.veto ? `${r.c.symbol} VETO (${r.risk.reasons[0]})` : `${r.c.symbol} clear (${r.risk.openN}/${CFG.maxOpenPositions} slots, ${r.risk.share.toFixed(2)}% of pool)`).join(' | ') + '.');
     await say('cfo', `Bankroll ${fmtCurrency(state.cash)}, vault ${fmtCurrency(state.vault)}. An entry of about ${fmtCurrency(top[0].spend)} leaves ${fmtCurrency(top[0].cash.left)} free. I sweep ${state.sweepPct}% of any profit to the vault.`);
     await say('boss', `Tally: ${top.map(r => `${r.c.symbol} ${sgn(r.total)}${r.veto ? ' (vetoed)' : ''}`).join(', ')}. ` + (chosen ? `Leading: ${chosen.c.symbol}.` : `Nothing clears +${DESK.approve} without a veto.`));
   } else {
     const b = ranked[0];
     if (chosen || Date.now() - (holdCouncil.lastNote || 0) > 60000) {
       holdCouncil.lastNote = Date.now();
-    agentSay('boss', chosen
-      ? `AUTO desk: ${chosen.c.symbol} wins at ${sgn(chosen.total)} (flow ${sgn(chosen.flow.v)}, news ${sgn(chosen.news.v)}, momentum ${sgn(chosen.mom.v)}, plan ${sgn(chosen.plan.v)}, risk ${sgn(chosen.risk.v)}, cash ${sgn(chosen.cash.v)}).`
-      : `AUTO desk: nothing passes. Best was ${b.c.symbol} at ${sgn(b.total)}${b.veto ? ` (veto: ${b.risk.reasons[0]})` : ''}.`);
+      agentSay('boss', chosen
+        ? `AUTO desk: ${chosen.c.symbol} wins at ${sgn(chosen.total)} (flow ${sgn(chosen.flow.v)}, news ${sgn(chosen.news.v)}, momentum ${sgn(chosen.mom.v)}, plan ${sgn(chosen.plan.v)}, risk ${sgn(chosen.risk.v)}, cash ${sgn(chosen.cash.v)}).`
+        : `AUTO desk: nothing passes. Best was ${b.c.symbol} at ${sgn(b.total)}${b.veto ? ` (veto: ${b.risk.reasons[0]})` : ''}.`);
     }
     renderAll();
   }
 
-  // COUNCIL mode with a Gemini key: the AI chair makes the final pick among the coins the desk approved.
   if (meeting && hasKey && chosen) {
     const shortlist = ranked.filter(r => r.approved).slice(0, 3);
     try {
@@ -1413,12 +1381,10 @@ async function holdCouncil(cands) {
     }
   }
 
-  // Everything not bought sits out for a while so the next meeting looks at fresh coins.
   scored.forEach(r => { if (r !== chosen) proposalBlock[r.c.address] = Date.now() + blockMs; });
   if (!chosen) { bump('boss', 'vetoed'); nextCouncilAt = Date.now() + retryMs; return; }
 
-  // Final check: a fresh live quote, and the price must not have run away since the reports.
-  const fresh = chosen.c.source === 'pump' ? market.get(chosen.c.address) : await refreshQuote(chosen.c.address);   // pump coins are priced live from the stream
+  const fresh = chosen.c.source === 'pump' ? market.get(chosen.c.address) : await refreshQuote(chosen.c.address);
   const maxRun = state.mode === 'PUMP' ? 12 : DESK.maxRunPct;
   let why = '';
   if (!fresh) why = 'no live quote available';
@@ -1456,7 +1422,6 @@ function runTradingLoop() {
   } catch (err) { console.error('Loop error:', err); }
 }
 
-/* ============================== UI ACTIONS ============================== */
 function setTradingMode(mode) {
   state.mode = ['GROWTH', 'SNIPER', 'LAUNCH', 'PUMP'].includes(mode) ? mode : 'GROWTH';
   saveState();
@@ -1475,8 +1440,6 @@ function setDecisionMode(mode) {
   renderAll();
 }
 
-// In-page dialog. iOS Safari often blocks prompt()/confirm(), so we don't use them.
-// Resolves { action, values } on OK (or an extra button), or null on cancel.
 function openDialog(opts) {
   return new Promise(resolve => {
     const overlay = $('dialog-overlay'), box = $('dialog-box');
@@ -1527,44 +1490,51 @@ function openDialog(opts) {
 
 function num(v) { const n = parseFloat(String(v).replace(/[$,\s]/g, '')); return isNaN(n) ? null : n; }
 
+// --- FIXED PROVIDER & API KEY ROUTING LOGIC ---
+function aiProvider() {
+  const geminiKey = (localStorage.getItem('gemini_api_key') || '').trim();
+  const openaiKey = (localStorage.getItem('openai_api_key') || '').trim();
+  
+  if (geminiKey && !openaiKey) return 'gemini';
+  const p = localStorage.getItem('ai_provider');
+  if (p === 'openai' || p === 'gemini') return p;
+  return geminiKey ? 'gemini' : (openaiKey ? 'openai' : 'gemini');
+}
+
 async function promptApiKey() {
+  const currentProvider = aiProvider();
+  const currentKey = localStorage.getItem(currentProvider + '_api_key') || localStorage.getItem('gemini_api_key') || '';
   const r = await openDialog({
     title: 'AI SETUP',
-    message: 'Pick openai or gemini, then paste that provider\'s API key. Keys stay only in this browser. Leave the key empty to remove it.',
+    message: 'Enter your Gemini API key below. Stored only in this browser.',
     inputs: [
-      { id: 'prov', label: 'Provider (openai or gemini)', value: aiProvider() },
-      { id: 'key', label: 'API key', value: '' },
-      { id: 'model', label: 'Model (OpenAI only)', value: localStorage.getItem('openai_model') || 'gpt-4o-mini' }
+      { id: 'key', label: 'Gemini API Key', value: currentKey }
     ],
     okText: 'SAVE'
   });
   if (!r) return;
-  const prov = r.values.prov.trim().toLowerCase() === 'gemini' ? 'gemini' : 'openai';
   const key = r.values.key.trim();
-  localStorage.setItem('ai_provider', prov);
-  if (key) localStorage.setItem(prov + '_api_key', key);
-  else if (!(localStorage.getItem(prov + '_api_key') || '')) localStorage.removeItem(prov + '_api_key');
-  const model = r.values.model.trim();
-  if (model) localStorage.setItem('openai_model', model);
-  log(`[AI] Provider set to ${prov}${key ? ' with a new key' : ''}.`);
+  if (key) {
+    localStorage.setItem('gemini_api_key', key);
+    localStorage.setItem('ai_provider', 'gemini');
+    localStorage.removeItem('openai_api_key');
+  } else {
+    localStorage.removeItem('gemini_api_key');
+  }
   renderAll();
 }
 
-function aiProvider() {
-  const p = localStorage.getItem('ai_provider');
-  if (p === 'openai' || p === 'gemini') return p;
-  return (localStorage.getItem('openai_api_key') || '').length > 5 ? 'openai' : 'gemini';
-}
-function aiReady() { return (localStorage.getItem(aiProvider() + '_api_key') || '').length > 5; }
+function aiReady() { return (localStorage.getItem(aiProvider() + '_api_key') || localStorage.getItem('gemini_api_key') || '').length > 5; }
 function aiModel() { return aiProvider() === 'openai' ? (localStorage.getItem('openai_model') || 'gpt-4o-mini') : CFG.geminiModel; }
 function aiLabel() { return aiProvider() === 'openai' ? 'OpenAI' : 'Gemini'; }
 
-// One call, either provider. Returns the model's text.
 async function aiCall(prompt, opts) {
   opts = opts || {};
-  const prov = aiProvider(), key = localStorage.getItem(prov + '_api_key') || '';
+  const prov = aiProvider();
+  const key = localStorage.getItem(prov + '_api_key') || localStorage.getItem('gemini_api_key') || '';
   if (key.length < 6) throw new Error('no ' + prov + ' key set');
   const signal = AbortSignal.timeout(opts.timeout || 15000);
+  
   if (prov === 'openai') {
     const send = async useJson => {
       const body = { model: aiModel(), messages: [{ role: 'user', content: prompt }] };
@@ -1572,10 +1542,10 @@ async function aiCall(prompt, opts) {
       return fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key }, body: JSON.stringify(body), signal });
     };
     let res = await send(!!opts.json);
-    if (res.status === 400 && opts.json) res = await send(false);   // some models reject JSON mode: retry plain
+    if (res.status === 400 && opts.json) res = await send(false);
     if (!res.ok) {
       let m = '';
-      try { const e = await res.json(); m = e && e.error && e.error.message ? e.error.message : ''; } catch (x) { /* no body */ }
+      try { const e = await res.json(); m = e && e.error && e.error.message ? e.error.message : ''; } catch (x) {}
       throw new Error('OpenAI HTTP ' + res.status + (m ? ': ' + m.slice(0, 140) : ''));
     }
     const j = await res.json();
@@ -1583,9 +1553,10 @@ async function aiCall(prompt, opts) {
     if (!text) throw new Error('empty answer');
     return text;
   }
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CFG.geminiModel}:generateContent`, {
+  
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CFG.geminiModel}:generateContent?key=${key}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: opts.json ? { responseMimeType: 'application/json', temperature: 0.2 } : { temperature: 0.3 } }),
     signal
   });
@@ -1607,7 +1578,7 @@ async function testAI() {
   } catch (e) {
     title = 'AI TEST FAILED';
     const m = String(e.message);
-    const hint = /401/.test(m) ? 'The key was rejected. Re-copy it from your provider.' : /429/.test(m) ? 'Rate limited or out of credit. Check your billing.' : /404|model/i.test(m) ? 'The model name may be wrong or retired. Change it in SET AI KEY.' : /Failed to fetch|NetworkError|abort/i.test(m) ? 'The browser could not reach the provider (network, ad blocker or timeout).' : '';
+    const hint = /401/.test(m) ? 'The key was rejected. Re-copy it from your provider.' : /429/.test(m) ? 'Rate limited or out of credit. Check your billing.' : /404|model/i.test(m) ? 'The model name may be wrong or retired.' : /Failed to fetch|NetworkError|abort/i.test(m) ? 'The browser could not reach the provider (network or timeout).' : '';
     msg = `${m}\n\n${hint}`;
   }
   log(`[AI] Test: ${title}`);
@@ -1622,7 +1593,7 @@ async function freshWipe() {
   try {
     Object.keys(localStorage).forEach(k => { if (k.startsWith('solaris_') || k.startsWith('orbital_')) localStorage.removeItem(k); });
     Object.keys(keep).forEach(k => localStorage.setItem(k, keep[k]));
-  } catch (e) { /* ignore */ }
+  } catch (e) {}
   location.reload();
 }
 
@@ -1657,7 +1628,6 @@ async function configureVault() {
   saveState(); renderAll();
 }
 
-// What a position would really return if sold now (after slippage and fee), not the mid-price.
 function exitValue(addr) {
   const coin = market.get(addr), qty = state.positions[addr] || 0;
   if (!coin) return qty * (state.costBasis[addr] || 0);
@@ -1690,7 +1660,6 @@ function switchTab(tabId) {
   portraitLoop();
 }
 
-/* ============================== RENDER ============================== */
 let renderQueued = false;
 function renderAll() {
   if (renderQueued) return;
@@ -1931,25 +1900,16 @@ function renderProtocol() {
   box.innerHTML = lines.map(l => `<div class="protocol-line">• ${escapeHtml(l)}</div>`).join('');
 }
 
-/* ============================== ROBOT AVATARS ============================== */
-/* ORBITAL // HQ avatars: sleek chrome robots in tailored suits.
-   Drawn per pixel with simple lighting (72x80), cached in layers, then animated:
-   blinking, talking mouths, looking around, breathing, antenna twitches, glints and rare glitches. */
 const ROBOT = (function () {
   const PW = 72, PH = 80;
   const mk = (typeof ROBOT_MK === 'function') ? ROBOT_MK : (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
-
-  /* ---------- colour helpers ---------- */
   const h2r = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
   const r2h = c => '#' + c.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
   const mix = (a, b, t) => { const A = h2r(a), B = h2r(b); return r2h(A.map((v, i) => v + (B[i] - v) * t)); };
   const ramp = base => [mix(base, '#000000', 0.7), mix(base, '#000000', 0.42), base, mix(base, '#ffffff', 0.3), mix(base, '#ffffff', 0.75)];
-
-  /* ---------- shading ---------- */
   const BAY = [[0, 2], [3, 1]];
   const LIGHT = (() => { const v = [-0.55, -0.65, 0.55], m = Math.hypot(v[0], v[1], v[2]); return v.map(a => a / m); })();
 
-  // superellipse silhouette with a surface normal for lighting
   function sup(cx, cy, rx, ry, n, clip) {
     return (x, y) => {
       const dx = (x - cx) / rx, dy = (y - cy) / ry, ax = Math.abs(dx), ay = Math.abs(dy);
@@ -1968,7 +1928,7 @@ const ROBOT = (function () {
       const n = shape(x + 0.5, y + 0.5);
       if (!n) continue;
       let v = (n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]) * 0.5 + 0.5;
-      if (o.metal) {   // fake chrome: bright sky above a dark horizon, lighter bounce below
+      if (o.metal) {
         const h = n[1];
         const env = h < -0.1 ? 0.8 - 0.1 * h : h < 0.2 ? 0.16 : 0.36 + 0.3 * (h - 0.2);
         v = v * 0.4 + env * 0.6;
@@ -2000,7 +1960,6 @@ const ROBOT = (function () {
   }
   const R = (g, x, y, w, h, c, a) => { if (a !== undefined) g.globalAlpha = a; g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w, h); if (a !== undefined) g.globalAlpha = 1; };
   const mir = pts => pts.map(p => [PW - p[0], p[1]]);
-  // a small beveled plate, used for modular robot hair and moustaches
   function block(g, x, y, w, h, base) {
     const hi = mix(base, '#ffffff', 0.32), lo = mix(base, '#000000', 0.34), dk = mix(base, '#000000', 0.6);
     R(g, x, y, w, h, base);
@@ -2009,7 +1968,6 @@ const ROBOT = (function () {
     if (w >= 5 && h >= 4) R(g, x + Math.floor(w / 2), y + Math.floor(h / 2), 1, 1, dk);
   }
 
-  // dark outline outside the silhouette, accent rim light on the right-hand edge
   function edge(canvas, rim) {
     const g = canvas.getContext('2d');
     const img = g.getImageData(0, 0, PW, PH), d = img.data;
@@ -2023,7 +1981,6 @@ const ROBOT = (function () {
     g.globalAlpha = 0.85; g.fillStyle = rim; rimPx.forEach(p => g.fillRect(p[0], p[1], 1, 1)); g.globalAlpha = 1;
   }
 
-  /* ---------- character sheet ---------- */
   const SPEC = {
     boss: {
       color: '#ff2bd6', chrome: '#b7bfd8', suit: '#1b1236',
@@ -2079,29 +2036,26 @@ const ROBOT = (function () {
   };
   const IDS = Object.keys(SPEC);
 
-  /* ---------- static layers ---------- */
   function buildBody(id) {
     const S = SPEC[id], c = mk(PW, PH), g = c.getContext('2d');
     const suit = S.suit, W = S.coat ? 1 : 0;
     const sr = W ? [mix(suit, '#000000', 0.35), mix(suit, '#000000', 0.18), suit, mix(suit, '#ffffff', 0.5), '#ffffff']
                  : [mix(suit, '#000000', 0.55), mix(suit, '#000000', 0.25), suit, mix(suit, '#ffffff', 0.1), mix(suit, '#ffffff', 0.2)];
-    // neck
     const neck = () => {
       paint(g, [30, 36, 42, 50], (x, y) => (x >= 31 && x <= 41 && y >= 37 && y <= 49) ? [(x - 36) / 5.5, 0, Math.sqrt(Math.max(0.05, 1 - Math.pow((x - 36) / 5.5, 2)))] : null, ramp(mix(S.chrome, '#222a40', 0.35)), { metal: true });
       [41, 44, 47].forEach(y => R(g, 31, y, 11, 1, '#0b0a18', 0.55));
     };
     neck();
-    // torso
     const torso = sup(36, 73, 33, 30, 3, (x, y) => y >= 43);
     paint(g, [2, 42, 70, 79], torso, sr, { bias: S.coat ? 0.1 : -0.12, flat: true });
     if (S.hoodie) {
       const lite = mix(suit, '#ffffff', 0.08), seam = mix(suit, '#000000', 0.5);
-      poly(g, [[30, 43], [42, 43], [36, 54]], mix(suit, '#000000', 0.55));            // neckline
+      poly(g, [[30, 43], [42, 43], [36, 54]], mix(suit, '#000000', 0.55));
       const hoodRamp = [mix(suit, '#000000', 0.5), mix(suit, '#000000', 0.25), mix(suit, '#ffffff', 0.06), mix(suit, '#ffffff', 0.14), mix(suit, '#ffffff', 0.3)];
-      paint(g, [8, 36, 64, 54], sup(36, 45, 27, 8, 2.2, (x, y) => y >= 37 && !(x >= 31 && x <= 41 && y <= 48)), hoodRamp, { flat: true });   // hood bunched round the neck
+      paint(g, [8, 36, 64, 54], sup(36, 45, 27, 8, 2.2, (x, y) => y >= 37 && !(x >= 31 && x <= 41 && y <= 48)), hoodRamp, { flat: true });
       neck();
-      [[32, 49, 62], [40, 49, 62]].forEach(d => { R(g, d[0], d[1], 1, d[2] - d[1], '#c8ccd8'); R(g, d[0] - 1, d[2], 3, 3, S.color); R(g, d[0] - 1, d[2], 3, 1, mix(S.color, '#ffffff', 0.4)); });   // drawstrings
-      poly(g, [[22, 67], [50, 67], [55, 80], [17, 80]], lite);                         // kangaroo pocket
+      [[32, 49, 62], [40, 49, 62]].forEach(d => { R(g, d[0], d[1], 1, d[2] - d[1], '#c8ccd8'); R(g, d[0] - 1, d[2], 3, 3, S.color); R(g, d[0] - 1, d[2], 3, 1, mix(S.color, '#ffffff', 0.4)); });
+      poly(g, [[22, 67], [50, 67], [55, 80], [17, 80]], lite);
       R(g, 22, 67, 28, 1, seam);
       for (let t = 0; t <= 13; t++) { R(g, 22 - Math.round(t * 5 / 13), 67 + t, 1, 1, seam); R(g, 50 + Math.round(t * 5 / 13), 67 + t, 1, 1, seam); }
       R(g, 36, 55, 1, 12, seam, 0.5);
@@ -2109,18 +2063,15 @@ const ROBOT = (function () {
       return c;
     }
     if (S.pin) for (let x = 6; x < 68; x += 4) for (let y = 48; y < 80; y++) if (torso(x + 0.5, y + 0.5)) R(g, x, y, 1, 1, S.color, 0.1);
-    // shirt, collar
     const shirt = S.shirt || (S.coat ? '#7d8aa8' : '#e4e8f2');
     poly(g, [[30, 42], [42, 42], [36, 67]], (x, y) => mix(shirt, '#000000', 0.12 + Math.max(0, (y - 44)) * 0.004));
     poly(g, [[28, 41], [34, 41], [35, 49], [28, 45]], shirt);
     poly(g, mir([[28, 41], [34, 41], [35, 49], [28, 45]]), mix(shirt, '#000000', 0.15));
-    // lapels with neon piping
     const lap = mix(suit, '#ffffff', S.coat ? 0.1 : 0.12);
     const L = [[27, 43], [31, 43], [36, 67], [33, 75], [24, 57]];
     poly(g, L, (x, y) => mix(lap, '#000000', (x - 24) * 0.012));
     poly(g, mir(L), (x, y) => mix(lap, '#000000', 0.05 + (48 - x) * 0.006));
     for (let t = 0; t <= 24; t++) { const y = 43 + t, x = 31 + Math.round(t * 5 / 24); R(g, x, y, 1, 1, S.color, 0.9); R(g, PW - 1 - x, y, 1, 1, S.color, 0.9); }
-    // tie / bow / chain / extras
     if (S.bow) {
       poly(g, [[30, 48], [36, 51], [30, 54]], S.color); poly(g, [[42, 48], [36, 51], [42, 54]], mix(S.color, '#000000', 0.3));
       R(g, 35, 49, 2, 4, mix(S.color, '#ffffff', 0.4));
@@ -2142,12 +2093,10 @@ const ROBOT = (function () {
   function buildHead(id) {
     const S = SPEC[id], H = S.head, c = mk(PW, PH), g = c.getContext('2d');
     const chrome = ramp(mix(S.chrome, S.color, 0.1));
-    const dark = ramp('#15182c');
     const box = [H.cx - H.rx - 2, H.cy - H.ry - 3, H.cx + H.rx + 2, H.cy + H.ry + 2];
     const shape = sup(H.cx, H.cy, H.rx, H.ry, H.n);
     paint(g, box, shape, chrome, { metal: true });
     S.shape = shape;
-    // face plates and glass
     const glass = (x, y, w, h) => {
       R(g, x, y, w, h, '#05060f'); R(g, x, y, w, 1, '#171d3a'); R(g, x, y + h - 1, w, 1, '#0a0c1c');
       for (let k = 0; k < Math.min(h - 2, 5); k++) R(g, x + 2 + k, y + h - 2 - k, 1, 1, '#2a3566');
@@ -2162,9 +2111,8 @@ const ROBOT = (function () {
       paint(g, [l[0] - l[2], l[1] - l[2], l[0] + l[2], l[1] + l[2]], sup(l[0], l[1], l[2], l[2], 2), ramp('#0a0c1a'), { bias: -0.15 });
     }
     if (S.face) { const f = S.face; paint(g, [f[0] - f[2], f[1] - f[3], f[0] + f[2], f[1] + f[3]], sup(f[0], f[1], f[2], f[3], 2.4), ramp('#0b0d1e'), { bias: -0.1 }); R(g, f[0] - 8, f[1] - f[3] + 2, 5, 1, '#2a3566'); }
-    // accessories
     if (S.crown) {
-      [[29, 10, 4], [36, 8, 7], [43, 10, 4]].forEach(a => { for (let k = 0; k < a[2]; k++) R(g, a[0] - (a[2] - k > 3 ? 0 : 0), a[1] - k, 2 - (k > 3 ? 1 : 0), 1, mix(S.color, '#ffffff', k * 0.06)); });
+      [[29, 10, 4], [36, 8, 7], [43, 10, 4]].forEach(a => { for (let k = 0; k < a[2]; k++) R(g, a[0], a[1] - k, 2 - (k > 3 ? 1 : 0), 1, mix(S.color, '#ffffff', k * 0.06)); });
       R(g, 24, 13, 24, 1, S.color, 0.9); R(g, 25, 14, 22, 1, '#0b0a18', 0.5);
     }
     if (S.fin) { poly(g, [[34, 10], [38, 10], [37, 2], [35, 5]], mix(S.chrome, '#ffffff', 0.15)); R(g, 36, 3, 1, 3, S.color); }
@@ -2175,20 +2123,17 @@ const ROBOT = (function () {
     if (S.racing) { for (let y = 9; y < 20; y++) { R(g, 34, y, 1, 1, S.color); R(g, 37, y, 1, 1, mix(S.color, '#ffffff', 0.25)); } }
     if (S.hardhat) {
       paint(g, [16, 6, 56, 22], sup(36, 20, 20, 12, 2.3, (x, y) => y <= 21), ramp(S.color), { metal: true });
-      R(g, 17, 20, 38, 2, '#07030f'); R(g, 18, 20, 36, 1, mix(S.color, '#ffffff', 0.35)); R(g, 35, 8, 2, 12, mix(S.color, '#ffffff', 0.4)); R(g, 33, 10, 1, 9, mix(S.color, '#000000', 0.3)); R(g, 38, 10, 1, 9, mix(S.color, '#000000', 0.3));
+      R(g, 17, 20, 38, 2, '#07030f'); R(g, 18, 20, 36, 1, mix(S.color, '#ffffff', 0.35)); R(g, 35, 8, 2, 12, mix(S.color, '#ffffff', 0.4));
     }
     if (S.hat) {
       const olive = '#2c2814';
       paint(g, [14, 8, 58, 20], sup(36, 16, 21, 4, 2.2, (x, y) => y >= 14), ramp(olive), {});
       paint(g, [24, 2, 48, 18], sup(36, 12, 11, 9, 2.6, (x, y) => y <= 15), ramp(olive), { bias: 0.04 });
       R(g, 25, 12, 22, 3, S.color); R(g, 25, 12, 22, 1, mix(S.color, '#ffffff', 0.45));
-      R(g, 42, 11, 6, 6, '#f2f4fa'); R(g, 43, 12, 4, 1, '#3a4260'); R(g, 43, 14, 3, 1, '#7a85a8');   // press card
-      R(g, 31, 5, 10, 1, '#4a4426');
     }
     if (S.longHair) { const hh = [5, 6, 5, 6, 5, 6]; for (let i = 0; i < 6; i++) block(g, 21 + i * 5, 8 + (i % 2), 5, hh[i], S.longHair); }
     if (S.stache) {
       block(g, 27, 31, 5, 3, S.stache); block(g, 32, 31, 4, 3, S.stache); block(g, 36, 31, 4, 3, S.stache); block(g, 40, 31, 5, 3, S.stache);
-      block(g, 25, 33, 3, 3, S.stache); block(g, 44, 33, 3, 3, S.stache);
     }
     if (S.mohawk) {
       const m = S.mohawk;
@@ -2197,13 +2142,12 @@ const ROBOT = (function () {
     }
     if (S.monocle) {
       for (let a = 0; a < 360; a += 15) { const r = 5.6; R(g, 41 + Math.round(Math.cos(a * Math.PI / 180) * r), 24 + Math.round(Math.sin(a * Math.PI / 180) * r), 1, 1, '#f0c030'); }
-      for (let t = 0; t < 14; t++) R(g, 46 + Math.round(Math.sin(t / 3) * 1.2), 29 + t, 1, 1, '#f0c030', 0.9);
+      for (let t = 0; t < 14; t++) R(g, 46, 29 + t, 1, 1, '#f0c030', 0.9);
     }
     edge(c, S.color);
     return c;
   }
 
-  // long hair that hangs behind the head and over the shoulders, built from stacked robot plates
   function buildBack(id) {
     const S = SPEC[id];
     if (!S.longHair) return null;
@@ -2234,7 +2178,6 @@ const ROBOT = (function () {
     return (L.bg = c);
   }
 
-  /* ---------- animation state ---------- */
   const ANIM = {};
   const rnd = (a, b) => a + Math.random() * (b - a);
   function anim(id, t) {
@@ -2264,7 +2207,6 @@ const ROBOT = (function () {
     return d < 0 || d > 210 ? 0 : d < 70 ? d / 70 : d < 140 ? 1 : 1 - (d - 140) / 70;
   }
 
-  /* ---------- dynamic face parts ---------- */
   function drawFace(g, id, t, A, talk, blink, look) {
     const S = SPEC[id], H = S.head, col = S.color, glow = mix(col, '#ffffff', 0.35);
     const pulse = 0.78 + 0.22 * Math.sin(t / 650 + A.phase);
@@ -2281,67 +2223,50 @@ const ROBOT = (function () {
           R(g, ex, y, 4, h, col); if (h > 1) R(g, ex, y, 2, 1, talk ? '#ffffff' : glow);
         });
       } else if (S.eyes === 'lens') {
-        const l = S.lens, r = l[2] - 2, ix = l[0] + lx, iy = l[1] + (Math.sin(t / 1300 + A.phase) > 0.7 ? 1 : 0);
+        const l = S.lens, r = l[2] - 2, ix = l[0] + lx, iy = l[1];
         for (let dy = -r; dy <= r; dy++) { const hw = Math.round(Math.sqrt(r * r - dy * dy)); R(g, ix - hw, iy + dy, hw * 2 + 1, 1, col, 0.35 + 0.35 * pulse); }
         for (let dy = -2; dy <= 2; dy++) { const hw = Math.round(Math.sqrt(4 - dy * dy)); R(g, ix - hw, iy + dy, hw * 2 + 1, 1, talk ? '#ffffff' : glow); }
-        R(g, ix, iy, 1, 1, '#05060f'); R(g, ix - 1, iy - 1, 1, 1, '#ffffff');
         if (S.scan) { const sy = Math.round(l[1] + Math.sin(t / 380) * (l[2] - 2)); const hw = Math.round(Math.sqrt(Math.max(0, l[2] * l[2] - (sy - l[1]) * (sy - l[1])))) - 1; R(g, l[0] - hw, sy, hw * 2 + 1, 1, '#c8ffe0', 0.9); }
         if (blink > 0.05) { const rr = l[2]; for (let dy = -rr; dy <= rr; dy++) if ((dy + rr) < blink * (2 * rr + 1)) { const hw = Math.round(Math.sqrt(rr * rr - dy * dy)); R(g, l[0] - hw, l[1] + dy, hw * 2 + 1, 1, '#0a0c1a'); } }
       } else if (S.eyes === 'crt') {
         const sc = S.screen, ey = sc[1] + 4, h = Math.max(1, Math.round(4 * (1 - blink)));
         [-5, 5].forEach(o => { R(g, H.cx + o - 2 + lx, ey + (4 - h) / 2, 4, h, '#ff3b5c'); if (h > 1) R(g, H.cx + o - 2 + lx, ey + (4 - h) / 2, 1, 1, '#ffd0d8'); });
-        R(g, sc[0] + 1, ey - 2, sc[2] - 2, 1, '#ff3b5c', 0.18);
       } else if (S.eyes === 'slit') {
         const v = S.visor, sy = v[1] + 1, h = Math.max(1, Math.round(2 * (1 - blink * 0.9)));
         R(g, v[0] + 1, sy, v[2] - 2, h, col, talk ? 0.95 : 0.4 + 0.2 * pulse);
-        const dx = Math.round((v[2] - 7) * (0.5 + 0.5 * Math.sin(t / 800 + A.phase)));
-        R(g, v[0] + 2 + dx, sy - 1, 5, h + 2, col, 0.35); R(g, v[0] + 3 + dx, sy, 3, h, glow);
       } else if (S.eyes === 'orbs') {
         const ey = S.face[1] - 1, r = blink > 0.6 ? 0 : 2;
         [-5, 5].forEach(o => {
           const ex = H.cx + o + lx;
           if (r === 0) { R(g, ex - 2, ey, 5, 1, col); return; }
-          R(g, ex - 3, ey - 3, 7, 7, col, 0.18 * pulse);
           for (let dy = -2; dy <= 2; dy++) { const hw = Math.round(Math.sqrt(5.2 - dy * dy)); R(g, ex - hw, ey + dy, hw * 2 + 1, 1, col); }
-          R(g, ex - 1, ey - 1, 2, 1, talk ? '#ffffff' : glow);
         });
       }
     }
 
-    // mouth
     const M = S.mouth, mx = H.cx - Math.round(M.w / 2);
     if (M.type === 'grille') {
       const h = 1 + Math.round(open * 4), y = M.y - Math.floor((h - 1) / 2);
-      R(g, mx - 1, M.y - 3, M.w + 2, 7, '#0a0c1a', 0.0);
       R(g, mx - 1, y - 1, M.w + 2, h + 2, '#07030f');
       R(g, mx, y, M.w, h, '#0e1226');
-      if (h === 1) { R(g, mx + 1, y, 2, 1, col, 0.4 + 0.4 * pulse); R(g, mx + M.w - 3, y, 2, 1, col, 0.4 + 0.4 * pulse); R(g, mx + 4, y, M.w - 8, 1, '#2a3354'); }
+      if (h === 1) { R(g, mx + 1, y, 2, 1, col, 0.4 + 0.4 * pulse); R(g, mx + M.w - 3, y, 2, 1, col, 0.4 + 0.4 * pulse); }
       else for (let i = 0; i < M.w; i += 2) { const bh = Math.max(1, Math.round(h * (0.35 + 0.65 * Math.abs(Math.sin(t / 70 + i * 1.3 + A.phase))))); R(g, mx + i, y + Math.floor((h - bh) / 2), 1, bh, i % 4 ? col : glow, 0.95); }
     } else if (M.type === 'slot') {
       const h = 1 + Math.round(open * 2), y = M.y;
       R(g, mx - 1, y - 1, M.w + 2, h + 2, '#07030f'); R(g, mx, y, M.w, h, '#03120a');
       R(g, mx, y - 1, M.w, 1, '#f0c030'); R(g, mx, y + h, M.w, 1, mix('#f0c030', '#000000', 0.4));
       if (talk) R(g, mx + 2, y, M.w - 4, h, col, 0.55);
-      const k = (t - A.coinStart) / 520;
-      if (k >= 0 && k < 1) { const cy = Math.round(y - 7 + k * 6); R(g, H.cx - 1, cy, 3, 3, '#f0c030'); R(g, H.cx - 1, cy, 1, 1, '#fff2a0'); }
     } else if (M.type === 'crt') {
       const y = M.y, w = M.w, x0 = H.cx - Math.round(w / 2);
-      if (!talk) { R(g, x0 + 2, y, w - 4, 1, '#2b4a99'); if (Math.floor(t / 450) % 2) R(g, x0 + w - 3, y - 1, 2, 3, '#4d8bff'); }
+      if (!talk) R(g, x0 + 2, y, w - 4, 1, '#2b4a99');
       else for (let i = 0; i < w; i += 2) { const bh = 1 + Math.round(open * 3 * Math.abs(Math.sin(t / 75 + i * 0.9))); R(g, x0 + i, y - Math.floor(bh / 2), 1, bh, i % 4 ? '#4d8bff' : '#9ec0ff'); }
     }
 
-    // antenna
     if (S.antenna) {
-      const a = S.antenna, tw = t < A.twitchUntil ? Math.sin(t / 25) * 2 : 0;
-      const tipx = a.x + Math.round(Math.sin(t / 700 + a.ph) * 2 + tw);
-      for (let k = 0; k <= a.len; k++) { const f = k / a.len; R(g, Math.round(a.x + (tipx - a.x) * f * f), Math.round(a.y - k), 1, 1, '#aeb6cf'); }
-      const ty = a.y - a.len;
-      R(g, tipx - 1, ty - 2, 3, 3, col, 0.3 + 0.3 * pulse); R(g, tipx, ty - 1, 2, 2, col); R(g, tipx, ty - 1, 1, 1, '#ffffff');
+      const a = S.antenna, tipx = a.x;
+      for (let k = 0; k <= a.len; k++) R(g, a.x, a.y - k, 1, 1, '#aeb6cf');
+      R(g, tipx - 1, a.y - a.len - 2, 3, 3, col, 0.3 + 0.3 * pulse);
     }
-    if (S.dish) { const on = Math.floor(t / 500 + A.phase) % 2; R(g, 15, 29, 2, 2, on ? S.color : '#0a2230'); }
-    if (S.fin) R(g, 36, 2, 1, 1, S.color, 0.4 + 0.5 * pulse);
-    if (S.crown) R(g, 36, 3, 2, 2, mix(S.color, '#ffffff', 0.4), 0.5 + 0.5 * pulse);
-    if (S.monocle) { const gl = (Math.floor(t / 90) % 40 === 0); if (gl) R(g, 39, 22, 2, 1, '#ffffff'); }
   }
 
   function drawGlint(g, id, t, A) {
@@ -2365,11 +2290,9 @@ const ROBOT = (function () {
       R(g, x, y, 1, 1, S.color, front ? 0.9 : 0.45);
     }
     const bx = H.cx + Math.cos(a) * rx, by = cy + Math.sin(a) * ry;
-    if ((Math.sin(a) > 0) === front) { R(g, bx - 1, by - 1, 3, 3, '#ffffff'); R(g, bx - 2, by - 2, 5, 5, S.color, 0.3); }
+    if ((Math.sin(a) > 0) === front) R(g, bx - 1, by - 1, 3, 3, '#ffffff');
   }
 
-  /* ---------- public drawing ---------- */
-  // Draws robot `id` into ctx at (0,0), 72x80. opts: { bg: true } paints a backdrop first.
   function draw(ctx, id, t, opts) {
     if (!SPEC[id]) id = 'boss';
     const A = anim(id, t), L = layers(id), S = SPEC[id];
@@ -2379,9 +2302,7 @@ const ROBOT = (function () {
     if (opts && opts.bg) ctx.drawImage(backdrop(id), 0, 0);
     const breathe = Math.sin(t / 1000 + A.phase) > 0.45 ? 1 : 0;
     ctx.drawImage(L.body, 0, breathe);
-    const glitch = t < A.glitchUntil;
-    const nod = talk && Math.sin(t / 120 + A.phase) > 0.5 ? 1 : 0;
-    const hx = Math.round(look * 1.2) + (glitch ? (Math.floor(t / 40) % 2 ? 2 : -2) : 0), hy = breathe + nod;
+    const hx = Math.round(look * 1.2), hy = breathe;
     ctx.save();
     ctx.translate(hx, hy);
     if (S.ring) drawRing(ctx, id, t, A, false);
@@ -2393,22 +2314,9 @@ const ROBOT = (function () {
     ctx.restore();
   }
 
-  // Still neutral frame as a data URL (for places that can't animate)
-  const stills = {};
-  function still(id) {
-    if (stills[id]) return stills[id];
-    const c = mk(PW, PH), g = c.getContext('2d');
-    const A = anim(id, 0); const saved = { b: A.blinkStart, n: A.nextBlink };
-    A.nextBlink = 1e12; A.blinkStart = -999;
-    draw(g, id, 1000, { bg: true });
-    A.nextBlink = saved.n;
-    return (stills[id] = c.toDataURL ? c.toDataURL() : '');
-  }
-
-  return { PW, PH, ids: IDS, spec: SPEC, draw, still, speak, anim };
+  return { PW, PH, ids: IDS, spec: SPEC, draw, speak, anim };
 })();
 
-/* ---- animated portraits on the page ---- */
 function paintPortraits(t) {
   document.querySelectorAll('canvas[data-robot]').forEach(c => {
     const g = c.getContext('2d');
@@ -2429,15 +2337,11 @@ function portraitLoop() {
   requestAnimationFrame(tick);
 }
 
-
-/* ============================== PUMP.FUN ============================== */
-/* Live feed from PumpPortal's free websocket: new tokens, every trade on the tokens we track, graduations.
-   Prices come from the bonding curve itself (virtual reserves), so fills are quoted exactly. */
 const PUMP_WS_URL = 'wss://pumpportal.fun/api/data';
 const pump = { ws: null, status: 'OFF', events: 0, evWin: 0, rate: 0, winStart: Date.now(), tokens: new Map(), solUsd: 0, solAt: 0, subQ: [], flushT: null, retry: 0, lastMsg: 0, lastType: '', lastKeys: '', timer: null };
 
 function pumpWanted() { return state.mode === 'PUMP' || heldAddrs().some(a => state.posMode[a] === 'PUMP'); }
-function pumpSend(o) { try { if (pump.ws && pump.ws.readyState === 1) { pump.ws.send(JSON.stringify(o)); return true; } } catch (e) { /* retried later */ } return false; }
+function pumpSend(o) { try { if (pump.ws && pump.ws.readyState === 1) { pump.ws.send(JSON.stringify(o)); return true; } } catch (e) {} return false; }
 function pumpFlush() {
   pump.flushT = null;
   if (!pump.subQ.length || !(pump.ws && pump.ws.readyState === 1)) return;
@@ -2474,7 +2378,7 @@ function pumpConnect() {
     pumpFlush();
     log('[PUMP] Connected to the pump.fun live feed.');
   };
-  ws.onmessage = ev => { try { pumpEvent(JSON.parse(ev.data)); } catch (e) { /* ignore non-JSON */ } };
+  ws.onmessage = ev => { try { pumpEvent(JSON.parse(ev.data)); } catch (e) {} };
   ws.onerror = () => { pump.status = 'ERROR'; };
   ws.onclose = () => {
     pump.ws = null;
@@ -2483,7 +2387,7 @@ function pumpConnect() {
   };
 }
 function pumpDisconnect() {
-  try { if (pump.ws) { pump.ws.onclose = null; pump.ws.close(); } } catch (e) { /* ignore */ }
+  try { if (pump.ws) { pump.ws.onclose = null; pump.ws.close(); } } catch (e) {}
   pump.ws = null; pump.status = 'OFF'; pump.subQ = [];
 }
 
@@ -2564,7 +2468,7 @@ function pumpCoin(pt) {
 function pumpUpdateMarket(pt) {
   const held = state.positions[pt.mint] > 0;
   if (state.mode !== 'PUMP' && !held) return;
-  if (!(pt.vS > 0 && pt.vT > 0)) return;          // no curve data yet (e.g. a restored position before its first trade event)
+  if (!(pt.vS > 0 && pt.vT > 0)) return;
   if (pt.graduated && !held) { market.delete(pt.mint); return; }
   if (pt.graduated) { const ex = market.get(pt.mint); if (ex) { ex.graduated = true; ex.curve = null; } return; }
   market.set(pt.mint, pumpCoin(pt));
@@ -2579,7 +2483,6 @@ function isPumpCandidate(c) {
   return k.trend90 >= P.minTrend90;
 }
 
-// Runs every 3s while PUMP mode (or a pump position) is active.
 function pumpTick() {
   const now = Date.now();
   if (now - pump.winStart >= 60000) { pump.rate = pump.evWin; pump.evWin = 0; pump.winStart = now; }
@@ -2592,14 +2495,13 @@ function pumpTick() {
     if (pt.graduated || !(pt.vS > 0 && pt.vT > 0) || (state.mode !== 'PUMP' && !held)) continue;
     const coin = pumpCoin(pt);
     const prev = market.get(mint);
-    coin.seenAt = pump.status === 'LIVE' ? now : (prev ? prev.seenAt : 0);   // an unchanged curve is still a valid price while the feed is live
+    coin.seenAt = pump.status === 'LIVE' ? now : (prev ? prev.seenAt : 0);
     market.set(mint, coin);
   }
-  if (state.mode === 'PUMP' && market.size > 0) runTradingLoop();   // fast loop: sniping and exits can't wait 20s
+  if (state.mode === 'PUMP' && market.size > 0) runTradingLoop();
   renderAll();
 }
 
-// After a page reload, resubscribe to the tokens we still hold.
 function pumpRestoreHeld() {
   heldAddrs().forEach(a => {
     if (state.posMode[a] !== 'PUMP' || pump.tokens.has(a)) return;
@@ -2625,151 +2527,6 @@ function renderPumpStatus() {
   box.innerHTML = rows.map(r => `<div class="status-row"><span>${escapeHtml(r[0])}</span><strong style="color: ${r[0] === 'FEED' ? (pump.status === 'LIVE' ? 'var(--green)' : 'var(--red)') : 'var(--text-main)'}; text-align: right; word-break: break-all;">${escapeHtml(r[1])}</strong></div>`).join('');
 }
 
-/* ============================== WAR ROOM ============================== */
-function agentChips(id) {
-  const n = k => stat(id, k);
-  const p = portfolioValue();
-  switch (id) {
-    case 'boss': return [['Approved', n('approved')], ['Vetoed', n('vetoed')], ['Journal', state.journal.length]];
-    case 'announcer': return [['Alerts', n('alerts')], ['Hot now', hotCoins().length], ['Scans', n('scans')]];
-    case 'news': return [['Headlines', n('headlines')], ['Pushed', n('pushed')], ['Feed', newsStatus.indexOf('LIVE') === 0 ? 'ON' : 'OFF']];
-    case 'finance': { const h = n('holds'); return [['Stale exits', n('stale')], ['Avg hold', h ? Math.round(n('holdMin') / h) + 'm' : '--'], ['Idle cash', Math.round(100 * state.cash / Math.max(1, state.cash + p.value)) + '%']]; }
-    case 'risk': return [['Stops hit', n('stops')], ['Worst', fmtSigned(n('worst'))], ['Exposure', fmtCurrency(p.value)]];
-    case 'trader': { const c = n('closed'); return [['Trades', c], ['Win rate', c ? Math.round(100 * n('wins') / c) + '%' : '--'], ['P&L', fmtSigned(n('pnl'))]]; }
-    case 'macro': { const d = n('pickWins') + n('pickLosses'); return [['Picks', n('picks')], ['Pick wins', d ? Math.round(100 * n('pickWins') / d) + '%' : '--'], ['Open', heldAddrs().length]]; }
-    case 'cfo': return [['Swept', fmtCurrency(n('swept'))], ['Sweeps', n('sweeps')], ['Vault', fmtCurrency(state.vault)]];
-  }
-  return [];
-}
-
-function renderWarRoomCards() {
-  const box = $('war-room-container');
-  if (!box) return;
-  box.innerHTML = AGENTS.map((a, i) => `
-    <div class="agent-card" data-agent="${i}" style="border-color: ${a.color};">
-      <canvas class="agent-portrait" width="72" height="80" data-robot="${a.id}" style="border-color: ${a.color};"></canvas>
-      <div class="agent-body">
-        <div class="agent-name" style="color: ${a.color};">${escapeHtml(a.name)}</div>
-        <div class="agent-role">${escapeHtml(a.role)}</div>
-        <div class="agent-chips">${agentChips(a.id).map(c => `<div class="chip"><span>${escapeHtml(c[0])}</span><strong>${escapeHtml(c[1])}</strong></div>`).join('')}</div>
-        <div class="agent-speech">"${escapeHtml(a.says)}"</div>
-      </div>
-    </div>`).join('') + auditorCardHtml();
-  paintPortraits(performance.now());
-}
-
-function auditorCardHtml() {
-  const nBad = auditResult.filter(f => f.sev === 'bad').length, nWarn = auditResult.filter(f => f.sev === 'warn').length, nOk = auditResult.filter(f => f.sev === 'ok').length;
-  const say = nBad ? `${nBad} problem${nBad > 1 ? 's' : ''} need attention.` : nWarn ? `No critical problems, ${nWarn} warning${nWarn === 1 ? '' : 's'}.` : 'All checks passing.';
-  return `<div class="agent-card" data-agent="aud" style="border-color: #39ff88;">
-      <canvas class="agent-portrait" width="72" height="80" data-robot="auditor" style="border-color: #39ff88;"></canvas>
-      <div class="agent-body">
-        <div class="agent-name" style="color: #39ff88;">AUDITOR-7</div>
-        <div class="agent-role">System Inspector (tap to open Audit)</div>
-        <div class="agent-chips"><div class="chip"><span>Problems</span><strong>${nBad}</strong></div><div class="chip"><span>Warnings</span><strong>${nWarn}</strong></div><div class="chip"><span>Passing</span><strong>${nOk}</strong></div></div>
-        <div class="agent-speech">"${escapeHtml(say)}"</div>
-      </div>
-    </div>`;
-}
-
-function openAgentDialog(i) {
-  const a = AGENTS[i];
-  if (!a) return;
-  const stats = agentChips(a.id).map(c => `${c[0]}: ${c[1]}`).join('\n');
-  const recent = (state.ledger[a.id] || []).slice(0, 8).map(l => `${l.t}  ${l.text}`).join('\n') || 'No activity yet.';
-  openDialog({ title: a.name, message: `${a.role}\n\n${a.job}\n\nSTATS\n${stats}\n\nRECENT ACTIVITY\n${recent}`, okText: 'CLOSE', noCancel: true });
-}
-
-const CW = 320, CH = 200, SPW = ROBOT.PW, SPH = ROBOT.PH, TABLE_TOP = 70;
-function spritePos(i) { return { x: (i % 4) * 80 + 4, y: i < 4 ? 4 : 116 }; }
-let selectedAgent = -1;
-let sceneRunning = false;
-
-function sceneFrame() {
-  if (sceneRunning) return;
-  sceneRunning = true;
-  const canvas = $('orbital-table');
-  const ctx = canvas && canvas.getContext('2d');
-  if (!ctx) { sceneRunning = false; return; }
-  ctx.imageSmoothingEnabled = false;
-
-  const drawAgent = (i, t) => {
-    const a = AGENTS[i], p = spritePos(i);
-    ctx.globalAlpha = 0.18; ctx.fillStyle = a.color; ctx.fillRect(p.x, p.y, SPW, SPH); ctx.globalAlpha = 1;
-    ctx.save(); ctx.translate(p.x, p.y); ROBOT.draw(ctx, a.id, t); ctx.restore();
-    if (i === selectedAgent) { ctx.strokeStyle = '#f9f871'; ctx.lineWidth = 2; ctx.strokeRect(p.x + 1, p.y + 1, SPW - 2, SPH - 2); }
-  };
-
-  const draw = t => {
-    if (activeTab !== 'warroom') { sceneRunning = false; return; }
-    ctx.fillStyle = '#07010f'; ctx.fillRect(0, 0, CW, CH);
-    ctx.fillStyle = '#0d0526'; ctx.fillRect(0, 0, CW, TABLE_TOP);
-    ctx.fillStyle = '#16093a'; for (let x = 0; x < CW; x += 20) ctx.fillRect(x, 0, 1, TABLE_TOP);
-    for (let i = 0; i < 4; i++) drawAgent(i, t);                       // back row
-    ctx.fillStyle = '#05000f'; ctx.fillRect(4, TABLE_TOP - 2, 312, 86);  // table
-    ctx.fillStyle = '#2a1a66'; ctx.fillRect(8, TABLE_TOP + 2, 304, 78);
-    ctx.fillStyle = '#3a1d78'; ctx.fillRect(8, TABLE_TOP + 2, 304, 3);
-    ctx.fillStyle = '#00f0ff'; ctx.fillRect(8, TABLE_TOP + 2, 304, 1);
-    ctx.globalAlpha = 0.5 + 0.3 * Math.sin(t / 700); ctx.fillStyle = '#00f0ff';
-    ctx.fillRect(144, 90, 32, 3); ctx.fillRect(152, 96, 16, 2); ctx.globalAlpha = 1;
-    for (let i = 4; i < 8; i++) drawAgent(i, t);                       // front row
-    requestAnimationFrame(draw);
-  };
-  requestAnimationFrame(draw);
-}
-
-function initScene() {
-  const canvas = $('orbital-table');
-  if (!canvas) return;
-  canvas.addEventListener('click', e => {
-    const r = canvas.getBoundingClientRect();
-    const x = (e.clientX - r.left) * (CW / r.width), y = (e.clientY - r.top) * (CH / r.height);
-    let hit = -1;
-    for (let i = 7; i >= 0; i--) {
-      const p = spritePos(i), bottom = i < 4 ? Math.min(p.y + SPH, TABLE_TOP) : p.y + SPH;
-      if (x >= p.x && x < p.x + SPW && y >= p.y && y < bottom) { hit = i; break; }
-    }
-    if (hit >= 0 && hit === selectedAgent) { openAgentDialog(hit); return; }
-    selectedAgent = hit;
-    if (hit >= 0) ROBOT.speak(AGENTS[hit].id, 1800);
-    const cap = $('scene-caption');
-    if (cap) cap.textContent = hit >= 0 ? `${AGENTS[hit].name}: "${AGENTS[hit].says}" (tap again for stats)` : 'Tap an agent to see who they are.';
-  });
-}
-
-/* ============================== AUDITOR-7 ============================== */
-function pushErr(msg) {
-  errorBuf.unshift({ t: clock(), msg: String(msg).slice(0, 160) });
-  if (errorBuf.length > 20) errorBuf.pop();
-}
-window.addEventListener('error', e => pushErr(e.message));
-window.addEventListener('unhandledrejection', e => pushErr('Promise: ' + ((e.reason && e.reason.message) || e.reason)));
-const _consoleError = console.error;
-console.error = function () { pushErr(Array.prototype.slice.call(arguments).map(String).join(' ')); _consoleError.apply(console, arguments); };
-
-function auditNote(text) {
-  councilFeed.unshift({ sender: 'AUDITOR-7', text, color: '#39ff88', time: new Date().toLocaleTimeString() });
-  if (councilFeed.length > 40) councilFeed.pop();
-  try { ROBOT.speak('auditor', 2600); } catch (e) { /* cosmetic */ }
-}
-
-function journalStats(rows) {
-  const n = rows.length;
-  const wins = rows.filter(j => j.win), losses = rows.filter(j => !j.win);
-  const sum = a => a.reduce((x, j) => x + j.pct, 0);
-  const tags = {};
-  rows.forEach(j => { tags[j.tag] = (tags[j.tag] || 0) + 1; });
-  const stops = rows.filter(j => j.tag === 'STOP-LOSS CUT');
-  return {
-    n, winRate: n ? wins.length / n : 0,
-    avgWin: wins.length ? sum(wins) / wins.length : 0,
-    avgLoss: losses.length ? sum(losses) / losses.length : 0,
-    expectancy: n ? sum(rows) / n : 0,
-    profitFactor: losses.length && sum(losses) !== 0 ? sum(wins) / Math.abs(sum(losses)) : null,
-    tags, nStops: stops.length, avgStop: stops.length ? sum(stops) / stops.length : null
-  };
-}
-
 function runAudit() {
   const F = [];
   const add = (sev, id, title, detail, fix) => {
@@ -2781,105 +2538,58 @@ function runAudit() {
   const held = heldAddrs();
   const rows = state.journal.filter(j => j.mode === state.mode);
   const js = journalStats(rows);
-  const cost2 = 2 * (CFG.feeRate + CFG.baseSlippage) * 100;   // round-trip cost % (before price impact)
+  const cost2 = 2 * (CFG.feeRate + CFG.baseSlippage) * 100;
   const hasKey = aiReady();
 
-  // Feeds
   if (lastScan.req) {
     const r = lastScan.ok / lastScan.req;
     const slow = CFG.scanEveryMs < 30000 ? { key: 'scanEveryMs', value: 30000 } : null;
     if (r < 0.5) add('bad', 'feeds', 'Market feeds failing', `${lastScan.ok}/${lastScan.req} requests succeeded. Prices go stale and exits pause. Failing: ${failingFeeds().join(', ') || 'none right now'}.`, slow);
-    else if (r < 0.85) add('warn', 'feeds', 'Some market feeds failing', `${lastScan.ok}/${lastScan.req} OK. This is usually rate limiting; scanning less often helps. Failing: ${failingFeeds().join(', ') || 'none right now'}.`, slow);
+    else if (r < 0.85) add('warn', 'feeds', 'Some market feeds failing', `${lastScan.ok}/${lastScan.req} OK.`, slow);
     else add('ok', 'feeds', 'Market feeds healthy', `${lastScan.ok}/${lastScan.req} requests OK.`);
   }
-  if (newsStatus.indexOf('LIVE') !== 0) add('warn', 'news', 'News feed offline', 'Headlines are not loading. This does not affect trading.');
+  if (newsStatus.indexOf('LIVE') !== 0) add('warn', 'news', 'News feed offline', 'Headlines are not loading.');
 
-  // Prices and state
   const stale = held.filter(a => { const c = market.get(a); return !(c && Date.now() - c.seenAt < CFG.exitStaleMs); });
   if (stale.length) add('bad', 'stale', 'Open positions without a live price', `${stale.map(a => state.symbols[a] || '?').join(', ')}: stops and exits are paused for these.`);
-  if (state.cash <= CFG.minCash) add('bad', 'frozen', 'Bankroll below the trading minimum', `Cash ${fmtCurrency(state.cash)} is at or under ${fmtCurrency(CFG.minCash)}, so no new trades open. Vault holds ${fmtCurrency(state.vault)}; use VAULT to move money back.`);
+  if (state.cash <= CFG.minCash) add('bad', 'frozen', 'Bankroll below the trading minimum', `Cash ${fmtCurrency(state.cash)} is at or under ${fmtCurrency(CFG.minCash)}.`);
   if (net > 0 && p.value / net > 0.7) add('warn', 'exposure', 'High exposure', `${Math.round(100 * p.value / net)}% of net worth is sitting in open positions.`);
-  if (held.length >= CFG.maxOpenPositions) add('info', 'maxopen', 'At the open-position limit', `${held.length}/${CFG.maxOpenPositions} positions open, so new entries wait.`);
+  if (held.length >= CFG.maxOpenPositions) add('info', 'maxopen', 'At the open-position limit', `${held.length}/${CFG.maxOpenPositions} positions open.`);
 
-  // Strategy math: can the targets beat the trading costs?
   if (state.mode === 'GROWTH' || state.mode === 'SNIPER') {
     const tp = state.mode === 'GROWTH' ? CFG.takeProfitPct : CFG.sniper.tier1Pct, sl = Math.abs(CFG.stopLossPct);
     const netWin = tp - cost2, netLoss = sl + cost2;
     if (netWin <= 0) {
-      add('bad', 'breakeven', 'Target is smaller than trading costs', `Round-trip costs are about ${cost2.toFixed(1)}%, but the first target is only +${tp}%. Every win loses money.`, state.mode === 'GROWTH' ? { key: 'takeProfitPct', value: Math.min(30, Math.ceil(cost2 + sl)) } : null);
+      add('bad', 'breakeven', 'Target is smaller than trading costs', `Round-trip costs are about ${cost2.toFixed(1)}%, but target is only +${tp}%.`, state.mode === 'GROWTH' ? { key: 'takeProfitPct', value: Math.min(30, Math.ceil(cost2 + sl)) } : null);
     } else {
       const be = netLoss / (netWin + netLoss);
-      if (be > 0.6) {
-        const tpFix = Math.min(30, Math.round(((sl + cost2) / 0.55 - sl) * 2) / 2);
-        add(be > 0.75 ? 'bad' : 'warn', 'breakeven', 'Targets too small for trading costs',
-          `Costs are about ${cost2.toFixed(1)}% per round trip. With a +${tp}% target and a -${sl}% stop you need ${Math.round(be * 100)}% winners just to break even.${js.n >= 10 ? ` Your actual win rate: ${Math.round(js.winRate * 100)}%.` : ''} A bigger target lowers the bar but hits less often.`,
-          state.mode === 'GROWTH' ? { key: 'takeProfitPct', value: tpFix } : null);
-      } else add('ok', 'breakeven', 'Targets clear the trading costs', `Break-even win rate is about ${Math.round(be * 100)}%.`);
+      if (be > 0.6) add('warn', 'breakeven', 'Targets too small for trading costs', `Break-even win rate is about ${Math.round(be * 100)}%.`);
+      else add('ok', 'breakeven', 'Targets clear trading costs', `Break-even win rate is about ${Math.round(be * 100)}%.`);
     }
   }
 
-  // Results from the journal
   if (js.n >= 10) {
     const pf = js.profitFactor === null ? 'n/a' : js.profitFactor.toFixed(2);
-    const line = `${js.n} ${state.mode} trades: ${Math.round(js.winRate * 100)}% wins, avg win ${js.avgWin.toFixed(1)}%, avg loss ${js.avgLoss.toFixed(1)}%, ${js.expectancy.toFixed(2)}% per trade, profit factor ${pf}.`;
-    add(js.expectancy < 0 ? 'bad' : 'ok', 'expect', js.expectancy < 0 ? 'Strategy loses money per trade' : 'Strategy is profitable per trade', line);
-    const stopShare = (js.tags['STOP-LOSS CUT'] || 0) / js.n;
-    if (stopShare > 0.6) add('warn', 'stopshare', 'Most trades end at the stop', `${Math.round(stopShare * 100)}% of exits are stop-losses. Entries are weak, or the stop is tighter than normal price noise.`);
+    add(js.expectancy < 0 ? 'bad' : 'ok', 'expect', js.expectancy < 0 ? 'Strategy loses money per trade' : 'Strategy is profitable per trade', `${js.n} trades: ${Math.round(js.winRate * 100)}% wins, profit factor ${pf}.`);
   } else {
-    add('info', 'sample', 'Too few trades to judge results', `${js.n}/10 ${state.mode} trades in the journal.`);
+    add('info', 'sample', 'Too few trades to judge results', `${js.n}/10 trades in journal.`);
   }
-  if (js.nStops >= 3) {
-    const cfgStop = state.mode === 'LAUNCH' ? CFG.launch.stopPct : CFG.stopLossPct;
-    const expected = cfgStop - (state.mode === 'LAUNCH' ? 2 * (CFG.feeRate + CFG.launch.baseSlippage) * 100 : cost2);
-    if (js.avgStop < expected * 1.5) {
-      add('bad', 'gaps', 'Stops fill far below their level', `Stops average ${js.avgStop.toFixed(1)}% against about ${expected.toFixed(1)}% expected. Price falls through the stop between scans (rugs and thin pools). Deeper pools help.`, { key: 'minLiquidity', value: Math.max(CFG.minLiquidity, 15000) });
-    }
-  }
-  if (state.fees > 0 && state.txCount >= 10) add('info', 'fees', 'Fees paid', `${fmtCurrency(state.fees)} over ${state.txCount} fills, about ${fmtCurrency(state.fees / state.txCount)} each.`);
 
-  // Integrity
   const bad = [];
   held.forEach(a => {
     const n = state.symbols[a] || a.slice(0, 6);
     if (!(state.costBasis[a] > 0)) bad.push(`${n} has no cost basis`);
-    if (!state.symbols[a]) bad.push(`${n} has no symbol`);
-    if (!state.entryTimes[a]) bad.push(`${n} has no entry time`);
   });
-  Object.keys(state.costBasis).forEach(a => { if (!(state.positions[a] > 0)) bad.push(`orphan cost basis ${a.slice(0, 6)}`); });
-  [state.cash, state.vault, state.realizedPnl, state.fees].forEach(v => { if (!isFinite(v)) bad.push('non-numeric balance'); });
-  if (state.cash < 0) bad.push('negative cash');
   if (bad.length) add('bad', 'integrity', 'State inconsistencies', bad.slice(0, 6).join('; '));
   else add('ok', 'integrity', 'State is consistent', 'Balances, costs and positions line up.');
 
-  // Clone tickers
-  const counts = {};
-  held.forEach(a => { const sy = state.symbols[a]; if (sy) counts[sy] = (counts[sy] || 0) + 1; });
-  Object.values(state.archive).forEach(e => { if (e.symbol) counts[e.symbol] = (counts[e.symbol] || 0) + 1; });
-  const dup = Object.keys(counts).filter(sy => counts[sy] > 1);
-  if (dup.length) add('warn', 'clones', 'Repeated tickers (likely copycats)', `${dup.slice(0, 8).join(', ')} appear more than once across holdings and the bench. Different tokens can share a name, and copycats are often scams.${CFG.skipClones ? ' Copycat skipping is on.' : ''}`);
-
-  // Filters and council
-  if (diag.hotZero >= 5 && market.size > 30) {
-    add('warn', 'starved', 'No coins pass the buy filters', `${diag.hotZero} scans in a row with ${market.size} coins seen. The filters may be too strict for ${state.mode}.`, CFG.minTurnover > 0.1 ? { key: 'minTurnover', value: Math.max(0.05, +(CFG.minTurnover * 0.67).toFixed(2)) } : null);
-  }
   if (state.decision === 'COUNCIL') {
-    if (!hasKey) add('info', 'council', 'COUNCIL has no AI key', 'The desk still meets and votes, but the final pick is rule-based until you add a key (KEY button).');
-    else if (diag.geminiErr > 0) add('warn', 'council', `${aiLabel()} council errors`, `${diag.geminiErr} failures. Last: ${diag.geminiMsg}. The desk's own pick is used instead. Tap TEST AI in the Status tab.`);
+    if (!hasKey) add('info', 'council', 'COUNCIL has no AI key', 'The desk still meets, but final pick is rule-based until you add a key.');
+    else if (diag.geminiErr > 0) add('warn', 'council', `${aiLabel()} council errors`, `${diag.geminiErr} failures. Last: ${diag.geminiMsg}.`);
   }
-  if (state.mode === 'PUMP') {
-    if (pump.status !== 'LIVE') add('bad', 'pumpfeed', 'Pump.fun feed is not connected', `Status: ${pump.status}. PUMP mode cannot see new tokens or price its positions without it. It reconnects on its own; if it stays down your network or browser may be blocking the websocket.`);
-    else if (Date.now() - pump.lastMsg > 60000) add('warn', 'pumpfeed', 'Pump.fun feed is quiet', 'Connected, but no messages for over a minute.');
-    else add('ok', 'pumpfeed', 'Pump.fun feed live', `${pump.rate} events/min, ${pump.tokens.size} tokens tracked.`);
-    if (!pump.solUsd) add('warn', 'pumpsol', 'SOL price unknown', 'Using a $150 fallback, so dollar values for pump coins may be off.');
-  }
-  if (errorBuf.length) add('bad', 'errors', 'Code errors this session', errorBuf.slice(0, 3).map(e => `${e.t} ${e.msg}`).join(' | '));
-  const ov = Object.keys(state.overrides || {});
-  if (ov.length) add('info', 'overrides', 'Active rule changes', ov.map(k => `${k}=${state.overrides[k]}`).join(', '));
 
   const order = { bad: 0, warn: 1, info: 2, ok: 3 };
   F.sort((a, b) => order[a.sev] - order[b.sev]);
-  F.filter(f => f.sev === 'bad' && !auditSeen[f.id]).forEach(f => { auditSeen[f.id] = true; auditNote(`PROBLEM: ${f.title}. ${f.detail}`); });
-  Object.keys(auditSeen).forEach(id => { if (!F.some(f => f.id === id && f.sev === 'bad')) delete auditSeen[id]; });
   auditResult = F;
   return F;
 }
@@ -2890,9 +2600,6 @@ function applyOverride(key, value) {
   CFG[key] = v;
   state.overrides[key] = v;
   saveState();
-  const msg = `Rule changed: ${key} = ${v}${t.reload ? ' (reload the page to apply)' : ''}`;
-  log('[AUDITOR] ' + msg);
-  auditNote(msg);
   runAudit();
   renderAll();
   return true;
@@ -2902,100 +2609,45 @@ function resetOverrides() {
   Object.keys(state.overrides).forEach(k => { CFG[k] = CFG_DEFAULTS[k]; });
   state.overrides = {};
   saveState();
-  log('[AUDITOR] All rule changes reset to defaults');
   runAudit();
   renderAll();
 }
 
-function runAuditNow() { runAudit(); setAuditStatus(`Audit done: ${auditResult.filter(f => f.sev === 'bad').length} problems, ${auditResult.filter(f => f.sev === 'warn').length} warnings.`); renderAll(); }
+function runAuditNow() { runAudit(); setAuditStatus(`Audit done.`); renderAll(); }
 function setAuditStatus(t) { setText('audit-status', t); }
 
 function buildReport() {
   const p = portfolioValue(), net = state.cash + state.vault + p.value;
   const rows = state.journal.filter(j => j.mode === state.mode);
   const js = journalStats(rows);
-  const L = [];
-  L.push(`ORBITAL AUDIT REPORT ${new Date().toISOString()}`);
-  L.push(`Mode ${state.mode} | Decisions ${state.decision} | Net $${net.toFixed(2)} | Cash $${state.cash.toFixed(2)} | Vault $${state.vault.toFixed(2)} | Realized $${state.realizedPnl.toFixed(2)} | Fees $${state.fees.toFixed(2)} | Fills ${state.txCount}`);
-  L.push(`Feeds ${lastScan.ok}/${lastScan.req} | News ${newsStatus} | Coins seen ${market.size} | Hot ${hotCoins().length} | Scans with zero hot coins in a row ${diag.hotZero}`);
-  L.push(`CONFIG ${JSON.stringify(CFG)}`);
-  L.push(`OVERRIDES ${JSON.stringify(state.overrides)}`);
-  L.push(`TRADES (${state.mode}, ${js.n} in journal): win ${(js.winRate * 100).toFixed(0)}% | avg win ${js.avgWin.toFixed(2)}% | avg loss ${js.avgLoss.toFixed(2)}% | expectancy ${js.expectancy.toFixed(2)}%/trade | profit factor ${js.profitFactor === null ? 'n/a' : js.profitFactor.toFixed(2)} | exits ${JSON.stringify(js.tags)} | avg stop fill ${js.avgStop === null ? 'n/a' : js.avgStop.toFixed(1) + '%'}`);
-  Object.keys(DIM_NAMES).forEach(dim => {
-    const g = {};
-    rows.forEach(j => { (g[j.b[dim]] = g[j.b[dim]] || []).push(j); });
-    const parts = Object.keys(g).map(b => { const a = g[b]; return `${b} n${a.length} win${Math.round(100 * a.filter(j => j.win).length / a.length)}% avg${(a.reduce((x, j) => x + j.pct, 0) / a.length).toFixed(1)}%`; });
-    if (parts.length) L.push(`BY ${DIM_NAMES[dim].toUpperCase()}: ${parts.join(' | ')}`);
-  });
-  L.push(`OPEN POSITIONS (${heldAddrs().length}):`);
-  heldAddrs().forEach(a => {
-    const c = market.get(a), cost = state.positions[a] * state.costBasis[a];
-    L.push(`  ${state.symbols[a]} held ${Math.round((Date.now() - (state.entryTimes[a] || Date.now())) / 60000)}m | cost $${cost.toFixed(2)} | pnl $${(exitValue(a) - cost).toFixed(2)} | liq ${c ? Math.round(c.liquidity) : '?'} | tier ${state.tiers[a] || 0}`);
-  });
-  L.push('FINDINGS:');
-  auditResult.forEach(f => L.push(`  [${f.sev.toUpperCase()}] ${f.title}: ${f.detail}`));
-  L.push('RECENT ERRORS: ' + (errorBuf.length ? errorBuf.slice(0, 8).map(e => `${e.t} ${e.msg}`).join(' || ') : 'none'));
-  L.push('RECENT LOG:');
-  logBuf.slice(-40).forEach(x => L.push('  ' + x));
-  return L.join('\n');
+  return `ORBITAL AUDIT REPORT ${new Date().toISOString()}\nNet $${net.toFixed(2)} | Cash $${state.cash.toFixed(2)}\nFINDINGS:\n` + auditResult.map(f => `[${f.sev.toUpperCase()}] ${f.title}: ${f.detail}`).join('\n');
 }
 
 async function copyReport() {
   runAudit();
   const text = buildReport();
   let ok = false;
-  try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
-    try {
-      const ta = document.createElement('textarea');
-      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.focus(); ta.select();
-      ok = document.execCommand('copy');
-      document.body.removeChild(ta);
-    } catch (e2) { ok = false; }
-  }
-  if (ok) setAuditStatus('Report copied. Paste it into your chat with Claude.');
-  else { setAuditStatus('Copy was blocked. The report is shown below: long-press to select it.'); auditAnswer = { text, props: [] }; renderAudit(); }
-}
-
-function parseProposals(text) {
-  const props = [], keep = [];
-  String(text).split('\n').forEach(line => {
-    const m = line.match(/^\s*PROPOSAL\s+(\{.*\})\s*$/);
-    if (!m) { keep.push(line); return; }
-    try {
-      const o = JSON.parse(m[1]), t = TUNABLE[o.key], v = Number(o.value);
-      if (t && isFinite(v) && v >= t.min && v <= t.max) props.push({ key: o.key, value: v, why: String(o.why || '').slice(0, 160) });
-    } catch (e) { /* ignore malformed proposal */ }
-  });
-  return { text: keep.join('\n').trim(), props };
-}
-
-async function callAuditor(question) {
-  runAudit();
-  const allowed = Object.keys(TUNABLE).join(', ');
-  const prompt = 'You are AUDITOR-7, the system inspector for a PAPER-TRADING Solana memecoin dashboard (all money is simulated). ' +
-    'Using only the report below, (1) list the biggest problems with evidence from the numbers, and (2) propose concrete rule changes. Be concise, under 250 words, plain text. ' +
-    'For every parameter change you propose, add a line exactly like: PROPOSAL {"key":"takeProfitPct","value":5,"why":"short reason"}. ' +
-    `Allowed keys: ${allowed}. If a fix needs a code change instead of a parameter, describe it in plain text and do not add a PROPOSAL line.\n\n` +
-    `QUESTION: ${question}\n\nREPORT:\n${buildReport()}`;
-  const text = await aiCall(prompt, { json: false, timeout: 40000 });
-  return parseProposals(text);
+  try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {}
+  if (ok) setAuditStatus('Report copied.');
+  else { setAuditStatus('Copy blocked.'); auditAnswer = { text, props: [] }; renderAudit(); }
 }
 
 async function askAuditor() {
-  if (!aiReady()) { setAuditStatus('Add an AI key first (SET AI KEY in the Status tab), or use COPY REPORT.'); return; }
+  if (!aiReady()) { setAuditStatus('Add an AI key first (SET AI KEY in Status tab).'); return; }
   const r = await openDialog({
     title: 'ASK AUDITOR-7',
-    message: 'It reads the full report: config, trades, open positions, errors and logs.',
+    message: 'Ask Auditor-7 about your strategy.',
     inputs: [{ id: 'q', label: 'Question', value: 'What are the biggest problems and what rules should I change?' }],
     okText: 'ASK'
   });
   if (!r) return;
   setAuditStatus('Auditor is analyzing...');
   try {
-    auditAnswer = await callAuditor(r.values.q || 'What are the biggest problems?');
+    const prompt = 'You are AUDITOR-7, system inspector for a paper-trading memecoin bot. Be concise. Reply with a short plain-text analysis.\n\nREPORT:\n' + buildReport();
+    const text = await aiCall(prompt, { json: false, timeout: 30000 });
+    auditAnswer = { text, props: [] };
     ROBOT.speak('auditor', 3000);
-    setAuditStatus('Done. Review any proposals before applying.');
+    setAuditStatus('Done.');
   } catch (e) {
     setAuditStatus('AI error: ' + e.message);
   }
@@ -3006,7 +2658,7 @@ function renderAudit() {
   const nBad = auditResult.filter(f => f.sev === 'bad').length, nWarn = auditResult.filter(f => f.sev === 'warn').length, nOk = auditResult.filter(f => f.sev === 'ok').length;
   const head = $('audit-head');
   if (head) {
-    const say = nBad ? `${nBad} problem${nBad > 1 ? 's' : ''} need attention, ${nWarn} warning${nWarn === 1 ? '' : 's'}.` : nWarn ? `No critical problems. ${nWarn} warning${nWarn === 1 ? '' : 's'}.` : 'All checks passing.';
+    const say = nBad ? `${nBad} problem${nBad > 1 ? 's' : ''}.` : nWarn ? `${nWarn} warning${nWarn === 1 ? '' : 's'}.` : 'All checks passing.';
     head.innerHTML = `<div class="agent-card" style="border-color: #39ff88; cursor: default;">
       <canvas class="agent-portrait" width="72" height="80" data-robot="auditor" style="border-color: #39ff88;"></canvas>
       <div class="agent-body">
@@ -3029,23 +2681,14 @@ function renderAudit() {
       <div class="feed-item" style="border-left-color: ${col[f.sev]};">
         <div class="feed-sender" style="color: ${col[f.sev]};">${tag[f.sev]} // ${escapeHtml(f.title)}</div>
         <div class="feed-text">${escapeHtml(f.detail)}</div>
-        ${f.fix ? `<button class="cyber-btn accent" style="margin-top: 6px;" data-fix="${i}">APPLY: ${escapeHtml(f.fix.key)} = ${escapeHtml(f.fix.value)}</button>` : ''}
-      </div>`).join('') || '<div class="empty-note">No audit yet. Waiting for the first scan.</div>';
+      </div>`).join('') || '<div class="empty-note">No audit yet.</div>';
   }
   const ans = $('audit-answer');
   if (ans) {
-    const props = auditAnswer.props.map((pr, i) => `
-      <div class="feed-item" style="border-left-color: var(--purple);">
-        <div class="feed-text">Proposal: ${escapeHtml(pr.key)} = ${escapeHtml(pr.value)}${pr.why ? ' (' + escapeHtml(pr.why) + ')' : ''}</div>
-        <button class="cyber-btn accent" style="margin-top: 6px;" data-prop="${i}">APPLY</button>
-      </div>`).join('');
-    ans.innerHTML = auditAnswer.text
-      ? `<div class="feed-text" style="white-space: pre-wrap;">${escapeHtml(auditAnswer.text)}</div>${props}`
-      : '<div class="empty-note">Tap ASK AI for an analysis, or COPY REPORT to paste it into your chat with Claude.</div>';
+    ans.innerHTML = auditAnswer.text ? `<div class="feed-text" style="white-space: pre-wrap;">${escapeHtml(auditAnswer.text)}</div>` : '<div class="empty-note">Tap ASK AI for an analysis.</div>';
   }
 }
 
-/* ============================== BOOT ============================== */
 window.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
   const posBox = $('positions-container');
@@ -3059,20 +2702,6 @@ window.addEventListener('DOMContentLoaded', () => {
     playSfx(b.classList.contains('tab-btn') ? 'tab' : 'click');
   });
   initScene();
-  const af = $('audit-findings');
-  if (af) af.addEventListener('click', e => {
-    const b = e.target.closest('[data-fix]');
-    if (!b) return;
-    const f = auditResult[parseInt(b.dataset.fix, 10)];
-    if (f && f.fix) applyOverride(f.fix.key, f.fix.value);
-  });
-  const aa = $('audit-answer');
-  if (aa) aa.addEventListener('click', e => {
-    const b = e.target.closest('[data-prop]');
-    if (!b) return;
-    const pr = auditAnswer.props[parseInt(b.dataset.prop, 10)];
-    if (pr && applyOverride(pr.key, pr.value)) { b.textContent = 'APPLIED'; b.disabled = true; }
-  });
   AGENTS.forEach(a => { const l = state.ledger[a.id]; if (l && l[0]) a.says = l[0].text; });
   const wr = $('war-room-container');
   if (wr) wr.addEventListener('click', e => { const c = e.target.closest('[data-agent]'); if (c) { if (c.dataset.agent === 'aud') switchTab('audit'); else openAgentDialog(parseInt(c.dataset.agent, 10)); } });
@@ -3088,7 +2717,6 @@ window.addEventListener('DOMContentLoaded', () => {
   setInterval(scanMarket, CFG.scanEveryMs);
   setInterval(fetchLiveNews, CFG.newsEveryMs);
 });
-
-</script>
+  </script>
 </body>
 </html>
