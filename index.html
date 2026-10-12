@@ -1552,6 +1552,10 @@ async function aiCall(prompt, opts) {
   return text;
 }
 
+async function testAI() {
+  if (!aiReady()) { await openDialog({ title: 'AI TEST', message: `No Gemini key is saved yet. Tap SET AI KEY first.`, okText: 'OK', noCancel: true }); return; }
+  let title, msg;
+  try {
     const t = await aiCall('Reply with exactly this JSON and nothing else: {"ok": true, "word": "ready"}', { json: true, timeout: 20000 });
     title = 'AI TEST PASSED';
     msg = `${aiLabel()} (${aiModel()}) answered:\n${String(t).slice(0, 160)}\n\nThe council chair and AUDITOR-7 will use this.`;
