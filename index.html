@@ -2282,12 +2282,76 @@ const ROBOT = (function () {
   return { PW, PH, ids: IDS, spec: SPEC, draw, speak, anim };
 })();
 
+// --- WAR ROOM SCENE RENDERING HELPERS ---
+const SEAT_POS = [
+  { x: 50, y: 35, id: 'boss' },
+  { x: 110, y: 35, id: 'announcer' },
+  { x: 170, y: 35, id: 'news' },
+  { x: 230, y: 35, id: 'finance' },
+  { x: 50, y: 155, id: 'risk' },
+  { x: 110, y: 155, id: 'trader' },
+  { x: 170, y: 155, id: 'macro' },
+  { x: 230, y: 155, id: 'cfo' }
+];
+
+function initScene() {
+  const cv = $('orbital-table');
+  if (!cv) return;
+  cv.addEventListener('click', e => {
+    const rect = cv.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (cv.width / rect.width);
+    const y = (e.clientY - rect.top) * (cv.height / rect.height);
+    let hit = null;
+    SEAT_POS.forEach((s, idx) => {
+      if (Math.hypot(x - s.x, y - s.y) < 24) hit = idx;
+    });
+    if (hit !== null) openAgentDialog(hit);
+  });
+}
+
+function sceneFrame() {
+  const cv = $('orbital-table');
+  const g = cv && cv.getContext('2d');
+  if (!g) return;
+  const t = performance.now ? performance.now() : Date.now();
+  g.fillStyle = '#07010f';
+  g.fillRect(0, 0, cv.width, cv.height);
+  
+  // Draw table
+  g.fillStyle = '#1a0f40';
+  g.fillRect(80, 70, 160, 60);
+  g.strokeStyle = '#00f0ff';
+  g.lineWidth = 2;
+  g.strokeRect(80, 70, 160, 60);
+
+  SEAT_POS.forEach(s => {
+    g.save();
+    g.translate(s.x - ROBOT.PW / 2, s.y - ROBOT.PH / 2 + 10);
+    ROBOT.draw(g, s.id, t, { bg: false });
+    g.restore();
+  });
+}
+
+function openAgentDialog(idx) {
+  const a = AGENTS[idx];
+  if (!a) return;
+  ROBOT.speak(a.id, 3000);
+  openDialog({
+    title: `${a.name} // ${a.role.toUpperCase()}`,
+    message: `${a.job}\n\nLatest statement:\n"${a.says}"`,
+    okText: 'OK',
+    noCancel: true
+  });
+}
+
 function paintPortraits(t) {
   document.querySelectorAll('canvas[data-robot]').forEach(c => {
     const g = c.getContext('2d');
     if (g) ROBOT.draw(g, c.dataset.robot, t, { bg: true });
   });
+  if (activeTab === 'warroom') sceneFrame();
 }
+
 let portraitLoopOn = false;
 function portraitLoop() {
   if (portraitLoopOn) return;
@@ -2296,10 +2360,25 @@ function portraitLoop() {
   let last = 0;
   const tick = t => {
     if (activeTab !== 'warroom' && activeTab !== 'audit') { portraitLoopOn = false; return; }
-    if (!slow || t - last > 1000) { last = t; paintPortraits(t); }
+    if (!slow || t - last > 30) { last = t; paintPortraits(t); }
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
+}
+
+function renderWarRoomCards() {
+  const box = $('war-room-container');
+  if (!box) return;
+  box.innerHTML = AGENTS.map((a, idx) => `
+    <div class="agent-card" style="border-color: ${a.color};" data-agent="${idx}">
+      <canvas class="agent-portrait" width="72" height="80" data-robot="${escapeHtml(a.id)}" style="border-color: ${a.color};"></canvas>
+      <div class="agent-body">
+        <div class="agent-name" style="color: ${a.color};">${escapeHtml(a.name)}</div>
+        <div class="agent-role">${escapeHtml(a.role)}</div>
+        <div class="agent-speech">"${escapeHtml(a.says)}"</div>
+      </div>
+    </div>`).join('');
+  paintPortraits(performance.now());
 }
 
 const PUMP_WS_URL = 'wss://pumpportal.fun/api/data';
@@ -2517,7 +2596,7 @@ function runAudit() {
 
   const stale = held.filter(a => { const c = market.get(a); return !(c && Date.now() - c.seenAt < CFG.exitStaleMs); });
   if (stale.length) add('bad', 'stale', 'Open positions without a live price', `${stale.map(a => state.symbols[a] || '?').join(', ')}: stops and exits are paused for these.`);
-  if (state.cash <= CFG.minCash) add('bad', 'frozen', 'Bankroll below the trading minimum', `Cash ${fmtCurrency(state.cash)} is at or under ${fmtCurrency(CFG.minCash)}.`);
+  if (state.cash <= CFG.minCash) add('bad', 'frozen', 'Bankroll below the trading minimum', `Cash ${fmtCurrency(state.cash)} is at or under ${fmtCurrency(state.minCash)}.`);
   if (net > 0 && p.value / net > 0.7) add('warn', 'exposure', 'High exposure', `${Math.round(100 * p.value / net)}% of net worth is sitting in open positions.`);
   if (held.length >= CFG.maxOpenPositions) add('info', 'maxopen', 'At the open-position limit', `${held.length}/${CFG.maxOpenPositions} positions open.`);
 
