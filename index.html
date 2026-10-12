@@ -296,13 +296,13 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V17.1</div>
+          <div class="logo-sub">PAPER TRADING // V17.1 (OLLAMA)</div>
         </div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
         <button class="cyber-btn accent" onclick="adjustFunds()">FUND</button>
-        <button class="cyber-btn" onclick="promptApiKey()">KEY</button>
+        <button class="cyber-btn" onclick="promptApiKey()">OLLAMA</button>
         <button class="cyber-btn" onclick="requestBriefing()">BRIEF</button>
         <button class="cyber-btn" id="btn-sound" onclick="toggleSound()">SND ON</button>
         <button class="cyber-btn danger" onclick="freshWipe()">WIPE</button>
@@ -399,9 +399,9 @@ body::after {
       <div class="status-row"><span>NEWS FEED:</span> <strong id="status-news" style="color: var(--text-dim);">CONNECTING</strong></div>
       <div class="status-row"><span>MAX POSITION CAP:</span> <strong id="status-cap" style="color: var(--green);">20% OF BANKROLL</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>AI PROVIDER:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
+      <div class="status-row"><span>AI PROVIDER:</span> <strong id="key-status" style="color: var(--text-dim);">● OLLAMA LOCAL</strong></div>
       <div class="audit-btns" style="margin: 4px 0;">
-        <button class="cyber-btn" onclick="promptApiKey()">SET AI KEY</button>
+        <button class="cyber-btn" onclick="promptApiKey()">OLLAMA SETTINGS</button>
         <button class="cyber-btn accent" onclick="testAI()">TEST AI</button>
       </div>
       <div class="pane-title" style="margin-top: 8px;">// PUMP.FUN FEED</div>
@@ -504,7 +504,7 @@ const CFG = {
     maxTracked: 500, maxTrackMin: 30
   },
   councilBlockMs: 5 * 60 * 1000,
-  geminiModel: 'gemini-1.5-flash'
+  ollamaModel: 'llama3'
 };
 
 const CFG_DEFAULTS = JSON.parse(JSON.stringify(CFG));
@@ -524,7 +524,7 @@ const TUNABLE = {
   scanEveryMs: { min: 10000, max: 120000, reload: true }
 };
 
-const diag = { hotZero: 0, geminiErr: 0, geminiMsg: '' };
+const diag = { hotZero: 0, ollamaErr: 0, ollamaMsg: '' };
 const errorBuf = [];
 const logBuf = [];
 let auditResult = [];
@@ -538,7 +538,7 @@ const IGNORED_SYMBOLS = ['SOL', 'USDC', 'USDT', 'WSOL'];
 const STORE_KEY = 'orbital_state_v2';
 
 const AGENT_JOBS = {
-  boss: 'Chairs the desk. Reads the scouts reports, picks the coin to buy, and asks the AI to make the final call.',
+  boss: 'Chairs the desk. Reads the scouts reports, picks the coin to buy, and asks the local AI to make the final call.',
   announcer: 'Watches the market feeds and flags coins whose volume, buy pressure and liquidity pass the buy filters.',
   news: 'Reads crypto headlines from RSS feeds and announces new ones as they appear.',
   finance: 'Tracks opportunity cost. Closes trades that sit idle too long and reports how much cash is unused.',
@@ -1376,7 +1376,7 @@ async function holdCouncil(cands) {
       chosen = v.pick ? shortlist.find(r => r.c.symbol === v.pick) : null;
       await say('boss', chosen ? `${aiLabel()} picks ${chosen.c.symbol}. ${v.reason}` : `${aiLabel()} passes on all of them. ${v.reason}`);
     } catch (e) {
-      diag.geminiErr++; diag.geminiMsg = e.message;
+      diag.ollamaErr++; diag.ollamaMsg = e.message;
       log(`[COUNCIL] AI unavailable (${e.message}); using the desk's own pick`);
     }
   }
@@ -1434,9 +1434,6 @@ function setDecisionMode(mode) {
   state.decision = mode === 'AUTO' ? 'AUTO' : 'COUNCIL';
   saveState();
   log(`[DECISIONS] Mode set to ${state.decision}`);
-  if (state.decision === 'COUNCIL' && !aiReady()) {
-    log('[DECISIONS] No AI key set: COUNCIL still holds the desk meeting, but the final pick is rule-based until you add a key (KEY button).');
-  }
   renderAll();
 }
 
@@ -1490,90 +1487,75 @@ function openDialog(opts) {
 
 function num(v) { const n = parseFloat(String(v).replace(/[$,\s]/g, '')); return isNaN(n) ? null : n; }
 
-// --- FIXED PROVIDER & API KEY ROUTING LOGIC ---
-function aiProvider() {
-  const geminiKey = (localStorage.getItem('gemini_api_key') || '').trim();
-  const openaiKey = (localStorage.getItem('openai_api_key') || '').trim();
-  
-  if (geminiKey && !openaiKey) return 'gemini';
-  const p = localStorage.getItem('ai_provider');
-  if (p === 'openai' || p === 'gemini') return p;
-  return geminiKey ? 'gemini' : (openaiKey ? 'openai' : 'gemini');
-}
-
+// --- OLLAMA LOCAL INTEGRATION ---
 async function promptApiKey() {
-  const currentProvider = aiProvider();
-  const currentKey = localStorage.getItem(currentProvider + '_api_key') || localStorage.getItem('gemini_api_key') || '';
+  const currentModel = localStorage.getItem('ollama_model') || 'llama3';
+  const currentEndpoint = localStorage.getItem('ollama_endpoint') || 'http://localhost:11434/api/chat';
   const r = await openDialog({
-    title: 'AI SETUP',
-    message: 'Enter your Gemini API key below. Stored only in this browser.',
+    title: 'OLLAMA LOCAL SETTINGS',
+    message: 'Configure your local Ollama endpoint or model name.',
     inputs: [
-      { id: 'key', label: 'Gemini API Key', value: currentKey }
+      { id: 'model', label: 'Model Name (e.g. llama3)', value: currentModel },
+      { id: 'endpoint', label: 'API Endpoint URL', value: currentEndpoint }
     ],
     okText: 'SAVE'
   });
   if (!r) return;
-  const key = r.values.key.trim();
-  if (key) {
-    localStorage.setItem('gemini_api_key', key);
-    localStorage.setItem('ai_provider', 'gemini');
-    localStorage.removeItem('openai_api_key');
-  } else {
-    localStorage.removeItem('gemini_api_key');
-  }
+  const model = r.values.model.trim();
+  const endpoint = r.values.endpoint.trim();
+  if (model) localStorage.setItem('ollama_model', model);
+  if (endpoint) localStorage.setItem('ollama_endpoint', endpoint);
   renderAll();
 }
 
-function aiReady() { return (localStorage.getItem(aiProvider() + '_api_key') || localStorage.getItem('gemini_api_key') || '').length > 5; }
-function aiModel() { return aiProvider() === 'openai' ? (localStorage.getItem('openai_model') || 'gpt-4o-mini') : CFG.geminiModel; }
-function aiLabel() { return aiProvider() === 'openai' ? 'OpenAI' : 'Gemini'; }
+function aiReady() { return true; }
+function aiLabel() { return 'Ollama'; }
+function aiModel() { return localStorage.getItem('ollama_model') || CFG.ollamaModel; }
 
 async function aiCall(prompt, opts) {
   opts = opts || {};
-  const key = (localStorage.getItem('gemini_api_key') || '').trim();
-  if (key.length < 6) throw new Error('No Gemini key set');
-  const signal = AbortSignal.timeout(opts.timeout || 15000);
+  const endpoint = localStorage.getItem('ollama_endpoint') || 'http://localhost:11434/api/chat';
+  const model = localStorage.getItem('ollama_model') || CFG.ollamaModel;
+  const signal = AbortSignal.timeout(opts.timeout || 30000);
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+  const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: opts.json ? { responseMimeType: 'application/json', temperature: 0.2 } : { temperature: 0.3 }
+      model: model,
+      messages: [{ role: 'user', content: prompt }],
+      stream: false,
+      format: opts.json ? 'json' : undefined
     }),
     signal
   });
 
-  if (!res.ok) throw new Error('Gemini HTTP ' + res.status);
+  if (!res.ok) throw new Error('Ollama HTTP ' + res.status);
   const data = await res.json();
-  const parts = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
-  const text = parts.map(x => x.text || '').join('');
-  if (!text) throw new Error('Empty answer from Gemini');
+  const text = data && data.message && data.message.content;
+  if (!text) throw new Error('Empty answer from Ollama');
   return text;
 }
 
 async function testAI() {
-  if (!aiReady()) { await openDialog({ title: 'AI TEST', message: `No Gemini key is saved yet. Tap SET AI KEY first.`, okText: 'OK', noCancel: true }); return; }
   let title, msg;
   try {
-    const t = await aiCall('Reply with exactly this JSON and nothing else: {"ok": true, "word": "ready"}', { json: true, timeout: 20000 });
+    const t = await aiCall('Reply with exactly this JSON and nothing else: {"ok": true, "word": "ready"}', { json: true, timeout: 25000 });
     title = 'AI TEST PASSED';
-    msg = `${aiLabel()} (${aiModel()}) answered:\n${String(t).slice(0, 160)}\n\nThe council chair and AUDITOR-7 will use this.`;
+    msg = `Ollama (${aiModel()}) answered:\n${String(t).slice(0, 160)}\n\nThe council chair and AUDITOR-7 will use this.`;
   } catch (e) {
     title = 'AI TEST FAILED';
-    const m = String(e.message);
-    const hint = /401/.test(m) ? 'The key was rejected. Re-copy it from your provider.' : /429/.test(m) ? 'Rate limited or out of credit. Check your billing.' : /404|model/i.test(m) ? 'The model name may be wrong or retired.' : /Failed to fetch|NetworkError|abort/i.test(m) ? 'The browser could not reach the provider (network or timeout).' : '';
-    msg = `${m}\n\n${hint}`;
+    msg = `${e.message}\n\nMake sure Ollama is running and accessible from this device.`;
   }
   log(`[AI] Test: ${title}`);
   await openDialog({ title, message: msg, okText: 'OK', noCancel: true });
 }
 
 async function freshWipe() {
-  const r = await openDialog({ title: 'WIPE EVERYTHING?', message: 'Resets bankroll, vault, positions and history. Your AI keys are kept.', okText: 'WIPE', danger: true });
+  const r = await openDialog({ title: 'WIPE EVERYTHING?', message: 'Resets bankroll, vault, positions and history. Your Ollama settings are kept.', okText: 'WIPE', danger: true });
   if (!r) return;
   const keep = {};
-  ['gemini_api_key', 'openai_api_key', 'ai_provider', 'openai_model'].forEach(k => { const v = localStorage.getItem(k); if (v) keep[k] = v; });
+  ['ollama_model', 'ollama_endpoint'].forEach(k => { const v = localStorage.getItem(k); if (v) keep[k] = v; });
   try {
     Object.keys(localStorage).forEach(k => { if (k.startsWith('solaris_') || k.startsWith('orbital_')) localStorage.removeItem(k); });
     Object.keys(keep).forEach(k => localStorage.setItem(k, keep[k]));
@@ -1687,9 +1669,8 @@ function renderNow() {
 
     const keyEl = $('key-status');
     if (keyEl) {
-      const ok = aiReady();
-      keyEl.textContent = ok ? `● ${aiLabel().toUpperCase()} READY (${aiModel()})` : `● NO ${aiLabel().toUpperCase()} KEY`;
-      keyEl.style.color = ok ? 'var(--green)' : 'var(--text-dim)';
+      keyEl.textContent = `● OLLAMA LOCAL (${aiModel()})`;
+      keyEl.style.color = 'var(--green)';
     }
 
     if (activeTab === 'positions') renderPositions();
@@ -2568,8 +2549,7 @@ function runAudit() {
   else add('ok', 'integrity', 'State is consistent', 'Balances, costs and positions line up.');
 
   if (state.decision === 'COUNCIL') {
-    if (!hasKey) add('info', 'council', 'COUNCIL has no AI key', 'The desk still meets, but final pick is rule-based until you add a key.');
-    else if (diag.geminiErr > 0) add('warn', 'council', `${aiLabel()} council errors`, `${diag.geminiErr} failures. Last: ${diag.geminiMsg}.`);
+    if (diag.ollamaErr > 0) add('warn', 'council', `Ollama council errors`, `${diag.ollamaErr} failures. Last: ${diag.ollamaMsg}.`);
   }
 
   const order = { bad: 0, warn: 1, info: 2, ok: 3 };
@@ -2617,7 +2597,6 @@ async function copyReport() {
 }
 
 async function askAuditor() {
-  if (!aiReady()) { setAuditStatus('Add an AI key first (SET AI KEY in Status tab).'); return; }
   const r = await openDialog({
     title: 'ASK AUDITOR-7',
     message: 'Ask Auditor-7 about your strategy.',
