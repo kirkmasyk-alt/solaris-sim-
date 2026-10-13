@@ -296,13 +296,13 @@ body::after {
         </svg>
         <div>
           <div class="logo">ORBITAL // HQ</div>
-          <div class="logo-sub">PAPER TRADING // V17.1 (OLLAMA)</div>
+          <div class="logo-sub">PAPER TRADING // V18</div>
         </div>
       </div>
       <div class="header-btns">
         <button class="cyber-btn purple" onclick="configureVault()">VAULT</button>
         <button class="cyber-btn accent" onclick="adjustFunds()">FUND</button>
-        <button class="cyber-btn" onclick="promptApiKey()">OLLAMA</button>
+        <button class="cyber-btn" onclick="promptApiKey()">KEY</button>
         <button class="cyber-btn" onclick="requestBriefing()">BRIEF</button>
         <button class="cyber-btn" id="btn-sound" onclick="toggleSound()">SND ON</button>
         <button class="cyber-btn danger" onclick="freshWipe()">WIPE</button>
@@ -316,6 +316,7 @@ body::after {
         <button id="btn-mode-sniper" class="cyber-btn" onclick="setTradingMode('SNIPER')">🎯 SNIPER</button>
         <button id="btn-mode-launch" class="cyber-btn" onclick="setTradingMode('LAUNCH')">🚀 LAUNCH</button>
         <button id="btn-mode-pump" class="cyber-btn" onclick="setTradingMode('PUMP')">🎰 PUMP</button>
+        <button id="btn-pump-setup" class="cyber-btn purple" onclick="openPumpMenu()">⚙ PUMP SETUP</button>
       </div>
     </div>
 
@@ -352,6 +353,7 @@ body::after {
       <button class="tab-btn" data-tab="council">Council</button>
       <button class="tab-btn" data-tab="news">News</button>
       <button class="tab-btn" data-tab="positions">Positions</button>
+      <button class="tab-btn" data-tab="ledger">Ledger</button>
       <button class="tab-btn" data-tab="status">Status</button>
       <button class="tab-btn" data-tab="warroom">War Room</button>
       <button class="tab-btn" id="tab-btn-audit" data-tab="audit">Audit</button>
@@ -376,7 +378,7 @@ body::after {
     </div>
 
     <div id="tab-positions" class="tab-pane panel">
-      <div class="pane-title">// OPEN HOLDINGS &amp; MANUAL LIQUIDATION</div>
+      <div class="pane-title">// OPEN HOLDINGS (TAP A ROW TO INSPECT)</div>
       <div class="terminal-box" id="positions-container" style="height: 420px;">
         <div class="position-row position-header">
           <div>ASSET</div><div>HOLDING</div><div>AVG COST</div><div>P&amp;L ($)</div><div>ACTION</div>
@@ -384,11 +386,14 @@ body::after {
         <div id="positions-list"></div>
         <div class="section-title">// ARCHIVE (LOSERS &amp; FLAT COINS ONLY)</div>
         <div id="archive-list"></div>
-        <div class="section-title">// NET WORTH HISTORY</div>
-        <canvas id="history-canvas" width="320" height="110" style="width: 100%; height: auto; image-rendering: pixelated; background: #07010f; border: 2px solid #2a1a66;"></canvas>
-        <div class="section-title">// TRADE LEDGER</div>
-        <div id="trade-ledger"></div>
       </div>
+    </div>
+
+    <div id="tab-ledger" class="tab-pane panel">
+      <div class="pane-title">// NET WORTH HISTORY</div>
+      <canvas id="history-canvas" width="320" height="110" style="width: 100%; height: auto; image-rendering: pixelated; background: #07010f; border: 2px solid #2a1a66;"></canvas>
+      <div class="pane-title" style="margin-top: 8px;">// COMPLETED TRANSACTION LEDGER</div>
+      <div class="terminal-box" style="height: 320px;"><div id="trade-ledger"></div></div>
     </div>
 
     <div id="tab-status" class="tab-pane panel">
@@ -399,9 +404,9 @@ body::after {
       <div class="status-row"><span>NEWS FEED:</span> <strong id="status-news" style="color: var(--text-dim);">CONNECTING</strong></div>
       <div class="status-row"><span>MAX POSITION CAP:</span> <strong id="status-cap" style="color: var(--green);">20% OF BANKROLL</strong></div>
       <div class="status-row"><span>MAIN VAULT RESERVE:</span> <strong style="color: var(--purple);" id="status-vault">$0.00 LOCKED</strong></div>
-      <div class="status-row"><span>AI PROVIDER:</span> <strong id="key-status" style="color: var(--text-dim);">● OLLAMA LOCAL</strong></div>
+      <div class="status-row"><span>AI PROVIDER:</span> <strong id="key-status" style="color: var(--text-dim);">● NOT CONFIGURED</strong></div>
       <div class="audit-btns" style="margin: 4px 0;">
-        <button class="cyber-btn" onclick="promptApiKey()">OLLAMA SETTINGS</button>
+        <button class="cyber-btn" onclick="promptApiKey()">SET AI KEY</button>
         <button class="cyber-btn accent" onclick="testAI()">TEST AI</button>
       </div>
       <div class="pane-title" style="margin-top: 8px;">// PUMP.FUN FEED</div>
@@ -417,6 +422,7 @@ body::after {
       <div id="protocol-box"></div>
       <div class="pane-title" style="margin-top: 8px;">// LEARNED RULES</div>
       <div id="lessons-box"></div>
+      <div id="book-panel"></div>
     </div>
 
     <div id="tab-warroom" class="tab-pane panel">
@@ -443,6 +449,21 @@ body::after {
 
   </div>
   <div id="dialog-overlay" class="dialog-overlay"><div id="dialog-box" class="dialog-box" role="dialog" aria-modal="true"></div></div>
+  <!-- Coin Inspector -->
+  <div id="inspector-overlay" class="dialog-overlay">
+    <div class="dialog-box" role="dialog" aria-modal="true">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img id="insp-logo" alt="" src="" style="width: 32px; height: 32px; image-rendering: pixelated; border-radius: 4px; display: none; background: #2a1a66;" />
+        <div class="dialog-title" id="insp-title">// COIN INSPECT</div>
+      </div>
+      <div class="terminal-box" id="insp-content" style="height: 190px; font-size: 14px; gap: 2px;"></div>
+      <div style="background: #07010f; border: 2px solid var(--outline); padding: 4px;">
+        <canvas id="insp-chart" width="400" height="110" style="width: 100%; height: 100px; image-rendering: pixelated; display: block;"></canvas>
+      </div>
+      <div class="dialog-btns"><button class="cyber-btn accent" onclick="closeInspector()">CLOSE</button></div>
+    </div>
+  </div>
+
   <script>
 'use strict';
 /* ORBITAL // HQ — paper-trading dashboard. Everything here is simulated; no real funds move. */
@@ -451,64 +472,63 @@ body::after {
 const CFG = {
   startBankroll: 100,
   entryPct: 0.20,
-  maxSpendPctOfLiq: 0.02,
+  maxSpendPctOfLiq: 0.02,  // never spend more than 2% of a pool's liquidity on one buy
   minCash: 5,
-  feeRate: 0.003,
-  baseSlippage: 0.005,
-  stopLossPct: -5,
-  takeProfitPct: 10,
+  feeRate: 0.003,          // swap fee per side
+  baseSlippage: 0.005,     // 0.5% per side, plus price impact (trade size / pool liquidity)
+  stopLossPct: -5,         // wide enough that normal price noise and trading costs don't trigger it
+  takeProfitPct: 20,       // GROWTH: cap for the runner
+  growthTier1Pct: 8,       // GROWTH: sell half at this gain, the rest trails
+  growthTrailPct: 12,
   staleExitMs: 2 * 60 * 60 * 1000,
   scanEveryMs: 20000,
   newsEveryMs: 120000,
-  recentKeepMs: 200000,
-  staleDataMs: 150000,
-  exitStaleMs: 60000,
+  recentKeepMs: 200000,    // keep coins that dropped out of the rotating discovery lists this long
+  staleDataMs: 150000,     // candidates older than this are ignored (a fresh quote is fetched again before every buy)
+  exitStaleMs: 60000,      // exits pause if a held coin's price is older than this
   minVolumeH1: 10000,
   minTurnover: 0.15,
   minTxnsH1: 40,
   minBuyRatio: 0.5,
   topPicks: 5,
-  maxOpenPositions: 6,
-  minLiquidity: 8000,
-  skipClones: true,
-  minAgeMin: 15,
-  launch: {
-    maxMc: 5000,
-    maxAgeMin: 10,
+  maxOpenPositions: 6,     // never hold more than this many positions
+  minLiquidity: 8000,      // GROWTH/SNIPER skip pools thinner than this
+  skipClones: true,        // skip a coin if a deeper pool uses the same ticker
+  minAgeMin: 15,           // GROWTH/SNIPER ignore pools younger than this (launch-minute rugs)
+  launch: {                // LAUNCH mode: buy right as a pool gets liquidity
+    maxMc: 5000,           // only coins at or under this market cap
+    maxAgeMin: 10,         // pool must be this new
     minLiq: 2000,
     minTxns: 10,
     minBuyRatio: 0.55,
-    entryPct: 0.05,
-    baseSlippage: 0.03,
+    entryPct: 0.05,        // small size: most launches fail
+    baseSlippage: 0.03,    // launch pools are volatile and thin
     stopPct: -20,
-    tier1Pct: 100,
-    tier2Pct: 400,
-    trailPct: 30,
+    tier1Pct: 100,         // sell 50% at 2x (recovers cost)
+    tier2Pct: 400,         // sell half of the rest at 5x
+    trailPct: 30,          // runner exits on a 30% drop from peak
     staleMs: 30 * 60 * 1000,
-    stalePct: 10
+    stalePct: 10           // out if under +10% after the stale time
   },
   sniperMaxLiq: 300000,
-  unbenchH1: 25,
-  unbenchM5: 5,
+  unbenchH1: 25,           // a benched coin only returns early on a REAL pump: +25% in 1h ...
+  unbenchM5: 5,            // ... and +5% in the last 5 minutes
   sniper: { tier1Pct: 8, tier1Frac: 0.4, tier2Pct: 25, tier2Frac: 0.5833, trailPct: 15 },
-  pump: {
-    feedMinAgeSec: 25, maxAgeMin: 25,
-    minMcUsd: 5000, maxMcUsd: 45000,
-    minBuyers: 15, minTxns: 20, minBuyRatio: 0.6, minVolSol: 5,
-    minTrend90: 0,
-    minLiqUsd: 5000,
-    entryPct: 0.05, feeRate: 0.01,
-    stopPct: -18, tier1Pct: 80, tier1Frac: 0.5, tier2Pct: 250, tier2Frac: 0.5, trailPct: 25,
-    staleMs: 8 * 60 * 1000, stalePct: 10, deadMs: 120000,
-    sellOnGraduate: true, exitOnCreatorSell: true,
-    maxTracked: 500, maxTrackMin: 30
-  },
+  maxCh5m: 6,              // GROWTH/SNIPER anti-chase: skip a coin already up more than this in 5m
+  maxCh1h: 40,             //   ... or this in 1h
+  maxScanRun: 5,           //   ... or this over the last ~3 minutes
+  majorStopPct: -4, majorEntryPct: 0.25, stableMinLiq: 500000, stableTargetProfitUsd: 1.0,   // SOL and other very deep pools: dip scalps
+  lock: { on: true, arm: 5, floor: 2, steps: [[8, 0.45], [15, 0.6], [30, 0.7], [60, 0.75]], majorArm: 2.5, majorFloor: 0.3, extPct: 50,
+          pump: { arm: 25, floor: 8, steps: [[50, 0.5], [120, 0.6], [300, 0.7]] } },
+  openaiModel: 'gpt-4o-mini',
+
   councilBlockMs: 5 * 60 * 1000,
-  ollamaModel: 'llama3'
+  geminiModel: 'gemini-3.5-flash'   // Google retires models often: check ai.google.dev/gemini-api/docs/deprecations
 };
 
 const CFG_DEFAULTS = JSON.parse(JSON.stringify(CFG));
 
+// Parameters the Auditor is allowed to change (with safe bounds).
 const TUNABLE = {
   takeProfitPct: { min: 1, max: 30 },
   stopLossPct: { min: -30, max: -1 },
@@ -521,10 +541,12 @@ const TUNABLE = {
   minTxnsH1: { min: 5, max: 500 },
   minBuyRatio: { min: 0.4, max: 0.8 },
   minAgeMin: { min: 0, max: 180 },
-  scanEveryMs: { min: 10000, max: 120000, reload: true }
+  scanEveryMs: { min: 10000, max: 120000, reload: true },
+  maxCh5m: { min: 1, max: 30 }, maxCh1h: { min: 10, max: 200 }, maxScanRun: { min: 1, max: 30 }, majorStopPct: { min: -15, max: -1 }
 };
 
-const diag = { hotZero: 0, ollamaErr: 0, ollamaMsg: '' };
+// Diagnostics shared with the Auditor
+const diag = { hotZero: 0, geminiErr: 0, geminiMsg: '' };
 const errorBuf = [];
 const logBuf = [];
 let auditResult = [];
@@ -533,18 +555,18 @@ let symbolTop = {};
 const auditSeen = {};
 
 const HOUR = 60 * 60 * 1000;
-const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR, 'BREAKEVEN STOP': 2 * HOUR, 'CREATOR SOLD': 24 * HOUR, 'GRADUATION': 1 * HOUR, 'DEAD COIN': 6 * HOUR };
-const IGNORED_SYMBOLS = ['SOL', 'USDC', 'USDT', 'WSOL'];
-const STORE_KEY = 'orbital_state_v2';
+const ARCHIVE_MS = { 'STALE EXIT': 24 * HOUR, 'STOP-LOSS CUT': 12 * HOUR, 'RUNNER EXIT': 4 * HOUR, 'TAKE-PROFIT': 2 * HOUR, 'MANUAL': 1 * HOUR, 'BREAKEVEN STOP': 2 * HOUR, 'CREATOR SOLD': 24 * HOUR, 'GRADUATION': 1 * HOUR, 'DEAD COIN': 6 * HOUR, 'PROFIT LOCK': 1 * HOUR, 'EXTENDED EXIT': 2 * HOUR, 'TOP EXIT': 1 * HOUR, 'GRAD EXIT': 30 * 60000, 'FLOW EXIT': 3 * HOUR };
+const IGNORED_SYMBOLS = ['USDC', 'USDT'];
+const STORE_KEY = 'orbital_state_v11';   // same key as the previous version, so your saved bankroll, journal and rules carry over
 
 const AGENT_JOBS = {
-  boss: 'Chairs the desk. Reads the scouts reports, picks the coin to buy, and asks the local AI to make the final call.',
+  boss: 'Chairs the desk. Reads the scouts\' reports, picks the coin to buy, and (in COUNCIL mode with an AI key) asks the AI to make the final call. Enforces the rules learned from past trades.',
   announcer: 'Watches the market feeds and flags coins whose volume, buy pressure and liquidity pass the buy filters.',
   news: 'Reads crypto headlines from RSS feeds and announces new ones as they appear.',
   finance: 'Tracks opportunity cost. Closes trades that sit idle too long and reports how much cash is unused.',
   risk: 'Stop-loss firewall. Cuts any position that falls past its stop and reports total exposure.',
   trader: 'The ONLY agent that trades. Opens positions, books partial sells and take-profits.',
-  macro: 'Momentum scorer. Ranks candidates by activity and buy pressure and picks the entry.',
+  macro: 'Momentum scorer. Ranks candidates by activity and buy pressure and picks the entry. Judged by how its picks perform.',
   cfo: 'Vault sweeper. Moves a share of every winning trade into the vault.'
 };
 
@@ -559,6 +581,8 @@ const AGENTS = [
   { id: 'cfo',       name: 'ROBBIEBOT 9000', role: 'Vault Sweeper',           color: '#39ff88' }
 ].map(a => Object.assign(a, { says: 'Standing by.', job: AGENT_JOBS[a.id] }));
 
+/* ============================== STATE ============================== */
+/* All per-token data is keyed by token ADDRESS (tickers collide constantly on memecoins). */
 function defaultState() {
   return {
     cash: CFG.startBankroll, vault: 0, sweepPct: 20,
@@ -567,7 +591,8 @@ function defaultState() {
     realizedPnl: 0, fees: 0, txCount: 0,
     mode: 'GROWTH', decision: 'COUNCIL', sound: true,
     stats: {}, ledger: {}, tradePnl: {}, entryFeat: {}, entryCost: {}, journal: [], overrides: {},
-    trades: [], history: [], lastSnap: 0, posMode: {}, cfgVer: 0
+    trades: [], history: [], lastSnap: 0, posMode: {}, cfgVer: 0,
+    runnerRecovered: {}, lows: {}, book: {}, shadow: { open: [], done: [] }, pumpProfile: 'BALANCED', pumpEdits: null, eqPeak: 0, lastProbe: 0
   };
 }
 
@@ -579,8 +604,8 @@ function loadState() {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === 'object') Object.assign(s, parsed);
     }
-  } catch (e) {}
-  if ((s.cfgVer || 0) < 3) { s.overrides = {}; s.cfgVer = 3; }
+  } catch (e) { /* corrupt or blocked storage: start fresh */ }
+  if ((s.cfgVer || 0) < 3) { s.overrides = {}; s.cfgVer = 3; }   // old auto-tuned rules were tuned for old defaults
   const now = Date.now();
   Object.keys(s.archive).forEach(a => {
     const e = s.archive[a];
@@ -590,12 +615,12 @@ function loadState() {
 }
 
 function saveState() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* storage full or blocked */ }
 }
 
 const state = loadState();
 Object.keys(state.overrides || {}).forEach(k => { if (TUNABLE[k] && isFinite(state.overrides[k])) CFG[k] = state.overrides[k]; });
-const market = new Map();
+const market = new Map();          // address -> coin
 const councilFeed = [];
 const whaleFeed = [];
 const whaleSeen = {};
@@ -612,6 +637,7 @@ const seenNews = new Set();
 let newsBootstrapped = false;
 let activeTab = 'hub';
 
+/* ============================== HELPERS ============================== */
 const $ = id => document.getElementById(id);
 function setText(id, v) { const el = $(id); if (el) el.textContent = v; }
 
@@ -661,11 +687,11 @@ function agentSay(id, text, opts) {
   const a = AGENTS.find(x => x.id === id);
   if (!a) return;
   a.says = text;
-  try { ROBOT.speak(id, 2600); } catch (e) {}
+  try { ROBOT.speak(id, 2600); } catch (e) { /* avatars are cosmetic */ }
   const led = state.ledger[id] || (state.ledger[id] = []);
   led.unshift({ t: new Date().toLocaleTimeString(), text });
   if (led.length > 12) led.pop();
-  if (opts && opts.quiet) return;
+  if (opts && opts.quiet) return;   // fills and sweeps go to the Trade Ledger instead
   councilFeed.unshift({ sender: a.name, text, color: a.color, time: new Date().toLocaleTimeString() });
   if (councilFeed.length > 80) councilFeed.pop();
 }
@@ -675,6 +701,7 @@ function logTrade(kind, text, pnl) {
   if (state.trades.length > 80) state.trades.pop();
 }
 
+/* ============================== SOUND ============================== */
 let audioCtx = null;
 function getAudio() {
   if (!state.sound) return null;
@@ -709,7 +736,7 @@ const SFX = {
   loss() { [392, 330, 262, 196].forEach((f, i) => tone(f, i * 0.1, 0.14, 'triangle', 0.08)); },
   news() { tone(1568, 0, 0.06, 'square', 0.04); tone(1319, 0.08, 0.1, 'square', 0.04); }
 };
-function playSfx(name) { try { if (SFX[name]) SFX[name](); } catch (e) {} }
+function playSfx(name) { try { if (SFX[name]) SFX[name](); } catch (e) { /* audio is optional */ } }
 function toggleSound() {
   state.sound = !state.sound;
   saveState();
@@ -717,6 +744,7 @@ function toggleSound() {
   if (state.sound) { getAudio(); SFX.news(); }
 }
 
+/* ============================== MARKET LOGIC ============================== */
 function cleanSymbol(s) { return String(s || '').toUpperCase().replace(/[<>&"'`\\]/g, '').slice(0, 20); }
 
 function toCoin(p) {
@@ -726,12 +754,12 @@ function toCoin(p) {
   if (!(liquidity > 0) || !(price > 0)) return null;
   const symbol = cleanSymbol(p.baseToken.symbol);
   if (!symbol || IGNORED_SYMBOLS.includes(symbol)) return null;
-  const pc = p.priceChange || {}, tx = (p.txns && p.txns.h1) || {};
+  const pc = p.priceChange || {}, tx = (p.txns && p.txns.h1) || {}, tx5 = (p.txns && p.txns.m5) || {};
   return {
     address: p.baseToken.address, symbol, price, liquidity,
     change5m: pc.m5 || 0, change1h: pc.h1 || 0, change24h: pc.h24 || 0,
-    volumeH1: (p.volume && p.volume.h1) || 0,
-    buysH1: tx.buys || 0, sellsH1: tx.sells || 0,
+    volumeH1: (p.volume && p.volume.h1) || 0, volumeM5: (p.volume && p.volume.m5) || 0,
+    buysH1: tx.buys || 0, sellsH1: tx.sells || 0, buysM5: tx5.buys || 0, sellsM5: tx5.sells || 0,
     ageMin: p.pairCreatedAt ? (Date.now() - p.pairCreatedAt) / 60000 : null,
     marketCap: p.marketCap || p.fdv || null,
     seenAt: Date.now()
@@ -748,13 +776,13 @@ function toCoinGT(p) {
   const symbol = cleanSymbol(String(a.name || '').split(' / ')[0]);
   if (!address || !(price > 0) || !(liquidity > 0) || !symbol || IGNORED_SYMBOLS.includes(symbol)) return null;
   const pc = a.price_change_percentage || {}, vol = a.volume_usd || {};
-  const tx = (a.transactions && a.transactions.h1) || {};
+  const tx = (a.transactions && a.transactions.h1) || {}, tx5 = (a.transactions && a.transactions.m5) || {};
   const created = a.pool_created_at ? Date.parse(a.pool_created_at) : NaN;
   return {
     address, symbol, price, liquidity,
     change5m: parseFloat(pc.m5) || 0, change1h: parseFloat(pc.h1) || 0, change24h: parseFloat(pc.h24) || 0,
-    volumeH1: parseFloat(vol.h1) || 0,
-    buysH1: tx.buys || 0, sellsH1: tx.sells || 0,
+    volumeH1: parseFloat(vol.h1) || 0, volumeM5: parseFloat(vol.m5) || 0,
+    buysH1: tx.buys || 0, sellsH1: tx.sells || 0, buysM5: tx5.buys || 0, sellsM5: tx5.sells || 0,
     ageMin: isNaN(created) ? null : (Date.now() - created) / 60000,
     marketCap: parseFloat(a.market_cap_usd) || parseFloat(a.fdv_usd) || null,
     seenAt: Date.now()
@@ -764,7 +792,19 @@ function toCoinGT(p) {
 function modeAllows(c) { return state.mode !== 'SNIPER' || c.liquidity <= CFG.sniperMaxLiq; }
 function isFresh(c) { return c && Date.now() - c.seenAt < CFG.staleDataMs; }
 
+function isMajorWave(c) { return c.symbol === 'SOL' || c.symbol === 'WSOL' || c.liquidity >= CFG.stableMinLiq; }
+
+function determineHoldHorizon(c) {
+  const turnover = c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0;
+  const buyRatio = c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1);
+  if (isMajorWave(c)) return 'MULTI-DAY WAVE';
+  if (turnover > 1.5 && buyRatio > 0.65) return 'MOMENTUM SURGE (Hours)';
+  if (turnover > 0.5) return 'QUICK SCALP (Minutes)';
+  return 'PATIENT HOLD';
+}
+
 function isActive(c) {
+  if (isMajorWave(c)) return c.change5m <= -1.5 && c.change5m >= -8.0;   // very deep pools: only buy a clean dip
   if (c.ageMin !== null && c.ageMin !== undefined && c.ageMin < CFG.minAgeMin) return false;
   const tx = c.buysH1 + c.sellsH1;
   if (c.liquidity < CFG.minLiquidity) return false;
@@ -776,11 +816,14 @@ function isActive(c) {
 }
 
 function activityScore(c) {
+  // the old score REWARDED coins that had already pumped (it boosted by the 1h gain), which made the bots buy late
   const tx = Math.max(1, c.buysH1 + c.sellsH1);
-  return (c.volumeH1 / c.liquidity) * (c.buysH1 / tx) * (1 + Math.max(0, c.change1h) / 50);
+  const ext = Math.min(0.6, Math.max(0, c.change1h - 15) / 100);
+  return (c.volumeH1 / c.liquidity) * (c.buysH1 / tx) * (1 - ext);
 }
 
 function isLaunchCandidate(c) {
+  if (isMajorWave(c)) return false;
   const L = CFG.launch;
   if (c.ageMin === null || c.ageMin === undefined || c.ageMin > L.maxAgeMin) return false;
   if (!(c.marketCap > 0) || c.marketCap > L.maxMc) return false;
@@ -817,12 +860,13 @@ function isClone(c) {
   return !!t && t.address !== c.address && t.liquidity > c.liquidity;
 }
 
+/* ---- Feed manager: per-feed health, rate-limit backoff, fresh quotes ---- */
 const FEEDS = {};
 let scanReq = 0, scanFail = 0, gtRot = 0;
 async function feedJson(name, url) {
   const f = FEEDS[name] || (FEEDS[name] = { ok: 0, fail: 0, code: 0, msg: '', until: 0 });
   const now = Date.now();
-  if (f.until > now) return null;
+  if (f.until > now) return null;                       // cooling down after a rate limit or outage
   scanReq++;
   try {
     const res = await fetch(url);
@@ -841,6 +885,7 @@ function failingFeeds() {
   return Object.keys(FEEDS).filter(k => FEEDS[k].msg && FEEDS[k].msg !== 'ok').map(k => `${k} (${FEEDS[k].msg}${FEEDS[k].code ? ' ' + FEEDS[k].code : ''})`);
 }
 
+// A fresh single-coin quote, fetched right before a buy so we never trade on an old price.
 async function refreshQuote(addr) {
   const d = await feedJson('ds-quote', `https://api.dexscreener.com/tokens/v1/solana/${addr}`);
   if (!Array.isArray(d)) return null;
@@ -863,6 +908,7 @@ async function scanMarket() {
     const GT = 'https://api.geckoterminal.com/api/v2/networks/solana';
     const DS = 'https://api.dexscreener.com';
 
+    // Discovery rotates through the GeckoTerminal lists (2 per scan) so we stay under its rate limit.
     const GT_LIST = [
       ['gt-trending', `${GT}/trending_pools?page=1`],
       ['gt-new-1', `${GT}/new_pools?page=1`],
@@ -870,7 +916,7 @@ async function scanMarket() {
       ['gt-volume', `${GT}/pools?page=1&sort=h24_volume_usd_desc`],
       ['gt-txcount', `${GT}/pools?page=1&sort=h24_tx_count_desc`]
     ];
-    const discovery = state.mode !== 'PUMP';
+    const discovery = state.mode !== 'PUMP';   // PUMP mode gets its coins from the live pump.fun stream instead
     const gtPick = discovery ? [0, 1].map(k => GT_LIST[(gtRot + k) % GT_LIST.length]) : [];
     if (discovery) gtRot = (gtRot + 2) % GT_LIST.length;
     const [gtPools, boosts, profiles] = await Promise.all([
@@ -879,13 +925,16 @@ async function scanMarket() {
       discovery ? getJson('ds-profiles', `${DS}/token-profiles/latest/v1`) : null
     ]);
 
-    const addrs = new Set(heldAddrs());
+    // DexScreener boosts/profiles only give token addresses, so look those up for full stats.
+    const addrs = new Set(heldAddrs());   // always include holdings so they keep a live price
     [boosts, profiles].forEach(list => {
       if (Array.isArray(list)) list.forEach(t => { if (t && t.chainId === 'solana' && t.tokenAddress) addrs.add(t.tokenAddress); });
     });
     const all = Array.from(addrs).slice(0, 90), chunks = [];
     for (let i = 0; i < all.length; i += 30) chunks.push(all.slice(i, i + 30));
     const lookups = await Promise.all(chunks.map(c => getJson('ds-lookup', `${DS}/tokens/v1/solana/${c.join(',')}`)));
+
+    if (state.mode === 'PUMP') await pumpScan();
 
     const fresh = new Map();
     const put = c => {
@@ -900,7 +949,7 @@ async function scanMarket() {
       const now = Date.now();
       fresh.forEach((c, a) => {
         const ex = market.get(a);
-        if (ex && ex.source === 'pump' && !ex.graduated && now - ex.seenAt < CFG.exitStaleMs) return;
+        if (ex && ex.source === 'pump' && !ex.graduated && now - ex.seenAt < CFG.exitStaleMs) return;   // keep the live curve quote
         market.set(a, c);
       });
       for (const [a, c] of market) {
@@ -908,6 +957,7 @@ async function scanMarket() {
       }
     }
 
+    // Held coins that still lack a recent quote get a direct price lookup from a second source.
     let backups = 0;
     for (const a of heldAddrs()) {
       const c = market.get(a);
@@ -928,14 +978,18 @@ async function scanMarket() {
     const hot = hotCoins();
     diag.hotZero = hot.length ? 0 : diag.hotZero + 1;
     announceHot(hot);
+    if (scanCount === 1 || scanCount % 4 === 0) {
+      log(`[SCAN] ${market.size} seen, ${hot.length} hot [${hot.map(c => c.symbol).join(', ') || 'None'}] | feeds ok ${lastScan.ok}/${lastScan.req}`);
+    }
   } catch (err) {
     console.warn('Scan error:', err);
   } finally {
     scanning = false;
+    try { snapshotPrices(); shadowTick(); logWhy(); } catch (e) { console.error('Analytics error:', e); }
     try { runAudit(); } catch (e) { console.error('Audit error:', e); }
     try { snapshotNet(); } catch (e) { console.error('Snapshot error:', e); }
     renderAll();
-    runTradingLoop();
+    runTradingLoop();   // always trade on the data we just fetched, not on stale prices
   }
 }
 
@@ -985,6 +1039,8 @@ async function fetchLiveNews() {
   renderAll();
 }
 
+/* ============================== TRADING ============================== */
+function posModeOf(a) { return state.posMode[a] || (state.entryFeat[a] || {}).mode || state.mode; }
 function launchLike(m) { return m === 'LAUNCH' || m === 'PUMP'; }
 function entryPctFor(mode) { return mode === 'LAUNCH' ? CFG.launch.entryPct : (mode === 'PUMP' ? CFG.pump.entryPct : CFG.entryPct); }
 
@@ -993,6 +1049,7 @@ function slippage(usd, liquidity, mode) {
   return base + Math.min(0.15, (2 * usd) / Math.max(1, liquidity));
 }
 
+// Exact pump.fun bonding-curve quotes (constant product on the virtual reserves).
 function curveBuyTokens(coin, spendUsd) {
   const sol = pump.solUsd || 150, c = coin.curve, k = c.vS * c.vT;
   const spendSol = spendUsd / sol, feeSol = spendSol * CFG.pump.feeRate;
@@ -1007,6 +1064,7 @@ function curveSellUsd(coin, qty) {
 function isArchived(coin) {
   const e = state.archive[coin.address];
   if (!e || e.until <= Date.now()) return false;
+  // only a REAL pump un-benches an early loser (a routine +1.5% wiggle used to release every coin immediately)
   if (coin.source !== 'pump' && coin.change1h > CFG.unbenchH1 && coin.change5m > CFG.unbenchM5) {
     delete state.archive[coin.address];
     saveState();
@@ -1021,9 +1079,10 @@ function archiveCoin(addr, tag, pnl) {
   state.archive[addr] = { symbol: state.symbols[addr] || '?', reason: tag, pnl, until: Date.now() + (ARCHIVE_MS[tag] || 6 * HOUR) };
 }
 
+// Sells `qty` tokens at a slippage-adjusted fill, books fees/P&L, sweeps profit to the vault.
 function sellTokens(addr, coin, qty) {
   const cost = state.costBasis[addr];
-  const pm = state.posMode[addr] || state.mode;
+  const pm = posModeOf(addr);
   let net, fee;
   if (coin.curve && !coin.graduated) { const r = curveSellUsd(coin, qty); net = r.net; fee = r.fee; }
   else {
@@ -1050,18 +1109,26 @@ function sellTokens(addr, coin, qty) {
 }
 
 function clearPosition(addr) {
-  ['positions', 'costBasis', 'entryTimes', 'peaks', 'tiers', 'tradePnl', 'entryFeat', 'entryCost', 'posMode'].forEach(k => { delete state[k][addr]; });
+  ['positions', 'costBasis', 'entryTimes', 'peaks', 'tiers', 'tradePnl', 'entryFeat', 'entryCost', 'posMode', 'runnerRecovered', 'lows'].forEach(k => { delete state[k][addr]; });
 }
 
+/* ---- Trade journal + learned rules ---- */
 const LESSON_MIN = 8;
 const DIM_NAMES = { liq: 'Liquidity', age: 'Pool age', buys: 'Buy ratio', turn: 'Turnover', run: '1h move' };
+const lessonSeen = {};
 
 function featOf(c) {
-  const tx = Math.max(1, c.buysH1 + c.sellsH1);
-  return {
+  const tx = Math.max(1, c.buysH1 + c.sellsH1), m = pumpMetrics(c), P = CFG.pump;
+  const f = {
     mode: state.mode, liq: c.liquidity, mc: c.marketCap, ageMin: c.ageMin === undefined ? null : c.ageMin,
-    buyRatio: c.buysH1 / tx, turnover: c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0, ch5m: c.change5m, ch1h: c.change1h
+    buyRatio: c.buysH1 / tx, turnover: c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0, ch5m: c.change5m, ch1h: c.change1h,
+    phase: pumpPhase(c, P), accel: m.accel, dd: m.dd, flow5: m.flow5, major: isMajorWave(c)
   };
+  if (state.mode === 'PUMP') {
+    f.profile = P.profile;
+    f.pcfg = { stopPct: P.stopPct, recoverPct: P.recoverPct, tier2Pct: P.tier2Pct, trailPct: P.trailPct, staleMin: P.staleMin, stalePct: P.stalePct, exitMc: P.exitMc, topExit: P.topExit };   // the trade keeps the rules it was opened with
+  }
+  return f;
 }
 
 function bucketOf(f) {
@@ -1070,12 +1137,16 @@ function bucketOf(f) {
     age: f.ageMin === null ? 'unknown' : f.ageMin < 15 ? '<15m' : f.ageMin < 120 ? '15m-2h' : f.ageMin < 1440 ? '2-24h' : '1d+',
     buys: f.buyRatio < 0.55 ? '<55%' : f.buyRatio < 0.65 ? '55-65%' : '65%+',
     turn: f.turnover < 0.5 ? '<0.5' : f.turnover < 2 ? '0.5-2' : '2+',
-    run: f.ch1h < 0 ? 'down' : f.ch1h < 10 ? '0-10%' : f.ch1h < 50 ? '10-50%' : '50%+'
+    run: f.ch1h < 0 ? 'down' : f.ch1h < 10 ? '0-10%' : f.ch1h < 50 ? '10-50%' : '50%+',
+    phase: f.phase || undefined,
+    accel: f.accel === undefined ? undefined : f.accel < 0.6 ? '<0.6x' : f.accel < 1.2 ? '0.6-1.2x' : '1.2x+',
+    dd: f.dd === undefined ? undefined : f.dd < 3 ? '<3%' : f.dd < 10 ? '3-10%' : '10%+'
   };
 }
 
 function recordTrade(addr, tag, total) {
   const f = state.entryFeat[addr], cost = state.entryCost[addr] || 0;
+  const basis = state.costBasis[addr] || 0, coin = market.get(addr), sym = state.symbols[addr] || '?';
   const heldMin = (Date.now() - (state.entryTimes[addr] || Date.now())) / 60000;
   const win = total > 0;
   bump('trader', 'closed'); if (win) bump('trader', 'wins'); bump('trader', 'pnl', total);
@@ -1085,45 +1156,61 @@ function recordTrade(addr, tag, total) {
   if (tag === 'STALE EXIT') bump('finance', 'stale');
   const rs = state.stats.risk || (state.stats.risk = {});
   if (total < (rs.worst || 0)) rs.worst = total;
+  const mfe = basis > 0 ? ((state.peaks[addr] || basis) / basis - 1) * 100 : 0;      // best the trade ever was
+  const mae = basis > 0 ? ((state.lows[addr] || basis) / basis - 1) * 100 : 0;       // worst the trade ever was
   if (f && tag !== 'MANUAL') {
-    state.journal.push({ mode: f.mode, b: bucketOf(f), pct: cost > 0 ? (total / cost) * 100 : 0, win, tag, heldMin: Math.round(heldMin) });
-    if (state.journal.length > 300) state.journal.shift();
+    state.journal.push({
+      symbol: sym, mode: f.mode, b: bucketOf(f), pct: cost > 0 ? (total / cost) * 100 : 0, pnl: total, win, tag, time: clock(),
+      heldMin: Math.round(heldMin), mfe: Math.max(0, mfe), mae: Math.min(0, mae), profile: f.profile || null
+    });
+    if (state.journal.length > 400) state.journal.shift();
   }
+  // coin book: remember every coin we trade (average buy / sell, record, its own average price)
+  try {
+    const B = state.book;
+    const b = B[addr] || (B[addr] = { sym, n: 0, wins: 0, pnl: 0, buys: [], sells: [] });
+    const sell = coin && coin.price > 0 ? coin.price : null;
+    b.sym = sym; b.n++; if (total > 0) b.wins++; b.pnl += total;
+    if (basis > 0) { b.buys.push(basis); if (b.buys.length > 8) b.buys.shift(); }
+    if (sell) { b.sells.push(sell); if (b.sells.length > 8) b.sells.shift(); }
+    b.last = { t: Date.now(), pnl: total, pct: cost > 0 ? (total / cost) * 100 : 0, tag, sell, buy: basis };
+    if (!(b.ema > 0)) b.ema = ((basis || 0) + (sell || basis || 0)) / 2 || sell || basis;
+    const keys = Object.keys(B);
+    if (keys.length > 300) keys.sort((x, y) => ((B[x].last || {}).t || 0) - ((B[y].last || {}).t || 0)).slice(0, keys.length - 300).forEach(k => delete B[k]);
+  } catch (e) { console.error('book', e); }
 }
 
-function journalStats(rows) {
-  if (!rows || rows.length === 0) return { n: 0, winRate: 0, profitFactor: null, expectancy: 0 };
-  let wins = 0, grossWin = 0, grossLoss = 0, totalPct = 0;
-  rows.forEach(j => {
-    totalPct += j.pct;
-    if (j.win) { wins++; grossWin += j.pct; }
-    else { grossLoss += Math.abs(j.pct); }
-  });
-  const n = rows.length;
-  const winRate = wins / n;
-  const profitFactor = grossLoss === 0 ? (grossWin > 0 ? 99 : 1) : grossWin / grossLoss;
-  const expectancy = totalPct / n;
-  return { n, winRate, profitFactor, expectancy };
+let lessonCache = { k: '', L: null };
+function wilson(wins, n, z) {
+  if (!n) return [0, 1];
+  const p = wins / n, d = 1 + z * z / n, c = p + z * z / (2 * n), a = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n));
+  return [(c - a) / d, (c + a) / d];
 }
-
 function computeLessons() {
+  const key = state.mode + ':' + state.journal.length + ':' + Math.floor(Date.now() / 30000);
+  if (lessonCache.k === key) return lessonCache.L;
   const rows = state.journal.filter(j => j.mode === state.mode);
   const res = { avoid: [], favor: [], n: rows.length };
-  if (rows.length < LESSON_MIN) return res;
-  const overall = rows.reduce((a, j) => a + j.pct, 0) / rows.length;
-  Object.keys(DIM_NAMES).forEach(dim => {
-    const groups = {};
-    rows.forEach(j => { (groups[j.b[dim]] = groups[j.b[dim]] || []).push(j); });
-    Object.keys(groups).forEach(bucket => {
-      const arr = groups[bucket];
-      if (arr.length < LESSON_MIN) return;
-      const avg = arr.reduce((a, j) => a + j.pct, 0) / arr.length;
-      const win = arr.filter(j => j.win).length / arr.length;
-      const item = { dim, bucket, n: arr.length, avg, win };
-      if (avg < overall - 2 && win < 0.4) res.avoid.push(item);
-      else if (avg > overall + 2 && win > 0.5) res.favor.push(item);
+  if (rows.length >= LESSON_MIN) {
+    const N = rows.length, w = rows.map((j, i) => Math.pow(0.97, N - 1 - i));      // newer trades count more than old ones
+    const W = w.reduce((a, b) => a + b, 0);
+    const overall = rows.reduce((a, j, i) => a + j.pct * w[i], 0) / W;
+    Object.keys(DIM_NAMES).forEach(dim => {
+      const groups = {};
+      rows.forEach((j, i) => { const b = j.b && j.b[dim]; if (!b || b === '?') return; (groups[b] = groups[b] || []).push(i); });
+      Object.keys(groups).forEach(bucket => {
+        const idx = groups[bucket];
+        if (idx.length < LESSON_MIN) return;
+        const gw = idx.reduce((a, i) => a + w[i], 0);
+        const avg = idx.reduce((a, i) => a + rows[i].pct * w[i], 0) / gw;
+        const wins = idx.filter(i => rows[i].win).length, ci = wilson(wins, idx.length, 1.28);
+        const item = { dim, bucket, n: idx.length, avg, win: wins / idx.length, lo: ci[0], hi: ci[1] };
+        if (avg < overall - 2 && ci[1] < 0.45) res.avoid.push(item);          // clearly worse AND the win rate is provably low
+        else if (avg > overall + 2 && ci[0] > 0.4) res.favor.push(item);
+      });
     });
-  });
+  }
+  lessonCache = { k: key, L: res };
   return res;
 }
 
@@ -1138,7 +1225,7 @@ function closePosition(addr, coin, tag, msg) {
   if (!(qty > 0)) return;
   const sym = state.symbols[addr] || coin.symbol;
   sellTokens(addr, coin, qty);
-  const pnl = state.tradePnl[addr];
+  const pnl = state.tradePnl[addr];   // whole trade, including earlier partial sells
   recordTrade(addr, tag, pnl);
   archiveCoin(addr, tag, pnl);
   clearPosition(addr);
@@ -1158,8 +1245,14 @@ function manualSellPosition(addr) {
 function openPosition(coin) {
   const addr = coin.address;
   if (state.positions[addr] > 0 || state.cash <= CFG.minCash || isArchived(coin)) return false;
-  const wanted = state.cash * entryPctFor(state.mode);
-  const spend = Math.min(wanted, coin.liquidity * CFG.maxSpendPctOfLiq);
+  const mode = state.mode, major = isMajorWave(coin), sizeMult = probeNext ? 0.5 : 1;
+  if (heldAddrs().length >= maxOpenNow()) return false;
+  if (major && heldAddrs().filter(a => state.symbols[a] === 'SOL' || state.symbols[a] === 'WSOL').length >= 2) return false;
+  const pct = (major ? CFG.majorEntryPct : entryPctFor(mode)) * sizeMult * sizeAdj(mode, major);   // sized from real results, not a fixed bet
+  const minTicket = (launchLike(mode) ? 5 : 10) * sizeMult;
+  const wanted = Math.min(state.cash, Math.max(minTicket, state.cash * pct));
+  const liqPct = mode === 'PUMP' ? CFG.pump.maxSpendPctOfLiq : CFG.maxSpendPctOfLiq;
+  const spend = Math.min(wanted, state.cash, coin.liquidity * liqPct);
   if (spend < 1) return false;
   let tokens, fee;
   if (coin.curve && !coin.graduated) { const r = curveBuyTokens(coin, spend); tokens = r.tokens; fee = r.fee; }
@@ -1167,12 +1260,14 @@ function openPosition(coin) {
   if (!(tokens > 0)) return false;
   state.cash -= spend;
   state.positions[addr] = tokens;
-  state.costBasis[addr] = spend / tokens;
+  state.costBasis[addr] = spend / tokens;   // all-in (fee and slippage included) so P&L always matches the bankroll
   state.symbols[addr] = coin.symbol;
-  state.posMode[addr] = state.mode;
+  state.posMode[addr] = mode;
   state.entryTimes[addr] = Date.now();
   state.peaks[addr] = coin.price;
+  state.lows[addr] = coin.price;
   state.tiers[addr] = 0;
+  state.runnerRecovered[addr] = false;
   state.entryFeat[addr] = featOf(coin);
   state.entryCost[addr] = spend;
   state.tradePnl[addr] = 0;
@@ -1180,19 +1275,22 @@ function openPosition(coin) {
   state.fees += fee;
   state.txCount += 1;
   playSfx('buy');
-  logTrade('BUY', `Entered ${coin.symbol} for ${fmtCurrency(spend)}`);
+  logTrade('BUY', `Entered ${coin.symbol} for ${fmtCurrency(spend)}${probeNext ? ' (probe)' : ''}`);
   agentSay('trader', `Entered ${coin.symbol} with ${fmtCurrency(spend)}.`, { quiet: true });
   saveState();
   renderAll();
   return true;
 }
 
-function exitRules(pm) {
-  const L = CFG.launch, P = CFG.pump, S = CFG.sniper;
+function exitRules(pm, feat) {
+  const L = CFG.launch, S = CFG.sniper;
   if (pm === 'LAUNCH') return { stop: L.stopPct, tiers: [[L.tier1Pct, 0.5], [L.tier2Pct, 0.5]], trail: L.trailPct, staleMs: L.staleMs, stalePct: L.stalePct };
-  if (pm === 'PUMP') return { stop: P.stopPct, tiers: [[P.tier1Pct, P.tier1Frac], [P.tier2Pct, P.tier2Frac]], trail: P.trailPct, staleMs: P.staleMs, stalePct: P.stalePct };
-  if (pm === 'SNIPER') return { stop: CFG.stopLossPct, tiers: [[S.tier1Pct, S.tier1Frac], [S.tier2Pct, S.tier2Frac]], trail: S.trailPct, staleMs: CFG.staleExitMs, stalePct: 1 };
-  return { stop: CFG.stopLossPct, tp: CFG.takeProfitPct, tiers: null, staleMs: CFG.staleExitMs, stalePct: 1 };
+  if (pm === 'PUMP') {
+    const P = Object.assign({}, CFG.pump, (feat && feat.pcfg) || {});   // the rules the trade was opened with
+    return { stop: P.stopPct, recover: P.recoverPct, tiers: [[P.tier2Pct, 0.5]], trail: P.trailPct, staleMs: P.staleMin * 60000, stalePct: P.stalePct, P };
+  }
+  if (pm === 'SNIPER') return { stop: CFG.stopLossPct, tiers: [[S.tier1Pct, S.tier1Frac], [S.tier2Pct, S.tier2Frac]], trail: S.trailPct };
+  return { stop: CFG.stopLossPct, tiers: [[CFG.growthTier1Pct, 0.5]], trail: CFG.growthTrailPct, tp: CFG.takeProfitPct };
 }
 
 function runExits() {
@@ -1200,23 +1298,30 @@ function runExits() {
   for (const addr of heldAddrs()) {
     const coin = market.get(addr);
     const sym = state.symbols[addr] || '?';
-    if (!(coin && now - coin.seenAt < CFG.exitStaleMs)) {
+    if (!(coin && now - coin.seenAt < CFG.exitStaleMs)) {   // no live price: do nothing rather than act on a guess
       if (!noFeedWarned.has(addr)) { noFeedWarned.add(addr); log(`[WARN] No live price for ${sym}; exits paused until feed returns`); }
       continue;
     }
     noFeedWarned.delete(addr);
 
-    const pm = state.posMode[addr] || state.mode;
-    const R = exitRules(pm);
+    const feat = state.entryFeat[addr] || {};
+    const pm = posModeOf(addr);                      // a trade keeps the exit rules of the mode it was opened in
+    const major = feat.major !== undefined ? feat.major : isMajorWave(coin);
+    const R = exitRules(pm, feat), P = R.P;
     const cost = state.costBasis[addr] || coin.price;
     const gain = ((coin.price - cost) / cost) * 100;
     if (!(state.peaks[addr] >= coin.price)) state.peaks[addr] = coin.price;
+    if (!(state.lows[addr] <= coin.price)) state.lows[addr] = Math.min(coin.price, cost);
+    const peakGain = (state.peaks[addr] / cost - 1) * 100;
     const drop = ((state.peaks[addr] - coin.price) / state.peaks[addr]) * 100;
     const healthyDip = classifyDipOrDump(coin) === 'HEALTHY DIP';
-    const tier = state.tiers[addr] || 0;
-    const pt = pm === 'PUMP' ? pump.tokens.get(addr) : null;
+    const tier = state.tiers[addr] || 0, recovered = !!state.runnerRecovered[addr];
+    const qty = state.positions[addr] || 0, value = qty * coin.price;
+    const heldMs = now - (state.entryTimes[addr] || now);
+    const buyRatio = coin.buysH1 / Math.max(1, coin.buysH1 + coin.sellsH1);
+    const stopLimit = major ? CFG.majorStopPct : R.stop;
     const partial = idx => {
-      const frac = R.tiers[idx][1], q = state.positions[addr] * frac;
+      const frac = R.tiers[idx][1], q = qty * frac;
       const pnl = sellTokens(addr, coin, q);
       state.positions[addr] -= q; state.tiers[addr] = idx + 1;
       playSfx('win');
@@ -1224,48 +1329,410 @@ function runExits() {
       saveState();
     };
 
-    if (pm === 'PUMP') {
-      if (CFG.pump.exitOnCreatorSell && pt && pt.creatorSold) { closePosition(addr, coin, 'CREATOR SOLD', 'The creator dumped, out of'); continue; }
-      if (CFG.pump.sellOnGraduate && coin.graduated) { closePosition(addr, coin, 'GRADUATION', 'Token graduated, sold'); continue; }
-    }
-    if (gain <= R.stop) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
-    if (tier >= 1 && gain <= 0) { closePosition(addr, coin, 'BREAKEVEN STOP', 'Protecting banked profit on'); continue; }
+    if (gain <= stopLimit) { closePosition(addr, coin, 'STOP-LOSS CUT', 'RISK_CORE cut'); continue; }
 
-    if (R.tiers) {
-      if (tier < 1 && gain >= R.tiers[0][0]) { partial(0); continue; }
-      if (tier < 2 && gain >= R.tiers[1][0]) { partial(1); continue; }
-      if (tier >= 1 && drop >= R.trail && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Trailing stop hit on'); continue; }
-    } else if (gain >= R.tp) {
-      closePosition(addr, coin, 'TAKE-PROFIT', 'Target secured on');
+    if (pm === 'PUMP' && !major) {
+      const pt = pump.tokens.get(addr);
+      if (P.exitOnCreatorSell && pt && pt.creatorSold) { closePosition(addr, coin, 'CREATOR SOLD', 'The creator dumped, out of'); continue; }
+      if (P.sellOnGraduate && coin.graduated) { closePosition(addr, coin, 'GRADUATION', 'Token graduated, sold'); continue; }
+      if (P.exitMc > 0 && coin.marketCap >= P.exitMc) { closePosition(addr, coin, 'GRAD EXIT', 'Reached the exit market cap, sold'); continue; }
+      const ph = pumpPhase(coin, P);
+      if (P.topExit && gain > 1 && (ph === 'TOPPING' || ph === 'DEAD')) { closePosition(addr, coin, 'TOP EXIT', `Pump looks finished (${ph}), banked`); continue; }
+      if (gain <= 0 && ph === 'DEAD' && heldMs > 3 * 60000) { closePosition(addr, coin, 'FLOW EXIT', 'Volume died, cut'); continue; }
+      if (!recovered && gain < 0 && heldMs > 2 * 60000 && buyRatio < 0.45) { closePosition(addr, coin, 'FLOW EXIT', 'Buy flow reversed on'); continue; }
+      if (tier === 0 && !recovered && pt && now - pt.lastTradeAt > P.deadMs && gain < 0) { closePosition(addr, coin, 'DEAD COIN', 'No trades for a while, closed'); continue; }
+    }
+
+    // profit lock: once a trade was up it may no longer turn into a loss
+    const fl = lockFloor(peakGain, pm, major);
+    if (fl !== null && gain <= fl) { closePosition(addr, coin, 'PROFIT LOCK', `Peak was +${peakGain.toFixed(0)}%, locked in`); continue; }
+    const vs = valueSignal(coin);
+    if (gain >= 3 && vs && vs.pct >= CFG.lock.extPct && coin.change5m < 0) { closePosition(addr, coin, 'EXTENDED EXIT', `Price ${vs.pct.toFixed(0)}% above its average and turning down, sold`); continue; }
+
+    if ((tier >= 1 || recovered) && gain <= 0) { closePosition(addr, coin, 'BREAKEVEN STOP', 'Protecting banked profit on'); continue; }
+
+    if (major) {
+      const net = exitValue(addr) - qty * cost;
+      if (net >= CFG.stableTargetProfitUsd) closePosition(addr, coin, 'TAKE-PROFIT ($1+)', `Secured $${net.toFixed(2)} on`);
       continue;
     }
 
-    if (pm === 'PUMP' && tier === 0 && pt && now - pt.lastTradeAt > CFG.pump.deadMs && gain < 0) { closePosition(addr, coin, 'DEAD COIN', 'No trades for a while, closed'); continue; }
-    if (tier === 0 && now - (state.entryTimes[addr] || now) > R.staleMs && gain < R.stalePct) {
-      closePosition(addr, coin, 'STALE EXIT', 'Going nowhere, closed');
+    if (R.recover && !recovered && gain >= R.recover && value > 0) {     // take the principal out, the rest rides free
+      const initialCost = state.entryCost[addr] || (value / (1 + gain / 100));
+      const q = qty * Math.min(0.85, initialCost / value);
+      if (q > 0) {
+        const pnl = sellTokens(addr, coin, q);
+        state.positions[addr] -= q; state.runnerRecovered[addr] = true;
+        playSfx('win');
+        log(`[PRINCIPAL RECOVERED] ${sym}: the rest is a FREE RUNNER`);
+        logTrade('PRINCIPAL', `Recovered principal on ${sym}`, pnl);
+        agentSay('finance', `KIRKTRON 9001: Principal secured on ${sym}. Free runner active.`, { quiet: true });
+        saveState();
+        continue;
+      }
+    }
+
+    if ((tier >= 1 || recovered) && drop >= R.trail && !healthyDip) { closePosition(addr, coin, 'RUNNER EXIT', 'Trailing stop hit on'); continue; }
+    const nxt = R.tiers && R.tiers[tier];
+    if (nxt && gain >= nxt[0]) { partial(tier); continue; }
+    if (R.tp && gain >= R.tp) { closePosition(addr, coin, 'TAKE-PROFIT', 'Runner cap reached on'); continue; }
+
+    // stale: going nowhere
+    if (tier === 0 && !recovered) {
+      if (R.staleMs !== undefined) { if (heldMs > R.staleMs && gain < R.stalePct) closePosition(addr, coin, 'STALE EXIT', 'Went quiet, closed'); }
+      else {
+        const horizon = determineHoldHorizon(coin);
+        const maxHold = horizon === 'QUICK SCALP (Minutes)' ? 30 * 60000 : horizon === 'MOMENTUM SURGE (Hours)' ? 6 * HOUR : CFG.staleExitMs;
+        if (heldMs > maxHold && gain < 2.0) closePosition(addr, coin, 'STALE EXIT', `Horizon (${horizon}) elapsed, closed`);
+      }
     }
   }
 }
 
+/* ============================== ANALYTICS ============================== */
+/* Price history, "is the pump over?" detector, coin book, profit lock, sound sizing, shadow tracking, math. */
+Object.assign(DIM_NAMES, { phase: 'Pump phase', accel: 'Volume momentum', dd: 'Off recent high' });
+const avgOf = a => (a && a.length) ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+function isPump(c) { return !!c && typeof c.address === 'string' && c.address.endsWith('pump'); }
+
+const priceHist = new Map(), coinTrack = new Map();
+function snapshotPrices() {
+  const now = Date.now();
+  market.forEach((c, a) => {
+    let h = priceHist.get(a);
+    if (!h) { h = []; priceHist.set(a, h); }
+    const last = h[h.length - 1];
+    if (!last || now - last.t >= 15000) h.push({ t: now, p: c.price });
+    while (h.length > 40) h.shift();
+    let t = coinTrack.get(a);
+    if (!t) { t = { high: c.price, low: c.price }; coinTrack.set(a, t); }
+    if (c.price > t.high) t.high = c.price;
+    if (c.price < t.low) t.low = c.price;
+    const b = state.book[a];
+    if (b && c.price > 0) { b.ema = b.ema > 0 ? b.ema * 0.9 + c.price * 0.1 : c.price; b.lo = Math.min(b.lo || c.price, c.price); b.hi = Math.max(b.hi || 0, c.price); }
+  });
+  if (priceHist.size > 600) priceHist.forEach((v, a) => { if (!market.has(a)) { priceHist.delete(a); coinTrack.delete(a); } });
+}
+function scanRun(c) {                      // % move over the last ~3 minutes
+  const h = priceHist.get(c.address);
+  if (!h || !h.length) return 0;
+  const recent = h.filter(x => x.t >= Date.now() - 3 * 60000);
+  if (!recent.length || !(recent[0].p > 0)) return 0;
+  return (c.price / recent[0].p - 1) * 100;
+}
+function pumpMetrics(c) {
+  const tx1 = Math.max(1, c.buysH1 + c.sellsH1), tx5 = (c.buysM5 || 0) + (c.sellsM5 || 0);
+  const win = Math.max(5, Math.min(60, c.ageMin === null || c.ageMin === undefined ? 60 : c.ageMin));
+  const t = coinTrack.get(c.address);
+  let dd = t && t.high > 0 ? Math.max(0, (t.high - c.price) / t.high * 100) : 0;
+  if (c.pump && c.pump.dd !== undefined) dd = c.pump.dd;
+  return {
+    flow1: c.buysH1 / tx1, flow5: tx5 > 0 ? (c.buysM5 || 0) / tx5 : 0, tx5,
+    accel: c.volumeH1 > 0 ? ((c.volumeM5 || 0) / 5) / (c.volumeH1 / win) : 0,      // volume per minute now vs. its average
+    dd                                                                              // % below the highest price seen
+  };
+}
+function pumpPhase(c, P) {
+  P = P || CFG.pump;
+  const m = pumpMetrics(c), maxDD = P.maxDD || 12, maxCh5m = P.maxCh5m || 20;
+  if (m.accel < 0.25 || m.dd > maxDD * 1.8) return 'DEAD';
+  if (c.change1h >= 50 && (c.change5m <= 1 || m.flow5 < m.flow1 - 0.12 || m.accel < 0.6 || m.dd > maxDD * 0.6)) return 'TOPPING';
+  if (c.change5m > maxCh5m || (c.change1h > 30 && c.change5m > 0.5 * c.change1h)) return 'PARABOLIC';
+  if (c.change1h < 25 && c.change5m >= -2 && m.accel >= 1 && m.flow5 >= 0.55) return 'EARLY';
+  return 'BUILDING';
+}
+function passesChaseGate(c) {
+  if (isMajorWave(c)) return true;
+  if (c.change5m > CFG.maxCh5m || c.change1h > CFG.maxCh1h || c.change5m < -4) return false;
+  if (scanRun(c) > CFG.maxScanRun) return false;
+  const ph = pumpPhase(c, { maxDD: 12, maxCh5m: CFG.maxCh5m });
+  return !(ph === 'TOPPING' || ph === 'DEAD' || ph === 'PARABOLIC');
+}
+
+/* ---- coin book + value signal ---- */
+function valueSignal(c) {                  // is this coin LOW or HIGH versus its own average price?
+  const b = state.book[c.address];
+  let ref = b && b.ema;
+  if (!(ref > 0)) { const h = priceHist.get(c.address); if (h && h.length >= 6) ref = avgOf(h.map(x => x.p)); }
+  if (!(ref > 0) || !(c.price > 0)) return null;
+  const pct = (c.price / ref - 1) * 100;
+  return { ref, pct, label: pct <= -12 ? 'LOW' : pct >= 12 ? 'HIGH' : 'FAIR' };
+}
+function bookBlock(c) {                    // reasons not to re-buy a coin we already traded
+  const b = state.book[c.address];
+  if (!b || !b.n) return '';
+  const L = b.last || {}, ageH = (Date.now() - (L.t || 0)) / HOUR;
+  if (b.n >= 2 && b.wins / b.n < 0.34) return 'rebuy: repeat loser';
+  if (L.pnl < 0 && ageH < 4) return 'rebuy: cooling off after a loss';
+  if (L.pnl > 0 && ageH < 6 && L.sell && c.price > L.sell * 0.98) return 'rebuy: not cheaper than our last sell';
+  const v = valueSignal(c);
+  if (v && v.pct > 40) return 'rebuy: far above its average';
+  return '';
+}
+
+/* ---- buy rules per mode (all gates in one place) ---- */
+function baseBuyable(c) {                  // everything except the anti-chase gate
+  if (classifyDipOrDump(c) === 'DUMP' && !isMajorWave(c)) return false;
+  return state.mode === 'LAUNCH' ? isLaunchCandidate(c) : (isActive(c) && modeAllows(c) && !(CFG.skipClones && isClone(c)));
+}
+function isBuyable(c) {
+  if (bookBlock(c)) return false;
+  if (state.mode === 'PUMP') return isPumpCandidate(c);
+  if (!baseBuyable(c)) return false;
+  return state.mode === 'LAUNCH' ? true : passesChaseGate(c);
+}
+function favorBoost(c) {
+  const L = computeLessons();
+  if (!L.favor.length) return 1;
+  const b = bucketOf(featOf(c));
+  return 1 + Math.min(0.5, 0.12 * L.favor.filter(l => b[l.dim] === l.bucket).length);
+}
+function entryScore(c) {
+  let s;
+  if (isMajorWave(c)) s = Math.abs(c.change5m) * 15;
+  else if (state.mode === 'PUMP') s = pumpScore(c);
+  else if (state.mode === 'LAUNCH') s = c.buysH1 * (c.buysH1 / Math.max(1, c.buysH1 + c.sellsH1));
+  else s = activityScore(c);
+  s *= favorBoost(c);
+  const v = valueSignal(c), b = state.book[c.address];
+  if (v) {
+    if (v.label === 'LOW' && b && b.wins > 0) s *= 1.15;          // a past winner, now cheap
+    else if (v.pct >= 25) s *= 0.85;                               // stretched above its own average = chasing
+    else if (v.label === 'HIGH') s *= 0.93;
+  }
+  return s;
+}
+
+/* ---- profit lock: a trade that was up can no longer turn into a loss ---- */
+function lockFloor(peakGain, pm, major) {
+  const L = CFG.lock;
+  if (!L.on || pm === 'LAUNCH') return null;
+  if (major) { if (peakGain < L.majorArm) return null; return peakGain >= 6 ? Math.max(L.majorFloor, peakGain * 0.5) : L.majorFloor; }
+  const c = pm === 'PUMP' ? L.pump : L;
+  if (peakGain < c.arm) return null;
+  let f = c.floor;
+  for (const [pk, keep] of c.steps) if (peakGain >= pk) f = Math.max(f, peakGain * keep);
+  return f;
+}
+
+/* ---- sound sizing: quarter-Kelly from real results + drawdown brake ---- */
+function equityNow() { try { return state.cash + portfolioValue().value; } catch (e) { return state.cash; } }
+function sizeInfo(mode) {
+  const J = state.journal.filter(j => j.mode === mode).slice(-60);
+  const base = mode === 'LAUNCH' ? CFG.launch.entryPct : mode === 'PUMP' ? CFG.pump.entryPct : CFG.entryPct;
+  const out = { mult: 1, why: 'not enough trades yet (need 12), full size', n: J.length };
+  if (J.length >= 12) {
+    const W = J.filter(j => j.win), Ls = J.filter(j => !j.win);
+    const p = wilson(W.length, J.length, 1.28)[0];
+    const aw = avgOf(W.map(j => j.pct)), al = Math.abs(avgOf(Ls.map(j => j.pct))) || 1;
+    const b = aw > 0 ? aw / al : 0.01;
+    const f = p - (1 - p) / b;
+    out.mult = f <= 0 ? 0.25 : Math.min(1, Math.max(0.25, (f * 0.25) / base));
+    out.why = f <= 0 ? `no proven edge in the last ${J.length} trades, minimum size` : `quarter-Kelly ${(f * 25).toFixed(1)}% of bankroll vs ${(base * 100).toFixed(0)}% set`;
+  }
+  const eq = equityNow();
+  if (!(state.eqPeak > 0) || !state.journal.length) state.eqPeak = eq;
+  if (eq > state.eqPeak) state.eqPeak = eq;
+  const dd = 1 - eq / state.eqPeak;
+  out.dd = dd;
+  if (dd > 0.2) { out.mult *= 0.5; out.why += ` | drawdown ${(dd * 100).toFixed(0)}% x0.5`; }
+  else if (dd > 0.1) { out.mult *= 0.7; out.why += ` | drawdown ${(dd * 100).toFixed(0)}% x0.7`; }
+  return out;
+}
+function sizeAdj(mode, major) { if (major) return 1; try { return sizeInfo(mode).mult; } catch (e) { return 1; } }
+
+/* ---- math panel ---- */
+function mathStats(mode) {
+  const J = state.journal.filter(j => !mode || j.mode === mode), n = J.length;
+  if (!n) return null;
+  const W = J.filter(j => j.win), Ls = J.filter(j => !j.win);
+  const aw = avgOf(W.map(j => j.pct)), al = Math.abs(avgOf(Ls.map(j => j.pct)));
+  const gw = W.reduce((x, j) => x + j.pnl, 0), gl = Math.abs(Ls.reduce((x, j) => x + j.pnl, 0));
+  const exp = avgOf(J.map(j => j.pct));
+  let run = 0, maxL = 0, cum = 0, pk = 0, mdd = 0;
+  J.forEach(j => { run = j.win ? 0 : run + 1; maxL = Math.max(maxL, run); cum += j.pnl; pk = Math.max(pk, cum); mdd = Math.max(mdd, pk - cum); });
+  return { n, wr: W.length / n * 100, wrLow: wilson(W.length, n, 1.64)[0] * 100, aw, al, payoff: al > 0 ? aw / al : null, pf: gl > 0 ? gw / gl : null,
+    exp, be: al > 0 ? 100 / (1 + aw / al) : null, maxL, mdd, locks: J.filter(j => j.tag === 'PROFIT LOCK' || j.tag === 'EXTENDED EXIT') };
+}
+function mathLines(mode) {
+  const m = mathStats(mode);
+  if (!m) return ['No closed trades yet.'];
+  const f = x => x === null ? 'n/a' : x.toFixed(2);
+  const out = [
+    `${m.n} trades | win rate ${m.wr.toFixed(0)}% (safe estimate ${m.wrLow.toFixed(0)}%) | break-even needs ${m.be === null ? 'n/a' : m.be.toFixed(0) + '%'}`,
+    `avg win ${m.aw.toFixed(1)}% | avg loss -${m.al.toFixed(1)}% | payoff ${f(m.payoff)} | profit factor ${f(m.pf)}`,
+    `expectancy ${m.exp >= 0 ? '+' : ''}${m.exp.toFixed(2)}% per trade | worst losing streak ${m.maxL} | max drawdown ${fmtCurrency(m.mdd)}`
+  ];
+  if (m.locks.length) out.push(`profit lock / extended exits: ${m.locks.length} trades, avg ${avgOf(m.locks.map(j => j.pct)).toFixed(1)}%`);
+  out.push(m.n < 20 ? 'Verdict: too few trades to trust yet (need 20+).' : m.exp > 0 && m.wrLow >= (m.be || 0) ? 'Verdict: real edge so far.' : m.exp > 0 ? 'Verdict: positive but not proven (the win rate could be luck).' : 'Verdict: NO EDGE yet, losing after costs.');
+  return out;
+}
+
+/* ---- shadow tracking: what would the coins we SKIPPED have done? ---- */
+const SHADOW_MS = 30 * 60000, PROBE_MS = 3 * HOUR;
+const shadowSeen = {};
+let probeNext = false;
+function shadowAdd(c, reason) {
+  const now = Date.now();
+  if (shadowSeen[c.address] && now - shadowSeen[c.address] < SHADOW_MS) return false;
+  shadowSeen[c.address] = now;
+  state.shadow.open.push({ a: c.address, sym: c.symbol, p: c.price, t: now, reason, mode: state.mode, hi: c.price, lo: c.price });
+  if (state.shadow.open.length > 80) state.shadow.open.shift();
+  return true;
+}
+function shadowTick() {
+  const s = state.shadow, now = Date.now(), keep = [];
+  s.open.forEach(x => {
+    const c = market.get(x.a);
+    if (c && isFresh(c)) { if (c.price > x.hi) x.hi = c.price; if (c.price < x.lo) x.lo = c.price; x.last = c.price; }
+    if (now - x.t >= SHADOW_MS) {
+      if (x.last) {
+        const pct = (x.last / x.p - 1) * 100 - 2;       // minus about 2% round-trip costs
+        s.done.push({ reason: x.reason, mode: x.mode, sym: x.sym, pct, mfe: (x.hi / x.p - 1) * 100, mae: (x.lo / x.p - 1) * 100, win: pct > 0, t: now });
+        if (s.done.length > 300) s.done.shift();
+      }
+    } else keep.push(x);
+  });
+  s.open = keep;
+}
+function shadowStats() {
+  const by = {};
+  state.shadow.done.forEach(d => { const o = by[d.reason] || (by[d.reason] = { n: 0, w: 0, s: 0, mfe: 0 }); o.n++; if (d.win) o.w++; o.s += d.pct; o.mfe += d.mfe; });
+  return by;
+}
+function collectShadows(all) {
+  let n = 0;
+  for (const c of all) {
+    if (n >= 3) break;
+    let r = '';
+    if (state.mode === 'PUMP') {
+      const x = pumpReject(c);
+      if (x === 'chase' || x === 'fade' || x === 'topped' || x.indexOf('phase') === 0) r = 'PUMP:' + (x.indexOf('phase') === 0 ? 'phase' : x);
+    } else if (state.mode !== 'LAUNCH') {
+      if (!bookBlock(c) && baseBuyable(c) && !passesChaseGate(c)) r = 'GROWTH:chase';
+    }
+    if (r && shadowAdd(c, r)) n++;
+  }
+}
+
+/* ---- why is nothing being bought? ---- */
+function growthReject(c) {
+  const b = bookBlock(c); if (b) return b;
+  if (!isFresh(c)) return 'stale data';
+  if (isMajorWave(c)) return isActive(c) ? '' : 'big coin not dipping';
+  if (state.mode === 'LAUNCH') return isLaunchCandidate(c) ? '' : 'not a fresh launch';
+  if (c.ageMin !== null && c.ageMin !== undefined && c.ageMin < CFG.minAgeMin) return 'too new';
+  const tx = c.buysH1 + c.sellsH1;
+  if (tx < CFG.minTxnsH1) return 'few trades';
+  if (c.buysH1 / tx < CFG.minBuyRatio) return 'weak buying';
+  if (c.liquidity < CFG.minLiquidity) return 'thin liquidity';
+  if (c.volumeH1 < CFG.minVolumeH1) return 'low volume';
+  if (c.volumeH1 / c.liquidity < CFG.minTurnover) return 'low turnover';
+  if (!modeAllows(c)) return 'too big for sniper';
+  if (CFG.skipClones && isClone(c)) return 'copycat ticker';
+  if (classifyDipOrDump(c) === 'DUMP') return 'dumping';
+  if (state.mode !== 'LAUNCH' && !passesChaseGate(c)) return 'already ran';
+  return '';
+}
+const REJECT_WORDS = { age: 'wrong age', mc: 'mcap out of range', liq: 'thin liquidity', flow: 'weak buying', weak: 'falling', chase: 'already ran', fade: 'volume fading', topped: 'off its high', notpump: 'not pump.fun', graduated: 'graduated', creator: 'creator sold' };
+function whyNotTrading() {
+  const blockers = [];
+  if (market.size === 0) blockers.push('NO MARKET DATA (feeds down)');
+  if (state.cash <= CFG.minCash) blockers.push('bankroll at minimum');
+  if (heldAddrs().length >= maxOpenNow()) blockers.push('max positions open');
+  const cnt = {}; let n = 0;
+  market.forEach(c => {
+    if (state.mode === 'PUMP' && !isPump(c)) return;
+    n++;
+    let r = state.mode === 'PUMP' ? (bookBlock(c) || pumpReject(c)) : growthReject(c);
+    r = r ? (r.indexOf('phase:') === 0 ? 'phase ' + r.slice(6) : (REJECT_WORDS[r] || r)) : 'READY TO BUY';
+    cnt[r] = (cnt[r] || 0) + 1;
+  });
+  const txt = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).map(k => `${k} ${cnt[k]}`).join(', ') || 'none';
+  return { blockers, n, txt };
+}
+let lastWhyLog = 0;
+function logWhy() {
+  const now = Date.now();
+  if (now - lastWhyLog < 90000) return;
+  lastWhyLog = now;
+  const w = whyNotTrading();
+  log(`[WHY] ${state.mode}: ${w.n} coins in view -> ${w.txt}`);
+  if (w.blockers.length) log(`[WHY] BLOCKERS: ${w.blockers.join('; ')}`);
+}
+
+/* ---- pump presets (every number editable from PUMP SETUP) ---- */
+const PUMP_COMMON = {
+  minAgeMin: 3, maxAgeMin: 180, minMc: 6000, maxMc: 90000, minLiq: 4000,
+  minTxns: 30, minBuyRatio: 0.58, minTx5m: 6, minBuy5m: 0.55, minBuyers: 8, minVolSol: 3,
+  minCh5m: -4, maxCh5m: 20, minCh1h: -100, maxCh1h: 150, minCh24h: -1000, maxScanRun: 12,
+  maxDD: 12, minAccel: 0.8, phases: ['EARLY', 'BUILDING'],
+  entryPct: 0.05, maxSpendPctOfLiq: 0.03, feeRate: 0.01,
+  stopPct: -12, recoverPct: 50, tier2Pct: 150, trailPct: 20, staleMin: 25, stalePct: 5,
+  maxOpen: 4, exitMc: 0, topExit: true, deadMs: 120000, sellOnGraduate: true, exitOnCreatorSell: true, maxTracked: 500, maxTrackMin: 45
+};
+const PUMP_PROFILES = {
+  BALANCED: { label: 'Balanced', desc: 'All-round: coins 3-180 min old with live buying. Skips anything that already ran or is rolling over.' },
+  SNIPER: {
+    label: 'Early Sniper', desc: 'Brand-new coins (1-15 min, mcap under $25k) while volume is still accelerating. Small size, wide stop, fast stale exit. Needs speed, so real fills would be worse than paper.',
+    minAgeMin: 1, maxAgeMin: 15, minMc: 5000, maxMc: 25000, minLiq: 3000, minTxns: 15, minBuyRatio: 0.62, minTx5m: 8, minBuy5m: 0.6, minBuyers: 8,
+    maxCh5m: 30, maxCh1h: 80, minAccel: 1.0, phases: ['EARLY'], entryPct: 0.04, stopPct: -15, recoverPct: 40, tier2Pct: 120, trailPct: 20, staleMin: 12, stalePct: 4, maxOpen: 5
+  },
+  MOMENTUM: {
+    label: 'Momentum Rider', desc: 'Coins 10-90 min old that proved themselves (60+ txns/hour) and are still building, not spiking. Tighter stop, earlier profit-taking.',
+    minAgeMin: 10, maxAgeMin: 90, minMc: 15000, maxMc: 55000, minLiq: 6000, minTxns: 60, minTx5m: 10, maxCh5m: 12, maxCh1h: 100, minCh1h: 5, minBuyers: 15,
+    maxDD: 10, minAccel: 0.9, phases: ['BUILDING', 'EARLY'], stopPct: -10, recoverPct: 35, tier2Pct: 100, trailPct: 15, staleMin: 25, stalePct: 5
+  },
+  GRADUATION: {
+    label: 'Graduation Run', desc: 'Coins near the end of the bonding curve (mcap $45-66k) still gaining volume. Sells everything at $68k mcap, before the migration volatility.',
+    minAgeMin: 5, maxAgeMin: 240, minMc: 45000, maxMc: 66000, minLiq: 8000, minTxns: 50, minTx5m: 8, maxCh5m: 15, maxCh1h: 120, minBuyers: 15,
+    phases: ['EARLY', 'BUILDING'], stopPct: -10, recoverPct: 25, tier2Pct: 80, trailPct: 15, staleMin: 20, stalePct: 3, exitMc: 68000
+  },
+  DIP: {
+    label: 'Graduate Dip', desc: 'Older coins (30 min to 24 h, mcap $40-400k) that ran 50%+ in 24h and are pulling back gently with buyers returning. Tight stop. Highest risk of catching a dying coin. Uses the older-coin feeds.',
+    minAgeMin: 30, maxAgeMin: 1440, minMc: 40000, maxMc: 400000, minLiq: 15000, minTxns: 80, minBuyRatio: 0.5, minTx5m: 6, minBuy5m: 0.52, minBuyers: 0, minVolSol: 0,
+    minCh5m: -6, maxCh5m: 3, minCh1h: -25, maxCh1h: 15, minCh24h: 50, maxScanRun: 4, maxDD: 25, minAccel: 0.6, phases: ['BUILDING', 'EARLY'],
+    stopPct: -8, recoverPct: 15, tier2Pct: 60, trailPct: 12, staleMin: 40, stalePct: 2
+  }
+};
+function applyPumpProfile() {
+  const name = PUMP_PROFILES[state.pumpProfile] ? state.pumpProfile : 'BALANCED';
+  CFG.pump = Object.assign({}, PUMP_COMMON, PUMP_PROFILES[name], state.pumpEdits || {});
+  CFG.pump.profile = name;
+  CFG.pump.label = PUMP_PROFILES[name].label + (state.pumpEdits ? ' (edited)' : '');
+}
+applyPumpProfile();
+
+function maxOpenNow() { return state.mode === 'PUMP' ? CFG.pump.maxOpen : CFG.maxOpenPositions; }
+
+/* ============================== DESK + COUNCIL ============================== */
+/* Scouts (WHALE_EYE, NEWS_HAWK, MACRO_9) file reports, the checkers (KIRKTRON, RISK_CORE, ROBBIEBOT)
+   review them, and ORCHESTRATOR-1 picks which coin to buy. Same rulebook in COUNCIL and AUTO:
+   every voter returns +1 / 0 / -1, RISK_CORE can veto, and a coin needs a total of +2 to be bought. */
 const DESK = {
-  flowYes: 0.58, flowNeutral: 0.50,
-  newsMood: 3,
-  momYes: 62, momNo: 40,
-  chaseHard: 80, chaseSoft: 40, thinMomentum: 50,
-  parabolic: 150,
-  minCashLeft: 8,
+  flowYes: 0.58, flowNeutral: 0.50,      // WHALE_EYE: share of 1h trades that are buys
+  newsMood: 3,                           // NEWS_HAWK: bullish minus bearish headlines
+  momYes: 62, momNo: 40,                 // MACRO_9: momentum score
+  chaseHard: 80, chaseSoft: 40, thinMomentum: 50,   // KIRKTRON: late-entry and weak-momentum checks
+  parabolic: 150,                        // RISK_CORE: veto if up this % in 1h
+  minCashLeft: 8,                        // ROBBIEBOT: cash that must stay free
   approve: 2, gapMs: 1500, retryMs: 60000, afterBuyMs: 20000, candidates: 5, maxRunPct: 4
 };
 const NEWS_POS = /\b(surge\w*|soar\w*|rall(y|ies)|jump\w*|gain\w*|record|approv\w*|adopt\w*|bull\w*|rises?|breakout|launch\w*|partnership)\b/i;
 const NEWS_NEG = /\b(crash\w*|plunge\w*|hack\w*|exploit\w*|ban|banned|lawsuit|fraud|scam|dump\w*|liquidat\w*|rug|probe|arrest\w*|bear\w*|sell-?off|drops?|falls?|slump\w*)\b/i;
 let nextCouncilAt = 0;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const sgn = v => (v > 0 ? '+' : '') + v;
+const voteWord = v => (v > 0 ? 'YES' : (v < 0 ? 'NO' : 'NEUTRAL'));
+const signedPct = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
 
-function flowReport(c) {
+function flowReport(c) {                 // WHALE_EYE
   const b = c.buysH1, sl = c.sellsH1, tx = Math.max(1, b + sl), ratio = b / tx;
   return { b, s: sl, ratio, turn: c.liquidity > 0 ? c.volumeH1 / c.liquidity : 0, v: ratio >= DESK.flowYes ? 1 : (ratio >= DESK.flowNeutral ? 0 : -1) };
 }
 
-function newsReport(c) {
+function newsReport(c) {                 // NEWS_HAWK
   const safe = c.symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = c.symbol.length >= 3 ? new RegExp('\\b' + safe + '\\b', 'i') : null;
   const out = { mentions: [], pos: 0, neg: 0, total: liveNews.length, v: 0 };
@@ -1281,13 +1748,13 @@ function newsReport(c) {
   return out;
 }
 
-function momentumReport(c, fv, nv) {
+function momentumReport(c, fv, nv) {     // MACRO_9 (reads WHALE_EYE's flow and NEWS_HAWK's mood)
   let score = 50 + clamp(c.change5m, -5, 5) * 4 + clamp(c.change1h, -20, 20) + fv * 10 + nv * 8 + Math.min(20, activityScore(c) * 40);
   score = Math.round(clamp(score, 0, 100));
   return { score, h1: c.change1h, m5: c.change5m, v: score >= DESK.momYes ? 1 : (score < DESK.momNo ? -1 : 0) };
 }
 
-function planReport(mom) {
+function planReport(mom) {               // KIRKTRON 9001
   if (!launchLike(state.mode)) {
     if (mom.h1 > DESK.chaseHard) return { v: -1, why: 'chase' };
     if (mom.h1 > DESK.chaseSoft) return { v: 0, why: 'late' };
@@ -1296,11 +1763,11 @@ function planReport(mom) {
   return { v: 1, why: '' };
 }
 
-function riskReport(c, spend, sum, flow, mom, avoid) {
+function riskReport(c, spend, sum, flow, mom, avoid) {   // RISK_CORE (reads everyone, can veto)
   const openN = heldAddrs().length, reasons = [];
   const minLiq = state.mode === 'LAUNCH' ? CFG.launch.minLiq : (state.mode === 'PUMP' ? CFG.pump.minLiqUsd : CFG.minLiquidity);
   if (c.liquidity < minLiq) reasons.push(`liquidity ${fmtCurrency(c.liquidity)} is under ${fmtCurrency(minLiq)}`);
-  if (openN >= CFG.maxOpenPositions) reasons.push(`all ${CFG.maxOpenPositions} position slots are full`);
+  if (openN >= maxOpenNow()) reasons.push(`all ${maxOpenNow()} position slots are full`);
   if (!launchLike(state.mode) && mom.h1 > DESK.parabolic) reasons.push(`price is parabolic (${signedPct(mom.h1)} in 1h)`);
   if (flow.v < 0 && mom.score < DESK.thinMomentum) reasons.push('sellers lead and momentum is weak');
   const lesson = lessonFor(c, avoid);
@@ -1309,7 +1776,7 @@ function riskReport(c, spend, sum, flow, mom, avoid) {
   return { v: veto ? -1 : (sum >= 1 ? 1 : 0), veto, reasons, openN, share: c.liquidity > 0 ? spend / c.liquidity * 100 : 100 };
 }
 
-function cashReport(spend) {
+function cashReport(spend) {             // ROBBIEBOT 9000
   const left = state.cash - spend;
   return { left, v: left >= DESK.minCashLeft ? 1 : 0 };
 }
@@ -1326,9 +1793,9 @@ function scoreCandidate(c, avoid) {
 function exitPlanText() {
   const S = CFG.sniper, P = CFG.pump;
   if (state.mode === 'LAUNCH') { const L = CFG.launch; return `stop ${L.stopPct}%, half out at +${L.tier1Pct}%, half the rest at +${L.tier2Pct}%, runner trails ${L.trailPct}%`; }
-  if (state.mode === 'PUMP') return `stop ${P.stopPct}%, ${Math.round(P.tier1Frac * 100)}% out at +${P.tier1Pct}%, half the rest at +${P.tier2Pct}%, runner trails ${P.trailPct}%, out if the creator sells or it graduates`;
+  if (state.mode === 'PUMP') return `stop ${P.stopPct}%, principal out at +${P.recoverPct}%, half the runner at +${P.tier2Pct}%, trail ${P.trailPct}%, out if the creator sells or it tops out`;
   if (state.mode === 'SNIPER') return `stop ${CFG.stopLossPct}%, ${Math.round(S.tier1Frac * 100)}% out at +${S.tier1Pct}%, 35% at +${S.tier2Pct}%, runner trails ${S.trailPct}%, breakeven stop after the first sale`;
-  return `take profit +${CFG.takeProfitPct}%, stop ${CFG.stopLossPct}%`;
+  return `stop ${CFG.stopLossPct}%, half out at +${CFG.growthTier1Pct}%, runner trails ${CFG.growthTrailPct}%, cap +${CFG.takeProfitPct}%; profit lock after +${CFG.lock.arm}%`;
 }
 
 async function askCouncilPick(rs) {
@@ -1346,11 +1813,12 @@ async function askCouncilPick(rs) {
   return { pick, reason: String(out.reason || '').slice(0, 140) };
 }
 
-async function holdCouncil(cands) {
-  const meeting = state.decision === 'COUNCIL' && state.mode !== 'PUMP';
+async function holdCouncil(cands, opts) {
+  opts = opts || {};
+  const meeting = state.decision === 'COUNCIL' && state.mode !== 'PUMP';   // pump.fun moves too fast for a paced meeting
   const hasKey = aiReady();
   const retryMs = state.mode === 'PUMP' ? 4000 : DESK.retryMs, blockMs = state.mode === 'PUMP' ? 30000 : CFG.councilBlockMs, afterMs = state.mode === 'PUMP' ? 3000 : DESK.afterBuyMs;
-  const avoid = computeLessons().avoid;
+  const avoid = opts.probe ? [] : computeLessons().avoid;
   const scored = cands.map(c => scoreCandidate(c, avoid));
   const ranked = scored.slice().sort((a, b) => (b.approved - a.approved) || (b.total - a.total) || (entryScore(b.c) - entryScore(a.c)));
   const top = ranked.slice(0, 3);
@@ -1366,40 +1834,45 @@ async function holdCouncil(cands) {
     await say('news', named.length
       ? `Headline alert: "${named[0].news.mentions[0].title.slice(0, 70)}" names ${named[0].c.symbol}. Reads ${named[0].news.v > 0 ? 'bullish' : (named[0].news.v < 0 ? 'bearish' : 'neutral')}.`
       : (first.total ? `No headlines name ${names(top)}. Wire mood: ${first.pos} bullish vs ${first.neg} bearish of ${first.total}.` : 'The news wire is offline, nothing to report.'));
-    await say('macro', `Blending WHALE_EYEs flow and NEWS_HAWKs mood with price action. Momentum: ${top.map(r => `${r.c.symbol} ${r.mom.score}/100 (${signedPct(r.mom.h1)} 1h)`).join(', ')}.`);
+    await say('macro', `Blending WHALE_EYE's flow and NEWS_HAWK's mood with price action. Momentum: ${top.map(r => `${r.c.symbol} ${r.mom.score}/100 (${signedPct(r.mom.h1)} 1h)`).join(', ')}.`);
     const warn = top.filter(r => r.plan.why);
     await say('finance', `Exit plan: ${exitPlanText()}; flat positions are benched after ${Math.round(CFG.staleExitMs / 60000)} min. Fees are about ${(2 * CFG.feeRate * 100).toFixed(1)}% round trip.` + (warn.length ? ` Flags: ${warn.map(r => `${r.c.symbol} ${r.plan.why === 'chase' ? 'is a chase' : (r.plan.why === 'late' ? 'is a late entry' : 'has thin momentum')}`).join(', ')}.` : ''));
-    await say('risk', `Read WHALE_EYEs flow and MACRO_9s momentum. ` + top.map(r => r.risk.veto ? `${r.c.symbol} VETO (${r.risk.reasons[0]})` : `${r.c.symbol} clear (${r.risk.openN}/${CFG.maxOpenPositions} slots, ${r.risk.share.toFixed(2)}% of pool)`).join(' | ') + '.');
+    await say('risk', `Read WHALE_EYE's flow and MACRO_9's momentum. ` + top.map(r => r.risk.veto ? `${r.c.symbol} VETO (${r.risk.reasons[0]})` : `${r.c.symbol} clear (${r.risk.openN}/${maxOpenNow()} slots, ${r.risk.share.toFixed(2)}% of pool)`).join(' | ') + '.');
     await say('cfo', `Bankroll ${fmtCurrency(state.cash)}, vault ${fmtCurrency(state.vault)}. An entry of about ${fmtCurrency(top[0].spend)} leaves ${fmtCurrency(top[0].cash.left)} free. I sweep ${state.sweepPct}% of any profit to the vault.`);
     await say('boss', `Tally: ${top.map(r => `${r.c.symbol} ${sgn(r.total)}${r.veto ? ' (vetoed)' : ''}`).join(', ')}. ` + (chosen ? `Leading: ${chosen.c.symbol}.` : `Nothing clears +${DESK.approve} without a veto.`));
   } else {
     const b = ranked[0];
     if (chosen || Date.now() - (holdCouncil.lastNote || 0) > 60000) {
       holdCouncil.lastNote = Date.now();
-      agentSay('boss', chosen
-        ? `AUTO desk: ${chosen.c.symbol} wins at ${sgn(chosen.total)} (flow ${sgn(chosen.flow.v)}, news ${sgn(chosen.news.v)}, momentum ${sgn(chosen.mom.v)}, plan ${sgn(chosen.plan.v)}, risk ${sgn(chosen.risk.v)}, cash ${sgn(chosen.cash.v)}).`
-        : `AUTO desk: nothing passes. Best was ${b.c.symbol} at ${sgn(b.total)}${b.veto ? ` (veto: ${b.risk.reasons[0]})` : ''}.`);
+    agentSay('boss', chosen
+      ? `AUTO desk: ${chosen.c.symbol} wins at ${sgn(chosen.total)} (flow ${sgn(chosen.flow.v)}, news ${sgn(chosen.news.v)}, momentum ${sgn(chosen.mom.v)}, plan ${sgn(chosen.plan.v)}, risk ${sgn(chosen.risk.v)}, cash ${sgn(chosen.cash.v)}).`
+      : `AUTO desk: nothing passes. Best was ${b.c.symbol} at ${sgn(b.total)}${b.veto ? ` (veto: ${b.risk.reasons[0]})` : ''}.`);
     }
     renderAll();
   }
 
+  // COUNCIL mode with a Gemini key: the AI chair makes the final pick among the coins the desk approved.
   if (meeting && hasKey && chosen) {
     const shortlist = ranked.filter(r => r.approved).slice(0, 3);
     try {
       await say('boss', `Asking ${aiLabel()} to choose between ${names(shortlist)}...`);
       const v = await askCouncilPick(shortlist);
       chosen = v.pick ? shortlist.find(r => r.c.symbol === v.pick) : null;
+      if (!chosen) shadowAdd(shortlist[0].c, 'COUNCIL');
       await say('boss', chosen ? `${aiLabel()} picks ${chosen.c.symbol}. ${v.reason}` : `${aiLabel()} passes on all of them. ${v.reason}`);
     } catch (e) {
-      diag.ollamaErr++; diag.ollamaMsg = e.message;
+      diag.geminiErr++; diag.geminiMsg = e.message;
       log(`[COUNCIL] AI unavailable (${e.message}); using the desk's own pick`);
     }
   }
 
+  // Everything not bought sits out for a while so the next meeting looks at fresh coins.
   scored.forEach(r => { if (r !== chosen) proposalBlock[r.c.address] = Date.now() + blockMs; });
+  ranked.filter(r => r !== chosen).slice(0, 2).forEach(r => shadowAdd(r.c, r.veto ? 'DESK:veto' : 'DESK:score'));
   if (!chosen) { bump('boss', 'vetoed'); nextCouncilAt = Date.now() + retryMs; return; }
 
-  const fresh = chosen.c.source === 'pump' ? market.get(chosen.c.address) : await refreshQuote(chosen.c.address);
+  // Final check: a fresh live quote, and the price must not have run away since the reports.
+  const fresh = chosen.c.source === 'pump' ? market.get(chosen.c.address) : await refreshQuote(chosen.c.address);   // pump coins are priced live from the stream
   const maxRun = state.mode === 'PUMP' ? 12 : DESK.maxRunPct;
   let why = '';
   if (!fresh) why = 'no live quote available';
@@ -1412,19 +1885,31 @@ async function holdCouncil(cands) {
     return;
   }
   bump('boss', 'approved');
-  if (openPosition(fresh)) await say('trader', `Order sent for ${chosen.c.symbol} on a ${sgn(chosen.total)} vote. The fill is in the Trade Ledger.`);
+  probeNext = !!opts.probe;
+  let opened = false;
+  try { opened = openPosition(fresh); } finally { probeNext = false; }
+  if (opened) {
+    if (opts.probe) { state.lastProbe = Date.now(); log(`[LEARN] Probe trade on ${chosen.c.symbol} (half size) to re-test an avoided pattern`); }
+    await say('trader', `Order sent for ${chosen.c.symbol} on a ${sgn(chosen.total)} vote. The fill is in the Trade Ledger.`);
+  }
   nextCouncilAt = Date.now() + afterMs;
 }
 
 async function considerEntry() {
-  if (state.cash <= CFG.minCash || councilBusy || heldAddrs().length >= CFG.maxOpenPositions || Date.now() < nextCouncilAt) return;
+  if (state.cash <= CFG.minCash || councilBusy || heldAddrs().length >= maxOpenNow() || Date.now() < nextCouncilAt) return;
   const now = Date.now();
-  const candidates = Array.from(market.values()).filter(c =>
-    isFresh(c) && !(state.positions[c.address] > 0) && !(proposalBlock[c.address] > now) && isBuyable(c) && !isArchived(c)
-  ).sort((a, b) => entryScore(b) - entryScore(a)).slice(0, DESK.candidates);
-  if (!candidates.length) return;
+  const all = Array.from(market.values()).filter(c => isFresh(c) && !(state.positions[c.address] > 0) && !(proposalBlock[c.address] > now) && !isArchived(c));
+  collectShadows(all);
+  const cands = all.filter(isBuyable).sort((a, b) => entryScore(b) - entryScore(a));
+  if (!cands.length) return;
+  const avoid = computeLessons().avoid;
+  const allowed = cands.filter(c => !lessonFor(c, avoid)), blocked = cands.filter(c => lessonFor(c, avoid));
+  blocked.slice(0, 2).forEach(c => shadowAdd(c, 'LESSON'));
+  let list = allowed.slice(0, DESK.candidates), probe = false;
+  if (!list.length && blocked.length && now - (state.lastProbe || 0) > PROBE_MS) { list = [blocked[0]]; probe = true; }   // re-test an avoided pattern at half size
+  if (!list.length) return;
   councilBusy = true;
-  try { await holdCouncil(candidates); }
+  try { await holdCouncil(list, { probe }); }
   catch (e) { console.error('Council error:', e); nextCouncilAt = Date.now() + (state.mode === 'PUMP' ? 4000 : DESK.retryMs); }
   finally { councilBusy = false; renderAll(); }
 }
@@ -1437,6 +1922,7 @@ function runTradingLoop() {
   } catch (err) { console.error('Loop error:', err); }
 }
 
+/* ============================== UI ACTIONS ============================== */
 function setTradingMode(mode) {
   state.mode = ['GROWTH', 'SNIPER', 'LAUNCH', 'PUMP'].includes(mode) ? mode : 'GROWTH';
   saveState();
@@ -1449,9 +1935,14 @@ function setDecisionMode(mode) {
   state.decision = mode === 'AUTO' ? 'AUTO' : 'COUNCIL';
   saveState();
   log(`[DECISIONS] Mode set to ${state.decision}`);
+  if (state.decision === 'COUNCIL' && !aiReady()) {
+    log('[DECISIONS] No AI key set: COUNCIL still holds the desk meeting, but the final pick is rule-based until you add a key (KEY button).');
+  }
   renderAll();
 }
 
+// In-page dialog. iOS Safari often blocks prompt()/confirm(), so we don't use them.
+// Resolves { action, values } on OK (or an extra button), or null on cancel.
 function openDialog(opts) {
   return new Promise(resolve => {
     const overlay = $('dialog-overlay'), box = $('dialog-box');
@@ -1502,79 +1993,111 @@ function openDialog(opts) {
 
 function num(v) { const n = parseFloat(String(v).replace(/[$,\s]/g, '')); return isNaN(n) ? null : n; }
 
-// --- OLLAMA LOCAL INTEGRATION ---
 async function promptApiKey() {
-  const currentModel = localStorage.getItem('ollama_model') || 'llama3';
-  const currentEndpoint = localStorage.getItem('ollama_endpoint') || 'http://localhost:11434/api/chat';
   const r = await openDialog({
-    title: 'OLLAMA LOCAL SETTINGS',
-    message: 'Configure your local Ollama endpoint or model name.',
+    title: 'AI SETUP',
+    message: 'Pick openai or gemini, then paste that provider\'s API key. Keys stay only in this browser. Leave the key empty to remove it.',
     inputs: [
-      { id: 'model', label: 'Model Name (e.g. llama3)', value: currentModel },
-      { id: 'endpoint', label: 'API Endpoint URL', value: currentEndpoint }
+      { id: 'prov', label: 'Provider (openai or gemini)', value: aiProvider() },
+      { id: 'key', label: 'API key', value: '' },
+      { id: 'model', label: 'Model (OpenAI only)', value: localStorage.getItem('openai_model') || 'gpt-4o-mini' }
     ],
     okText: 'SAVE'
   });
   if (!r) return;
+  const prov = r.values.prov.trim().toLowerCase() === 'gemini' ? 'gemini' : 'openai';
+  const key = r.values.key.trim();
+  localStorage.setItem('ai_provider', prov);
+  if (key) localStorage.setItem(prov + '_api_key', key);
+  else if (!(localStorage.getItem(prov + '_api_key') || '')) localStorage.removeItem(prov + '_api_key');
   const model = r.values.model.trim();
-  const endpoint = r.values.endpoint.trim();
-  if (model) localStorage.setItem('ollama_model', model);
-  if (endpoint) localStorage.setItem('ollama_endpoint', endpoint);
+  if (model) localStorage.setItem('openai_model', model);
+  log(`[AI] Provider set to ${prov}${key ? ' with a new key' : ''}.`);
   renderAll();
 }
 
-function aiReady() { return true; }
-function aiLabel() { return 'Ollama'; }
-function aiModel() { return localStorage.getItem('ollama_model') || CFG.ollamaModel; }
+function aiProvider() {
+  const p = localStorage.getItem('ai_provider');
+  if (p === 'openai' || p === 'gemini') return p;
+  return (localStorage.getItem('openai_api_key') || '').length > 5 ? 'openai' : 'gemini';
+}
+function aiReady() { return (localStorage.getItem(aiProvider() + '_api_key') || '').length > 5; }
+function aiModel() { return aiProvider() === 'openai' ? (localStorage.getItem('openai_model') || 'gpt-4o-mini') : CFG.geminiModel; }
+function aiLabel() { return aiProvider() === 'openai' ? 'OpenAI' : 'Gemini'; }
 
+// One call, either provider. Returns the model's text.
 async function aiCall(prompt, opts) {
   opts = opts || {};
-  const endpoint = localStorage.getItem('ollama_endpoint') || 'http://localhost:11434/api/chat';
-  const model = localStorage.getItem('ollama_model') || CFG.ollamaModel;
-  const signal = AbortSignal.timeout(opts.timeout || 30000);
-
-  const res = await fetch(endpoint, {
+  const prov = aiProvider(), key = localStorage.getItem(prov + '_api_key') || '';
+  if (key.length < 6) throw new Error('no ' + prov + ' key set');
+  const signal = AbortSignal.timeout(opts.timeout || 15000);
+  if (prov === 'openai') {
+    const send = async useJson => {
+      const body = { model: aiModel(), messages: [{ role: 'user', content: prompt }] };
+      if (useJson) body.response_format = { type: 'json_object' };
+      return fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key }, body: JSON.stringify(body), signal });
+    };
+    let res = await send(!!opts.json);
+    if (res.status === 400 && opts.json) res = await send(false);   // some models reject JSON mode: retry plain
+    if (!res.ok) {
+      let m = '';
+      try { const e = await res.json(); m = e && e.error && e.error.message ? e.error.message : ''; } catch (x) { /* no body */ }
+      throw new Error('OpenAI HTTP ' + res.status + (m ? ': ' + m.slice(0, 140) : ''));
+    }
+    const j = await res.json();
+    const text = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+    if (!text) throw new Error('empty answer');
+    return text;
+  }
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CFG.geminiModel}:generateContent`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: model,
-      messages: [{ role: 'user', content: prompt }],
-      stream: false,
-      format: opts.json ? 'json' : undefined
-    }),
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: opts.json ? { responseMimeType: 'application/json', temperature: 0.2 } : { temperature: 0.3 } }),
     signal
   });
-
-  if (!res.ok) throw new Error('Ollama HTTP ' + res.status);
+  if (!res.ok) throw new Error('Gemini HTTP ' + res.status);
   const data = await res.json();
-  const text = data && data.message && data.message.content;
-  if (!text) throw new Error('Empty answer from Ollama');
+  const parts = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+  const text = parts.map(x => x.text || '').join('');
+  if (!text) throw new Error('empty answer');
   return text;
 }
 
 async function testAI() {
+  if (!aiReady()) { await openDialog({ title: 'AI TEST', message: `No ${aiLabel()} key is saved yet. Tap SET AI KEY first.`, okText: 'OK', noCancel: true }); return; }
   let title, msg;
   try {
-    const t = await aiCall('Reply with exactly this JSON and nothing else: {"ok": true, "word": "ready"}', { json: true, timeout: 25000 });
+    const t = await aiCall('Reply with exactly this JSON and nothing else: {"ok": true, "word": "ready"}', { json: true, timeout: 20000 });
     title = 'AI TEST PASSED';
-    msg = `Ollama (${aiModel()}) answered:\n${String(t).slice(0, 160)}\n\nThe council chair and AUDITOR-7 will use this.`;
+    msg = `${aiLabel()} (${aiModel()}) answered:\n${String(t).slice(0, 160)}\n\nThe council chair and AUDITOR-7 will use this.`;
   } catch (e) {
     title = 'AI TEST FAILED';
-    msg = `${e.message}\n\nMake sure Ollama is running and accessible from this device.`;
+    const m = String(e.message);
+    const hint = /401/.test(m) ? 'The key was rejected. Re-copy it from your provider.' : /429/.test(m) ? 'Rate limited or out of credit. Check your billing.' : /404|model/i.test(m) ? 'The model name may be wrong or retired. Change it in SET AI KEY.' : /Failed to fetch|NetworkError|abort/i.test(m) ? 'The browser could not reach the provider (network, ad blocker or timeout).' : '';
+    msg = `${m}\n\n${hint}`;
   }
   log(`[AI] Test: ${title}`);
   await openDialog({ title, message: msg, okText: 'OK', noCancel: true });
 }
 
 async function freshWipe() {
-  const r = await openDialog({ title: 'WIPE EVERYTHING?', message: 'Resets bankroll, vault, positions and history. Your Ollama settings are kept.', okText: 'WIPE', danger: true });
+  const r = await openDialog({
+    title: 'WIPE & RESET TREASURY',
+    message: 'Resets vault, positions, history and learning. Your AI keys are kept. Enter the new starting bankroll:',
+    inputs: [{ id: 'startFund', label: 'Starting bankroll ($)', value: '100.00', inputmode: 'decimal' }],
+    okText: 'WIPE & START', danger: true
+  });
   if (!r) return;
+  const bank = num(r.values.startFund);
+  if (bank === null || bank < 0) return;
   const keep = {};
-  ['ollama_model', 'ollama_endpoint'].forEach(k => { const v = localStorage.getItem(k); if (v) keep[k] = v; });
+  ['gemini_api_key', 'openai_api_key', 'ai_provider', 'openai_model'].forEach(k => { const v = localStorage.getItem(k); if (v) keep[k] = v; });
   try {
     Object.keys(localStorage).forEach(k => { if (k.startsWith('solaris_') || k.startsWith('orbital_')) localStorage.removeItem(k); });
     Object.keys(keep).forEach(k => localStorage.setItem(k, keep[k]));
-  } catch (e) {}
+    const fresh = defaultState(); fresh.cash = bank; fresh.cfgVer = 3;
+    localStorage.setItem(STORE_KEY, JSON.stringify(fresh));
+  } catch (e) { /* ignore */ }
   location.reload();
 }
 
@@ -1609,12 +2132,13 @@ async function configureVault() {
   saveState(); renderAll();
 }
 
+// What a position would really return if sold now (after slippage and fee), not the mid-price.
 function exitValue(addr) {
   const coin = market.get(addr), qty = state.positions[addr] || 0;
   if (!coin) return qty * (state.costBasis[addr] || 0);
   if (coin.curve && !coin.graduated) return curveSellUsd(coin, qty).net;
   const gross = qty * coin.price;
-  return gross * (1 - slippage(gross, coin.liquidity, state.posMode[addr])) * (1 - CFG.feeRate);
+  return gross * (1 - slippage(gross, coin.liquidity, posModeOf(addr))) * (1 - CFG.feeRate);
 }
 
 function portfolioValue() {
@@ -1641,6 +2165,7 @@ function switchTab(tabId) {
   portraitLoop();
 }
 
+/* ============================== RENDER ============================== */
 let renderQueued = false;
 function renderAll() {
   if (renderQueued) return;
@@ -1684,14 +2209,16 @@ function renderNow() {
 
     const keyEl = $('key-status');
     if (keyEl) {
-      keyEl.textContent = `● OLLAMA LOCAL (${aiModel()})`;
-      keyEl.style.color = 'var(--green)';
+      const ok = aiReady();
+      keyEl.textContent = ok ? `● ${aiLabel().toUpperCase()} READY (${aiModel()})` : `● NO ${aiLabel().toUpperCase()} KEY`;
+      keyEl.style.color = ok ? 'var(--green)' : 'var(--text-dim)';
     }
 
     if (activeTab === 'positions') renderPositions();
+    if (activeTab === 'ledger') { drawHistory(); renderLedger(); }
     if (activeTab === 'council') renderCouncil();
     if (activeTab === 'news') renderNewsTab();
-    if (activeTab === 'status') { renderProtocol(); renderLessons(); renderFeedHealth(); renderPumpStatus(); }
+    if (activeTab === 'status') { renderProtocol(); renderLessons(); renderFeedHealth(); renderPumpStatus(); renderBookPanel(); }
     if (activeTab === 'warroom') renderWarRoomCards();
     if (activeTab === 'audit') renderAudit();
     const nBad = auditResult.filter(f => f.sev === 'bad').length, nWarn = auditResult.filter(f => f.sev === 'warn').length;
@@ -1707,12 +2234,12 @@ function renderPositions() {
       const coin = market.get(a);
       const qty = state.positions[a], cost = state.costBasis[a];
       const pnl = exitValue(a) - qty * cost;
-      return `<div class="position-row">
+      return `<div class="position-row" onclick="inspectCoin('${escapeHtml(a)}')">
         <strong style="color: var(--cyan);">${escapeHtml(state.symbols[a] || '?')}</strong>
         <span>${qty > 1000 ? Math.round(qty).toLocaleString() : qty.toFixed(2)}</span>
         <span>${fmtPrice(cost)}</span>
         <span style="color: ${pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${fmtSigned(pnl)}</span>
-        <button class="cyber-btn danger" data-sell="${escapeHtml(a)}">SELL</button>
+        <button class="cyber-btn danger" onclick="event.stopPropagation(); manualSellPosition('${escapeHtml(a)}')">SELL</button>
       </div>`;
     }).join('') : '<div class="empty-note">NO ACTIVE POSITIONS HELD</div>';
   }
@@ -1727,8 +2254,6 @@ function renderPositions() {
         <span>${escapeHtml(e.reason)}</span><span>${fmtSigned(e.pnl)}</span><span>${mins}m</span></div>`;
     }).join('') : '<div class="empty-note">NOTHING BENCHED</div>';
   }
-  drawHistory();
-  renderLedger();
 }
 
 function snapshotNet() {
@@ -1741,7 +2266,7 @@ function snapshotNet() {
   saveState();
 }
 
-function drawHistory() {
+function drawHistory() {   // net worth over time
   const cv = $('history-canvas');
   const g = cv && cv.getContext('2d');
   if (!g) return;
@@ -1847,7 +2372,33 @@ function renderLessons() {
   const L = computeLessons();
   const row = (avoid, l) => `<div class="protocol-line" style="color: ${avoid ? 'var(--red)' : 'var(--green)'};">${avoid ? 'AVOID' : 'FAVOR'} ${escapeHtml(DIM_NAMES[l.dim])} ${escapeHtml(l.bucket)}: ${Math.round(l.win * 100)}% wins, avg ${l.avg.toFixed(1)}% over ${l.n} trades</div>`;
   const rows = L.avoid.map(l => row(true, l)).concat(L.favor.map(l => row(false, l)));
-  box.innerHTML = `<div class="protocol-line">Journal: ${L.n} ${escapeHtml(state.mode)} trades (rules start at ${LESSON_MIN})</div>` + (rows.join('') || '<div class="protocol-line">No clear patterns yet.</div>');
+  const by = shadowStats(), sh = [];
+  Object.keys(by).forEach(k => {
+    const o = by[k];
+    if (o.n < 5) return;
+    const avg = o.s / o.n;
+    sh.push(`<div class="protocol-line" style="color:${avg < 0 ? 'var(--green)' : 'var(--amber)'};">BLOCKED ${escapeHtml(k)}: ${o.n} coins, ${Math.round(100 * o.w / o.n)}% would have won, avg ${avg.toFixed(1)}% ${avg < 0 ? '(filter helping)' : '(filter may cost you)'}</div>`);
+  });
+  box.innerHTML = `<div class="protocol-line">Journal: ${L.n} ${escapeHtml(state.mode)} trades (rules start at ${LESSON_MIN}; newer trades count more)</div>` +
+    (rows.join('') || '<div class="protocol-line">No clear patterns yet.</div>') +
+    `<div class="protocol-line" style="color:var(--text-dim);">Shadow tracking: ${state.shadow.done.length} results, ${state.shadow.open.length} coins being watched. An avoided pattern gets a half-size probe trade every 3h.</div>` + sh.join('');
+}
+
+function renderBookPanel() {
+  const el = $('book-panel');
+  if (!el) return;
+  const B = state.book, si = sizeInfo(state.mode);
+  const rows = Object.keys(B).sort((a, b) => ((B[b].last || {}).t || 0) - ((B[a].last || {}).t || 0)).slice(0, 12).map(a => {
+    const b = B[a], c = market.get(a), v = c ? valueSignal(c) : null;
+    const col = !v ? 'var(--text-dim)' : v.label === 'LOW' ? 'var(--green)' : v.label === 'HIGH' ? 'var(--red)' : 'var(--amber)';
+    const sig = v ? `${v.pct >= 0 ? '+' : ''}${v.pct.toFixed(0)}% vs avg ${v.label}` : 'not in view';
+    return `<div class="status-row"><span>${escapeHtml(b.sym)} (${b.wins}/${b.n} wins, ${fmtSigned(b.pnl)})</span><strong style="color:${col};">${sig}</strong></div>`;
+  }).join('');
+  el.innerHTML = `<div class="pane-title" style="margin-top:8px;">// MATH (${escapeHtml(state.mode)})</div>` +
+    mathLines(state.mode).map(l => `<div class="protocol-line">${escapeHtml(l)}</div>`).join('') +
+    `<div class="protocol-line" style="color:var(--amber);">Bet size x${si.mult.toFixed(2)}: ${escapeHtml(si.why)}</div>` +
+    `<div class="protocol-line" style="color:var(--text-dim);">Profit lock ${CFG.lock.on ? 'ON' : 'OFF'}: a trade that was up can no longer turn into a loss; it keeps 35-75% of its peak gain.</div>` +
+    `<div class="pane-title" style="margin-top:8px;">// COIN BOOK (${Object.keys(B).length} coins)</div>` + (rows || '<div class="protocol-line">Nothing traded yet.</div>');
 }
 
 function renderProtocol() {
@@ -1855,12 +2406,12 @@ function renderProtocol() {
   if (!box) return;
   const L = CFG.launch, P = CFG.pump;
   const lines = state.mode === 'PUMP' ? [
-    `Token age ${P.feedMinAgeSec}s to ${P.maxAgeMin} min, market cap ${fmtCurrency(P.minMcUsd)} to ${fmtCurrency(P.maxMcUsd)}, not graduated`,
-    `Last 5 min: ${P.minBuyers}+ unique buyers, ${P.minTxns}+ trades, ${Math.round(P.minBuyRatio * 100)}%+ buys, ${P.minVolSol}+ SOL volume`,
-    `Price not falling vs 90s ago, creator has not sold`,
-    `Entry: ${Math.round(P.entryPct * 100)}% of bankroll, exact bonding-curve fill, ${(P.feeRate * 100).toFixed(0)}% fee per side`,
-    `Stop ${P.stopPct}% | ${Math.round(P.tier1Frac * 100)}% out at +${P.tier1Pct}%, half the rest at +${P.tier2Pct}%, runner trails ${P.trailPct}%`,
-    `Out on: creator sells, graduation, dead for ${P.deadMs / 1000}s while down, flat for ${P.staleMs / 60000} min`
+    `Profile: ${P.label}. Pump.fun coins only (mint ends in "pump"), age ${P.minAgeMin}-${P.maxAgeMin} min, mcap ${fmtCurrency(P.minMc)}-${fmtCurrency(P.maxMc)}, liquidity ${fmtCurrency(P.minLiq)}+`,
+    `Flow: ${P.minTxns}+ trades/hour at ${Math.round(P.minBuyRatio * 100)}%+ buys; last 5 min ${P.minTx5m}+ trades at ${Math.round(P.minBuy5m * 100)}%+ buys, ${P.minBuyers}+ unique buyers, ${P.minVolSol}+ SOL volume (live-feed coins)`,
+    `Anti-chase: skip if 5m > +${P.maxCh5m}%, 1h > +${P.maxCh1h}%, last 3 min > +${P.maxScanRun}%, more than ${P.maxDD}% off its high, volume under ${P.minAccel}x its average, or phase not in ${P.phases.join('/')}`,
+    `Entry ${Math.round(P.entryPct * 100)}% of bankroll (scaled by results), max ${P.maxOpen} open, exact bonding-curve fill, ${(P.feeRate * 100).toFixed(0)}% fee per side`,
+    `Stop ${P.stopPct}% | principal out at +${P.recoverPct}% | half the runner at +${P.tier2Pct}% | trail ${P.trailPct}%`,
+    `Also out on: creator sells, graduation${P.exitMc ? ' / mcap ' + fmtCurrency(P.exitMc) : ''}, pump tops out, volume dies, flat for ${P.staleMin} min`
   ] : state.mode === 'LAUNCH' ? [
     `Pool age ≤ ${L.maxAgeMin} min, market cap ≤ ${fmtCurrency(L.maxMc)}`,
     `Liquidity ≥ ${fmtCurrency(L.minLiq)}, txns ≥ ${L.minTxns}, buy ratio ≥ ${Math.round(L.minBuyRatio * 100)}%`,
@@ -1874,22 +2425,32 @@ function renderProtocol() {
     `Txns 1h ≥ ${CFG.minTxnsH1}, buy ratio ≥ ${Math.round(CFG.minBuyRatio * 100)}%, pool age ≥ ${CFG.minAgeMin} min`,
     `Liquidity ≥ ${fmtCurrency(CFG.minLiquidity)}, max ${CFG.maxOpenPositions} open, copycat tickers skipped`,
     `Entry: ${Math.round(CFG.entryPct * 100)}% of bankroll, random pick from top ${CFG.topPicks}`,
-    `Stop-loss ${CFG.stopLossPct}% | ${state.mode === 'SNIPER' ? `Tiers: ${Math.round(CFG.sniper.tier1Frac * 100)}% at +${CFG.sniper.tier1Pct}%, 35% at +${CFG.sniper.tier2Pct}%, runner trails ${CFG.sniper.trailPct}%` : `Take-profit +${CFG.takeProfitPct}%`}`,
+    `Stop-loss ${CFG.stopLossPct}% | ${state.mode === 'SNIPER' ? `Tiers: ${Math.round(CFG.sniper.tier1Frac * 100)}% at +${CFG.sniper.tier1Pct}%, 35% at +${CFG.sniper.tier2Pct}%, runner trails ${CFG.sniper.trailPct}%` : `Half out at +${CFG.growthTier1Pct}%, runner trails ${CFG.growthTrailPct}%, cap +${CFG.takeProfitPct}%`}`,
+    `Anti-chase: skip if 5m > +${CFG.maxCh5m}%, 1h > +${CFG.maxCh1h}%, last 3 min > +${CFG.maxScanRun}%, or the pump looks topped. Profit lock arms at +${CFG.lock.arm}%.`,
     `Costs: ${(CFG.feeRate * 100).toFixed(1)}% fee + ${(CFG.baseSlippage * 100).toFixed(1)}%+ slippage per side`
   ];
   box.innerHTML = lines.map(l => `<div class="protocol-line">• ${escapeHtml(l)}</div>`).join('');
 }
 
+/* ============================== ROBOT AVATARS ============================== */
+/* ORBITAL // HQ avatars: sleek chrome robots in tailored suits.
+   Drawn per pixel with simple lighting (72x80), cached in layers, then animated:
+   blinking, talking mouths, looking around, breathing, antenna twitches, glints and rare glitches. */
 const ROBOT = (function () {
   const PW = 72, PH = 80;
   const mk = (typeof ROBOT_MK === 'function') ? ROBOT_MK : (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+
+  /* ---------- colour helpers ---------- */
   const h2r = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
   const r2h = c => '#' + c.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
   const mix = (a, b, t) => { const A = h2r(a), B = h2r(b); return r2h(A.map((v, i) => v + (B[i] - v) * t)); };
   const ramp = base => [mix(base, '#000000', 0.7), mix(base, '#000000', 0.42), base, mix(base, '#ffffff', 0.3), mix(base, '#ffffff', 0.75)];
+
+  /* ---------- shading ---------- */
   const BAY = [[0, 2], [3, 1]];
   const LIGHT = (() => { const v = [-0.55, -0.65, 0.55], m = Math.hypot(v[0], v[1], v[2]); return v.map(a => a / m); })();
 
+  // superellipse silhouette with a surface normal for lighting
   function sup(cx, cy, rx, ry, n, clip) {
     return (x, y) => {
       const dx = (x - cx) / rx, dy = (y - cy) / ry, ax = Math.abs(dx), ay = Math.abs(dy);
@@ -1908,7 +2469,7 @@ const ROBOT = (function () {
       const n = shape(x + 0.5, y + 0.5);
       if (!n) continue;
       let v = (n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]) * 0.5 + 0.5;
-      if (o.metal) {
+      if (o.metal) {   // fake chrome: bright sky above a dark horizon, lighter bounce below
         const h = n[1];
         const env = h < -0.1 ? 0.8 - 0.1 * h : h < 0.2 ? 0.16 : 0.36 + 0.3 * (h - 0.2);
         v = v * 0.4 + env * 0.6;
@@ -1940,6 +2501,7 @@ const ROBOT = (function () {
   }
   const R = (g, x, y, w, h, c, a) => { if (a !== undefined) g.globalAlpha = a; g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w, h); if (a !== undefined) g.globalAlpha = 1; };
   const mir = pts => pts.map(p => [PW - p[0], p[1]]);
+  // a small beveled plate, used for modular robot hair and moustaches
   function block(g, x, y, w, h, base) {
     const hi = mix(base, '#ffffff', 0.32), lo = mix(base, '#000000', 0.34), dk = mix(base, '#000000', 0.6);
     R(g, x, y, w, h, base);
@@ -1948,6 +2510,7 @@ const ROBOT = (function () {
     if (w >= 5 && h >= 4) R(g, x + Math.floor(w / 2), y + Math.floor(h / 2), 1, 1, dk);
   }
 
+  // dark outline outside the silhouette, accent rim light on the right-hand edge
   function edge(canvas, rim) {
     const g = canvas.getContext('2d');
     const img = g.getImageData(0, 0, PW, PH), d = img.data;
@@ -1961,6 +2524,7 @@ const ROBOT = (function () {
     g.globalAlpha = 0.85; g.fillStyle = rim; rimPx.forEach(p => g.fillRect(p[0], p[1], 1, 1)); g.globalAlpha = 1;
   }
 
+  /* ---------- character sheet ---------- */
   const SPEC = {
     boss: {
       color: '#ff2bd6', chrome: '#b7bfd8', suit: '#1b1236',
@@ -2016,26 +2580,29 @@ const ROBOT = (function () {
   };
   const IDS = Object.keys(SPEC);
 
+  /* ---------- static layers ---------- */
   function buildBody(id) {
     const S = SPEC[id], c = mk(PW, PH), g = c.getContext('2d');
     const suit = S.suit, W = S.coat ? 1 : 0;
     const sr = W ? [mix(suit, '#000000', 0.35), mix(suit, '#000000', 0.18), suit, mix(suit, '#ffffff', 0.5), '#ffffff']
                  : [mix(suit, '#000000', 0.55), mix(suit, '#000000', 0.25), suit, mix(suit, '#ffffff', 0.1), mix(suit, '#ffffff', 0.2)];
+    // neck
     const neck = () => {
       paint(g, [30, 36, 42, 50], (x, y) => (x >= 31 && x <= 41 && y >= 37 && y <= 49) ? [(x - 36) / 5.5, 0, Math.sqrt(Math.max(0.05, 1 - Math.pow((x - 36) / 5.5, 2)))] : null, ramp(mix(S.chrome, '#222a40', 0.35)), { metal: true });
       [41, 44, 47].forEach(y => R(g, 31, y, 11, 1, '#0b0a18', 0.55));
     };
     neck();
+    // torso
     const torso = sup(36, 73, 33, 30, 3, (x, y) => y >= 43);
     paint(g, [2, 42, 70, 79], torso, sr, { bias: S.coat ? 0.1 : -0.12, flat: true });
     if (S.hoodie) {
       const lite = mix(suit, '#ffffff', 0.08), seam = mix(suit, '#000000', 0.5);
-      poly(g, [[30, 43], [42, 43], [36, 54]], mix(suit, '#000000', 0.55));
+      poly(g, [[30, 43], [42, 43], [36, 54]], mix(suit, '#000000', 0.55));            // neckline
       const hoodRamp = [mix(suit, '#000000', 0.5), mix(suit, '#000000', 0.25), mix(suit, '#ffffff', 0.06), mix(suit, '#ffffff', 0.14), mix(suit, '#ffffff', 0.3)];
-      paint(g, [8, 36, 64, 54], sup(36, 45, 27, 8, 2.2, (x, y) => y >= 37 && !(x >= 31 && x <= 41 && y <= 48)), hoodRamp, { flat: true });
+      paint(g, [8, 36, 64, 54], sup(36, 45, 27, 8, 2.2, (x, y) => y >= 37 && !(x >= 31 && x <= 41 && y <= 48)), hoodRamp, { flat: true });   // hood bunched round the neck
       neck();
-      [[32, 49, 62], [40, 49, 62]].forEach(d => { R(g, d[0], d[1], 1, d[2] - d[1], '#c8ccd8'); R(g, d[0] - 1, d[2], 3, 3, S.color); R(g, d[0] - 1, d[2], 3, 1, mix(S.color, '#ffffff', 0.4)); });
-      poly(g, [[22, 67], [50, 67], [55, 80], [17, 80]], lite);
+      [[32, 49, 62], [40, 49, 62]].forEach(d => { R(g, d[0], d[1], 1, d[2] - d[1], '#c8ccd8'); R(g, d[0] - 1, d[2], 3, 3, S.color); R(g, d[0] - 1, d[2], 3, 1, mix(S.color, '#ffffff', 0.4)); });   // drawstrings
+      poly(g, [[22, 67], [50, 67], [55, 80], [17, 80]], lite);                         // kangaroo pocket
       R(g, 22, 67, 28, 1, seam);
       for (let t = 0; t <= 13; t++) { R(g, 22 - Math.round(t * 5 / 13), 67 + t, 1, 1, seam); R(g, 50 + Math.round(t * 5 / 13), 67 + t, 1, 1, seam); }
       R(g, 36, 55, 1, 12, seam, 0.5);
@@ -2043,15 +2610,18 @@ const ROBOT = (function () {
       return c;
     }
     if (S.pin) for (let x = 6; x < 68; x += 4) for (let y = 48; y < 80; y++) if (torso(x + 0.5, y + 0.5)) R(g, x, y, 1, 1, S.color, 0.1);
+    // shirt, collar
     const shirt = S.shirt || (S.coat ? '#7d8aa8' : '#e4e8f2');
     poly(g, [[30, 42], [42, 42], [36, 67]], (x, y) => mix(shirt, '#000000', 0.12 + Math.max(0, (y - 44)) * 0.004));
     poly(g, [[28, 41], [34, 41], [35, 49], [28, 45]], shirt);
     poly(g, mir([[28, 41], [34, 41], [35, 49], [28, 45]]), mix(shirt, '#000000', 0.15));
+    // lapels with neon piping
     const lap = mix(suit, '#ffffff', S.coat ? 0.1 : 0.12);
     const L = [[27, 43], [31, 43], [36, 67], [33, 75], [24, 57]];
     poly(g, L, (x, y) => mix(lap, '#000000', (x - 24) * 0.012));
     poly(g, mir(L), (x, y) => mix(lap, '#000000', 0.05 + (48 - x) * 0.006));
     for (let t = 0; t <= 24; t++) { const y = 43 + t, x = 31 + Math.round(t * 5 / 24); R(g, x, y, 1, 1, S.color, 0.9); R(g, PW - 1 - x, y, 1, 1, S.color, 0.9); }
+    // tie / bow / chain / extras
     if (S.bow) {
       poly(g, [[30, 48], [36, 51], [30, 54]], S.color); poly(g, [[42, 48], [36, 51], [42, 54]], mix(S.color, '#000000', 0.3));
       R(g, 35, 49, 2, 4, mix(S.color, '#ffffff', 0.4));
@@ -2073,10 +2643,12 @@ const ROBOT = (function () {
   function buildHead(id) {
     const S = SPEC[id], H = S.head, c = mk(PW, PH), g = c.getContext('2d');
     const chrome = ramp(mix(S.chrome, S.color, 0.1));
+    const dark = ramp('#15182c');
     const box = [H.cx - H.rx - 2, H.cy - H.ry - 3, H.cx + H.rx + 2, H.cy + H.ry + 2];
     const shape = sup(H.cx, H.cy, H.rx, H.ry, H.n);
     paint(g, box, shape, chrome, { metal: true });
     S.shape = shape;
+    // face plates and glass
     const glass = (x, y, w, h) => {
       R(g, x, y, w, h, '#05060f'); R(g, x, y, w, 1, '#171d3a'); R(g, x, y + h - 1, w, 1, '#0a0c1c');
       for (let k = 0; k < Math.min(h - 2, 5); k++) R(g, x + 2 + k, y + h - 2 - k, 1, 1, '#2a3566');
@@ -2091,8 +2663,9 @@ const ROBOT = (function () {
       paint(g, [l[0] - l[2], l[1] - l[2], l[0] + l[2], l[1] + l[2]], sup(l[0], l[1], l[2], l[2], 2), ramp('#0a0c1a'), { bias: -0.15 });
     }
     if (S.face) { const f = S.face; paint(g, [f[0] - f[2], f[1] - f[3], f[0] + f[2], f[1] + f[3]], sup(f[0], f[1], f[2], f[3], 2.4), ramp('#0b0d1e'), { bias: -0.1 }); R(g, f[0] - 8, f[1] - f[3] + 2, 5, 1, '#2a3566'); }
+    // accessories
     if (S.crown) {
-      [[29, 10, 4], [36, 8, 7], [43, 10, 4]].forEach(a => { for (let k = 0; k < a[2]; k++) R(g, a[0], a[1] - k, 2 - (k > 3 ? 1 : 0), 1, mix(S.color, '#ffffff', k * 0.06)); });
+      [[29, 10, 4], [36, 8, 7], [43, 10, 4]].forEach(a => { for (let k = 0; k < a[2]; k++) R(g, a[0] - (a[2] - k > 3 ? 0 : 0), a[1] - k, 2 - (k > 3 ? 1 : 0), 1, mix(S.color, '#ffffff', k * 0.06)); });
       R(g, 24, 13, 24, 1, S.color, 0.9); R(g, 25, 14, 22, 1, '#0b0a18', 0.5);
     }
     if (S.fin) { poly(g, [[34, 10], [38, 10], [37, 2], [35, 5]], mix(S.chrome, '#ffffff', 0.15)); R(g, 36, 3, 1, 3, S.color); }
@@ -2103,17 +2676,20 @@ const ROBOT = (function () {
     if (S.racing) { for (let y = 9; y < 20; y++) { R(g, 34, y, 1, 1, S.color); R(g, 37, y, 1, 1, mix(S.color, '#ffffff', 0.25)); } }
     if (S.hardhat) {
       paint(g, [16, 6, 56, 22], sup(36, 20, 20, 12, 2.3, (x, y) => y <= 21), ramp(S.color), { metal: true });
-      R(g, 17, 20, 38, 2, '#07030f'); R(g, 18, 20, 36, 1, mix(S.color, '#ffffff', 0.35)); R(g, 35, 8, 2, 12, mix(S.color, '#ffffff', 0.4));
+      R(g, 17, 20, 38, 2, '#07030f'); R(g, 18, 20, 36, 1, mix(S.color, '#ffffff', 0.35)); R(g, 35, 8, 2, 12, mix(S.color, '#ffffff', 0.4)); R(g, 33, 10, 1, 9, mix(S.color, '#000000', 0.3)); R(g, 38, 10, 1, 9, mix(S.color, '#000000', 0.3));
     }
     if (S.hat) {
       const olive = '#2c2814';
       paint(g, [14, 8, 58, 20], sup(36, 16, 21, 4, 2.2, (x, y) => y >= 14), ramp(olive), {});
       paint(g, [24, 2, 48, 18], sup(36, 12, 11, 9, 2.6, (x, y) => y <= 15), ramp(olive), { bias: 0.04 });
       R(g, 25, 12, 22, 3, S.color); R(g, 25, 12, 22, 1, mix(S.color, '#ffffff', 0.45));
+      R(g, 42, 11, 6, 6, '#f2f4fa'); R(g, 43, 12, 4, 1, '#3a4260'); R(g, 43, 14, 3, 1, '#7a85a8');   // press card
+      R(g, 31, 5, 10, 1, '#4a4426');
     }
     if (S.longHair) { const hh = [5, 6, 5, 6, 5, 6]; for (let i = 0; i < 6; i++) block(g, 21 + i * 5, 8 + (i % 2), 5, hh[i], S.longHair); }
     if (S.stache) {
       block(g, 27, 31, 5, 3, S.stache); block(g, 32, 31, 4, 3, S.stache); block(g, 36, 31, 4, 3, S.stache); block(g, 40, 31, 5, 3, S.stache);
+      block(g, 25, 33, 3, 3, S.stache); block(g, 44, 33, 3, 3, S.stache);
     }
     if (S.mohawk) {
       const m = S.mohawk;
@@ -2122,12 +2698,13 @@ const ROBOT = (function () {
     }
     if (S.monocle) {
       for (let a = 0; a < 360; a += 15) { const r = 5.6; R(g, 41 + Math.round(Math.cos(a * Math.PI / 180) * r), 24 + Math.round(Math.sin(a * Math.PI / 180) * r), 1, 1, '#f0c030'); }
-      for (let t = 0; t < 14; t++) R(g, 46, 29 + t, 1, 1, '#f0c030', 0.9);
+      for (let t = 0; t < 14; t++) R(g, 46 + Math.round(Math.sin(t / 3) * 1.2), 29 + t, 1, 1, '#f0c030', 0.9);
     }
     edge(c, S.color);
     return c;
   }
 
+  // long hair that hangs behind the head and over the shoulders, built from stacked robot plates
   function buildBack(id) {
     const S = SPEC[id];
     if (!S.longHair) return null;
@@ -2158,6 +2735,7 @@ const ROBOT = (function () {
     return (L.bg = c);
   }
 
+  /* ---------- animation state ---------- */
   const ANIM = {};
   const rnd = (a, b) => a + Math.random() * (b - a);
   function anim(id, t) {
@@ -2187,6 +2765,7 @@ const ROBOT = (function () {
     return d < 0 || d > 210 ? 0 : d < 70 ? d / 70 : d < 140 ? 1 : 1 - (d - 140) / 70;
   }
 
+  /* ---------- dynamic face parts ---------- */
   function drawFace(g, id, t, A, talk, blink, look) {
     const S = SPEC[id], H = S.head, col = S.color, glow = mix(col, '#ffffff', 0.35);
     const pulse = 0.78 + 0.22 * Math.sin(t / 650 + A.phase);
@@ -2203,50 +2782,67 @@ const ROBOT = (function () {
           R(g, ex, y, 4, h, col); if (h > 1) R(g, ex, y, 2, 1, talk ? '#ffffff' : glow);
         });
       } else if (S.eyes === 'lens') {
-        const l = S.lens, r = l[2] - 2, ix = l[0] + lx, iy = l[1];
+        const l = S.lens, r = l[2] - 2, ix = l[0] + lx, iy = l[1] + (Math.sin(t / 1300 + A.phase) > 0.7 ? 1 : 0);
         for (let dy = -r; dy <= r; dy++) { const hw = Math.round(Math.sqrt(r * r - dy * dy)); R(g, ix - hw, iy + dy, hw * 2 + 1, 1, col, 0.35 + 0.35 * pulse); }
         for (let dy = -2; dy <= 2; dy++) { const hw = Math.round(Math.sqrt(4 - dy * dy)); R(g, ix - hw, iy + dy, hw * 2 + 1, 1, talk ? '#ffffff' : glow); }
+        R(g, ix, iy, 1, 1, '#05060f'); R(g, ix - 1, iy - 1, 1, 1, '#ffffff');
         if (S.scan) { const sy = Math.round(l[1] + Math.sin(t / 380) * (l[2] - 2)); const hw = Math.round(Math.sqrt(Math.max(0, l[2] * l[2] - (sy - l[1]) * (sy - l[1])))) - 1; R(g, l[0] - hw, sy, hw * 2 + 1, 1, '#c8ffe0', 0.9); }
         if (blink > 0.05) { const rr = l[2]; for (let dy = -rr; dy <= rr; dy++) if ((dy + rr) < blink * (2 * rr + 1)) { const hw = Math.round(Math.sqrt(rr * rr - dy * dy)); R(g, l[0] - hw, l[1] + dy, hw * 2 + 1, 1, '#0a0c1a'); } }
       } else if (S.eyes === 'crt') {
         const sc = S.screen, ey = sc[1] + 4, h = Math.max(1, Math.round(4 * (1 - blink)));
         [-5, 5].forEach(o => { R(g, H.cx + o - 2 + lx, ey + (4 - h) / 2, 4, h, '#ff3b5c'); if (h > 1) R(g, H.cx + o - 2 + lx, ey + (4 - h) / 2, 1, 1, '#ffd0d8'); });
+        R(g, sc[0] + 1, ey - 2, sc[2] - 2, 1, '#ff3b5c', 0.18);
       } else if (S.eyes === 'slit') {
         const v = S.visor, sy = v[1] + 1, h = Math.max(1, Math.round(2 * (1 - blink * 0.9)));
         R(g, v[0] + 1, sy, v[2] - 2, h, col, talk ? 0.95 : 0.4 + 0.2 * pulse);
+        const dx = Math.round((v[2] - 7) * (0.5 + 0.5 * Math.sin(t / 800 + A.phase)));
+        R(g, v[0] + 2 + dx, sy - 1, 5, h + 2, col, 0.35); R(g, v[0] + 3 + dx, sy, 3, h, glow);
       } else if (S.eyes === 'orbs') {
         const ey = S.face[1] - 1, r = blink > 0.6 ? 0 : 2;
         [-5, 5].forEach(o => {
           const ex = H.cx + o + lx;
           if (r === 0) { R(g, ex - 2, ey, 5, 1, col); return; }
+          R(g, ex - 3, ey - 3, 7, 7, col, 0.18 * pulse);
           for (let dy = -2; dy <= 2; dy++) { const hw = Math.round(Math.sqrt(5.2 - dy * dy)); R(g, ex - hw, ey + dy, hw * 2 + 1, 1, col); }
+          R(g, ex - 1, ey - 1, 2, 1, talk ? '#ffffff' : glow);
         });
       }
     }
 
+    // mouth
     const M = S.mouth, mx = H.cx - Math.round(M.w / 2);
     if (M.type === 'grille') {
       const h = 1 + Math.round(open * 4), y = M.y - Math.floor((h - 1) / 2);
+      R(g, mx - 1, M.y - 3, M.w + 2, 7, '#0a0c1a', 0.0);
       R(g, mx - 1, y - 1, M.w + 2, h + 2, '#07030f');
       R(g, mx, y, M.w, h, '#0e1226');
-      if (h === 1) { R(g, mx + 1, y, 2, 1, col, 0.4 + 0.4 * pulse); R(g, mx + M.w - 3, y, 2, 1, col, 0.4 + 0.4 * pulse); }
+      if (h === 1) { R(g, mx + 1, y, 2, 1, col, 0.4 + 0.4 * pulse); R(g, mx + M.w - 3, y, 2, 1, col, 0.4 + 0.4 * pulse); R(g, mx + 4, y, M.w - 8, 1, '#2a3354'); }
       else for (let i = 0; i < M.w; i += 2) { const bh = Math.max(1, Math.round(h * (0.35 + 0.65 * Math.abs(Math.sin(t / 70 + i * 1.3 + A.phase))))); R(g, mx + i, y + Math.floor((h - bh) / 2), 1, bh, i % 4 ? col : glow, 0.95); }
     } else if (M.type === 'slot') {
       const h = 1 + Math.round(open * 2), y = M.y;
       R(g, mx - 1, y - 1, M.w + 2, h + 2, '#07030f'); R(g, mx, y, M.w, h, '#03120a');
       R(g, mx, y - 1, M.w, 1, '#f0c030'); R(g, mx, y + h, M.w, 1, mix('#f0c030', '#000000', 0.4));
       if (talk) R(g, mx + 2, y, M.w - 4, h, col, 0.55);
+      const k = (t - A.coinStart) / 520;
+      if (k >= 0 && k < 1) { const cy = Math.round(y - 7 + k * 6); R(g, H.cx - 1, cy, 3, 3, '#f0c030'); R(g, H.cx - 1, cy, 1, 1, '#fff2a0'); }
     } else if (M.type === 'crt') {
       const y = M.y, w = M.w, x0 = H.cx - Math.round(w / 2);
-      if (!talk) R(g, x0 + 2, y, w - 4, 1, '#2b4a99');
+      if (!talk) { R(g, x0 + 2, y, w - 4, 1, '#2b4a99'); if (Math.floor(t / 450) % 2) R(g, x0 + w - 3, y - 1, 2, 3, '#4d8bff'); }
       else for (let i = 0; i < w; i += 2) { const bh = 1 + Math.round(open * 3 * Math.abs(Math.sin(t / 75 + i * 0.9))); R(g, x0 + i, y - Math.floor(bh / 2), 1, bh, i % 4 ? '#4d8bff' : '#9ec0ff'); }
     }
 
+    // antenna
     if (S.antenna) {
-      const a = S.antenna, tipx = a.x;
-      for (let k = 0; k <= a.len; k++) R(g, a.x, a.y - k, 1, 1, '#aeb6cf');
-      R(g, tipx - 1, a.y - a.len - 2, 3, 3, col, 0.3 + 0.3 * pulse);
+      const a = S.antenna, tw = t < A.twitchUntil ? Math.sin(t / 25) * 2 : 0;
+      const tipx = a.x + Math.round(Math.sin(t / 700 + a.ph) * 2 + tw);
+      for (let k = 0; k <= a.len; k++) { const f = k / a.len; R(g, Math.round(a.x + (tipx - a.x) * f * f), Math.round(a.y - k), 1, 1, '#aeb6cf'); }
+      const ty = a.y - a.len;
+      R(g, tipx - 1, ty - 2, 3, 3, col, 0.3 + 0.3 * pulse); R(g, tipx, ty - 1, 2, 2, col); R(g, tipx, ty - 1, 1, 1, '#ffffff');
     }
+    if (S.dish) { const on = Math.floor(t / 500 + A.phase) % 2; R(g, 15, 29, 2, 2, on ? S.color : '#0a2230'); }
+    if (S.fin) R(g, 36, 2, 1, 1, S.color, 0.4 + 0.5 * pulse);
+    if (S.crown) R(g, 36, 3, 2, 2, mix(S.color, '#ffffff', 0.4), 0.5 + 0.5 * pulse);
+    if (S.monocle) { const gl = (Math.floor(t / 90) % 40 === 0); if (gl) R(g, 39, 22, 2, 1, '#ffffff'); }
   }
 
   function drawGlint(g, id, t, A) {
@@ -2270,9 +2866,11 @@ const ROBOT = (function () {
       R(g, x, y, 1, 1, S.color, front ? 0.9 : 0.45);
     }
     const bx = H.cx + Math.cos(a) * rx, by = cy + Math.sin(a) * ry;
-    if ((Math.sin(a) > 0) === front) R(g, bx - 1, by - 1, 3, 3, '#ffffff');
+    if ((Math.sin(a) > 0) === front) { R(g, bx - 1, by - 1, 3, 3, '#ffffff'); R(g, bx - 2, by - 2, 5, 5, S.color, 0.3); }
   }
 
+  /* ---------- public drawing ---------- */
+  // Draws robot `id` into ctx at (0,0), 72x80. opts: { bg: true } paints a backdrop first.
   function draw(ctx, id, t, opts) {
     if (!SPEC[id]) id = 'boss';
     const A = anim(id, t), L = layers(id), S = SPEC[id];
@@ -2282,7 +2880,9 @@ const ROBOT = (function () {
     if (opts && opts.bg) ctx.drawImage(backdrop(id), 0, 0);
     const breathe = Math.sin(t / 1000 + A.phase) > 0.45 ? 1 : 0;
     ctx.drawImage(L.body, 0, breathe);
-    const hx = Math.round(look * 1.2), hy = breathe;
+    const glitch = t < A.glitchUntil;
+    const nod = talk && Math.sin(t / 120 + A.phase) > 0.5 ? 1 : 0;
+    const hx = Math.round(look * 1.2) + (glitch ? (Math.floor(t / 40) % 2 ? 2 : -2) : 0), hy = breathe + nod;
     ctx.save();
     ctx.translate(hx, hy);
     if (S.ring) drawRing(ctx, id, t, A, false);
@@ -2294,79 +2894,28 @@ const ROBOT = (function () {
     ctx.restore();
   }
 
-  return { PW, PH, ids: IDS, spec: SPEC, draw, speak, anim };
+  // Still neutral frame as a data URL (for places that can't animate)
+  const stills = {};
+  function still(id) {
+    if (stills[id]) return stills[id];
+    const c = mk(PW, PH), g = c.getContext('2d');
+    const A = anim(id, 0); const saved = { b: A.blinkStart, n: A.nextBlink };
+    A.nextBlink = 1e12; A.blinkStart = -999;
+    draw(g, id, 1000, { bg: true });
+    A.nextBlink = saved.n;
+    return (stills[id] = c.toDataURL ? c.toDataURL() : '');
+  }
+
+  return { PW, PH, ids: IDS, spec: SPEC, draw, still, speak, anim };
 })();
 
-// --- WAR ROOM SCENE RENDERING HELPERS ---
-const SEAT_POS = [
-  { x: 50, y: 35, id: 'boss' },
-  { x: 110, y: 35, id: 'announcer' },
-  { x: 170, y: 35, id: 'news' },
-  { x: 230, y: 35, id: 'finance' },
-  { x: 50, y: 155, id: 'risk' },
-  { x: 110, y: 155, id: 'trader' },
-  { x: 170, y: 155, id: 'macro' },
-  { x: 230, y: 155, id: 'cfo' }
-];
-
-function initScene() {
-  const cv = $('orbital-table');
-  if (!cv) return;
-  cv.addEventListener('click', e => {
-    const rect = cv.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (cv.width / rect.width);
-    const y = (e.clientY - rect.top) * (cv.height / rect.height);
-    let hit = null;
-    SEAT_POS.forEach((s, idx) => {
-      if (Math.hypot(x - s.x, y - s.y) < 24) hit = idx;
-    });
-    if (hit !== null) openAgentDialog(hit);
-  });
-}
-
-function sceneFrame() {
-  const cv = $('orbital-table');
-  const g = cv && cv.getContext('2d');
-  if (!g) return;
-  const t = performance.now ? performance.now() : Date.now();
-  g.fillStyle = '#07010f';
-  g.fillRect(0, 0, cv.width, cv.height);
-  
-  // Draw table
-  g.fillStyle = '#1a0f40';
-  g.fillRect(80, 70, 160, 60);
-  g.strokeStyle = '#00f0ff';
-  g.lineWidth = 2;
-  g.strokeRect(80, 70, 160, 60);
-
-  SEAT_POS.forEach(s => {
-    g.save();
-    g.translate(s.x - ROBOT.PW / 2, s.y - ROBOT.PH / 2 + 10);
-    ROBOT.draw(g, s.id, t, { bg: false });
-    g.restore();
-  });
-}
-
-function openAgentDialog(idx) {
-  const a = AGENTS[idx];
-  if (!a) return;
-  ROBOT.speak(a.id, 3000);
-  openDialog({
-    title: `${a.name} // ${a.role.toUpperCase()}`,
-    message: `${a.job}\n\nLatest statement:\n"${a.says}"`,
-    okText: 'OK',
-    noCancel: true
-  });
-}
-
+/* ---- animated portraits on the page ---- */
 function paintPortraits(t) {
   document.querySelectorAll('canvas[data-robot]').forEach(c => {
     const g = c.getContext('2d');
     if (g) ROBOT.draw(g, c.dataset.robot, t, { bg: true });
   });
-  if (activeTab === 'warroom') sceneFrame();
 }
-
 let portraitLoopOn = false;
 function portraitLoop() {
   if (portraitLoopOn) return;
@@ -2375,32 +2924,82 @@ function portraitLoop() {
   let last = 0;
   const tick = t => {
     if (activeTab !== 'warroom' && activeTab !== 'audit') { portraitLoopOn = false; return; }
-    if (!slow || t - last > 30) { last = t; paintPortraits(t); }
+    if (!slow || t - last > 1000) { last = t; paintPortraits(t); }
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
 }
 
-function renderWarRoomCards() {
-  const box = $('war-room-container');
-  if (!box) return;
-  box.innerHTML = AGENTS.map((a, idx) => `
-    <div class="agent-card" style="border-color: ${a.color};" data-agent="${idx}">
-      <canvas class="agent-portrait" width="72" height="80" data-robot="${escapeHtml(a.id)}" style="border-color: ${a.color};"></canvas>
-      <div class="agent-body">
-        <div class="agent-name" style="color: ${a.color};">${escapeHtml(a.name)}</div>
-        <div class="agent-role">${escapeHtml(a.role)}</div>
-        <div class="agent-speech">"${escapeHtml(a.says)}"</div>
-      </div>
-    </div>`).join('');
-  paintPortraits(performance.now());
-}
 
+/* ============================== COIN INSPECTOR ============================== */
+function seriesFor(addr, coin) {
+  const pt = pump.tokens.get(addr);
+  if (pt && pt.hist && pt.hist.length >= 2 && pt.mcSol > 0) return pt.hist.map(h => h.mc / pt.mcSol * coin.price);
+  const h = priceHist.get(addr);
+  return h ? h.map(x => x.p) : [];
+}
+function drawInspChart(coin, entry) {
+  const cv = $('insp-chart'), g = cv && cv.getContext('2d');
+  if (!g) return;
+  const W = cv.width, H = cv.height;
+  g.fillStyle = '#07010f'; g.fillRect(0, 0, W, H);
+  g.font = '12px VT323, monospace';
+  const pts = seriesFor(coin.address, coin).concat([coin.price]);
+  if (pts.length < 3) { g.fillStyle = '#8a7fb8'; g.fillText('COLLECTING PRICE HISTORY...', 12, H / 2); return; }
+  let lo = Math.min.apply(null, pts.concat(entry ? [entry] : [])), hi = Math.max.apply(null, pts.concat(entry ? [entry] : []));
+  if (hi - lo <= 0) { hi += hi * 0.01 || 1; lo -= lo * 0.01; }
+  const X = i => 10 + (W - 20) * i / (pts.length - 1), Y = v => H - 14 - (H - 28) * (v - lo) / (hi - lo);
+  g.strokeStyle = pts[pts.length - 1] >= pts[0] ? '#39ff88' : '#ff3b5c'; g.lineWidth = 2; g.beginPath();
+  pts.forEach((v, i) => { if (i) g.lineTo(X(i), Y(v)); else g.moveTo(X(i), Y(v)); });
+  g.stroke();
+  if (entry > 0) {
+    g.fillStyle = '#f9f871';
+    for (let x = 10; x < W - 10; x += 6) g.fillRect(x, Math.round(Y(entry)), 3, 1);
+    g.fillText('ENTRY ' + fmtPrice(entry), 12, Math.max(10, Y(entry) - 3));
+  }
+  g.fillStyle = '#8a7fb8'; g.fillText(`${pts.length} samples`, W - 70, H - 3);
+}
+function inspectCoin(addr) {
+  const held = state.positions[addr] > 0;
+  const coin = market.get(addr) || (held ? { address: addr, symbol: state.symbols[addr] || '?', price: state.costBasis[addr], liquidity: 0, volumeH1: 0, buysH1: 0, sellsH1: 0, change5m: 0, change1h: 0, change24h: 0, ageMin: null, marketCap: null } : null);
+  const box = $('insp-content');
+  if (!coin || !box) return;
+  const logo = $('insp-logo');
+  if (logo) { logo.src = `https://cdn.dexscreener.com/token-images/solana/${coin.address}`; logo.style.display = 'block'; logo.onerror = () => { logo.style.display = 'none'; }; }
+  setText('insp-title', '// ' + coin.symbol);
+  const qty = state.positions[addr] || 0, cost = state.costBasis[addr] || coin.price;
+  const pnl = qty > 0 ? exitValue(addr) - qty * cost : 0;
+  const m = pumpMetrics(coin), vs = valueSignal(coin), b = state.book[addr];
+  const row = (k, v) => `<div class="protocol-line"><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</div>`;
+  const lines = [
+    row('ADDRESS', coin.address.slice(0, 6) + '...' + coin.address.slice(-6) + (isPump(coin) ? '  (pump.fun)' : '')),
+    row('MODE', qty > 0 ? posModeOf(addr) + (isMajorWave(coin) ? ' / major' : '') : state.mode),
+    row('PRICE', `${fmtPrice(coin.price)}${qty > 0 ? ` (cost ${fmtPrice(cost)})` : ''}`),
+    row('MARKET CAP / LIQ', `${coin.marketCap ? fmtCurrency(coin.marketCap) : 'n/a'} / ${fmtCurrency(coin.liquidity)}`),
+    row('1H VOLUME', `${fmtCurrency(coin.volumeH1)} | buys ${coin.buysH1} sells ${coin.sellsH1}`),
+    row('MOVE 5m / 1h', `${coin.change5m >= 0 ? '+' : ''}${coin.change5m.toFixed(1)}% / ${coin.change1h >= 0 ? '+' : ''}${coin.change1h.toFixed(1)}%`),
+    row('PHASE / OFF HIGH', `${pumpPhase(coin)} / ${m.dd.toFixed(0)}% | volume momentum ${m.accel.toFixed(1)}x`),
+    row('VS ITS AVERAGE', vs ? `${vs.pct >= 0 ? '+' : ''}${vs.pct.toFixed(0)}% (${vs.label})` : 'not enough history'),
+    row('HOLD HORIZON', determineHoldHorizon(coin)),
+    row('HOLDING', qty > 0 ? `${qty > 1000 ? Math.round(qty).toLocaleString() : qty.toFixed(2)} tokens (${fmtSigned(pnl)}), tier ${state.tiers[addr] || 0}${state.runnerRecovered[addr] ? ', free runner' : ''}` : 'none'),
+    row('BOUGHT AT', state.entryTimes[addr] ? new Date(state.entryTimes[addr]).toLocaleTimeString() : 'n/a'),
+    row('COIN BOOK', b ? `${b.n} trades, ${b.wins} wins, net ${fmtSigned(b.pnl)}` : 'never traded')
+  ];
+  if (coin.pump) lines.splice(6, 0, row('LIVE FEED 5m', `${coin.pump.buyers5} unique buyers, ${coin.pump.tx5} trades, ${Math.round(coin.pump.buyRatio5 * 100)}% buys, ${coin.pump.vol5Sol.toFixed(1)} SOL`));
+  box.innerHTML = lines.join('');
+  drawInspChart(coin, qty > 0 ? cost : 0);
+  $('inspector-overlay').classList.add('open');
+}
+function closeInspector() { $('inspector-overlay').classList.remove('open'); }
+
+/* ============================== PUMP.FUN ============================== */
+/* Live feed from PumpPortal's free websocket: new tokens, every trade on the tokens we track, graduations.
+   Prices come from the bonding curve itself (virtual reserves), so fills are quoted exactly. */
 const PUMP_WS_URL = 'wss://pumpportal.fun/api/data';
 const pump = { ws: null, status: 'OFF', events: 0, evWin: 0, rate: 0, winStart: Date.now(), tokens: new Map(), solUsd: 0, solAt: 0, subQ: [], flushT: null, retry: 0, lastMsg: 0, lastType: '', lastKeys: '', timer: null };
 
-function pumpWanted() { return state.mode === 'PUMP' || heldAddrs().some(a => state.posMode[a] === 'PUMP'); }
-function pumpSend(o) { try { if (pump.ws && pump.ws.readyState === 1) { pump.ws.send(JSON.stringify(o)); return true; } } catch (e) {} return false; }
+function pumpWanted() { return state.mode === 'PUMP' || heldAddrs().some(a => posModeOf(a) === 'PUMP'); }
+function pumpSend(o) { try { if (pump.ws && pump.ws.readyState === 1) { pump.ws.send(JSON.stringify(o)); return true; } } catch (e) { /* retried later */ } return false; }
 function pumpFlush() {
   pump.flushT = null;
   if (!pump.subQ.length || !(pump.ws && pump.ws.readyState === 1)) return;
@@ -2437,7 +3036,7 @@ function pumpConnect() {
     pumpFlush();
     log('[PUMP] Connected to the pump.fun live feed.');
   };
-  ws.onmessage = ev => { try { pumpEvent(JSON.parse(ev.data)); } catch (e) {} };
+  ws.onmessage = ev => { try { pumpEvent(JSON.parse(ev.data)); } catch (e) { /* ignore non-JSON */ } };
   ws.onerror = () => { pump.status = 'ERROR'; };
   ws.onclose = () => {
     pump.ws = null;
@@ -2446,7 +3045,7 @@ function pumpConnect() {
   };
 }
 function pumpDisconnect() {
-  try { if (pump.ws) { pump.ws.onclose = null; pump.ws.close(); } } catch (e) {}
+  try { if (pump.ws) { pump.ws.onclose = null; pump.ws.close(); } } catch (e) { /* ignore */ }
   pump.ws = null; pump.status = 'OFF'; pump.subQ = [];
 }
 
@@ -2514,32 +3113,84 @@ function pumpCoin(pt) {
   const mcAt = secAgo => { const cut = now - secAgo * 1000; let v = pt.hist.length ? pt.hist[0].mc : pt.mcSol; for (const h of pt.hist) { if (h.t <= cut) v = h.mc; else break; } return v; };
   const price = pt.vT > 0 ? pt.vS / pt.vT * solUsd : pt.mcSol / 1e9 * solUsd;
   const chg = secAgo => { const old = mcAt(secAgo); return old > 0 ? (pt.mcSol / old - 1) * 100 : 0; };
+  let hi = pt.mcSol; for (const h of pt.hist) if (h.mc > hi) hi = h.mc;
   return {
     address: pt.mint, symbol: cleanSymbol(pt.symbol) || '?', price, liquidity: 2 * pt.vS * solUsd,
     change5m: chg(300), change1h: chg(3600), change24h: 0,
-    volumeH1: volH * solUsd, buysH1: bH, sellsH1: sH,
+    volumeH1: volH * solUsd, volumeM5: vol5 * solUsd, buysH1: bH, sellsH1: sH, buysM5: b5, sellsM5: s5,
     ageMin: (now - pt.createdAt) / 60000, marketCap: pt.mcSol * solUsd, seenAt: now,
     source: 'pump', graduated: pt.graduated, curve: pt.graduated ? null : { vS: pt.vS, vT: pt.vT },
-    pump: { buyers5: buyers.size, tx5: b5 + s5, buyRatio5: (b5 + s5) ? b5 / (b5 + s5) : 0, vol5Sol: vol5, trend90: chg(90), creatorSold: pt.creatorSold, lastTradeAt: pt.lastTradeAt }
+    pump: { buyers5: buyers.size, tx5: b5 + s5, buyRatio5: (b5 + s5) ? b5 / (b5 + s5) : 0, vol5Sol: vol5, trend90: chg(90), creatorSold: pt.creatorSold, lastTradeAt: pt.lastTradeAt, dd: hi > 0 ? (hi - pt.mcSol) / hi * 100 : 0 }
   };
 }
 
 function pumpUpdateMarket(pt) {
   const held = state.positions[pt.mint] > 0;
   if (state.mode !== 'PUMP' && !held) return;
-  if (!(pt.vS > 0 && pt.vT > 0)) return;
+  if (!(pt.vS > 0 && pt.vT > 0)) return;          // no curve data yet (e.g. a restored position before its first trade event)
   if (pt.graduated && !held) { market.delete(pt.mint); return; }
   if (pt.graduated) { const ex = market.get(pt.mint); if (ex) { ex.graduated = true; ex.curve = null; } return; }
   market.set(pt.mint, pumpCoin(pt));
 }
 
-function isPumpCandidate(c) {
-  const P = CFG.pump, k = c.pump;
-  if (c.source !== 'pump' || !k || c.graduated || k.creatorSold) return false;
-  if (c.ageMin * 60 < P.feedMinAgeSec || c.ageMin > P.maxAgeMin) return false;
-  if (c.marketCap < P.minMcUsd || c.marketCap > P.maxMcUsd) return false;
-  if (k.buyers5 < P.minBuyers || k.tx5 < P.minTxns || k.buyRatio5 < P.minBuyRatio || k.vol5Sol < P.minVolSol) return false;
-  return k.trend90 >= P.minTrend90;
+function pumpReject(c) {                 // why a pump.fun coin is NOT bought ('' = it passes)
+  const P = CFG.pump;
+  if (!isPump(c) || isMajorWave(c)) return 'notpump';
+  if (c.graduated) return 'graduated';
+  const k = c.pump;
+  if (k && k.creatorSold) return 'creator';
+  if (c.ageMin === null || c.ageMin === undefined || c.ageMin < P.minAgeMin || c.ageMin > P.maxAgeMin) return 'age';
+  if (!(c.marketCap > 0) || c.marketCap < P.minMc || c.marketCap > P.maxMc) return 'mc';
+  if (c.liquidity < P.minLiq) return 'liq';
+  const tx = c.buysH1 + c.sellsH1;
+  if (tx < P.minTxns || c.buysH1 / tx < P.minBuyRatio) return 'flow';
+  const m = pumpMetrics(c);
+  if (m.tx5 < P.minTx5m || m.flow5 < P.minBuy5m) return 'flow';
+  if (k && (k.buyers5 < P.minBuyers || k.vol5Sol < P.minVolSol)) return 'flow';       // live-feed coins: real unique buyers and volume
+  if (c.change5m < P.minCh5m || c.change1h < P.minCh1h || c.change24h < P.minCh24h) return 'weak';
+  if (c.change5m > P.maxCh5m || c.change1h > P.maxCh1h) return 'chase';
+  if (c.change1h > 30 && c.change5m > 0.5 * c.change1h) return 'chase';
+  if (scanRun(c) > P.maxScanRun) return 'chase';
+  if (k && k.trend90 < -2) return 'weak';
+  if (m.accel < P.minAccel) return 'fade';
+  if (m.dd > P.maxDD) return 'topped';
+  const ph = pumpPhase(c, P);
+  if (P.phases.indexOf(ph) < 0) return 'phase:' + ph;
+  return '';
+}
+function isPumpCandidate(c) { return pumpReject(c) === ''; }
+function pumpScore(c) {
+  const P = CFG.pump, m = pumpMetrics(c);
+  const ext = Math.min(0.7, Math.max(0, c.change5m) / (P.maxCh5m * 1.5));
+  return m.flow5 * Math.sqrt(Math.max(1, m.tx5)) * (1 - ext) * Math.min(2, Math.max(0.3, m.accel));
+}
+
+/* Older pump.fun coins (and graduated ones) come from GeckoTerminal; brand-new ones come from the live stream. */
+const PUMP_FEEDS = [
+  ['gt-new', 'new_pools?page=1'], ['gt-trend5m', 'trending_pools?duration=5m&page=1'], ['gt-pumpfun', 'dexes/pump-fun/pools?page=1&sort=h24_volume_usd_desc'],
+  ['gt-trend1h', 'trending_pools?duration=1h&page=1'], ['gt-pumpswap', 'dexes/pumpswap/pools?page=1&sort=h24_tx_count_desc'], ['gt-new2', 'new_pools?page=2']
+];
+let pumpFeedRot = 0;
+const pumpFeedInfo = {};
+async function pumpScan() {
+  const GT = 'https://api.geckoterminal.com/api/v2/networks/solana';
+  const picks = [0, 1].map(k => PUMP_FEEDS[(pumpFeedRot + k) % PUMP_FEEDS.length]);
+  pumpFeedRot = (pumpFeedRot + 2) % PUMP_FEEDS.length;
+  const lists = await Promise.all(picks.map(x => feedJson(x[0], `${GT}/${x[1]}`)));
+  lists.forEach((d, i) => {
+    let seen = 0, pumps = 0;
+    if (d && Array.isArray(d.data)) d.data.forEach(pl => {
+      const c = toCoinGT(pl);
+      if (!c) return;
+      seen++;
+      if (!isPump(c)) return;
+      pumps++;
+      const ex = market.get(c.address);
+      if (ex && ex.source === 'pump' && !ex.graduated && Date.now() - ex.seenAt < CFG.exitStaleMs) return;   // keep the live-stream quote
+      market.set(c.address, c);
+    });
+    pumpFeedInfo[picks[i][0]] = { seen, pump: pumps, ok: !!d, t: Date.now() };
+  });
 }
 
 function pumpTick() {
@@ -2554,16 +3205,17 @@ function pumpTick() {
     if (pt.graduated || !(pt.vS > 0 && pt.vT > 0) || (state.mode !== 'PUMP' && !held)) continue;
     const coin = pumpCoin(pt);
     const prev = market.get(mint);
-    coin.seenAt = pump.status === 'LIVE' ? now : (prev ? prev.seenAt : 0);
+    coin.seenAt = pump.status === 'LIVE' ? now : (prev ? prev.seenAt : 0);   // an unchanged curve is still a valid price while the feed is live
     market.set(mint, coin);
   }
-  if (state.mode === 'PUMP' && market.size > 0) runTradingLoop();
+  if (state.mode === 'PUMP' && market.size > 0) runTradingLoop();   // fast loop: sniping and exits can't wait 20s
   renderAll();
 }
 
+// After a page reload, resubscribe to the tokens we still hold.
 function pumpRestoreHeld() {
   heldAddrs().forEach(a => {
-    if (state.posMode[a] !== 'PUMP' || pump.tokens.has(a)) return;
+    if (posModeOf(a) !== 'PUMP' || pump.tokens.has(a)) return;
     pump.tokens.set(a, { mint: a, symbol: state.symbols[a] || '?', name: '', creator: '', createdAt: state.entryTimes[a] || Date.now(), vS: 0, vT: 0, mcSol: 0, lastTradeAt: Date.now(), trades: [], creatorSold: false, graduated: false, hist: [] });
     pump.subQ.push(a);
   });
@@ -2572,18 +3224,236 @@ function pumpRestoreHeld() {
 function renderPumpStatus() {
   const box = $('pump-box');
   if (!box) return;
-  const cands = Array.from(market.values()).filter(c => c.source === 'pump' && isPumpCandidate(c)).length;
+  const w = whyNotTrading();
+  const feeds = Object.keys(pumpFeedInfo).map(k => `${k} ${pumpFeedInfo[k].ok ? pumpFeedInfo[k].pump + '/' + pumpFeedInfo[k].seen : 'FAILED'}`).join(' | ');
   const rows = [
-    ['MODE', state.mode === 'PUMP' ? 'ON' : 'OFF (tap PUMP to start)'],
-    ['FEED', pump.status],
+    ['MODE', state.mode === 'PUMP' ? `ON (${CFG.pump.label})` : 'OFF (tap PUMP to start)'],
+    ['LIVE STREAM', pump.status],
     ['TOKENS TRACKED', String(pump.tokens.size)],
     ['EVENTS / MIN', String(pump.rate)],
     ['SOL PRICE', pump.solUsd ? fmtCurrency(pump.solUsd) : 'UNKNOWN (using $150)'],
     ['LAST MESSAGE', pump.lastMsg ? Math.round((Date.now() - pump.lastMsg) / 1000) + 's ago' : 'none yet'],
-    ['PASSING THE FILTERS', String(cands)],
+    ['OLDER-COIN FEEDS', feeds || 'not used yet'],
+    ['WHY / WHY NOT', state.mode === 'PUMP' ? `${w.n} coins: ${w.txt}` : 'switch to PUMP to see'],
     ['LAST EVENT FIELDS', pump.lastKeys ? pump.lastKeys.slice(0, 90) : '--']
   ];
-  box.innerHTML = rows.map(r => `<div class="status-row"><span>${escapeHtml(r[0])}</span><strong style="color: ${r[0] === 'FEED' ? (pump.status === 'LIVE' ? 'var(--green)' : 'var(--red)') : 'var(--text-main)'}; text-align: right; word-break: break-all;">${escapeHtml(r[1])}</strong></div>`).join('');
+  box.innerHTML = rows.map(r => `<div class="status-row"><span>${escapeHtml(r[0])}</span><strong style="color: ${r[0] === 'LIVE STREAM' ? (pump.status === 'LIVE' ? 'var(--green)' : 'var(--red)') : 'var(--text-main)'}; text-align: right; word-break: break-word;">${escapeHtml(r[1])}</strong></div>`).join('');
+}
+
+/* ============================== PUMP SETUP MENU ============================== */
+const PUMP_FIELDS = [
+  ['minAgeMin', 'Min age (min)', 1], ['maxAgeMin', 'Max age (min)', 1], ['minMc', 'Min mcap ($)', 1], ['maxMc', 'Max mcap ($)', 1],
+  ['minLiq', 'Min liquidity ($)', 1], ['minTxns', 'Min txns 1h', 1], ['minBuyRatio', 'Min buys 1h (%)', 100], ['minTx5m', 'Min txns 5m', 1],
+  ['minBuy5m', 'Min buys 5m (%)', 100], ['minBuyers', 'Min unique buyers 5m', 1], ['minVolSol', 'Min volume 5m (SOL)', 1], ['maxCh5m', 'Max 5m gain (%)', 1],
+  ['maxCh1h', 'Max 1h gain (%)', 1], ['maxScanRun', 'Max gain last 3 min (%)', 1], ['maxDD', 'Max drop from high (%)', 1], ['minAccel', 'Min volume momentum (x)', 1],
+  ['entryPct', 'Entry size (% of bankroll)', 100], ['maxOpen', 'Max open positions', 1], ['stopPct', 'Stop-loss (%)', 1], ['recoverPct', 'Take principal at (%)', 1],
+  ['tier2Pct', 'Sell half runner at (%)', 1], ['trailPct', 'Runner trail (%)', 1], ['staleMin', 'Stale after (min)', 1], ['stalePct', 'Stale if under (%)', 1], ['exitMc', 'Sell at mcap ($, 0 = off)', 1]
+];
+function openPumpMenu() {
+  let ov = document.getElementById('pump-overlay');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'pump-overlay'; ov.className = 'dialog-overlay'; document.body.appendChild(ov); }
+  ov.textContent = '';
+  const box = document.createElement('div'); box.className = 'dialog-box'; ov.appendChild(box);
+  const add = (par, tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; par.appendChild(e); return e; };
+  let sel = CFG.pump.profile, draft = Object.assign({}, CFG.pump);
+  add(box, 'div', 'dialog-title', 'PUMP.FUN SETUP');
+  const desc = add(box, 'div', 'dialog-msg', '');
+  const prow = add(box, 'div', 'dialog-btns'); prow.style.flexWrap = 'wrap'; prow.style.justifyContent = 'flex-start';
+  const pbtn = {};
+  const grid = add(box, 'div'); grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;';
+  const inputs = {};
+  PUMP_FIELDS.forEach(f => {
+    const w = add(grid, 'div'); add(w, 'label', 'dialog-label', f[1]);
+    const i = add(w, 'input', 'dialog-input'); i.type = 'text'; i.setAttribute('inputmode', 'decimal'); i.setAttribute('autocomplete', 'off'); i.style.fontSize = '15px';
+    inputs[f[0]] = i;
+  });
+  const chkRow = add(box, 'div', 'dialog-label'); chkRow.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;';
+  const mkChk = label => { const l = add(chkRow, 'label'); const c = document.createElement('input'); c.type = 'checkbox'; l.appendChild(c); l.appendChild(document.createTextNode(' ' + label)); return c; };
+  const cbEarly = mkChk('Buy EARLY phase'), cbBuild = mkChk('Buy BUILDING phase'), cbTop = mkChk('Sell when the pump tops');
+  const msg = add(box, 'div', 'dialog-msg', '');
+  const refresh = () => {
+    desc.textContent = PUMP_PROFILES[sel] ? PUMP_PROFILES[sel].desc : 'Custom settings';
+    PUMP_FIELDS.forEach(f => { inputs[f[0]].value = String(+(draft[f[0]] * f[2]).toFixed(4)); });
+    cbEarly.checked = draft.phases.indexOf('EARLY') >= 0; cbBuild.checked = draft.phases.indexOf('BUILDING') >= 0; cbTop.checked = !!draft.topExit;
+    Object.keys(pbtn).forEach(k => pbtn[k].classList.toggle('active-mode', k === sel));
+  };
+  Object.keys(PUMP_PROFILES).forEach(k => {
+    const b = add(prow, 'button', 'cyber-btn', PUMP_PROFILES[k].label); pbtn[k] = b;
+    b.addEventListener('click', () => { sel = k; draft = Object.assign({}, PUMP_COMMON, PUMP_PROFILES[k]); msg.textContent = ''; refresh(); });
+  });
+  const row = add(box, 'div', 'dialog-btns');
+  const close = () => ov.classList.remove('open');
+  add(row, 'button', 'cyber-btn danger', 'RESET').addEventListener('click', () => { state.pumpEdits = null; state.pumpProfile = sel; applyPumpProfile(); draft = Object.assign({}, CFG.pump); saveState(); msg.textContent = 'Reset to the preset.'; refresh(); renderAll(); });
+  add(row, 'button', 'cyber-btn', 'CLOSE').addEventListener('click', close);
+  add(row, 'button', 'cyber-btn accent', 'SAVE + USE').addEventListener('click', () => {
+    const out = Object.assign({}, draft); let bad = false;
+    PUMP_FIELDS.forEach(f => { const v = parseFloat(String(inputs[f[0]].value).replace(/[$,%\s]/g, '')); if (!isFinite(v)) bad = true; else out[f[0]] = v / f[2]; });
+    if (bad) { msg.textContent = 'Check the numbers.'; return; }
+    out.stopPct = -Math.abs(out.stopPct) || -12;
+    out.entryPct = Math.min(0.25, Math.max(0.01, out.entryPct));
+    out.maxOpen = Math.max(1, Math.min(10, Math.round(out.maxOpen)));
+    out.phases = []; if (cbEarly.checked) out.phases.push('EARLY'); if (cbBuild.checked) out.phases.push('BUILDING');
+    if (!out.phases.length) out.phases = ['EARLY', 'BUILDING'];
+    out.topExit = cbTop.checked;
+    state.pumpProfile = sel; state.pumpEdits = out; applyPumpProfile(); saveState();
+    log(`[PUMP] Profile ${CFG.pump.label} saved`);
+    setTradingMode('PUMP'); close();
+  });
+  refresh();
+  ov.classList.add('open');
+}
+
+/* ============================== WAR ROOM ============================== */
+function agentChips(id) {
+  const n = k => stat(id, k);
+  const p = portfolioValue();
+  switch (id) {
+    case 'boss': return [['Approved', n('approved')], ['Vetoed', n('vetoed')], ['Journal', state.journal.length]];
+    case 'announcer': return [['Alerts', n('alerts')], ['Hot now', hotCoins().length], ['Scans', n('scans')]];
+    case 'news': return [['Headlines', n('headlines')], ['Pushed', n('pushed')], ['Feed', newsStatus.indexOf('LIVE') === 0 ? 'ON' : 'OFF']];
+    case 'finance': { const h = n('holds'); return [['Stale exits', n('stale')], ['Avg hold', h ? Math.round(n('holdMin') / h) + 'm' : '--'], ['Idle cash', Math.round(100 * state.cash / Math.max(1, state.cash + p.value)) + '%']]; }
+    case 'risk': return [['Stops hit', n('stops')], ['Worst', fmtSigned(n('worst'))], ['Exposure', fmtCurrency(p.value)]];
+    case 'trader': { const c = n('closed'); return [['Trades', c], ['Win rate', c ? Math.round(100 * n('wins') / c) + '%' : '--'], ['P&L', fmtSigned(n('pnl'))]]; }
+    case 'macro': { const d = n('pickWins') + n('pickLosses'); return [['Picks', n('picks')], ['Pick wins', d ? Math.round(100 * n('pickWins') / d) + '%' : '--'], ['Open', heldAddrs().length]]; }
+    case 'cfo': return [['Swept', fmtCurrency(n('swept'))], ['Sweeps', n('sweeps')], ['Vault', fmtCurrency(state.vault)]];
+  }
+  return [];
+}
+
+function renderWarRoomCards() {
+  const box = $('war-room-container');
+  if (!box) return;
+  box.innerHTML = AGENTS.map((a, i) => `
+    <div class="agent-card" data-agent="${i}" style="border-color: ${a.color};">
+      <canvas class="agent-portrait" width="72" height="80" data-robot="${a.id}" style="border-color: ${a.color};"></canvas>
+      <div class="agent-body">
+        <div class="agent-name" style="color: ${a.color};">${escapeHtml(a.name)}</div>
+        <div class="agent-role">${escapeHtml(a.role)}</div>
+        <div class="agent-chips">${agentChips(a.id).map(c => `<div class="chip"><span>${escapeHtml(c[0])}</span><strong>${escapeHtml(c[1])}</strong></div>`).join('')}</div>
+        <div class="agent-speech">"${escapeHtml(a.says)}"</div>
+      </div>
+    </div>`).join('') + auditorCardHtml();
+  paintPortraits(performance.now());
+}
+
+function auditorCardHtml() {
+  const nBad = auditResult.filter(f => f.sev === 'bad').length, nWarn = auditResult.filter(f => f.sev === 'warn').length, nOk = auditResult.filter(f => f.sev === 'ok').length;
+  const say = nBad ? `${nBad} problem${nBad > 1 ? 's' : ''} need attention.` : nWarn ? `No critical problems, ${nWarn} warning${nWarn === 1 ? '' : 's'}.` : 'All checks passing.';
+  return `<div class="agent-card" data-agent="aud" style="border-color: #39ff88;">
+      <canvas class="agent-portrait" width="72" height="80" data-robot="auditor" style="border-color: #39ff88;"></canvas>
+      <div class="agent-body">
+        <div class="agent-name" style="color: #39ff88;">AUDITOR-7</div>
+        <div class="agent-role">System Inspector (tap to open Audit)</div>
+        <div class="agent-chips"><div class="chip"><span>Problems</span><strong>${nBad}</strong></div><div class="chip"><span>Warnings</span><strong>${nWarn}</strong></div><div class="chip"><span>Passing</span><strong>${nOk}</strong></div></div>
+        <div class="agent-speech">"${escapeHtml(say)}"</div>
+      </div>
+    </div>`;
+}
+
+function openAgentDialog(i) {
+  const a = AGENTS[i];
+  if (!a) return;
+  const stats = agentChips(a.id).map(c => `${c[0]}: ${c[1]}`).join('\n');
+  const recent = (state.ledger[a.id] || []).slice(0, 8).map(l => `${l.t}  ${l.text}`).join('\n') || 'No activity yet.';
+  openDialog({ title: a.name, message: `${a.role}\n\n${a.job}\n\nSTATS\n${stats}\n\nRECENT ACTIVITY\n${recent}`, okText: 'CLOSE', noCancel: true });
+}
+
+const CW = 320, CH = 200, SPW = ROBOT.PW, SPH = ROBOT.PH, TABLE_TOP = 70;
+function spritePos(i) { return { x: (i % 4) * 80 + 4, y: i < 4 ? 4 : 116 }; }
+let selectedAgent = -1;
+let sceneRunning = false;
+
+function sceneFrame() {
+  if (sceneRunning) return;
+  sceneRunning = true;
+  const canvas = $('orbital-table');
+  const ctx = canvas && canvas.getContext('2d');
+  if (!ctx) { sceneRunning = false; return; }
+  ctx.imageSmoothingEnabled = false;
+
+  const drawAgent = (i, t) => {
+    const a = AGENTS[i], p = spritePos(i);
+    ctx.globalAlpha = 0.18; ctx.fillStyle = a.color; ctx.fillRect(p.x, p.y, SPW, SPH); ctx.globalAlpha = 1;
+    ctx.save(); ctx.translate(p.x, p.y); ROBOT.draw(ctx, a.id, t); ctx.restore();
+    if (i === selectedAgent) { ctx.strokeStyle = '#f9f871'; ctx.lineWidth = 2; ctx.strokeRect(p.x + 1, p.y + 1, SPW - 2, SPH - 2); }
+  };
+
+  const draw = t => {
+    if (activeTab !== 'warroom') { sceneRunning = false; return; }
+    ctx.fillStyle = '#07010f'; ctx.fillRect(0, 0, CW, CH);
+    ctx.fillStyle = '#0d0526'; ctx.fillRect(0, 0, CW, TABLE_TOP);
+    ctx.fillStyle = '#16093a'; for (let x = 0; x < CW; x += 20) ctx.fillRect(x, 0, 1, TABLE_TOP);
+    for (let i = 0; i < 4; i++) drawAgent(i, t);                       // back row
+    ctx.fillStyle = '#05000f'; ctx.fillRect(4, TABLE_TOP - 2, 312, 86);  // table
+    ctx.fillStyle = '#2a1a66'; ctx.fillRect(8, TABLE_TOP + 2, 304, 78);
+    ctx.fillStyle = '#3a1d78'; ctx.fillRect(8, TABLE_TOP + 2, 304, 3);
+    ctx.fillStyle = '#00f0ff'; ctx.fillRect(8, TABLE_TOP + 2, 304, 1);
+    ctx.globalAlpha = 0.5 + 0.3 * Math.sin(t / 700); ctx.fillStyle = '#00f0ff';
+    ctx.fillRect(144, 90, 32, 3); ctx.fillRect(152, 96, 16, 2); ctx.globalAlpha = 1;
+    for (let i = 4; i < 8; i++) drawAgent(i, t);                       // front row
+    requestAnimationFrame(draw);
+  };
+  requestAnimationFrame(draw);
+}
+
+function initScene() {
+  const canvas = $('orbital-table');
+  if (!canvas) return;
+  canvas.addEventListener('click', e => {
+    const r = canvas.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (CW / r.width), y = (e.clientY - r.top) * (CH / r.height);
+    let hit = -1;
+    for (let i = 7; i >= 0; i--) {
+      const p = spritePos(i), bottom = i < 4 ? Math.min(p.y + SPH, TABLE_TOP) : p.y + SPH;
+      if (x >= p.x && x < p.x + SPW && y >= p.y && y < bottom) { hit = i; break; }
+    }
+    if (hit >= 0 && hit === selectedAgent) { openAgentDialog(hit); return; }
+    selectedAgent = hit;
+    if (hit >= 0) ROBOT.speak(AGENTS[hit].id, 1800);
+    const cap = $('scene-caption');
+    if (cap) cap.textContent = hit >= 0 ? `${AGENTS[hit].name}: "${AGENTS[hit].says}" (tap again for stats)` : 'Tap an agent to see who they are.';
+  });
+}
+
+/* ============================== AUDITOR-7 ============================== */
+function pushErr(msg) {
+  errorBuf.unshift({ t: clock(), msg: String(msg).slice(0, 160) });
+  if (errorBuf.length > 20) errorBuf.pop();
+}
+window.addEventListener('error', e => pushErr(e.message));
+window.addEventListener('unhandledrejection', e => pushErr('Promise: ' + ((e.reason && e.reason.message) || e.reason)));
+const _consoleError = console.error;
+console.error = function () { pushErr(Array.prototype.slice.call(arguments).map(String).join(' ')); _consoleError.apply(console, arguments); };
+
+function auditNote(text) {
+  councilFeed.unshift({ sender: 'AUDITOR-7', text, color: '#39ff88', time: new Date().toLocaleTimeString() });
+  if (councilFeed.length > 40) councilFeed.pop();
+  try { ROBOT.speak('auditor', 2600); } catch (e) { /* cosmetic */ }
+}
+
+function exitAnalysis() {
+  const rows = state.journal.filter(j => j.mode === state.mode && j.mfe !== undefined);
+  if (rows.length < 10) return null;
+  const stops = rows.filter(j => j.tag === 'STOP-LOSS CUT'), wins = rows.filter(j => j.win);
+  const avg = (a, k) => a.length ? a.reduce((x, j) => x + j[k], 0) / a.length : 0;
+  return { n: rows.length, stops: stops.length, stopsWereUp8: stops.filter(j => j.mfe >= 8).length, capture: wins.length ? avg(wins, 'pct') / Math.max(1, avg(wins, 'mfe')) : null, avgHoldMin: avg(rows, 'heldMin') };
+}
+
+function journalStats(rows) {
+  const n = rows.length;
+  const wins = rows.filter(j => j.win), losses = rows.filter(j => !j.win);
+  const sum = a => a.reduce((x, j) => x + j.pct, 0);
+  const tags = {};
+  rows.forEach(j => { tags[j.tag] = (tags[j.tag] || 0) + 1; });
+  const stops = rows.filter(j => j.tag === 'STOP-LOSS CUT');
+  return {
+    n, winRate: n ? wins.length / n : 0,
+    avgWin: wins.length ? sum(wins) / wins.length : 0,
+    avgLoss: losses.length ? sum(losses) / losses.length : 0,
+    expectancy: n ? sum(rows) / n : 0,
+    profitFactor: losses.length && sum(losses) !== 0 ? sum(wins) / Math.abs(sum(losses)) : null,
+    tags, nStops: stops.length, avgStop: stops.length ? sum(stops) / stops.length : null
+  };
 }
 
 function runAudit() {
@@ -2597,57 +3467,135 @@ function runAudit() {
   const held = heldAddrs();
   const rows = state.journal.filter(j => j.mode === state.mode);
   const js = journalStats(rows);
-  const cost2 = 2 * (CFG.feeRate + CFG.baseSlippage) * 100;
+  const cost2 = 2 * (CFG.feeRate + CFG.baseSlippage) * 100;   // round-trip cost % (before price impact)
   const hasKey = aiReady();
 
+  // Feeds
   if (lastScan.req) {
     const r = lastScan.ok / lastScan.req;
     const slow = CFG.scanEveryMs < 30000 ? { key: 'scanEveryMs', value: 30000 } : null;
     if (r < 0.5) add('bad', 'feeds', 'Market feeds failing', `${lastScan.ok}/${lastScan.req} requests succeeded. Prices go stale and exits pause. Failing: ${failingFeeds().join(', ') || 'none right now'}.`, slow);
-    else if (r < 0.85) add('warn', 'feeds', 'Some market feeds failing', `${lastScan.ok}/${lastScan.req} OK.`, slow);
+    else if (r < 0.85) add('warn', 'feeds', 'Some market feeds failing', `${lastScan.ok}/${lastScan.req} OK. This is usually rate limiting; scanning less often helps. Failing: ${failingFeeds().join(', ') || 'none right now'}.`, slow);
     else add('ok', 'feeds', 'Market feeds healthy', `${lastScan.ok}/${lastScan.req} requests OK.`);
   }
-  if (newsStatus.indexOf('LIVE') !== 0) add('warn', 'news', 'News feed offline', 'Headlines are not loading.');
+  if (newsStatus.indexOf('LIVE') !== 0) add('warn', 'news', 'News feed offline', 'Headlines are not loading. This does not affect trading.');
 
+  // Prices and state
   const stale = held.filter(a => { const c = market.get(a); return !(c && Date.now() - c.seenAt < CFG.exitStaleMs); });
   if (stale.length) add('bad', 'stale', 'Open positions without a live price', `${stale.map(a => state.symbols[a] || '?').join(', ')}: stops and exits are paused for these.`);
-  if (state.cash <= CFG.minCash) add('bad', 'frozen', 'Bankroll below the trading minimum', `Cash ${fmtCurrency(state.cash)} is at or under ${fmtCurrency(state.minCash)}.`);
+  if (state.cash <= CFG.minCash) add('bad', 'frozen', 'Bankroll below the trading minimum', `Cash ${fmtCurrency(state.cash)} is at or under ${fmtCurrency(CFG.minCash)}, so no new trades open. Vault holds ${fmtCurrency(state.vault)}; use VAULT to move money back.`);
   if (net > 0 && p.value / net > 0.7) add('warn', 'exposure', 'High exposure', `${Math.round(100 * p.value / net)}% of net worth is sitting in open positions.`);
-  if (held.length >= CFG.maxOpenPositions) add('info', 'maxopen', 'At the open-position limit', `${held.length}/${CFG.maxOpenPositions} positions open.`);
+  if (held.length >= CFG.maxOpenPositions) add('info', 'maxopen', 'At the open-position limit', `${held.length}/${CFG.maxOpenPositions} positions open, so new entries wait.`);
 
+  // Strategy math: can the targets beat the trading costs?
   if (state.mode === 'GROWTH' || state.mode === 'SNIPER') {
-    const tp = state.mode === 'GROWTH' ? CFG.takeProfitPct : CFG.sniper.tier1Pct, sl = Math.abs(CFG.stopLossPct);
+    const tp = state.mode === 'GROWTH' ? CFG.growthTier1Pct : CFG.sniper.tier1Pct, sl = Math.abs(CFG.stopLossPct);
     const netWin = tp - cost2, netLoss = sl + cost2;
     if (netWin <= 0) {
-      add('bad', 'breakeven', 'Target is smaller than trading costs', `Round-trip costs are about ${cost2.toFixed(1)}%, but target is only +${tp}%.`, state.mode === 'GROWTH' ? { key: 'takeProfitPct', value: Math.min(30, Math.ceil(cost2 + sl)) } : null);
+      add('bad', 'breakeven', 'Target is smaller than trading costs', `Round-trip costs are about ${cost2.toFixed(1)}%, but the first target is only +${tp}%. Every win loses money.`, state.mode === 'GROWTH' ? { key: 'takeProfitPct', value: Math.min(30, Math.ceil(cost2 + sl)) } : null);
     } else {
       const be = netLoss / (netWin + netLoss);
-      if (be > 0.6) add('warn', 'breakeven', 'Targets too small for trading costs', `Break-even win rate is about ${Math.round(be * 100)}%.`);
-      else add('ok', 'breakeven', 'Targets clear trading costs', `Break-even win rate is about ${Math.round(be * 100)}%.`);
+      if (be > 0.6) {
+        const tpFix = Math.min(30, Math.round(((sl + cost2) / 0.55 - sl) * 2) / 2);
+        add(be > 0.75 ? 'bad' : 'warn', 'breakeven', 'Targets too small for trading costs',
+          `Costs are about ${cost2.toFixed(1)}% per round trip. With a +${tp}% target and a -${sl}% stop you need ${Math.round(be * 100)}% winners just to break even.${js.n >= 10 ? ` Your actual win rate: ${Math.round(js.winRate * 100)}%.` : ''} A bigger target lowers the bar but hits less often.`,
+          state.mode === 'GROWTH' ? { key: 'takeProfitPct', value: tpFix } : null);
+      } else add('ok', 'breakeven', 'Targets clear the trading costs', `Break-even win rate is about ${Math.round(be * 100)}%.`);
     }
   }
 
+  // Results from the journal
   if (js.n >= 10) {
     const pf = js.profitFactor === null ? 'n/a' : js.profitFactor.toFixed(2);
-    add(js.expectancy < 0 ? 'bad' : 'ok', 'expect', js.expectancy < 0 ? 'Strategy loses money per trade' : 'Strategy is profitable per trade', `${js.n} trades: ${Math.round(js.winRate * 100)}% wins, profit factor ${pf}.`);
+    const line = `${js.n} ${state.mode} trades: ${Math.round(js.winRate * 100)}% wins, avg win ${js.avgWin.toFixed(1)}%, avg loss ${js.avgLoss.toFixed(1)}%, ${js.expectancy.toFixed(2)}% per trade, profit factor ${pf}.`;
+    add(js.expectancy < 0 ? 'bad' : 'ok', 'expect', js.expectancy < 0 ? 'Strategy loses money per trade' : 'Strategy is profitable per trade', line);
+    const stopShare = (js.tags['STOP-LOSS CUT'] || 0) / js.n;
+    if (stopShare > 0.6) add('warn', 'stopshare', 'Most trades end at the stop', `${Math.round(stopShare * 100)}% of exits are stop-losses. Entries are weak, or the stop is tighter than normal price noise.`);
   } else {
-    add('info', 'sample', 'Too few trades to judge results', `${js.n}/10 trades in journal.`);
+    add('info', 'sample', 'Too few trades to judge results', `${js.n}/10 ${state.mode} trades in the journal.`);
   }
+  if (js.nStops >= 3) {
+    const cfgStop = state.mode === 'LAUNCH' ? CFG.launch.stopPct : CFG.stopLossPct;
+    const expected = cfgStop - (state.mode === 'LAUNCH' ? 2 * (CFG.feeRate + CFG.launch.baseSlippage) * 100 : cost2);
+    if (js.avgStop < expected * 1.5) {
+      add('bad', 'gaps', 'Stops fill far below their level', `Stops average ${js.avgStop.toFixed(1)}% against about ${expected.toFixed(1)}% expected. Price falls through the stop between scans (rugs and thin pools). Deeper pools help.`, { key: 'minLiquidity', value: Math.max(CFG.minLiquidity, 15000) });
+    }
+  }
+  if (state.fees > 0 && state.txCount >= 10) add('info', 'fees', 'Fees paid', `${fmtCurrency(state.fees)} over ${state.txCount} fills, about ${fmtCurrency(state.fees / state.txCount)} each.`);
 
+  // Integrity
   const bad = [];
   held.forEach(a => {
     const n = state.symbols[a] || a.slice(0, 6);
     if (!(state.costBasis[a] > 0)) bad.push(`${n} has no cost basis`);
+    if (!state.symbols[a]) bad.push(`${n} has no symbol`);
+    if (!state.entryTimes[a]) bad.push(`${n} has no entry time`);
   });
+  Object.keys(state.costBasis).forEach(a => { if (!(state.positions[a] > 0)) bad.push(`orphan cost basis ${a.slice(0, 6)}`); });
+  [state.cash, state.vault, state.realizedPnl, state.fees].forEach(v => { if (!isFinite(v)) bad.push('non-numeric balance'); });
+  if (state.cash < 0) bad.push('negative cash');
   if (bad.length) add('bad', 'integrity', 'State inconsistencies', bad.slice(0, 6).join('; '));
   else add('ok', 'integrity', 'State is consistent', 'Balances, costs and positions line up.');
 
-  if (state.decision === 'COUNCIL') {
-    if (diag.ollamaErr > 0) add('warn', 'council', `Ollama council errors`, `${diag.ollamaErr} failures. Last: ${diag.ollamaMsg}.`);
+  // Clone tickers
+  const counts = {};
+  held.forEach(a => { const sy = state.symbols[a]; if (sy) counts[sy] = (counts[sy] || 0) + 1; });
+  Object.values(state.archive).forEach(e => { if (e.symbol) counts[e.symbol] = (counts[e.symbol] || 0) + 1; });
+  const dup = Object.keys(counts).filter(sy => counts[sy] > 1);
+  if (dup.length) add('warn', 'clones', 'Repeated tickers (likely copycats)', `${dup.slice(0, 8).join(', ')} appear more than once across holdings and the bench. Different tokens can share a name, and copycats are often scams.${CFG.skipClones ? ' Copycat skipping is on.' : ''}`);
+
+  // Filters and council
+  if (diag.hotZero >= 5 && market.size > 30) {
+    add('warn', 'starved', 'No coins pass the buy filters', `${diag.hotZero} scans in a row with ${market.size} coins seen. The filters may be too strict for ${state.mode}.`, CFG.minTurnover > 0.1 ? { key: 'minTurnover', value: Math.max(0.05, +(CFG.minTurnover * 0.67).toFixed(2)) } : null);
   }
+  if (state.decision === 'COUNCIL') {
+    if (!hasKey) add('info', 'council', 'COUNCIL has no AI key', 'The desk still meets and votes, but the final pick is rule-based until you add a key (KEY button).');
+    else if (diag.geminiErr > 0) add('warn', 'council', `${aiLabel()} council errors`, `${diag.geminiErr} failures. Last: ${diag.geminiMsg}. The desk's own pick is used instead. Tap TEST AI in the Status tab.`);
+  }
+  if (state.mode === 'PUMP') {
+    if (pump.status !== 'LIVE') add('bad', 'pumpfeed', 'Pump.fun feed is not connected', `Status: ${pump.status}. PUMP mode cannot see new tokens or price its positions without it. It reconnects on its own; if it stays down your network or browser may be blocking the websocket.`);
+    else if (Date.now() - pump.lastMsg > 60000) add('warn', 'pumpfeed', 'Pump.fun feed is quiet', 'Connected, but no messages for over a minute.');
+    else add('ok', 'pumpfeed', 'Pump.fun feed live', `${pump.rate} events/min, ${pump.tokens.size} tokens tracked.`);
+    if (!pump.solUsd) add('warn', 'pumpsol', 'SOL price unknown', 'Using a $150 fallback, so dollar values for pump coins may be off.');
+  }
+  if (errorBuf.length) add('bad', 'errors', 'Code errors this session', errorBuf.slice(0, 3).map(e => `${e.t} ${e.msg}`).join(' | '));
+  const ov = Object.keys(state.overrides || {});
+  if (ov.length) add('info', 'overrides', 'Active rule changes', ov.map(k => `${k}=${state.overrides[k]}`).join(', '));
+
+  // learning, filters and math
+  try {
+    const by = shadowStats();
+    Object.keys(by).forEach(k => {
+      const o = by[k];
+      if (o.n < 10) return;
+      const avg = o.s / o.n, win = o.w / o.n;
+      if (avg > 3 && win > 0.55) add('warn', 'shadow-' + k, `Filter "${k}" may be too strict`, `${o.n} coins it blocked: ${Math.round(win * 100)}% would have won, avg ${avg.toFixed(1)}% after costs (30 min).`);
+      else if (avg < -2) add('ok', 'shadow-' + k, `Filter "${k}" is saving money`, `${o.n} coins it blocked: only ${Math.round(win * 100)}% would have won, avg ${avg.toFixed(1)}%.`);
+      else add('info', 'shadow-' + k, `Filter "${k}" is neutral`, `${o.n} blocked coins: ${Math.round(win * 100)}% wins, avg ${avg.toFixed(1)}%.`);
+    });
+    const w = whyNotTrading();
+    add(w.blockers.length ? 'warn' : 'info', 'why', 'Why coins are not bought', `${w.n} coins in view: ${w.txt}.` + (w.blockers.length ? ' BLOCKERS: ' + w.blockers.join('; ') + '.' : ''));
+    const ex = exitAnalysis();
+    if (ex) {
+      if (ex.stops >= 5 && ex.stopsWereUp8 / ex.stops > 0.25) add('warn', 'stopswins', 'Stop-outs were winners first', `${ex.stopsWereUp8} of ${ex.stops} stop-losses had been up 8%+ before reversing. Take profit earlier or tighten the trail.`);
+      if (ex.capture !== null && ex.capture < 0.5) add('warn', 'capture', 'Giving back too much profit', `Winners keep only ${Math.round(ex.capture * 100)}% of their peak gain. Tighten the trailing stop.`);
+      else if (ex.capture !== null) add('info', 'capture', 'Profit capture', `Winners keep ${Math.round(ex.capture * 100)}% of their peak gain; average hold ${Math.round(ex.avgHoldMin)} min.`);
+    }
+    const mm = mathStats(state.mode);
+    if (mm && mm.n >= 15) {
+      if (mm.exp < 0) add('bad', 'negexp', 'Negative expectancy', `Average trade ${mm.exp.toFixed(2)}% after costs. Wins avg ${mm.aw.toFixed(1)}%, losses avg -${mm.al.toFixed(1)}%. Break-even needs ${mm.be === null ? '?' : mm.be.toFixed(0)}% wins, you have ${mm.wr.toFixed(0)}%. Bet size is cut automatically until this turns positive.`);
+      else add('ok', 'posexp', 'Positive expectancy', `Average trade +${mm.exp.toFixed(2)}%, profit factor ${mm.pf === null ? 'n/a' : mm.pf.toFixed(2)}.`);
+    }
+    const si = sizeInfo(state.mode);
+    add('info', 'size', 'Position size scale', `x${si.mult.toFixed(2)}: ${si.why}.`);
+    const L2 = computeLessons();
+    add('info', 'learn', 'Learning status', `${L2.n} ${state.mode} trades in the journal, ${L2.avoid.length} avoid rules, ${L2.favor.length} favor rules, ${state.shadow.done.length} shadow results, ${Object.keys(state.book).length} coins in the coin book.`);
+  } catch (e) { console.error('audit extras', e); }
 
   const order = { bad: 0, warn: 1, info: 2, ok: 3 };
   F.sort((a, b) => order[a.sev] - order[b.sev]);
+  F.filter(f => f.sev === 'bad' && !auditSeen[f.id]).forEach(f => { auditSeen[f.id] = true; auditNote(`PROBLEM: ${f.title}. ${f.detail}`); });
+  Object.keys(auditSeen).forEach(id => { if (!F.some(f => f.id === id && f.sev === 'bad')) delete auditSeen[id]; });
   auditResult = F;
   return F;
 }
@@ -2658,6 +3606,9 @@ function applyOverride(key, value) {
   CFG[key] = v;
   state.overrides[key] = v;
   saveState();
+  const msg = `Rule changed: ${key} = ${v}${t.reload ? ' (reload the page to apply)' : ''}`;
+  log('[AUDITOR] ' + msg);
+  auditNote(msg);
   runAudit();
   renderAll();
   return true;
@@ -2667,44 +3618,111 @@ function resetOverrides() {
   Object.keys(state.overrides).forEach(k => { CFG[k] = CFG_DEFAULTS[k]; });
   state.overrides = {};
   saveState();
+  log('[AUDITOR] All rule changes reset to defaults');
   runAudit();
   renderAll();
 }
 
-function runAuditNow() { runAudit(); setAuditStatus(`Audit done.`); renderAll(); }
+function runAuditNow() { runAudit(); setAuditStatus(`Audit done: ${auditResult.filter(f => f.sev === 'bad').length} problems, ${auditResult.filter(f => f.sev === 'warn').length} warnings.`); renderAll(); }
 function setAuditStatus(t) { setText('audit-status', t); }
 
 function buildReport() {
   const p = portfolioValue(), net = state.cash + state.vault + p.value;
   const rows = state.journal.filter(j => j.mode === state.mode);
   const js = journalStats(rows);
-  return `ORBITAL AUDIT REPORT ${new Date().toISOString()}\nNet $${net.toFixed(2)} | Cash $${state.cash.toFixed(2)}\nFINDINGS:\n` + auditResult.map(f => `[${f.sev.toUpperCase()}] ${f.title}: ${f.detail}`).join('\n');
+  const L = [];
+  L.push(`ORBITAL AUDIT REPORT ${new Date().toISOString()}`);
+  L.push(`Mode ${state.mode} | Decisions ${state.decision} | Net $${net.toFixed(2)} | Cash $${state.cash.toFixed(2)} | Vault $${state.vault.toFixed(2)} | Realized $${state.realizedPnl.toFixed(2)} | Fees $${state.fees.toFixed(2)} | Fills ${state.txCount}`);
+  L.push(`Feeds ${lastScan.ok}/${lastScan.req} | News ${newsStatus} | Coins seen ${market.size} | Hot ${hotCoins().length} | Scans with zero hot coins in a row ${diag.hotZero}`);
+  L.push(`CONFIG ${JSON.stringify(CFG)}`);
+  L.push(`OVERRIDES ${JSON.stringify(state.overrides)}`);
+  L.push(`TRADES (${state.mode}, ${js.n} in journal): win ${(js.winRate * 100).toFixed(0)}% | avg win ${js.avgWin.toFixed(2)}% | avg loss ${js.avgLoss.toFixed(2)}% | expectancy ${js.expectancy.toFixed(2)}%/trade | profit factor ${js.profitFactor === null ? 'n/a' : js.profitFactor.toFixed(2)} | exits ${JSON.stringify(js.tags)} | avg stop fill ${js.avgStop === null ? 'n/a' : js.avgStop.toFixed(1) + '%'}`);
+  Object.keys(DIM_NAMES).forEach(dim => {
+    const g = {};
+    rows.forEach(j => { (g[j.b[dim]] = g[j.b[dim]] || []).push(j); });
+    const parts = Object.keys(g).map(b => { const a = g[b]; return `${b} n${a.length} win${Math.round(100 * a.filter(j => j.win).length / a.length)}% avg${(a.reduce((x, j) => x + j.pct, 0) / a.length).toFixed(1)}%`; });
+    if (parts.length) L.push(`BY ${DIM_NAMES[dim].toUpperCase()}: ${parts.join(' | ')}`);
+  });
+  L.push(`OPEN POSITIONS (${heldAddrs().length}):`);
+  heldAddrs().forEach(a => {
+    const c = market.get(a), cost = state.positions[a] * state.costBasis[a];
+    L.push(`  ${state.symbols[a]} held ${Math.round((Date.now() - (state.entryTimes[a] || Date.now())) / 60000)}m | cost $${cost.toFixed(2)} | pnl $${(exitValue(a) - cost).toFixed(2)} | liq ${c ? Math.round(c.liquidity) : '?'} | tier ${state.tiers[a] || 0}`);
+  });
+  L.push('FINDINGS:');
+  auditResult.forEach(f => L.push(`  [${f.sev.toUpperCase()}] ${f.title}: ${f.detail}`));
+  L.push('RECENT ERRORS: ' + (errorBuf.length ? errorBuf.slice(0, 8).map(e => `${e.t} ${e.msg}`).join(' || ') : 'none'));
+  L.push('RECENT LOG:');
+  logBuf.slice(-40).forEach(x => L.push('  ' + x));
+  try {
+    L.push('MATH'); mathLines(state.mode).forEach(x => L.push('  ' + x));
+    L.push('SIZING ' + JSON.stringify(sizeInfo(state.mode)));
+    const sh = shadowStats(), shs = {};
+    Object.keys(sh).forEach(k => { shs[k] = { n: sh[k].n, winPct: Math.round(100 * sh[k].w / sh[k].n), avgPct: +(sh[k].s / sh[k].n).toFixed(1) }; });
+    L.push('BLOCKED-COIN OUTCOMES (30 min) ' + JSON.stringify(shs));
+    L.push('EXIT ANALYSIS ' + JSON.stringify(exitAnalysis()));
+    const B = state.book;
+    L.push('COIN BOOK'); Object.keys(B).slice(-12).forEach(a => L.push(`  ${B[a].sym}: ${B[a].n} trades, ${B[a].wins} wins, net ${B[a].pnl.toFixed(2)}`));
+    L.push('PUMP PROFILE ' + JSON.stringify(CFG.pump));
+  } catch (e) { /* report extras are optional */ }
+  return L.join('\n');
 }
 
 async function copyReport() {
   runAudit();
   const text = buildReport();
   let ok = false;
-  try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {}
-  if (ok) setAuditStatus('Report copied.');
-  else { setAuditStatus('Copy blocked.'); auditAnswer = { text, props: [] }; renderAudit(); }
+  try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e2) { ok = false; }
+  }
+  if (ok) setAuditStatus('Report copied. Paste it into your chat with Claude.');
+  else { setAuditStatus('Copy was blocked. The report is shown below: long-press to select it.'); auditAnswer = { text, props: [] }; renderAudit(); }
+}
+
+function parseProposals(text) {
+  const props = [], keep = [];
+  String(text).split('\n').forEach(line => {
+    const m = line.match(/^\s*PROPOSAL\s+(\{.*\})\s*$/);
+    if (!m) { keep.push(line); return; }
+    try {
+      const o = JSON.parse(m[1]), t = TUNABLE[o.key], v = Number(o.value);
+      if (t && isFinite(v) && v >= t.min && v <= t.max) props.push({ key: o.key, value: v, why: String(o.why || '').slice(0, 160) });
+    } catch (e) { /* ignore malformed proposal */ }
+  });
+  return { text: keep.join('\n').trim(), props };
+}
+
+async function callAuditor(question) {
+  runAudit();
+  const allowed = Object.keys(TUNABLE).join(', ');
+  const prompt = 'You are AUDITOR-7, the system inspector for a PAPER-TRADING Solana memecoin dashboard (all money is simulated). ' +
+    'Using only the report below, (1) list the biggest problems with evidence from the numbers, and (2) propose concrete rule changes. Be concise, under 250 words, plain text. ' +
+    'For every parameter change you propose, add a line exactly like: PROPOSAL {"key":"takeProfitPct","value":5,"why":"short reason"}. ' +
+    `Allowed keys: ${allowed}. If a fix needs a code change instead of a parameter, describe it in plain text and do not add a PROPOSAL line.\n\n` +
+    `QUESTION: ${question}\n\nREPORT:\n${buildReport()}`;   // the report already carries the math, shadow results, exit analysis and pump profile
+  const text = await aiCall(prompt, { json: false, timeout: 40000 });
+  return parseProposals(text);
 }
 
 async function askAuditor() {
+  if (!aiReady()) { setAuditStatus('Add an AI key first (SET AI KEY in the Status tab), or use COPY REPORT.'); return; }
   const r = await openDialog({
     title: 'ASK AUDITOR-7',
-    message: 'Ask Auditor-7 about your strategy.',
+    message: 'It reads the full report: config, trades, open positions, errors and logs.',
     inputs: [{ id: 'q', label: 'Question', value: 'What are the biggest problems and what rules should I change?' }],
     okText: 'ASK'
   });
   if (!r) return;
   setAuditStatus('Auditor is analyzing...');
   try {
-    const prompt = 'You are AUDITOR-7, system inspector for a paper-trading memecoin bot. Be concise. Reply with a short plain-text analysis.\n\nREPORT:\n' + buildReport();
-    const text = await aiCall(prompt, { json: false, timeout: 30000 });
-    auditAnswer = { text, props: [] };
+    auditAnswer = await callAuditor(r.values.q || 'What are the biggest problems?');
     ROBOT.speak('auditor', 3000);
-    setAuditStatus('Done.');
+    setAuditStatus('Done. Review any proposals before applying.');
   } catch (e) {
     setAuditStatus('AI error: ' + e.message);
   }
@@ -2715,7 +3733,7 @@ function renderAudit() {
   const nBad = auditResult.filter(f => f.sev === 'bad').length, nWarn = auditResult.filter(f => f.sev === 'warn').length, nOk = auditResult.filter(f => f.sev === 'ok').length;
   const head = $('audit-head');
   if (head) {
-    const say = nBad ? `${nBad} problem${nBad > 1 ? 's' : ''}.` : nWarn ? `${nWarn} warning${nWarn === 1 ? '' : 's'}.` : 'All checks passing.';
+    const say = nBad ? `${nBad} problem${nBad > 1 ? 's' : ''} need attention, ${nWarn} warning${nWarn === 1 ? '' : 's'}.` : nWarn ? `No critical problems. ${nWarn} warning${nWarn === 1 ? '' : 's'}.` : 'All checks passing.';
     head.innerHTML = `<div class="agent-card" style="border-color: #39ff88; cursor: default;">
       <canvas class="agent-portrait" width="72" height="80" data-robot="auditor" style="border-color: #39ff88;"></canvas>
       <div class="agent-body">
@@ -2738,14 +3756,23 @@ function renderAudit() {
       <div class="feed-item" style="border-left-color: ${col[f.sev]};">
         <div class="feed-sender" style="color: ${col[f.sev]};">${tag[f.sev]} // ${escapeHtml(f.title)}</div>
         <div class="feed-text">${escapeHtml(f.detail)}</div>
-      </div>`).join('') || '<div class="empty-note">No audit yet.</div>';
+        ${f.fix ? `<button class="cyber-btn accent" style="margin-top: 6px;" data-fix="${i}">APPLY: ${escapeHtml(f.fix.key)} = ${escapeHtml(f.fix.value)}</button>` : ''}
+      </div>`).join('') || '<div class="empty-note">No audit yet. Waiting for the first scan.</div>';
   }
   const ans = $('audit-answer');
   if (ans) {
-    ans.innerHTML = auditAnswer.text ? `<div class="feed-text" style="white-space: pre-wrap;">${escapeHtml(auditAnswer.text)}</div>` : '<div class="empty-note">Tap ASK AI for an analysis.</div>';
+    const props = auditAnswer.props.map((pr, i) => `
+      <div class="feed-item" style="border-left-color: var(--purple);">
+        <div class="feed-text">Proposal: ${escapeHtml(pr.key)} = ${escapeHtml(pr.value)}${pr.why ? ' (' + escapeHtml(pr.why) + ')' : ''}</div>
+        <button class="cyber-btn accent" style="margin-top: 6px;" data-prop="${i}">APPLY</button>
+      </div>`).join('');
+    ans.innerHTML = auditAnswer.text
+      ? `<div class="feed-text" style="white-space: pre-wrap;">${escapeHtml(auditAnswer.text)}</div>${props}`
+      : '<div class="empty-note">Tap ASK AI for an analysis, or COPY REPORT to paste it into your chat with Claude.</div>';
   }
 }
 
+/* ============================== BOOT ============================== */
 window.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
   const posBox = $('positions-container');
@@ -2759,6 +3786,20 @@ window.addEventListener('DOMContentLoaded', () => {
     playSfx(b.classList.contains('tab-btn') ? 'tab' : 'click');
   });
   initScene();
+  const af = $('audit-findings');
+  if (af) af.addEventListener('click', e => {
+    const b = e.target.closest('[data-fix]');
+    if (!b) return;
+    const f = auditResult[parseInt(b.dataset.fix, 10)];
+    if (f && f.fix) applyOverride(f.fix.key, f.fix.value);
+  });
+  const aa = $('audit-answer');
+  if (aa) aa.addEventListener('click', e => {
+    const b = e.target.closest('[data-prop]');
+    if (!b) return;
+    const pr = auditAnswer.props[parseInt(b.dataset.prop, 10)];
+    if (pr && applyOverride(pr.key, pr.value)) { b.textContent = 'APPLIED'; b.disabled = true; }
+  });
   AGENTS.forEach(a => { const l = state.ledger[a.id]; if (l && l[0]) a.says = l[0].text; });
   const wr = $('war-room-container');
   if (wr) wr.addEventListener('click', e => { const c = e.target.closest('[data-agent]'); if (c) { if (c.dataset.agent === 'aud') switchTab('audit'); else openAgentDialog(parseInt(c.dataset.agent, 10)); } });
@@ -2774,6 +3815,7 @@ window.addEventListener('DOMContentLoaded', () => {
   setInterval(scanMarket, CFG.scanEveryMs);
   setInterval(fetchLiveNews, CFG.newsEveryMs);
 });
-  </script>
+
+</script>
 </body>
 </html>
