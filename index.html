@@ -3876,6 +3876,93 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 })();
 </script>
+<script>
+/* Latency model: delay slippage, tips, failed buys and stuck sells */
+(function () {
+  const g = window, KEY = 'latency_cfg';
+  const L = { on: true, ms: 600, tipSol: 0.0005, failBuy: 0.05, failSell: 0.03, driftGrowth: 0.002, driftSniper: 0.004, driftFast: 0.012 };
+  const S = { tips: 0, n: 0, failBuy: 0, failSell: 0 };
+  try { const s = JSON.parse(localStorage.getItem(KEY) || '{}'); Object.assign(L, s.cfg || {}); Object.assign(S, s.stats || {}); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ cfg: L, stats: S })); } catch (e) {} };
+  const o = { slippage, curveBuyTokens, curveSellUsd, sellTokens, openPosition, closePosition, exitValue };
+  let filling = false;
 
+  const tipUsd = () => L.tipSol * ((typeof pump !== 'undefined' && pump.solUsd) || 150);
+  function extra(mode, liq, jitter) {
+    if (!L.on) return 0;
+    const d = (mode === 'PUMP' || mode === 'LAUNCH') ? L.driftFast : mode === 'SNIPER' ? L.driftSniper : L.driftGrowth;
+    const ms = L.ms * (jitter ? 0.5 + Math.random() : 1);
+    return (ms / 1000) * d * (liq >= CFG.stableMinLiq ? 0.1 : 1);
+  }
+  function charge(addr) {
+    const t = tipUsd();
+    if (!(t > 0)) return 0;
+    state.cash = Math.max(0, state.cash - t); state.fees += t; state.realizedPnl -= t;
+    if (state.positions[addr] > 0) state.tradePnl[addr] = (state.tradePnl[addr] || 0) - t;
+    S.tips += t; S.n++; save();
+    return t;
+  }
+
+  g.slippage = (usd, liq, mode) => o.slippage(usd, liq, mode) + extra(mode || state.mode, liq, filling);
+  g.curveBuyTokens = (c, usd) => { const r = o.curveBuyTokens(c, usd); r.tokens *= 1 - extra('PUMP', 0, filling); return r; };
+  g.curveSellUsd = (c, q) => { const r = o.curveSellUsd(c, q); r.net *= 1 - extra('PUMP', 0, filling); return r; };
+  g.exitValue = a => { const v = o.exitValue(a); return L.on ? Math.max(0, v - tipUsd()) : v; };
+
+  g.openPosition = function (coin) {
+    if (!L.on) return o.openPosition(coin);
+    if (coin && !(state.positions[coin.address] > 0) && state.cash > CFG.minCash && heldAddrs().length < maxOpenNow() && Math.random() < L.failBuy) {
+      S.failBuy++; save(); log('[LAT] Buy of ' + coin.symbol + ' did not land (simulated)');
+      return false;
+    }
+    let ok = false;
+    filling = true;
+    try { ok = o.openPosition(coin); } finally { filling = false; }
+    if (ok) charge(coin.address);
+    return ok;
+  };
+
+  g.sellTokens = function (addr, coin, qty) {
+    let pnl;
+    filling = true;
+    try { pnl = o.sellTokens(addr, coin, qty); } finally { filling = false; }
+    if (!L.on) return pnl;
+    return pnl - charge(addr);
+  };
+
+  g.closePosition = function (addr, coin, tag, msg) {
+    if (L.on && tag !== 'MANUAL' && state.positions[addr] > 0 && Math.random() < L.failSell) {
+      S.failSell++; save(); log('[LAT] Sell of ' + (state.symbols[addr] || '?') + ' did not land, retrying (simulated)');
+      return;
+    }
+    return o.closePosition(addr, coin, tag, msg);
+  };
+
+  async function openLat() {
+    const r = await openDialog({
+      title: 'LATENCY MODEL',
+      message: 'Simulates fill delay, tips and failed transactions.\nTips paid: ' + fmtCurrency(S.tips) + ' over ' + S.n + ' fills\nMissed buys: ' + S.failBuy + ' | Stuck sells: ' + S.failSell,
+      inputs: [
+        { id: 'on', label: 'On (yes or no)', value: L.on ? 'yes' : 'no' },
+        { id: 'ms', label: 'Delay (ms)', value: String(L.ms), inputmode: 'decimal' },
+        { id: 'tip', label: 'Tip per fill (SOL)', value: String(L.tipSol), inputmode: 'decimal' },
+        { id: 'fb', label: 'Buys that fail (%)', value: String(L.failBuy * 100), inputmode: 'decimal' },
+        { id: 'fs', label: 'Sells that fail (%)', value: String(L.failSell * 100), inputmode: 'decimal' }
+      ],
+      okText: 'SAVE'
+    });
+    if (!r) return;
+    const v = r.values, c = (x, lo, hi, d) => { const n = num(x); return n === null ? d : Math.min(hi, Math.max(lo, n)); };
+    L.on = v.on.trim().toLowerCase() !== 'no';
+    L.ms = c(v.ms, 0, 5000, L.ms);
+    L.tipSol = c(v.tip, 0, 0.1, L.tipSol);
+    L.failBuy = c(v.fb, 0, 50, L.failBuy * 100) / 100;
+    L.failSell = c(v.fs, 0, 50, L.failSell * 100) / 100;
+    save(); log('[LAT] ' + (L.on ? 'On: ' + L.ms + 'ms, tip ' + L.tipSol + ' SOL' : 'Off'));
+    renderAll();
+  }
+  const hb = document.querySelector('.header-btns');
+  if (hb) { const b = document.createElement('button'); b.className = 'cyber-btn'; b.textContent = 'LAT'; b.addEventListener('click', openLat); hb.appendChild(b); }
+})();
+</script>
 </body>
 </html>
