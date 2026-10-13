@@ -4077,6 +4077,194 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 })();
 </script>
+<script>
+/* Help: full guide plus tap-to-explain mode */
+(function () {
+  const H = {
+    'VAULT': 'Move money between the bankroll (what the bot trades with) and the vault (safe, never traded). Also sets the profit sweep: the % of each winning sale that moves to the vault automatically.',
+    'FUND': 'Sets the bot bankroll to an amount you type. Paper money only, nothing real moves.',
+    'KEY': 'AI setup. Type openai, gemini or ollama, then the key (Ollama needs its URL instead). Saved only in this browser.',
+    'BRIEF': 'Posts a one-line summary to the Council tab: net worth, vault, bankroll and open positions.',
+    'SND': 'Turns the button and trade sounds on or off.',
+    'WIPE': 'Resets everything: positions, history, learned rules and the vault. You pick a new starting bankroll. Your AI keys are kept. This cannot be undone, so export a backup first.',
+    'LAT': 'Latency model. Makes paper fills more realistic: delay slippage, a tip per trade, and some buys that fail or sells that get stuck. Shows the tips paid so far.',
+    'GROWTH': 'Everyday mode. Buys active, liquid coins at least 15 minutes old with strong buying. Uses 20% of the bankroll per trade, sells half at +8%, then trails the rest.',
+    'SNIPER': 'Like GROWTH but only pools under $300k liquidity, with a three-step exit: sells at +8% and +25%, then trails the rest. Smaller coins, bigger swings.',
+    'LAUNCH': 'Buys brand-new pools (under 10 minutes old, market cap under $5k) in small 5% bites. Wide stop at -20%, sells half at 2x. Most launches fail, so expect many small losses.',
+    'PUMP': 'Trades pump.fun coins from the live feed. Small 5% entries priced off the bonding curve. Exits if the creator sells, the coin graduates, or the pump tops out.',
+    'PUMP SETUP': 'Pick a PUMP preset (Balanced, Early Sniper, Momentum, Graduation, Dip) and edit every number: age, market cap, entry size, stop and targets.',
+    'COUNCIL': 'Decision mode. The agents hold a desk meeting and vote on each coin. With an AI key set, the AI makes the final pick among the approved coins.',
+    'AUTO (NO AI)': 'Same rules and votes, but no AI call. Faster and free.',
+    'SELL': 'Sells the whole position right now at the current price.',
+    'TEST AI': 'Sends a tiny test message to the selected AI to check the key, model and connection.',
+    'EXPORT DATA': 'Copies a full backup of your data to the clipboard. Paste it somewhere safe, like Notes.',
+    'IMPORT DATA': 'Restores a pasted backup. This REPLACES everything currently saved.',
+    'RUN AUDIT': 'Runs the system checks again right now.',
+    'COPY REPORT': 'Copies the full audit report so you can paste it into a chat.',
+    'ASK AI': 'Asks the AI to read the report and suggest fixes. Suggestions appear with APPLY buttons.',
+    'RESET RULES': 'Undoes every rule change the Auditor made and returns to the default settings.',
+    'APPLY': 'Applies this suggested rule change. RESET RULES undoes it.',
+    'RESET MODE STATS': 'Clears the P&L by mode numbers. Trades and bankroll are not touched.'
+  };
+  H['SET AI KEY'] = H.KEY; H['SUMMARY'] = H.BRIEF;
+  const T = {
+    hub: 'Engine log: every scan, feed check, mode change and system message.',
+    council: 'The desk meeting. Each agent reports, then you see the vote tally and the final order for every coin.',
+    news: 'Live crypto headlines, plus WHALE_EYE alerts when a coin starts heating up.',
+    positions: 'Your open holdings with cost and P&L. Tap a row to inspect a coin, or SELL to close it. Below that is the bench: coins it will not re-buy for a while.',
+    ledger: 'Net worth chart, P&L by mode, and the list of completed trades.',
+    status: 'Connection health, feed status, backup and restore, the current buy rules, learned rules and the math panel.',
+    warroom: 'The eight agents at the table. Tap one to see who they are, tap again for their stats.',
+    audit: 'AUDITOR-7 checks the system for problems and can suggest or apply rule changes. The number is how many problems or warnings it found.'
+  };
+  const TN = { hub: 'HUB', council: 'COUNCIL', news: 'NEWS', positions: 'POSITIONS', ledger: 'LEDGER', status: 'STATUS', warroom: 'WAR ROOM', audit: 'AUDIT' };
+  const SEC = [
+    ['TOP BUTTONS', ['VAULT', 'FUND', 'KEY', 'BRIEF', 'SND', 'WIPE', 'LAT']],
+    ['MODES', ['GROWTH', 'SNIPER', 'LAUNCH', 'PUMP', 'PUMP SETUP']],
+    ['DECISIONS', ['COUNCIL', 'AUTO (NO AI)']],
+    ['OTHER BUTTONS', ['SELL', 'TEST AI', 'EXPORT DATA', 'IMPORT DATA', 'RUN AUDIT', 'COPY REPORT', 'ASK AI', 'RESET RULES', 'APPLY', 'RESET MODE STATS']]
+  ];
+  const norm = s => String(s).toUpperCase().replace(/[^A-Z0-9 ()]/g, '').replace(/\s+/g, ' ').trim();
+  const guide = () => {
+    const p = SEC.map(s => s[0] + '\n' + s[1].map(k => k + ': ' + H[k]).join('\n'));
+    p.splice(3, 0, 'TABS\n' + Object.keys(T).map(k => TN[k] + ': ' + T[k]).join('\n'));
+    return p.join('\n\n');
+  };
+  function find(b) {
+    if (b.dataset.tab) return [TN[b.dataset.tab] + ' TAB', T[b.dataset.tab]];
+    const n = norm(b.textContent);
+    if (H[n]) return [n, H[n]];
+    const k = Object.keys(H).sort((a, c) => c.length - a.length).find(x => n.startsWith(x));
+    return k ? [k, H[k]] : [n || 'BUTTON', 'No help written for this one yet.'];
+  }
+
+  let on = false;
+  const btn = document.createElement('button');
+  btn.className = 'cyber-btn accent'; btn.textContent = 'HELP';
+  const setOn = v => { on = v; btn.textContent = on ? 'HELP ON' : 'HELP'; btn.classList.toggle('active-mode', on); };
+  btn.addEventListener('click', async () => {
+    if (on) { setOn(false); return; }
+    const r = await openDialog({ title: 'HELP', message: guide(), okText: 'CLOSE', cancelText: 'TAP-TO-EXPLAIN' });
+    if (r === null) {
+      setOn(true);
+      openDialog({ title: 'EXPLAIN MODE', message: 'Tap any button to see what it does. Nothing will run while this is on. Tap HELP ON again to turn it off.', okText: 'GOT IT', noCancel: true });
+    }
+  });
+  document.addEventListener('click', e => {
+    if (!on) return;
+    const b = e.target.closest('button');
+    if (!b || b === btn || b.closest('.dialog-overlay')) return;
+    e.preventDefault(); e.stopPropagation();
+    const f = find(b);
+    openDialog({ title: f[0], message: f[1], okText: 'GOT IT', noCancel: true });
+  }, true);
+  const hb = document.querySelector('.header-btns');
+  if (hb) hb.appendChild(btn);
+})();
+</script>
+<script>
+/* Trade sheet: every closed trade as a table you can sort, filter, copy or download */
+(function () {
+  const KEY = 'orbital_sheet';
+  let rows = [];
+  try { rows = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { rows = []; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(rows.slice(-1000))); } catch (e) {} };
+  const r2 = (v, d) => (v === null || v === undefined || !isFinite(v)) ? '' : +(+v).toFixed(d === undefined ? 2 : d);
+  const D = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' + d.toTimeString().slice(0, 8); };
+  const COLS = [
+    ['exit', 'Exit time', r => D(r.exit)], ['entry', 'Entry time', r => D(r.entry)], ['sym', 'Symbol', r => r.sym], ['mode', 'Mode', r => r.mode],
+    ['tag', 'Reason', r => r.tag], ['cost', 'Cost $', r => r2(r.cost)], ['pnl', 'P&L $', r => r2(r.pnl)], ['pct', 'P&L %', r => r2(r.pct, 1)],
+    ['held', 'Held min', r => r2(r.held, 1)], ['mfe', 'Peak %', r => r2(r.mfe, 1)], ['mae', 'Low %', r => r2(r.mae, 1)],
+    ['liq', 'Liq $', r => r2(r.liq, 0)], ['mc', 'MCap $', r => r2(r.mc, 0)], ['age', 'Age min', r => r2(r.age, 0)], ['buys', 'Buys %', r => r2(r.buys, 0)],
+    ['turn', 'Turnover', r => r2(r.turn)], ['c5', '5m %', r => r2(r.c5, 1)], ['c1', '1h %', r => r2(r.c1, 1)], ['phase', 'Phase', r => r.phase || ''],
+    ['accel', 'Vol momentum', r => r2(r.accel)], ['dd', 'Off high %', r => r2(r.dd, 1)], ['lat', 'Latency ms', r => r.lat === undefined ? '' : r.lat],
+    ['buy', 'Entry price', r => r.buy ? (+r.buy).toPrecision(4) : ''], ['addr', 'Address', r => r.addr]
+  ];
+  let flt = 'ALL', sk = 'exit', dir = -1;
+  const o = { recordTrade };
+
+  window.recordTrade = function (addr, tag, total) {
+    try {
+      const f = state.entryFeat[addr] || {}, basis = state.costBasis[addr] || 0, cost = state.entryCost[addr] || 0, t0 = state.entryTimes[addr] || Date.now();
+      let lat; try { const s = JSON.parse(localStorage.getItem('latency_cfg') || '{}'); if (s.cfg) lat = s.cfg.on ? s.cfg.ms : 0; } catch (e) {}
+      rows.push({
+        exit: Date.now(), entry: t0, sym: state.symbols[addr] || '?', addr, mode: posModeOf(addr), tag, cost, pnl: total,
+        pct: cost > 0 ? total / cost * 100 : 0, held: (Date.now() - t0) / 60000, buy: basis,
+        mfe: basis > 0 ? ((state.peaks[addr] || basis) / basis - 1) * 100 : 0, mae: basis > 0 ? ((state.lows[addr] || basis) / basis - 1) * 100 : 0,
+        liq: f.liq, mc: f.mc, age: f.ageMin, buys: f.buyRatio !== undefined ? f.buyRatio * 100 : undefined, turn: f.turnover,
+        c5: f.ch5m, c1: f.ch1h, phase: f.phase, accel: f.accel, dd: f.dd, lat
+      });
+      save(); render();
+    } catch (e) {}
+    return o.recordTrade(addr, tag, total);
+  };
+
+  const view = () => rows.filter(r => flt === 'ALL' || r.mode === flt).sort((a, b) => {
+    const x = a[sk], y = b[sk];
+    const c = (typeof x === 'string' || typeof y === 'string') ? String(x || '').localeCompare(String(y || '')) : (x === undefined ? -1e18 : x) - (y === undefined ? -1e18 : y);
+    return c * dir;
+  });
+  const q = s => { s = String(s); return /[\t,"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const table = sep => [COLS.map(c => c[1]).join(sep)].concat(view().map(r => COLS.map(c => q(c[2](r))).join(sep))).join('\n');
+
+  function render() {
+    const box = document.getElementById('sheet-body');
+    if (!box) return;
+    const v = view(), w = v.filter(r => r.pnl > 0).length, tot = v.reduce((a, r) => a + r.pnl, 0);
+    document.getElementById('sheet-sum').textContent = v.length + ' trades | win ' + (v.length ? Math.round(100 * w / v.length) + '%' : '--') + ' | total ' + fmtSigned(tot);
+    document.querySelectorAll('#sheet-filters button').forEach(b => b.classList.toggle('active-mode', b.dataset.f === flt));
+    const th = COLS.map(c => '<th data-k="' + c[0] + '" style="padding:4px 6px;color:var(--amber);white-space:nowrap;cursor:pointer;border-bottom:2px solid var(--border-color);">' + escapeHtml(c[1]) + (sk === c[0] ? (dir > 0 ? ' ▲' : ' ▼') : '') + '</th>').join('');
+    const tb = v.slice(0, 300).map(r => '<tr>' + COLS.map(c => {
+      let val = String(c[2](r)); if (c[0] === 'addr') val = val.slice(0, 6) + '...';
+      const col = (c[0] === 'pnl' || c[0] === 'pct') ? (r.pnl >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--text-main)';
+      return '<td style="padding:3px 6px;white-space:nowrap;color:' + col + ';border-bottom:1px solid #2a1a66;">' + escapeHtml(val) + '</td>';
+    }).join('') + '</tr>').join('');
+    box.innerHTML = rows.length ? '<table style="border-collapse:collapse;font-size:15px;"><thead><tr>' + th + '</tr></thead><tbody>' + tb + '</tbody></table>'
+      : '<div class="empty-note">No trades recorded yet. Every trade that fully closes from now on is added here.</div>';
+  }
+
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+    try { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.focus(); ta.select(); const ok = document.execCommand('copy'); document.body.removeChild(ta); return ok; } catch (e) { return false; }
+  }
+
+  const nav = document.querySelector('.nav-tabs'), cont = document.querySelector('.container');
+  if (!nav || !cont) return;
+  const tb = document.createElement('button'); tb.className = 'tab-btn'; tb.dataset.tab = 'sheet'; tb.textContent = 'Sheet'; nav.appendChild(tb);
+  tb.addEventListener('click', () => setTimeout(render, 0));
+  const pane = document.createElement('div'); pane.id = 'tab-sheet'; pane.className = 'tab-pane panel';
+  pane.innerHTML = '<div class="pane-title">// TRADE SHEET (TAP A HEADING TO SORT)</div>' +
+    '<div id="sheet-filters" class="audit-btns">' + ['ALL', 'GROWTH', 'SNIPER', 'LAUNCH', 'PUMP'].map(m => '<button class="cyber-btn" data-f="' + m + '">' + m + '</button>').join('') + '</div>' +
+    '<div id="sheet-sum" class="scene-caption"></div>' +
+    '<div class="audit-btns"><button class="cyber-btn accent" data-act="copy">COPY</button><button class="cyber-btn" data-act="csv">DOWNLOAD CSV</button><button class="cyber-btn danger" data-act="clear">CLEAR</button></div>' +
+    '<div id="sheet-msg" class="scene-caption"></div>' +
+    '<div id="sheet-body" class="terminal-box" style="height:420px;display:block;overflow:auto;"></div>';
+  cont.appendChild(pane);
+
+  pane.addEventListener('click', async e => {
+    const f = e.target.closest('[data-f]');
+    if (f) { flt = f.dataset.f; render(); return; }
+    const k = e.target.closest('th[data-k]');
+    if (k) { if (sk === k.dataset.k) dir = -dir; else { sk = k.dataset.k; dir = -1; } render(); return; }
+    const a = e.target.closest('[data-act]');
+    if (!a) return;
+    const msg = document.getElementById('sheet-msg'), n = view().length;
+    if (a.dataset.act === 'clear') {
+      const r = await openDialog({ title: 'CLEAR SHEET', message: 'Deletes every row in the trade sheet. Your bankroll and positions are not touched.', okText: 'CLEAR', danger: true });
+      if (r) { rows = []; save(); render(); msg.textContent = 'Sheet cleared.'; }
+      return;
+    }
+    if (!n) { msg.textContent = 'Nothing to export yet.'; return; }
+    if (a.dataset.act === 'copy') msg.textContent = (await copy(table('\t'))) ? n + ' rows copied. Paste into Google Sheets, Excel or Numbers.' : 'Copy was blocked. Try DOWNLOAD CSV.';
+    else {
+      const l = document.createElement('a'); l.href = URL.createObjectURL(new Blob([table(',')], { type: 'text/csv' })); l.download = 'orbital-trades.csv';
+      document.body.appendChild(l); l.click(); document.body.removeChild(l);
+      msg.textContent = 'CSV download started (' + n + ' rows).';
+    }
+  });
+  render();
+})();
+</script>
 
 </body>
 </html>
