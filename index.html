@@ -3964,5 +3964,119 @@ window.addEventListener('DOMContentLoaded', () => {
   if (hb) { const b = document.createElement('button'); b.className = 'cyber-btn'; b.textContent = 'LAT'; b.addEventListener('click', openLat); hb.appendChild(b); }
 })();
 </script>
+<script>
+/* Per-mode stats: P&L, win rate and fees for GROWTH, SNIPER, LAUNCH and PUMP */
+(function () {
+  const g = window, KEY = 'orbital_modestats';
+  const MODES = ['GROWTH', 'SNIPER', 'LAUNCH', 'PUMP'];
+  const COL = { GROWTH: '#00f0ff', SNIPER: '#f9f871', LAUNCH: '#b45cff', PUMP: '#39ff88' };
+  const blank = () => ({ realized: 0, fees: 0, closed: 0, wins: 0, sumPct: 0, gw: 0, gl: 0 });
+  let M = { m: {}, series: {}, since: Date.now() };
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.m) M = s; } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(M)); } catch (e) {} };
+  const mm = k => (M.m[k] = Object.assign(blank(), M.m[k]));
+  const o = { sellTokens, openPosition, recordTrade, renderLedger };
+
+  function add(mode, dr, df) {
+    const m = mm(mode);
+    m.realized += dr; m.fees += df;
+    if (dr) {
+      const s = (M.series[mode] = M.series[mode] || []);
+      s.push({ t: Date.now(), v: m.realized });
+      if (s.length > 150) s.shift();
+    }
+    save();
+  }
+
+  g.sellTokens = function (addr, coin, qty) {
+    const mode = posModeOf(addr), r0 = state.realizedPnl, f0 = state.fees;
+    const pnl = o.sellTokens(addr, coin, qty);
+    add(mode, state.realizedPnl - r0, state.fees - f0);
+    return pnl;
+  };
+  g.openPosition = function (coin) {
+    const mode = state.mode, r0 = state.realizedPnl, f0 = state.fees;
+    const ok = o.openPosition(coin);
+    if (ok) add(mode, state.realizedPnl - r0, state.fees - f0);
+    return ok;
+  };
+  g.recordTrade = function (addr, tag, total) {
+    try {
+      const m = mm(posModeOf(addr)), cost = state.entryCost[addr] || 0;
+      m.closed++;
+      if (total > 0) { m.wins++; m.gw += total; } else m.gl += -total;
+      m.sumPct += cost > 0 ? total / cost * 100 : 0;
+      save();
+    } catch (e) {}
+    return o.recordTrade(addr, tag, total);
+  };
+
+  function draw() {
+    const cv = document.getElementById('mode-canvas'), c = cv && cv.getContext('2d');
+    if (!c) return;
+    const W = cv.width, H = cv.height;
+    c.fillStyle = '#07010f'; c.fillRect(0, 0, W, H);
+    const all = [];
+    MODES.forEach(k => (M.series[k] || []).forEach(p => all.push(p)));
+    if (all.length < 2) { c.fillStyle = '#8a7fb8'; c.font = '8px "Press Start 2P", monospace'; c.textBaseline = 'top'; c.fillText('COLLECTING DATA...', 8, H / 2 - 4); return; }
+    const now = Date.now(), t0 = Math.min.apply(null, all.map(p => p.t));
+    let lo = Math.min.apply(null, all.map(p => p.v).concat([0])), hi = Math.max.apply(null, all.map(p => p.v).concat([0]));
+    if (hi - lo < 0.5) { hi += 0.25; lo -= 0.25; }
+    const X = t => 10 + (W - 20) * (t - t0) / Math.max(1, now - t0), Y = v => H - 12 - (H - 24) * (v - lo) / (hi - lo);
+    c.fillStyle = '#2a1a66';
+    for (let x = 10; x < W - 10; x += 6) c.fillRect(x, Math.round(Y(0)), 3, 1);
+    MODES.forEach(k => {
+      const s = M.series[k];
+      if (!s || !s.length) return;
+      c.strokeStyle = COL[k]; c.lineWidth = 2; c.beginPath();
+      c.moveTo(X(s[0].t), Y(0));
+      s.forEach(p => c.lineTo(X(p.t), Y(p.v)));
+      c.lineTo(X(now), Y(s[s.length - 1].v));
+      c.stroke();
+    });
+  }
+
+  function render() {
+    const box = document.getElementById('mode-stats');
+    if (!box) return;
+    const ob = {};
+    heldAddrs().forEach(a => {
+      const mo = posModeOf(a), v = ob[mo] || (ob[mo] = { n: 0, u: 0 });
+      v.n++; v.u += exitValue(a) - state.positions[a] * state.costBasis[a];
+    });
+    const rows = MODES.map(k => {
+      const m = mm(k), op = ob[k] || { n: 0, u: 0 };
+      const wr = m.closed ? Math.round(100 * m.wins / m.closed) + '%' : '--';
+      const avg = m.closed ? (m.sumPct / m.closed).toFixed(1) + '%' : '--';
+      const pf = m.gl > 0 ? (m.gw / m.gl).toFixed(2) : (m.gw > 0 ? 'max' : '--');
+      return '<div class="status-row" style="flex-wrap:wrap;"><strong style="color:' + COL[k] + ';">' + k + '</strong>' +
+        '<strong style="color:' + (m.realized >= 0 ? 'var(--green)' : 'var(--red)') + ';">' + fmtSigned(m.realized) + '</strong>' +
+        '<span style="width:100%;color:var(--text-dim);">' + m.closed + ' closed | win ' + wr + ' | avg ' + avg + ' | PF ' + pf +
+        ' | fees ' + fmtCurrency(m.fees) + ' | open ' + op.n + ' (' + fmtSigned(op.u) + ')</span></div>';
+    }).join('');
+    box.innerHTML = '<div class="pane-title" style="margin-top:8px;">// P&L BY MODE (since ' + new Date(M.since).toLocaleDateString() + ')</div>' +
+      '<canvas id="mode-canvas" width="320" height="90" style="width:100%;height:auto;image-rendering:pixelated;background:#07010f;border:2px solid #2a1a66;margin-bottom:6px;"></canvas>' +
+      rows + '<button class="cyber-btn danger" data-reset="1" style="margin:4px 0 8px;">RESET MODE STATS</button>';
+    draw();
+  }
+
+  g.renderLedger = function () { o.renderLedger(); render(); };
+
+  const tab = document.getElementById('tab-ledger');
+  if (tab) {
+    const d = document.createElement('div');
+    d.id = 'mode-stats';
+    tab.insertBefore(d, tab.children[2] || null);
+    d.addEventListener('click', async e => {
+      if (!e.target.closest('[data-reset]')) return;
+      const r = await openDialog({ title: 'RESET MODE STATS', message: 'Clears the per-mode P&L and win rates. Your trades and bankroll are not touched.', okText: 'RESET', danger: true });
+      if (!r) return;
+      M = { m: {}, series: {}, since: Date.now() };
+      save(); render();
+    });
+  }
+})();
+</script>
+
 </body>
 </html>
