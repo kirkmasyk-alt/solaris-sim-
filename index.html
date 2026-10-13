@@ -3817,5 +3817,65 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 </script>
+<script>
+/* Ollama add-on: extends the AI helpers from the main script */
+(function () {
+  const g = window, ls = k => localStorage.getItem(k) || '';
+  const oProv = g.aiProvider, oReady = g.aiReady, oModel = g.aiModel, oLabel = g.aiLabel, oCall = g.aiCall;
+  const isOl = () => localStorage.getItem('ai_provider') === 'ollama';
+
+  g.aiProvider = () => isOl() ? 'ollama' : oProv();
+  g.aiReady = () => isOl() ? ls('ollama_url').length > 6 : oReady();
+  g.aiModel = () => isOl() ? (ls('ollama_model') || 'llama3.1') : oModel();
+  g.aiLabel = () => isOl() ? 'Ollama' : oLabel();
+
+  g.aiCall = async function (prompt, opts) {
+    if (!isOl()) return oCall(prompt, opts);
+    opts = opts || {};
+    const base = ls('ollama_url').trim().replace(/\/+$/, '');
+    if (!base) throw new Error('no Ollama URL set');
+    const body = { model: g.aiModel(), stream: false, messages: [{ role: 'user', content: prompt }] };
+    if (opts.json) body.format = 'json';
+    const r = await fetch(base + '/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(Math.max(opts.timeout || 15000, 60000))
+    });
+    if (!r.ok) throw new Error('Ollama HTTP ' + r.status);
+    const j = await r.json();
+    const t = j && j.message && j.message.content;
+    if (!t) throw new Error('empty answer');
+    return t;
+  };
+
+  g.promptApiKey = async function () {
+    const r = await openDialog({
+      title: 'AI SETUP',
+      message: 'Provider: openai, gemini or ollama. Keys stay in this browser. Ollama needs no key, just its URL.',
+      inputs: [
+        { id: 'prov', label: 'Provider (openai, gemini or ollama)', value: g.aiProvider() },
+        { id: 'key', label: 'API key (openai/gemini)', value: '' },
+        { id: 'model', label: 'OpenAI model', value: ls('openai_model') || 'gpt-4o-mini' },
+        { id: 'ourl', label: 'Ollama URL', value: ls('ollama_url') || 'http://localhost:11434' },
+        { id: 'omodel', label: 'Ollama model', value: ls('ollama_model') || 'llama3.1' }
+      ],
+      okText: 'SAVE'
+    });
+    if (!r) return;
+    const v = r.values.prov.trim().toLowerCase();
+    const prov = (v === 'gemini' || v === 'ollama') ? v : 'openai';
+    const key = r.values.key.trim();
+    localStorage.setItem('ai_provider', prov);
+    if (key && prov !== 'ollama') localStorage.setItem(prov + '_api_key', key);
+    if (r.values.model.trim()) localStorage.setItem('openai_model', r.values.model.trim());
+    if (r.values.ourl.trim()) localStorage.setItem('ollama_url', r.values.ourl.trim());
+    if (r.values.omodel.trim()) localStorage.setItem('ollama_model', r.values.omodel.trim());
+    log('[AI] Provider set to ' + prov + '.');
+    renderAll();
+  };
+})();
+</script>
+
 </body>
 </html>
